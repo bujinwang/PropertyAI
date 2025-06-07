@@ -1,0 +1,297 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model with role-based access
+model User {
+  id                String              @id @default(uuid())
+  email             String              @unique
+  password          String
+  firstName         String
+  lastName          String
+  phone             String?
+  role              UserRole            @default(TENANT)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  isActive          Boolean             @default(true)
+  propertiesManaged Property[]          @relation("PropertyManager")
+  propertiesOwned   Property[]          @relation("PropertyOwner")
+  units             Unit[]              @relation("UnitTenant")
+  documents         Document[]
+  maintenanceRequests MaintenanceRequest[] @relation("RequestedBy")
+  messages          Message[]
+  notifications     Notification[]
+}
+
+enum UserRole {
+  ADMIN
+  PROPERTY_MANAGER
+  TENANT
+}
+
+// Property model
+model Property {
+  id            String        @id @default(uuid())
+  name          String
+  address       String
+  city          String
+  state         String
+  zipCode       String
+  country       String
+  description   String?
+  propertyType  PropertyType
+  yearBuilt     Int?
+  totalUnits    Int
+  amenities     Json?         // Stores amenities as JSON
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  isActive      Boolean       @default(true)
+  manager       User          @relation("PropertyManager", fields: [managerId], references: [id])
+  managerId     String
+  owner         User          @relation("PropertyOwner", fields: [ownerId], references: [id])
+  ownerId       String
+  units         Unit[]
+  documents     Document[]
+  maintenanceRequests MaintenanceRequest[]
+  images        PropertyImage[] // Relation to property images
+  latitude      Float?
+  longitude     Float?
+}
+
+enum PropertyType {
+  APARTMENT
+  HOUSE
+  CONDO
+  TOWNHOUSE
+  COMMERCIAL
+  INDUSTRIAL
+  OTHER
+}
+
+// PropertyImage model for storing property images
+model PropertyImage {
+  id              Int         @id @default(autoincrement())
+  propertyId      String      
+  property        Property    @relation(fields: [propertyId], references: [id])
+  filename        String      // Stored filename
+  originalFilename String     // Original filename when uploaded
+  mimetype        String      // File MIME type
+  size            Int         // File size in bytes
+  url             String      // Full URL to access the image
+  isFeatured      Boolean     @default(false) // Is this the main/featured image
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+// Unit model
+model Unit {
+  id              String      @id @default(uuid())
+  unitNumber      String
+  floorNumber     Int?
+  size            Float?      // in square feet/meters
+  bedrooms        Int?
+  bathrooms       Float?      // 1.5, 2, etc.
+  rent            Float?
+  deposit         Float?
+  isAvailable     Boolean     @default(true)
+  dateAvailable   DateTime?
+  features        Json?       // Stores features as JSON
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  property        Property    @relation(fields: [propertyId], references: [id])
+  propertyId      String
+  tenant          User?       @relation("UnitTenant", fields: [tenantId], references: [id])
+  tenantId        String?
+  lease           Lease?
+  maintenanceRequests MaintenanceRequest[]
+  images          UnitImage[] // Relation to unit images
+}
+
+// UnitImage model for storing unit images
+model UnitImage {
+  id              Int         @id @default(autoincrement())
+  unitId          String      
+  unit            Unit        @relation(fields: [unitId], references: [id])
+  filename        String      // Stored filename
+  originalFilename String     // Original filename when uploaded
+  mimetype        String      // File MIME type
+  size            Int         // File size in bytes
+  url             String      // Full URL to access the image
+  isFeatured      Boolean     @default(false) // Is this the main/featured image
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+// Lease model
+model Lease {
+  id              String      @id @default(uuid())
+  startDate       DateTime
+  endDate         DateTime
+  rentAmount      Float
+  securityDeposit Float
+  leaseTerms      String?     @db.Text
+  status          LeaseStatus @default(ACTIVE)
+  signedDate      DateTime    @default(now())
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  unit            Unit        @relation(fields: [unitId], references: [id])
+  unitId          String      @unique
+  documents       Document[]
+  transactions    Transaction[]
+  renewalDate     DateTime?
+}
+
+enum LeaseStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  TERMINATED
+}
+
+// Document model
+model Document {
+  id              String      @id @default(uuid())
+  name            String
+  type            DocumentType
+  url             String      // S3 or other storage URL
+  uploadedAt      DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  description     String?
+  property        Property?   @relation(fields: [propertyId], references: [id])
+  propertyId      String?
+  lease           Lease?      @relation(fields: [leaseId], references: [id])
+  leaseId         String?
+  uploadedBy      User        @relation(fields: [uploadedById], references: [id])
+  uploadedById    String
+  maintenanceRequest MaintenanceRequest? @relation(fields: [maintenanceRequestId], references: [id])
+  maintenanceRequestId String?
+  size            Int?        // Size in bytes
+  mimeType        String?
+  isArchived      Boolean     @default(false)
+}
+
+enum DocumentType {
+  LEASE
+  INVOICE
+  RECEIPT
+  MAINTENANCE_REPORT
+  PROPERTY_PHOTO
+  CONTRACT
+  OTHER
+}
+
+// Maintenance request model
+model MaintenanceRequest {
+  id              String      @id @default(uuid())
+  title           String
+  description     String
+  status          MaintenanceStatus @default(OPEN)
+  priority        Priority    @default(MEDIUM)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  scheduledDate   DateTime?
+  completedDate   DateTime?
+  notes           String?     @db.Text
+  property        Property    @relation(fields: [propertyId], references: [id])
+  propertyId      String
+  unit            Unit        @relation(fields: [unitId], references: [id])
+  unitId          String
+  requestedBy     User        @relation("RequestedBy", fields: [requestedById], references: [id])
+  requestedById   String
+  assignedToId    String?
+  estimatedCost   Float?
+  actualCost      Float?
+  documents       Document[]
+  messages        Message[]
+}
+
+enum MaintenanceStatus {
+  OPEN
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  EMERGENCY
+}
+
+// Message model
+model Message {
+  id                  String      @id @default(uuid())
+  content             String
+  createdAt           DateTime    @default(now())
+  readAt              DateTime?
+  sender              User        @relation(fields: [senderId], references: [id])
+  senderId            String
+  maintenanceRequest  MaintenanceRequest? @relation(fields: [maintenanceRequestId], references: [id])
+  maintenanceRequestId String?
+  isAIGenerated       Boolean     @default(false)
+  attachment          String?     // URL to attached file
+}
+
+// Notification model
+model Notification {
+  id              String      @id @default(uuid())
+  title           String
+  message         String
+  type            NotificationType
+  isRead          Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  user            User        @relation(fields: [userId], references: [id])
+  userId          String
+  relatedId       String?     // ID of related item (e.g., maintenance request)
+  relatedType     String?     // Type of related item
+}
+
+enum NotificationType {
+  MAINTENANCE
+  LEASE
+  PAYMENT
+  ANNOUNCEMENT
+  OTHER
+}
+
+// Transaction model
+model Transaction {
+  id              String      @id @default(uuid())
+  amount          Float
+  type            TransactionType
+  status          TransactionStatus @default(PENDING)
+  description     String?
+  createdAt       DateTime    @default(now())
+  processedAt     DateTime?
+  lease           Lease       @relation(fields: [leaseId], references: [id])
+  leaseId         String
+  paymentMethod   String?
+  reference       String?     // External reference number
+}
+
+enum TransactionType {
+  RENT
+  DEPOSIT
+  FEES
+  MAINTENANCE
+  REFUND
+  OTHER
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+} 

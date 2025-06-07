@@ -1,0 +1,225 @@
+<context>
+# Overview  
+PropertyFlow AI is a comprehensive property management platform that leverages AI to streamline operations, enhance communication, and optimize property performance. The application aims to solve challenges faced by property managers, owners, and tenants by automating repetitive tasks, providing intelligent insights, and offering a seamless user experience across web and mobile platforms.
+
+# Core Features  
+1. **Intelligent Unit Listing & Marketing**
+   - AI-Generated Descriptions: Automatically create compelling property descriptions
+   - Smart Pricing Recommendations: Dynamic pricing based on market data
+   - Multi-Platform Publishing: One-click posting to listing platforms
+   - Photo Enhancement: AI-powered image optimization
+   - SEO Optimization: Automatic keyword optimization
+
+2. **AI Communication Hub**
+   - Smart Response Suggestions: Pre-written, contextual responses
+   - Multi-Language Support: Real-time translation
+   - Sentiment Analysis: Flag urgent or frustrated communications
+   - Automated Follow-ups: Schedule and send follow-up messages
+   - Voice-to-Text: Convert voicemails to searchable text
+
+3. **Tenant Screening & Application Processing**
+   - AI Risk Assessment: Score applicants based on various factors
+   - Document Verification: Automatically verify documents
+   - Background Check Integration: Streamlined checks
+   - Predictive Analytics: Identify potential issues
+
+4. **Maintenance Management**
+   - Smart Work Order Routing: Match requests with contractors
+   - Predictive Maintenance: Identify potential issues proactively
+   - Cost Estimation: Instant repair cost estimates
+   - Vendor Performance Tracking: Rate and track contractors
+   - Photo-Based Issue Assessment: AI analyzes tenant-submitted photos
+
+5. **Financial Management & Reporting**
+   - Automated Rent Collection: Smart reminders and payment options
+   - Expense Categorization: AI categorizes expenses
+   - Cash Flow Forecasting: Predict future finances
+   - Performance Analytics: Property-by-property analysis
+   - Tax Document Generation: Automated reports
+
+6. **Tenant Portal & Self-Service**
+   - Mobile App: React Native implementation for iOS and Android
+   - 24/7 AI Chatbot: Handle common questions
+   - Maintenance Request System: Photo upload with AI categorization
+   - Rent Payment Portal: Multiple payment methods
+   - Document Access: Access to important documents
+   - Community Features: Communication and announcements
+
+# User Experience  
+**Property Manager Experience:**
+- Dashboard with key metrics, urgent items, and daily tasks
+- Smart notifications with AI-prioritized alerts
+- One-click access to common tasks
+- Customizable dashboard widgets
+- Mobile-first design with offline capability
+
+**Tenant Experience:**
+- Easy-to-use mobile app for managing rental experience
+- Self-service for common requests and information
+- Simplified rent payment process
+- Clear communication channels with management
+- Document storage and access
+</context>
+<PRD>
+# Technical Architecture  
+## Frontend Architecture
+- **Mobile Apps**: React Native for cross-platform (iOS/Android) development
+- **Web Dashboard**: React.js with responsive design for property managers
+- **Real-time Updates**: WebSocket connections for instant notifications
+- **Offline Capability**: Local storage and synchronization for field work
+- **UI Framework**: Consistent component library across platforms
+
+## Backend Architecture
+- **API Layer**: Node.js with Express framework
+- **Database**: 
+  - PostgreSQL for structured relational data (users, properties, transactions)
+  - MongoDB for unstructured document storage (messages, maintenance records)
+  - Redis for caching and real-time features
+- **Authentication**: OAuth 2.0 with multi-factor authentication
+- **Microservices**:
+  - User Service: Authentication, user management, permissions
+  - Property Service: Property listings, unit management
+  - Communication Service: Messaging, notifications, AI responses
+  - Maintenance Service: Work orders, vendor management
+  - Financial Service: Rent collection, expense tracking, reporting
+  - AI Orchestration Service: Coordinates AI workflows
+
+## AI Implementation
+- **Primary AI Model**: Gemini 2.5 Pro as the core foundation model
+- **Natural Language Processing**:
+  - Tenant communication with context-aware responses
+  - Document analysis and information extraction
+  - Smart description generation for listings
+  - Sentiment analysis for communications
+- **Computer Vision**:
+  - Property analysis for features and conditions
+  - Document processing and verification
+  - Visual inspection and comparison
+- **Predictive Analytics**:
+  - Rent optimization models
+  - Maintenance prediction
+  - Tenant behavior analysis
+
+## Integrations
+- **Property Listing Platforms**: Zillow, Apartments.com, MLS, etc.
+- **Financial Systems**: QuickBooks, Xero, banking integration
+- **Background Check Services**: TransUnion, Experian
+- **Communication Channels**: Email, SMS, in-app, push notifications
+- **Payment Processing**: Stripe, PayPal, ACH transfers
+
+# Development Roadmap  
+## Phase 1: MVP (Core Foundation)
+- Basic user authentication and account management
+- Property and unit management functionality
+- Simple tenant portal with essential features
+- Mobile app shell with core navigation
+- Basic communication system between tenants and managers
+- Foundational database schema and API structure
+- Simple dashboard for property managers
+
+## Phase 2: AI Enhancement
+- Integration of Gemini 2.5 Pro for basic AI capabilities
+- Smart response suggestions for communications
+- Property description generation
+- Initial implementation of tenant screening features
+- Basic document verification
+- Enhanced mobile app functionality
+- Payment processing integration
+
+## Phase 3: Advanced Features
+- Predictive maintenance capabilities
+- Advanced tenant screening with risk assessment
+- Complete financial management and reporting
+- AI-powered pricing recommendations
+- Photo-based maintenance issue assessment
+- Enhanced integrations with external platforms
+- Comprehensive analytics dashboard
+
+## Phase 4: Scale & Optimization
+- Performance optimization across all services
+- Advanced AI model customization
+- Complete tenant self-service capabilities
+- White-label options for enterprise clients
+- API for third-party integrations
+- International expansion features
+- Enhanced security and compliance features
+
+# Logical Dependency Chain
+1. **Core Authentication & User Management**:
+   - User registration and authentication system
+   - User roles and permissions (admin, property manager, tenant)
+   - Profile management and settings
+
+2. **Property Management Foundation**:
+   - Property and unit database schema
+   - Basic CRUD operations for properties
+   - Image upload and management
+   - Property details and specifications
+
+3. **Communication Infrastructure**:
+   - Messaging system between users
+   - Notification framework
+   - Email and SMS integration
+   - Basic AI response capability
+
+4. **Tenant Portal Essentials**:
+   - React Native mobile app structure
+   - Tenant dashboard
+   - Property viewing
+   - Basic request submission
+
+5. **Financial Management**:
+   - Payment processing integration
+   - Rent tracking
+   - Basic expense management
+   - Transaction history
+
+6. **Advanced AI Features**:
+   - Full NLP capabilities
+   - Computer vision implementation
+   - Predictive analytics engine
+   - AI-driven workflows and automation
+
+7. **External Integrations**:
+   - Listing platform connections
+   - Background check services
+   - Accounting software integration
+   - Banking and financial services
+
+# Risks and Mitigations  
+## Technical Risks
+- **AI Model Performance**: Begin with well-established AI services before custom model development; implement robust feedback mechanisms
+- **Data Security**: Implement end-to-end encryption, regular security audits, and strict access controls
+- **Integration Complexity**: Use middleware layer to abstract third-party services; develop fallback mechanisms
+- **Scalability Challenges**: Design for horizontal scaling from the start; implement proper caching strategies
+
+## Product Risks
+- **Feature Overload**: Focus on core functionality in MVP; use user feedback for feature prioritization
+- **User Adoption**: Create intuitive UX with minimal learning curve; provide comprehensive onboarding
+- **Market Differentiation**: Emphasize AI capabilities that solve real pain points; collect testimonials from early users
+
+## Resource Constraints
+- **Development Velocity**: Use component libraries and existing frameworks; prioritize features with highest impact
+- **AI Expertise**: Partner with AI specialists for complex features; use pre-trained models where possible
+- **Testing Resources**: Implement automated testing early; use beta testing program with real users
+
+# Appendix  
+## Technical Stack Specifications
+- **Frontend**: React Native 0.72+, React 18+, Redux or Context API for state management
+- **Backend**: Node.js 18+, Express 4+, TypeScript
+- **Databases**: PostgreSQL 14+, MongoDB 6+, Redis 7+
+- **AI/ML**: Gemini 2.5 Pro through Google AI API, TensorFlow/PyTorch for custom models
+- **DevOps**: Docker, Kubernetes, CI/CD with GitHub Actions
+- **Cloud Infrastructure**: AWS or Google Cloud Platform
+- **Testing**: Jest, Cypress, Detox for mobile
+
+## Data Model Overview
+- **Users**: Profile information, authentication, roles, preferences
+- **Properties**: Details, amenities, location, availability, pricing
+- **Units**: Specifications, status, current tenants, maintenance history
+- **Leases**: Terms, documents, renewal information, payment schedules
+- **Maintenance**: Requests, work orders, contractor assignments, costs
+- **Communications**: Messages, notifications, templates, chatbot interactions
+- **Transactions**: Payments, expenses, fees, invoices, receipts
+- **Analytics**: Performance metrics, predictions, historical trends
+</PRD> 
