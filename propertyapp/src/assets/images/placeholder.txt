@@ -1,0 +1,5 @@
+These files will be replaced with actual image assets:
+- icon.png
+- splash.png
+- adaptive-icon.png
+- favicon.png 
