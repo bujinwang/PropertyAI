@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import * as dotenv from 'dotenv';
-import { prisma, connectMongoDB } from './config/database';
+import { prisma, connectMongoDB, setupPostgreSQL, setupMongoDB, closeDatabaseConnections } from './config/database';
 import routes from './routes';
 import path from 'path';
 
@@ -46,9 +46,17 @@ const startServer = async () => {
     await connectMongoDB();
     console.log('Connected to MongoDB');
     
-    // Test Prisma connection
+    // Set up MongoDB with security and performance settings
+    await setupMongoDB();
+    console.log('MongoDB setup and configuration completed');
+    
+    // Connect to PostgreSQL via Prisma
     await prisma.$connect();
     console.log('Connected to PostgreSQL via Prisma');
+    
+    // Set up PostgreSQL with security and performance settings
+    await setupPostgreSQL();
+    console.log('PostgreSQL setup and configuration completed');
     
     // Start the server
     app.listen(PORT, () => {
@@ -63,13 +71,13 @@ const startServer = async () => {
 // Handle graceful shutdown
 process.on('SIGINT', async () => {
   console.log('Shutting down server...');
-  await prisma.$disconnect();
+  await closeDatabaseConnections();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
   console.log('Shutting down server...');
-  await prisma.$disconnect();
+  await closeDatabaseConnections();
   process.exit(0);
 });
 

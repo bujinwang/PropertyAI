@@ -27,7 +27,8 @@ model User {
   units             Unit[]              @relation("UnitTenant")
   documents         Document[]
   maintenanceRequests MaintenanceRequest[] @relation("RequestedBy")
-  messages          Message[]
+  sentMessages      Message[]           @relation("SentMessages")
+  receivedMessages  Message[]           @relation("ReceivedMessages")
   notifications     Notification[]
 }
 
@@ -230,16 +231,18 @@ enum Priority {
 
 // Message model
 model Message {
-  id                  String      @id @default(uuid())
-  content             String
-  createdAt           DateTime    @default(now())
-  readAt              DateTime?
-  sender              User        @relation(fields: [senderId], references: [id])
-  senderId            String
-  maintenanceRequest  MaintenanceRequest? @relation(fields: [maintenanceRequestId], references: [id])
+  id                   String              @id @default(uuid())
+  content              String              @db.Text
+  createdAt            DateTime            @default(now())
+  isRead               Boolean             @default(false)
+
+  sender               User                @relation("SentMessages", fields: [senderId], references: [id])
+  senderId             String
+  recipient            User                @relation("ReceivedMessages", fields: [recipientId], references: [id])
+  recipientId          String
+
+  maintenanceRequest   MaintenanceRequest? @relation(fields: [maintenanceRequestId], references: [id])
   maintenanceRequestId String?
-  isAIGenerated       Boolean     @default(false)
-  attachment          String?     // URL to attached file
 }
 
 // Notification model
@@ -294,4 +297,11 @@ enum TransactionStatus {
   FAILED
   REFUNDED
   CANCELLED
+}
+
+// Add MessageReference model if needed
+model MessageReference {
+  id             String   @id @default(uuid())
+  mongoMessageId String   // The _id from MongoDB
+  createdAt      DateTime @default(now())
 } 

@@ -1,0 +1,17 @@
+[
+  {
+    "userId": "tenant_2",
+    "conversationId": "conv_1",
+    "messages": [
+      {"role": "user", "content": "How do I pay rent?", "timestamp": "2024-06-07T07:00:00Z"},
+      {"role": "bot", "content": "You can pay rent via the portal or bank transfer.", "timestamp": "2024-06-07T07:01:00Z"}
+    ],
+    "context": {"propertyId": "prop_1"},
+    "startedAt": "2024-06-07T07:00:00Z",
+    "endedAt": "2024-06-07T07:10:00Z",
+    "status": "completed",
+    "sentiment": "neutral",
+    "resolved": true,
+    "resolutionSummary": "Tenant was informed about payment methods."
+  }
+] 

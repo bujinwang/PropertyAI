@@ -1,0 +1,34 @@
+[
+  {
+    "propertyId": "prop_1",
+    "unitId": "unit_101",
+    "title": "Spacious 2BR Apartment",
+    "description": "A beautiful 2-bedroom apartment with city views.",
+    "aiGeneratedDescription": "Modern 2BR with smart home features and balcony.",
+    "price": 1850,
+    "priceHistory": [
+      {"date": "2024-05-01T00:00:00Z", "price": 1800, "reason": "Initial listing"},
+      {"date": "2024-06-01T00:00:00Z", "price": 1850, "reason": "Market adjustment"}
+    ],
+    "suggestedPrice": 1875,
+    "status": "active",
+    "features": ["Balcony", "Smart Thermostat"],
+    "amenities": ["Gym", "Pool"],
+    "images": [
+      {"url": "/images/apt1.jpg", "caption": "Living Room", "isPrimary": true, "isEnhanced": false}
+    ],
+    "virtualTour": "https://virtualtour.example.com/apt1",
+    "floorPlan": "/floorplans/apt1.pdf",
+    "dateAvailable": "2024-07-01T00:00:00Z",
+    "dateCreated": "2024-05-01T00:00:00Z",
+    "dateUpdated": "2024-06-01T00:00:00Z",
+    "externalListings": [
+      {"platform": "Zillow", "url": "https://zillow.com/listing/123", "status": "active", "datePublished": "2024-05-01T00:00:00Z", "externalId": "z123"}
+    ],
+    "views": 120,
+    "inquiries": 8,
+    "seoKeywords": ["2BR", "city view", "modern"],
+    "contactInfo": {"name": "Leasing Office", "email": "leasing@propertyai.com", "phone": "555-1234"},
+    "showingSchedule": {"availableDates": ["2024-07-05T10:00:00Z"], "duration": 30, "instructions": "Call ahead to confirm."}
+  }
+] 

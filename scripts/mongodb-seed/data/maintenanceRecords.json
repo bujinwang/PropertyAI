@@ -1,0 +1,8 @@
+[
+  {
+    "maintenanceRequestId": "pg_maint_101",
+    "notes": ["Tenant reported leak", "Plumber scheduled"],
+    "images": ["/uploads/leak1.jpg"],
+    "analytics": { "predictedCost": 120 }
+  }
+] 
