@@ -1,19 +1,24 @@
 openapi: 3.0.0
 info:
-  title: PropertyAI API
-  description: API specifications for PropertyAI services.
+  title: PropertyFlow AI API
   version: 1.0.0
-
-servers:
-  - url: http://localhost:3000/api
-    description: Local development server
+  description: API for PropertyFlow AI platform
 
 paths:
-  /auth/register:
+  /users:
+    get:
+      summary: Get all users
+      responses:
+        '200':
+          description: A list of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
     post:
-      summary: Register a new user
-      tags:
-        - Authentication
+      summary: Create a new user
       requestBody:
         required: true
         content:
@@ -22,18 +27,64 @@ paths:
               $ref: '#/components/schemas/NewUser'
       responses:
         '201':
-          description: User registered successfully
+          description: The created user
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
-        '400':
-          description: Invalid input
+
+  /users/{id}:
+    get:
+      summary: Get a user by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    put:
+      summary: Update a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewUser'
+      responses:
+        '200':
+          description: The updated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    delete:
+      summary: Delete a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No content
+
   /auth/login:
     post:
-      summary: Authenticate a user
-      tags:
-        - Authentication
+      summary: Log in a user
       requestBody:
         required: true
         content:
@@ -43,54 +94,50 @@ paths:
               properties:
                 email:
                   type: string
-                  format: email
                 password:
                   type: string
-                  format: password
       responses:
         '200':
-          description: Authentication successful
+          description: The logged in user and token
           content:
             application/json:
               schema:
                 type: object
                 properties:
+                  user:
+                    $ref: '#/components/schemas/User'
                   token:
                     type: string
-        '401':
-          description: Unauthorized
 
 components:
   schemas:
-    NewUser:
-      type: object
-      properties:
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-          minLength: 8
-        firstName:
-          type: string
-        lastName:
-          type: string
-        role:
-          type: string
-          enum: [PROPERTY_MANAGER, TENANT, OWNER]
     User:
       type: object
       properties:
         id:
           type: string
-          format: uuid
         email:
           type: string
-          format: email
         firstName:
           type: string
         lastName:
           type: string
+        phone:
+          type: string
         role:
           type: string
-          enum: [PROPERTY_MANAGER, TENANT, OWNER]
+    NewUser:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+        role:
+          type: string

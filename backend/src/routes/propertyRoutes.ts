@@ -1,21 +1,13 @@
-import express from 'express';
-import {
-  createProperty,
-  getProperties,
-  getProperty,
-  updateProperty,
-  deleteProperty,
-} from '../controllers/propertyController';
-import { protect } from '../middleware/auth';
-import { rbac } from '../middleware/rbacMiddleware';
+import { Router } from 'express';
+import PropertyController from '../controllers/propertyController';
+import { authMiddleware } from '../middleware/authMiddleware';
 
-const router = express.Router();
+const router = Router();
 
-router.route('/').get(getProperties).post(protect, rbac(['ADMIN', 'PROPERTY_MANAGER']), createProperty);
-router
-  .route('/:id')
-  .get(getProperty)
-  .put(protect, rbac(['ADMIN', 'PROPERTY_MANAGER']), updateProperty)
-  .delete(protect, rbac(['ADMIN', 'PROPERTY_MANAGER']), deleteProperty);
+router.get('/', authMiddleware, PropertyController.getAllProperties);
+router.post('/', authMiddleware, PropertyController.createProperty);
+router.get('/:id', authMiddleware, PropertyController.getPropertyById);
+router.put('/:id', authMiddleware, PropertyController.updateProperty);
+router.delete('/:id', authMiddleware, PropertyController.deleteProperty);
 
 export default router;

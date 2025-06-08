@@ -1,61 +1,62 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import AppError from '../middleware/errorMiddleware';
 
 const prisma = new PrismaClient();
 
-export const createLease = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const lease = await prisma.lease.create({
-      data: req.body,
-    });
-    res.status(201).json(lease);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getLeases = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const leases = await prisma.lease.findMany();
-    res.json(leases);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getLease = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    const lease = await prisma.lease.findUnique({ where: { id } });
-    if (!lease) {
-      return next(new AppError('Lease not found', 404));
+class LeaseController {
+  async getAllLeases(req: Request, res: Response) {
+    try {
+      const leases = await prisma.lease.findMany();
+      res.status(200).json(leases);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
-    res.json(lease);
-  } catch (error) {
-    next(error);
   }
-};
 
-export const updateLease = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    const lease = await prisma.lease.update({
-      where: { id },
-      data: req.body,
-    });
-    res.json(lease);
-  } catch (error) {
-    next(error);
+  async createLease(req: Request, res: Response) {
+    try {
+      const lease = await prisma.lease.create({ data: req.body });
+      res.status(201).json(lease);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
   }
-};
 
-export const deleteLease = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    await prisma.lease.delete({ where: { id } });
-    res.status(204).send();
-  } catch (error) {
-    next(error);
+  async getLeaseById(req: Request, res: Response) {
+    try {
+      const lease = await prisma.lease.findUnique({
+        where: { id: req.params.id },
+      });
+      if (lease) {
+        res.status(200).json(lease);
+      } else {
+        res.status(404).json({ message: 'Lease not found' });
+      }
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
   }
-};
+
+  async updateLease(req: Request, res: Response) {
+    try {
+      const lease = await prisma.lease.update({
+        where: { id: req.params.id },
+        data: req.body,
+      });
+      res.status(200).json(lease);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async deleteLease(req: Request, res: Response) {
+    try {
+      await prisma.lease.delete({ where: { id: req.params.id } });
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+}
+
+export default new LeaseController();
