@@ -1,20 +1,9 @@
-import express from 'express';
-import {
-  createTenant,
-  getTenants,
-  getTenant,
-  updateTenant,
-  deleteTenant,
-} from '../controllers/userController';
-import { protect } from '../middleware/auth';
+import { Router } from 'express';
+import TenantController from '../controllers/tenantController';
+import { authMiddleware } from '../middleware/authMiddleware';
 
-const router = express.Router();
+const router = Router();
 
-router.route('/').get(protect, getTenants).post(protect, createTenant);
-router
-  .route('/:id')
-  .get(protect, getTenant)
-  .put(protect, updateTenant)
-  .delete(protect, deleteTenant);
+router.get('/', authMiddleware, TenantController.getAllTenants);
 
 export default router;

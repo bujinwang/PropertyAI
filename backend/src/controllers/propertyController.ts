@@ -1,61 +1,62 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import AppError from '../middleware/errorMiddleware';
 
 const prisma = new PrismaClient();
 
-export const createProperty = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const property = await prisma.property.create({
-      data: req.body,
-    });
-    res.status(201).json(property);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getProperties = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const properties = await prisma.property.findMany();
-    res.json(properties);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getProperty = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    const property = await prisma.property.findUnique({ where: { id } });
-    if (!property) {
-      return next(new AppError('Property not found', 404));
+class PropertyController {
+  async getAllProperties(req: Request, res: Response) {
+    try {
+      const properties = await prisma.property.findMany();
+      res.status(200).json(properties);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
-    res.json(property);
-  } catch (error) {
-    next(error);
   }
-};
 
-export const updateProperty = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    const property = await prisma.property.update({
-      where: { id },
-      data: req.body,
-    });
-    res.json(property);
-  } catch (error) {
-    next(error);
+  async createProperty(req: Request, res: Response) {
+    try {
+      const property = await prisma.property.create({ data: req.body });
+      res.status(201).json(property);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
   }
-};
 
-export const deleteProperty = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    await prisma.property.delete({ where: { id } });
-    res.status(204).send();
-  } catch (error) {
-    next(error);
+  async getPropertyById(req: Request, res: Response) {
+    try {
+      const property = await prisma.property.findUnique({
+        where: { id: req.params.id },
+      });
+      if (property) {
+        res.status(200).json(property);
+      } else {
+        res.status(404).json({ message: 'Property not found' });
+      }
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
   }
-};
+
+  async updateProperty(req: Request, res: Response) {
+    try {
+      const property = await prisma.property.update({
+        where: { id: req.params.id },
+        data: req.body,
+      });
+      res.status(200).json(property);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async deleteProperty(req: Request, res: Response) {
+    try {
+      await prisma.property.delete({ where: { id: req.params.id } });
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+}
+
+export default new PropertyController();

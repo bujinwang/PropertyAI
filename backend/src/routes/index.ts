@@ -75,6 +75,7 @@ router.use(`${API_PREFIX}/background-checks`, backgroundCheckRoutes);
 router.use(`${API_PREFIX}/audit`, auditRoutes);
 router.use(`${API_PREFIX}/payments`, paymentRoutes);
 router.use(`${API_PREFIX}/reminders`, reminderRoutes);
+router.use(`${API_PREFIX}/applications`, applicationRoutes);
 
 // 404 handler for API routes
 router.use(`${API_PREFIX}/*`, (req, res) => {

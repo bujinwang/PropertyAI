@@ -1,61 +1,62 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import AppError from '../middleware/errorMiddleware';
 
 const prisma = new PrismaClient();
 
-export const createApplication = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const application = await prisma.application.create({
-      data: req.body,
-    });
-    res.status(201).json(application);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getApplications = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const applications = await prisma.application.findMany();
-    res.json(applications);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getApplication = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    const application = await prisma.application.findUnique({ where: { id } });
-    if (!application) {
-      return next(new AppError('Application not found', 404));
+class ApplicationController {
+  async getAllApplications(req: Request, res: Response) {
+    try {
+      const applications = await prisma.application.findMany();
+      res.status(200).json(applications);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
-    res.json(application);
-  } catch (error) {
-    next(error);
   }
-};
 
-export const updateApplication = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    const application = await prisma.application.update({
-      where: { id },
-      data: req.body,
-    });
-    res.json(application);
-  } catch (error) {
-    next(error);
+  async createApplication(req: Request, res: Response) {
+    try {
+      const application = await prisma.application.create({ data: req.body });
+      res.status(201).json(application);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
   }
-};
 
-export const deleteApplication = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    await prisma.application.delete({ where: { id } });
-    res.status(204).send();
-  } catch (error) {
-    next(error);
+  async getApplicationById(req: Request, res: Response) {
+    try {
+      const application = await prisma.application.findUnique({
+        where: { id: req.params.id },
+      });
+      if (application) {
+        res.status(200).json(application);
+      } else {
+        res.status(404).json({ message: 'Application not found' });
+      }
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
   }
-};
+
+  async updateApplication(req: Request, res: Response) {
+    try {
+      const application = await prisma.application.update({
+        where: { id: req.params.id },
+        data: req.body,
+      });
+      res.status(200).json(application);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async deleteApplication(req: Request, res: Response) {
+    try {
+      await prisma.application.delete({ where: { id: req.params.id } });
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+}
+
+export default new ApplicationController();
