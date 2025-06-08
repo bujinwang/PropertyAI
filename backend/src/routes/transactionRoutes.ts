@@ -1,20 +1,13 @@
-import express from 'express';
-import {
-  createTransaction,
-  getTransactions,
-  getTransaction,
-  updateTransaction,
-  deleteTransaction,
-} from '../controllers/transactionController';
-import { protect } from '../middleware/auth';
+import { Router } from 'express';
+import TransactionController from '../controllers/transactionController';
+import { authMiddleware } from '../middleware/authMiddleware';
 
-const router = express.Router();
+const router = Router();
 
-router.route('/').get(protect, getTransactions).post(protect, createTransaction);
-router
-  .route('/:id')
-  .get(protect, getTransaction)
-  .put(protect, updateTransaction)
-  .delete(protect, deleteTransaction);
+router.get('/', authMiddleware, TransactionController.getAllTransactions);
+router.post('/', authMiddleware, TransactionController.createTransaction);
+router.get('/:id', authMiddleware, TransactionController.getTransactionById);
+router.put('/:id', authMiddleware, TransactionController.updateTransaction);
+router.delete('/:id', authMiddleware, TransactionController.deleteTransaction);
 
 export default router;

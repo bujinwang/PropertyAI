@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import NotificationService from './notificationService';
+import EmailService from './emailService';
+import SmsService from './smsService';
 
 const prisma = new PrismaClient();
 
@@ -21,12 +23,21 @@ class ReminderService {
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
       if (diffDays === 7 || diffDays === 3 || diffDays === 1) {
+        const message = `Your rent payment of $${lease.rentAmount} is due in ${diffDays} days.`;
         await NotificationService.createNotification(
           lease.tenantId!,
           'Upcoming Rent Payment',
-          `Your rent payment of $${lease.rentAmount} is due in ${diffDays} days.`,
+          message,
           'PAYMENT'
         );
+        await EmailService.sendEmail(
+          lease.tenant.email,
+          'Upcoming Rent Payment',
+          message
+        );
+        if (lease.tenant.phone) {
+          await SmsService.sendSms(lease.tenant.phone, message);
+        }
       }
     }
   }
