@@ -1,61 +1,62 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import AppError from '../middleware/errorMiddleware';
 
 const prisma = new PrismaClient();
 
-export const createTransaction = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const transaction = await prisma.transaction.create({
-      data: req.body,
-    });
-    res.status(201).json(transaction);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getTransactions = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const transactions = await prisma.transaction.findMany();
-    res.json(transactions);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getTransaction = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    const transaction = await prisma.transaction.findUnique({ where: { id } });
-    if (!transaction) {
-      return next(new AppError('Transaction not found', 404));
+class TransactionController {
+  async getAllTransactions(req: Request, res: Response) {
+    try {
+      const transactions = await prisma.transaction.findMany();
+      res.status(200).json(transactions);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
-    res.json(transaction);
-  } catch (error) {
-    next(error);
   }
-};
 
-export const updateTransaction = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    const transaction = await prisma.transaction.update({
-      where: { id },
-      data: req.body,
-    });
-    res.json(transaction);
-  } catch (error) {
-    next(error);
+  async createTransaction(req: Request, res: Response) {
+    try {
+      const transaction = await prisma.transaction.create({ data: req.body });
+      res.status(201).json(transaction);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
   }
-};
 
-export const deleteTransaction = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    await prisma.transaction.delete({ where: { id } });
-    res.status(204).send();
-  } catch (error) {
-    next(error);
+  async getTransactionById(req: Request, res: Response) {
+    try {
+      const transaction = await prisma.transaction.findUnique({
+        where: { id: req.params.id },
+      });
+      if (transaction) {
+        res.status(200).json(transaction);
+      } else {
+        res.status(404).json({ message: 'Transaction not found' });
+      }
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
   }
-};
+
+  async updateTransaction(req: Request, res: Response) {
+    try {
+      const transaction = await prisma.transaction.update({
+        where: { id: req.params.id },
+        data: req.body,
+      });
+      res.status(200).json(transaction);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async deleteTransaction(req: Request, res: Response) {
+    try {
+      await prisma.transaction.delete({ where: { id: req.params.id } });
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+}
+
+export default new TransactionController();

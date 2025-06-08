@@ -1,61 +1,66 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import AppError from '../middleware/errorMiddleware';
 
 const prisma = new PrismaClient();
 
-export const createMaintenanceRequest = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const maintenanceRequest = await prisma.maintenanceRequest.create({
-      data: req.body,
-    });
-    res.status(201).json(maintenanceRequest);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getMaintenanceRequests = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const maintenanceRequests = await prisma.maintenanceRequest.findMany();
-    res.json(maintenanceRequests);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getMaintenanceRequest = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    const maintenanceRequest = await prisma.maintenanceRequest.findUnique({ where: { id } });
-    if (!maintenanceRequest) {
-      return next(new AppError('Maintenance request not found', 404));
+class MaintenanceController {
+  async getAllMaintenanceRequests(req: Request, res: Response) {
+    try {
+      const maintenanceRequests = await prisma.maintenanceRequest.findMany();
+      res.status(200).json(maintenanceRequests);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
-    res.json(maintenanceRequest);
-  } catch (error) {
-    next(error);
   }
-};
 
-export const updateMaintenanceRequest = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    const maintenanceRequest = await prisma.maintenanceRequest.update({
-      where: { id },
-      data: req.body,
-    });
-    res.json(maintenanceRequest);
-  } catch (error) {
-    next(error);
+  async createMaintenanceRequest(req: Request, res: Response) {
+    try {
+      const maintenanceRequest = await prisma.maintenanceRequest.create({
+        data: req.body,
+      });
+      res.status(201).json(maintenanceRequest);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
   }
-};
 
-export const deleteMaintenanceRequest = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    await prisma.maintenanceRequest.delete({ where: { id } });
-    res.status(204).send();
-  } catch (error) {
-    next(error);
+  async getMaintenanceRequestById(req: Request, res: Response) {
+    try {
+      const maintenanceRequest = await prisma.maintenanceRequest.findUnique({
+        where: { id: req.params.id },
+      });
+      if (maintenanceRequest) {
+        res.status(200).json(maintenanceRequest);
+      } else {
+        res.status(404).json({ message: 'Maintenance request not found' });
+      }
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
   }
-};
+
+  async updateMaintenanceRequest(req: Request, res: Response) {
+    try {
+      const maintenanceRequest = await prisma.maintenanceRequest.update({
+        where: { id: req.params.id },
+        data: req.body,
+      });
+      res.status(200).json(maintenanceRequest);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async deleteMaintenanceRequest(req: Request, res: Response) {
+    try {
+      await prisma.maintenanceRequest.delete({
+        where: { id: req.params.id },
+      });
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+}
+
+export default new MaintenanceController();
