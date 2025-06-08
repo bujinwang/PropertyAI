@@ -1,0 +1,13 @@
+[
+  {
+    "name": "Maintenance Request Received",
+    "category": "Maintenance",
+    "subject": "Your maintenance request has been received",
+    "content": "Dear {{tenantName}}, your request for {{issue}} has been received. We will update you soon.",
+    "variables": ["tenantName", "issue"],
+    "createdBy": "manager_1",
+    "createdAt": "2024-06-07T08:00:00Z",
+    "updatedAt": "2024-06-07T08:00:00Z",
+    "isActive": true
+  }
+] 

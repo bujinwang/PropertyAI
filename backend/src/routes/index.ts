@@ -4,6 +4,9 @@ import unitRoutes from './unitRoutes';
 import imageRoutes from './imageRoutes';
 import searchRoutes from './searchRoutes';
 import geocodingRoutes from './geocodingRoutes';
+import listingRoutes from './listingRoutes';
+import applicationRoutes from './applicationRoutes';
+import aiContentRoutes from './aiContentRoutes';
 
 const router = express.Router();
 
@@ -25,6 +28,9 @@ router.use(`${API_PREFIX}/units`, unitRoutes);
 router.use(`${API_PREFIX}`, imageRoutes); // Image routes handle both property and unit images
 router.use(`${API_PREFIX}/search`, searchRoutes); // Search routes for advanced filtering
 router.use(`${API_PREFIX}/geocoding`, geocodingRoutes); // Geocoding and address validation routes
+router.use(`${API_PREFIX}/listings`, listingRoutes); // Property listing management routes
+router.use(`${API_PREFIX}/applications`, applicationRoutes); // Tenant application routes
+router.use(`${API_PREFIX}/ai-content`, aiContentRoutes); // AI-generated content routes
 
 // 404 handler for API routes
 router.use(`${API_PREFIX}/*`, (req, res) => {
