@@ -20,7 +20,7 @@ export const publishingService = {
         listingId,
         platform,
         status: 'PUBLISHED',
-        platformUrl: `https://www.${platform.toLowerCase()}.com/homedetails/${listingId}`,
+        externalId: `https://www.${platform.toLowerCase()}.com/homedetails/${listingId}`,
       },
     });
 

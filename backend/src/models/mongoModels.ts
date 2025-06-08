@@ -2,24 +2,72 @@ import { Schema, model, Document } from 'mongoose';
 
 // Interface for AI-generated content
 export interface IAiContent extends Document {
-  sourceId: string; // ID of the property or unit
-  sourceType: 'Property' | 'Unit';
-  content: {
-    description: string;
-    smartPricing: number;
+  contentId: string;
+  contentType: string;
+  originalPrompt: string;
+  generatedContent: string;
+  relatedEntityId?: string;
+  relatedEntityType?: string;
+  modelName: string;
+  modelVersion?: string;
+  parameters?: Record<string, any>;
+  createdBy: string;
+  status: 'draft' | 'published' | 'archived';
+  tags?: string[];
+  usageMetrics?: {
+    views: number;
+    conversions: number;
+    engagement: number;
   };
+  feedback?: {
+    userId: string;
+    rating: number;
+    comments?: string;
+    timestamp: Date;
+  }[];
+  revisionHistory?: {
+    version: number;
+    content: string;
+    prompt: string;
+    timestamp: Date;
+    revisedBy: string;
+  }[];
   createdAt: Date;
   updatedAt: Date;
 }
 
 // Mongoose schema for AI-generated content
 const AiContentSchema = new Schema<IAiContent>({
-  sourceId: { type: String, required: true },
-  sourceType: { type: String, required: true, enum: ['Property', 'Unit'] },
-  content: {
-    description: { type: String, required: true },
-    smartPricing: { type: Number, required: true },
+  contentId: { type: String, required: true, unique: true },
+  contentType: { type: String, required: true },
+  originalPrompt: { type: String, required: true },
+  generatedContent: { type: String, required: true },
+  relatedEntityId: { type: String },
+  relatedEntityType: { type: String },
+  modelName: { type: String, required: true },
+  modelVersion: { type: String },
+  parameters: { type: Schema.Types.Mixed },
+  createdBy: { type: String, required: true },
+  status: { type: String, enum: ['draft', 'published', 'archived'], default: 'draft' },
+  tags: [String],
+  usageMetrics: {
+    views: { type: Number, default: 0 },
+    conversions: { type: Number, default: 0 },
+    engagement: { type: Number, default: 0 },
   },
+  feedback: [{
+    userId: { type: String, required: true },
+    rating: { type: Number, required: true },
+    comments: { type: String },
+    timestamp: { type: Date, default: Date.now },
+  }],
+  revisionHistory: [{
+    version: { type: Number, required: true },
+    content: { type: String, required: true },
+    prompt: { type: String, required: true },
+    timestamp: { type: Date, default: Date.now },
+    revisedBy: { type: String, required: true },
+  }],
 }, {
   timestamps: true,
 });

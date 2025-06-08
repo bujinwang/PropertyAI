@@ -1,4 +1,5 @@
 import { Prisma, Listing, Property, Unit } from '@prisma/client';
+import pricingService from './pricingService';
 
 // Placeholder for a real AI client, like OpenAI's SDK
 const aiClient = {
@@ -82,8 +83,30 @@ export const aiService = {
       Return the response as a JSON object with "recommendedPrice" and "explanation" keys.
     `;
 
-    const result = await aiClient.generatePrice(prompt);
-    return JSON.parse(result);
+    const result = await pricingService.getPriceRecommendation(listing);
+    return result;
+  },
+
+  async generateImageAnalysis(imageUrl: string): Promise<any> {
+    const prompt = `
+      Analyze the following image and provide a description, tags, and other relevant metadata.
+      Image URL: ${imageUrl}
+      Return the response as a JSON object with "description", "tags", "objects", "colors", and "quality" keys.
+    `;
+
+    // In a real implementation, you would use a vision-capable AI model.
+    // For now, we'll return mock data.
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve({
+          description: 'A beautiful modern kitchen with stainless steel appliances.',
+          tags: ['kitchen', 'modern', 'stainless steel', 'appliances'],
+          objects: ['refrigerator', 'oven', 'microwave'],
+          colors: ['white', 'grey', 'black'],
+          quality: 0.95,
+        });
+      }, 500);
+    });
   }
 };
 

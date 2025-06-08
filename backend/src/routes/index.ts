@@ -17,6 +17,7 @@ import maintenanceRoutes from './maintenanceRoutes';
 import transactionRoutes from './transactionRoutes';
 import publishingRoutes from './publishingRoutes';
 import passwordResetRoutes from './passwordResetRoutes';
+import aiRoutes from './aiRoutes';
 
 const router = express.Router();
 
@@ -51,6 +52,7 @@ router.use(`${API_PREFIX}/maintenance`, maintenanceRoutes);
 router.use(`${API_PREFIX}/transactions`, transactionRoutes);
 router.use(`${API_PREFIX}/publish`, publishingRoutes);
 router.use(`${API_PREFIX}/password-reset`, passwordResetRoutes);
+router.use(`${API_PREFIX}/ai`, aiRoutes);
 
 // 404 handler for API routes
 router.use(`${API_PREFIX}/*`, (req, res) => {

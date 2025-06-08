@@ -6,7 +6,7 @@ import { Text, View } from 'react-native';
 import { useAuth } from '@/contexts';
 import { UserRole } from '@/types/auth';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import ManageListingsScreen from '@/screens/ManageListingsScreen';
+import ListingStackNavigator from './ListingStackNavigator';
 import MaintenanceStackNavigator from './MaintenanceStackNavigator';
 
 // Placeholder screens
@@ -101,9 +101,10 @@ export function MainTabNavigator() {
       {(userRole === 'propertyManager' || userRole === 'admin') && (
         <Tab.Screen 
           name="ManageListings"
-          component={ManageListingsScreen}
+          component={ListingStackNavigator}
           options={{
             tabBarLabel: 'Manage Listings',
+            headerShown: false,
           }}
         />
       )}
@@ -140,4 +141,4 @@ export function MainTabNavigator() {
       />
     </Tab.Navigator>
   );
-} 
+}
