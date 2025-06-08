@@ -12,26 +12,27 @@ datasource db {
 
 // User model with role-based access
 model User {
-  id                String              @id @default(uuid())
-  email             String              @unique
-  password          String
-  firstName         String
-  lastName          String
-  phone             String?
-  role              UserRole            @default(TENANT)
-  mfaEnabled        Boolean             @default(false)
-  mfaSecret         String?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  isActive          Boolean             @default(true)
-  propertiesManaged Property[]          @relation("PropertyManager")
-  propertiesOwned   Property[]          @relation("PropertyOwner")
-  units             Unit[]              @relation("UnitTenant")
-  documents         Document[]
+  id                  String               @id @default(uuid())
+  email               String               @unique
+  password            String
+  firstName           String
+  lastName            String
+  phone               String?
+  role                UserRole             @default(TENANT)
+  mfaEnabled          Boolean              @default(false)
+  mfaSecret           String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  isActive            Boolean              @default(true)
+  propertiesManaged   Property[]           @relation("PropertyManager")
+  propertiesOwned     Property[]           @relation("PropertyOwner")
+  units               Unit[]               @relation("UnitTenant")
+  documents           Document[]
   maintenanceRequests MaintenanceRequest[] @relation("RequestedBy")
-  sentMessages      Message[]           @relation("SentMessages")
-  receivedMessages  Message[]           @relation("ReceivedMessages")
-  notifications     Notification[]
+  sentMessages        Message[]            @relation("SentMessages")
+  receivedMessages    Message[]            @relation("ReceivedMessages")
+  notifications       Notification[]
+  listings            Listing[]
 }
 
 enum UserRole {
@@ -42,32 +43,32 @@ enum UserRole {
 
 // Property model
 model Property {
-  id            String        @id @default(uuid())
-  name          String
-  address       String
-  city          String
-  state         String
-  zipCode       String
-  country       String
-  description   String?
-  propertyType  PropertyType
-  yearBuilt     Int?
-  totalUnits    Int
-  amenities     Json?         // Stores amenities as JSON
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  isActive      Boolean       @default(true)
-  manager       User          @relation("PropertyManager", fields: [managerId], references: [id])
-  managerId     String
-  owner         User          @relation("PropertyOwner", fields: [ownerId], references: [id])
-  ownerId       String
-  units         Unit[]
-  documents     Document[]
+  id                  String               @id @default(uuid())
+  name                String
+  address             String
+  city                String
+  state               String
+  zipCode             String
+  country             String
+  description         String?
+  propertyType        PropertyType
+  yearBuilt           Int?
+  totalUnits          Int
+  amenities           Json? // Stores amenities as JSON
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  isActive            Boolean              @default(true)
+  manager             User                 @relation("PropertyManager", fields: [managerId], references: [id])
+  managerId           String
+  owner               User                 @relation("PropertyOwner", fields: [ownerId], references: [id])
+  ownerId             String
+  units               Unit[]
+  documents           Document[]
   maintenanceRequests MaintenanceRequest[]
-  images        PropertyImage[] // Relation to property images
-  latitude      Float?
-  longitude     Float?
-  listings      Listing[]
+  images              PropertyImage[] // Relation to property images
+  latitude            Float?
+  longitude           Float?
+  listings            Listing[]
 }
 
 enum PropertyType {
@@ -82,73 +83,73 @@ enum PropertyType {
 
 // PropertyImage model for storing property images
 model PropertyImage {
-  id              Int         @id @default(autoincrement())
-  propertyId      String      
-  property        Property    @relation(fields: [propertyId], references: [id])
-  filename        String      // Stored filename
-  originalFilename String     // Original filename when uploaded
-  mimetype        String      // File MIME type
-  size            Int         // File size in bytes
-  url             String      // Full URL to access the image
-  isFeatured      Boolean     @default(false) // Is this the main/featured image
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  id               Int      @id @default(autoincrement())
+  propertyId       String
+  property         Property @relation(fields: [propertyId], references: [id])
+  filename         String // Stored filename
+  originalFilename String // Original filename when uploaded
+  mimetype         String // File MIME type
+  size             Int // File size in bytes
+  url              String // Full URL to access the image
+  isFeatured       Boolean  @default(false) // Is this the main/featured image
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 // Unit model
 model Unit {
-  id              String      @id @default(uuid())
-  unitNumber      String
-  floorNumber     Int?
-  size            Float?      // in square feet/meters
-  bedrooms        Int?
-  bathrooms       Float?      // 1.5, 2, etc.
-  rent            Float?
-  deposit         Float?
-  isAvailable     Boolean     @default(true)
-  dateAvailable   DateTime?
-  features        Json?       // Stores features as JSON
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  property        Property    @relation(fields: [propertyId], references: [id])
-  propertyId      String
-  tenant          User?       @relation("UnitTenant", fields: [tenantId], references: [id])
-  tenantId        String?
-  lease           Lease?
+  id                  String               @id @default(uuid())
+  unitNumber          String
+  floorNumber         Int?
+  size                Float? // in square feet/meters
+  bedrooms            Int?
+  bathrooms           Float? // 1.5, 2, etc.
+  rent                Float?
+  deposit             Float?
+  isAvailable         Boolean              @default(true)
+  dateAvailable       DateTime?
+  features            Json? // Stores features as JSON
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  property            Property             @relation(fields: [propertyId], references: [id])
+  propertyId          String
+  tenant              User?                @relation("UnitTenant", fields: [tenantId], references: [id])
+  tenantId            String?
+  lease               Lease?
   maintenanceRequests MaintenanceRequest[]
-  images          UnitImage[] // Relation to unit images
-  listing         Listing?
+  images              UnitImage[] // Relation to unit images
+  listing             Listing?
 }
 
 // UnitImage model for storing unit images
 model UnitImage {
-  id              Int         @id @default(autoincrement())
-  unitId          String      
-  unit            Unit        @relation(fields: [unitId], references: [id])
-  filename        String      // Stored filename
-  originalFilename String     // Original filename when uploaded
-  mimetype        String      // File MIME type
-  size            Int         // File size in bytes
-  url             String      // Full URL to access the image
-  isFeatured      Boolean     @default(false) // Is this the main/featured image
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  id               Int      @id @default(autoincrement())
+  unitId           String
+  unit             Unit     @relation(fields: [unitId], references: [id])
+  filename         String // Stored filename
+  originalFilename String // Original filename when uploaded
+  mimetype         String // File MIME type
+  size             Int // File size in bytes
+  url              String // Full URL to access the image
+  isFeatured       Boolean  @default(false) // Is this the main/featured image
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 // Lease model
 model Lease {
-  id              String      @id @default(uuid())
+  id              String        @id @default(uuid())
   startDate       DateTime
   endDate         DateTime
   rentAmount      Float
   securityDeposit Float
-  leaseTerms      String?     @db.Text
-  status          LeaseStatus @default(ACTIVE)
-  signedDate      DateTime    @default(now())
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  unit            Unit        @relation(fields: [unitId], references: [id])
-  unitId          String      @unique
+  leaseTerms      String?       @db.Text
+  status          LeaseStatus   @default(ACTIVE)
+  signedDate      DateTime      @default(now())
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  unit            Unit          @relation(fields: [unitId], references: [id])
+  unitId          String        @unique
   documents       Document[]
   transactions    Transaction[]
   renewalDate     DateTime?
@@ -163,24 +164,24 @@ enum LeaseStatus {
 
 // Document model
 model Document {
-  id              String      @id @default(uuid())
-  name            String
-  type            DocumentType
-  url             String      // S3 or other storage URL
-  uploadedAt      DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  description     String?
-  property        Property?   @relation(fields: [propertyId], references: [id])
-  propertyId      String?
-  lease           Lease?      @relation(fields: [leaseId], references: [id])
-  leaseId         String?
-  uploadedBy      User        @relation(fields: [uploadedById], references: [id])
-  uploadedById    String
-  maintenanceRequest MaintenanceRequest? @relation(fields: [maintenanceRequestId], references: [id])
+  id                   String              @id @default(uuid())
+  name                 String
+  type                 DocumentType
+  url                  String // S3 or other storage URL
+  uploadedAt           DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  description          String?
+  property             Property?           @relation(fields: [propertyId], references: [id])
+  propertyId           String?
+  lease                Lease?              @relation(fields: [leaseId], references: [id])
+  leaseId              String?
+  uploadedBy           User                @relation(fields: [uploadedById], references: [id])
+  uploadedById         String
+  maintenanceRequest   MaintenanceRequest? @relation(fields: [maintenanceRequestId], references: [id])
   maintenanceRequestId String?
-  size            Int?        // Size in bytes
-  mimeType        String?
-  isArchived      Boolean     @default(false)
+  size                 Int? // Size in bytes
+  mimeType             String?
+  isArchived           Boolean             @default(false)
 }
 
 enum DocumentType {
@@ -195,27 +196,27 @@ enum DocumentType {
 
 // Maintenance request model
 model MaintenanceRequest {
-  id              String      @id @default(uuid())
-  title           String
-  description     String
-  status          MaintenanceStatus @default(OPEN)
-  priority        Priority    @default(MEDIUM)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  scheduledDate   DateTime?
-  completedDate   DateTime?
-  notes           String?     @db.Text
-  property        Property    @relation(fields: [propertyId], references: [id])
-  propertyId      String
-  unit            Unit        @relation(fields: [unitId], references: [id])
-  unitId          String
-  requestedBy     User        @relation("RequestedBy", fields: [requestedById], references: [id])
-  requestedById   String
-  assignedToId    String?
-  estimatedCost   Float?
-  actualCost      Float?
-  documents       Document[]
-  messages        Message[]
+  id            String            @id @default(uuid())
+  title         String
+  description   String
+  status        MaintenanceStatus @default(OPEN)
+  priority      Priority          @default(MEDIUM)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  scheduledDate DateTime?
+  completedDate DateTime?
+  notes         String?           @db.Text
+  property      Property          @relation(fields: [propertyId], references: [id])
+  propertyId    String
+  unit          Unit              @relation(fields: [unitId], references: [id])
+  unitId        String
+  requestedBy   User              @relation("RequestedBy", fields: [requestedById], references: [id])
+  requestedById String
+  assignedToId  String?
+  estimatedCost Float?
+  actualCost    Float?
+  documents     Document[]
+  messages      Message[]
 }
 
 enum MaintenanceStatus {
@@ -235,15 +236,15 @@ enum Priority {
 
 // Message model
 model Message {
-  id                   String              @id @default(uuid())
-  content              String              @db.Text
-  createdAt            DateTime            @default(now())
-  isRead               Boolean             @default(false)
+  id        String   @id @default(uuid())
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  isRead    Boolean  @default(false)
 
-  sender               User                @relation("SentMessages", fields: [senderId], references: [id])
-  senderId             String
-  recipient            User                @relation("ReceivedMessages", fields: [recipientId], references: [id])
-  recipientId          String
+  sender      User   @relation("SentMessages", fields: [senderId], references: [id])
+  senderId    String
+  recipient   User   @relation("ReceivedMessages", fields: [recipientId], references: [id])
+  recipientId String
 
   maintenanceRequest   MaintenanceRequest? @relation(fields: [maintenanceRequestId], references: [id])
   maintenanceRequestId String?
@@ -251,16 +252,16 @@ model Message {
 
 // Notification model
 model Notification {
-  id              String      @id @default(uuid())
-  title           String
-  message         String
-  type            NotificationType
-  isRead          Boolean     @default(false)
-  createdAt       DateTime    @default(now())
-  user            User        @relation(fields: [userId], references: [id])
-  userId          String
-  relatedId       String?     // ID of related item (e.g., maintenance request)
-  relatedType     String?     // Type of related item
+  id          String           @id @default(uuid())
+  title       String
+  message     String
+  type        NotificationType
+  isRead      Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  user        User             @relation(fields: [userId], references: [id])
+  userId      String
+  relatedId   String? // ID of related item (e.g., maintenance request)
+  relatedType String? // Type of related item
 }
 
 enum NotificationType {
@@ -273,17 +274,17 @@ enum NotificationType {
 
 // Transaction model
 model Transaction {
-  id              String      @id @default(uuid())
-  amount          Float
-  type            TransactionType
-  status          TransactionStatus @default(PENDING)
-  description     String?
-  createdAt       DateTime    @default(now())
-  processedAt     DateTime?
-  lease           Lease       @relation(fields: [leaseId], references: [id])
-  leaseId         String
-  paymentMethod   String?
-  reference       String?     // External reference number
+  id            String            @id @default(uuid())
+  amount        Float
+  type          TransactionType
+  status        TransactionStatus @default(PENDING)
+  description   String?
+  createdAt     DateTime          @default(now())
+  processedAt   DateTime?
+  lease         Lease             @relation(fields: [leaseId], references: [id])
+  leaseId       String
+  paymentMethod String?
+  reference     String? // External reference number
 }
 
 enum TransactionType {
@@ -306,27 +307,29 @@ enum TransactionStatus {
 // Add MessageReference model if needed
 model MessageReference {
   id             String   @id @default(uuid())
-  mongoMessageId String   // The _id from MongoDB
+  mongoMessageId String // The _id from MongoDB
   createdAt      DateTime @default(now())
 }
 
 // Listing model for marketing and syndication
 model Listing {
-  id              String      @id @default(uuid())
-  title           String
-  description     String      @db.Text
-  price           Float
-  status          ListingStatus @default(DRAFT)
-  publishedAt     DateTime?
-  expiresAt       DateTime?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  property        Property    @relation(fields: [propertyId], references: [id])
-  propertyId      String
-  unit            Unit        @relation(fields: [unitId], references: [id])
-  unitId          String      @unique
-  images          ListingImage[]
-  campaigns       MarketingCampaign[]
+  id          String              @id @default(uuid())
+  title       String
+  description String              @db.Text
+  price       Float
+  status      ListingStatus       @default(DRAFT)
+  publishedAt DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  property    Property            @relation(fields: [propertyId], references: [id])
+  propertyId  String
+  unit        Unit                @relation(fields: [unitId], references: [id])
+  unitId      String              @unique
+  author      User                @relation(fields: [authorId], references: [id])
+  authorId    String
+  images      ListingImage[]
+  campaigns   MarketingCampaign[]
 }
 
 enum ListingStatus {
@@ -339,26 +342,26 @@ enum ListingStatus {
 
 // ListingImage model for storing listing-specific images
 model ListingImage {
-  id              Int         @id @default(autoincrement())
-  listingId       String
-  listing         Listing     @relation(fields: [listingId], references: [id])
-  url             String
-  isFeatured      Boolean     @default(false)
-  createdAt       DateTime    @default(now())
+  id         Int      @id @default(autoincrement())
+  listingId  String
+  listing    Listing  @relation(fields: [listingId], references: [id])
+  url        String
+  isFeatured Boolean  @default(false)
+  createdAt  DateTime @default(now())
 }
 
 // MarketingCampaign model
 model MarketingCampaign {
-  id              String      @id @default(uuid())
-  name            String
-  platform        String      // e.g., Zillow, Craigslist, Facebook
-  budget          Float?
-  startDate       DateTime
-  endDate         DateTime?
-  status          CampaignStatus @default(PLANNED)
-  listing         Listing     @relation(fields: [listingId], references: [id])
-  listingId       String
-  analytics       CampaignAnalytics[]
+  id        String              @id @default(uuid())
+  name      String
+  platform  String // e.g., Zillow, Craigslist, Facebook
+  budget    Float?
+  startDate DateTime
+  endDate   DateTime?
+  status    CampaignStatus      @default(PLANNED)
+  listing   Listing             @relation(fields: [listingId], references: [id])
+  listingId String
+  analytics CampaignAnalytics[]
 }
 
 enum CampaignStatus {
@@ -371,12 +374,12 @@ enum CampaignStatus {
 
 // CampaignAnalytics model
 model CampaignAnalytics {
-  id              String      @id @default(uuid())
-  impressions     Int?
-  clicks          Int?
-  conversions     Int?
-  cost            Float?
-  recordedAt      DateTime    @default(now())
-  campaign        MarketingCampaign @relation(fields: [campaignId], references: [id])
-  campaignId      String
+  id          String            @id @default(uuid())
+  impressions Int?
+  clicks      Int?
+  conversions Int?
+  cost        Float?
+  recordedAt  DateTime          @default(now())
+  campaign    MarketingCampaign @relation(fields: [campaignId], references: [id])
+  campaignId  String
 }
