@@ -24,6 +24,8 @@ model User {
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   isActive            Boolean              @default(true)
+  passwordResetToken  String?
+  passwordResetExpires DateTime?
   propertiesManaged   Property[]           @relation("PropertyManager")
   propertiesOwned     Property[]           @relation("PropertyOwner")
   units               Unit[]               @relation("UnitTenant")

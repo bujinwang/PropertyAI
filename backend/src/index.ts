@@ -101,4 +101,4 @@ process.on('SIGTERM', async () => {
 });
 
 // Start the server
-startServer(); 
+startServer();
