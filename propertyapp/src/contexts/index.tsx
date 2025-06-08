@@ -1,6 +1,7 @@
 import React, { ReactNode } from 'react';
 import { AuthProvider } from './AuthContext';
 import { AppSettingsProvider } from './AppSettingsContext';
+import { ThemeProvider } from './ThemeContext';
 
 type AppProvidersProps = {
   children: ReactNode;
@@ -8,14 +9,17 @@ type AppProvidersProps = {
 
 export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   return (
-    <AuthProvider>
-      <AppSettingsProvider>
-        {children}
-      </AppSettingsProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <AppSettingsProvider>
+          {children}
+        </AppSettingsProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 };
 
 // Export all context hooks for easy import
 export { useAuth } from './AuthContext';
-export { useAppSettings } from './AppSettingsContext'; 
+export { useAppSettings } from './AppSettingsContext';
+export { useTheme } from './ThemeContext'; 

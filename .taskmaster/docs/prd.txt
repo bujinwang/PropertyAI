@@ -167,4 +167,75 @@ PropertyFlow AI is a comprehensive property management platform that leverages a
 - Hours of operation awareness for response prioritization
 - Emergency protocols during non-business hours
 - Automated escalation paths for critical issues
-- On-call staff rotation integration 
+- On-call staff rotation integration
+
+# PropertyAI - Authentication & Security Enhancement PRD
+
+## Project Overview
+PropertyAI is a property management system that requires robust authentication and security features. This PRD focuses on completing the frontend integration for authentication, implementing additional security features, and testing the system.
+
+## Core Requirements
+
+### Frontend Integration
+1. Create an MFA (Multi-Factor Authentication) setup screen for users to enable MFA
+   - Allow users to toggle MFA on/off
+   - Provide clear instructions for setup process
+   - Display backup codes for account recovery
+
+2. Add QR code generation for authenticator apps
+   - Generate QR codes compatible with standard authenticator apps (Google Authenticator, Authy)
+   - Provide manual entry option with displayed secret key
+   - Include verification step to confirm successful setup
+
+3. Implement OAuth login buttons in the login screen
+   - Support multiple OAuth providers (Google, Facebook, etc.)
+   - Create consistent UI for OAuth buttons
+   - Handle OAuth flow and redirect properly
+
+### Security Features
+1. Implement rate limiting for login attempts
+   - Limit consecutive failed login attempts
+   - Implement progressive delays between attempts
+   - Log and monitor suspicious activity
+
+2. Add account lockout functionality
+   - Lock accounts after specified number of failed attempts
+   - Provide clear user feedback about lockout status
+   - Implement secure account recovery process
+
+3. Create password reset flow with email verification
+   - Generate secure, time-limited reset tokens
+   - Send password reset emails with verification links
+   - Implement secure password change form
+   - Notify users when password is changed
+
+### Testing Requirements
+1. Test full authentication flow
+   - Verify standard username/password login
+   - Test OAuth login flow with different providers
+   - Validate MFA verification process
+
+2. Verify token validation and session handling
+   - Test token expiration and refresh
+   - Validate secure storage of tokens
+   - Test session timeout and logout functionality
+
+3. Test MFA setup on various devices and authenticator apps
+   - Verify compatibility with Google Authenticator, Authy, and other apps
+   - Test backup code functionality
+   - Verify MFA works across different devices
+
+## Technical Constraints
+- Frontend is built with React Native
+- Backend uses Node.js with Express
+- Authentication system uses JWT tokens
+- MFA implementation uses TOTP (Time-based One-Time Password)
+- Database includes PostgreSQL and MongoDB
+
+## Success Criteria
+- Users can successfully set up MFA through the dedicated screen
+- QR codes are correctly generated and work with standard authenticator apps
+- OAuth login is seamlessly integrated with the existing authentication flow
+- Rate limiting and account lockout protect against brute force attacks
+- Password reset flow securely allows users to recover their accounts
+- All authentication flows pass security testing 

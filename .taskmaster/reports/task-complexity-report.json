@@ -1,8 +1,8 @@
 {
   "meta": {
-    "generatedAt": "2025-06-07T22:31:37.592Z",
-    "tasksAnalyzed": 15,
-    "totalTasks": 15,
+    "generatedAt": "2025-06-08T04:31:53.275Z",
+    "tasksAnalyzed": 2,
+    "totalTasks": 12,
     "analysisCount": 18,
     "thresholdScore": 5,
     "projectName": "Taskmaster",
@@ -98,22 +98,6 @@
       "reasoning": "Integrating payment systems securely, implementing AI for expense categorization, and automating rent collection processes with reminders contribute to high complexity and require distinct development efforts."
     },
     {
-      "taskId": 9,
-      "taskTitle": "Tenant Portal & Self-Service (Web - MVP)",
-      "complexityScore": 7,
-      "recommendedSubtasks": 5,
-      "expansionPrompt": "Decompose 'Tenant Portal & Self-Service (Web - MVP)' into subtasks for: 1. React project setup, theming, and basic portal navigation structure. 2. Develop UI components and logic for submitting and tracking maintenance requests (including photo upload). 3. Implement UI for viewing lease details and making rent payments (integrating with payment backend). 4. Create UI for accessing and downloading shared documents (e.g., lease agreements). 5. Integrate frontend with the user authentication system for secure access.",
-      "reasoning": "Building an interactive web portal with React.js that integrates multiple backend services (maintenance, payments, documents, auth) requires significant frontend development effort across several feature areas."
-    },
-    {
-      "taskId": 10,
-      "taskTitle": "Mobile App Development (React Native - MVP Shell)",
-      "complexityScore": 7,
-      "recommendedSubtasks": 6,
-      "expansionPrompt": "Break down 'Mobile App Development (React Native - MVP Shell)' into subtasks for: 1. React Native project initialization and environment setup for iOS & Android. 2. Implement core navigation structure (e.g., using React Navigation, tab bars, stacks). 3. Develop and integrate user authentication UI and logic (login, registration, token handling). 4. Create basic shell/layout and key screen stubs for property manager app features. 5. Create basic shell/layout and key screen stubs for tenant app features. 6. Set up an initial API service layer for communication with the backend.",
-      "reasoning": "Setting up a cross-platform mobile application with React Native, including robust navigation, authentication, and distinct shell structures for two user roles, is a substantial initial undertaking with inherent mobile development complexities."
-    },
-    {
       "taskId": 11,
       "taskTitle": "AI Model Integration (Gemini 2.5 Pro)",
       "complexityScore": 8,
@@ -152,6 +136,22 @@
       "recommendedSubtasks": 6,
       "expansionPrompt": "Decompose 'Document Management System' into subtasks for: 1. Implement secure document storage with robust versioning and role-based access control. 2. Develop a system for automated delivery (e.g., email with tracking) of legal notices and important documents. 3. Integrate a third-party digital signature service (e.g., DocuSign, HelloSign API) for lease agreements and other documents. 4. Create comprehensive audit trails for all document actions (uploads, views, shares, signatures). 5. Implement document expiration tracking and automated notification system for renewals or actions. 6. Design UI for users to upload, manage, search, and share documents securely.",
       "reasoning": "Building a secure and compliant document management system with features like digital signatures, automated legal notice delivery with tracking, and detailed audit trails is a complex undertaking with significant security, legal, and integration considerations."
+    },
+    {
+      "taskId": 9,
+      "taskTitle": "Integrate Multi-Factor Authentication (MFA) & OAuth Logins",
+      "complexityScore": 8,
+      "recommendedSubtasks": 7,
+      "expansionPrompt": "Break down the 'Integrate Multi-Factor Authentication (MFA) & OAuth Logins' task into subtasks covering: MFA backend logic (TOTP generation/validation, QR code support, backup code management), MFA frontend (web & mobile UI for setup, verification, code entry), OAuth backend integration (e.g., Google, including token handling), OAuth frontend (web & mobile UI for login buttons and flow), linking MFA/OAuth to user accounts, and comprehensive testing for all features.",
+      "reasoning": "High complexity due to integrating two major security enhancements (MFA, OAuth) across web and mobile platforms. Each involves multiple components (TOTP, QR, backup codes for MFA; specific provider integration for OAuth) and has significant security implications and UI/UX considerations."
+    },
+    {
+      "taskId": 10,
+      "taskTitle": "Implement Advanced Security Features (Login Protection)",
+      "complexityScore": 6,
+      "recommendedSubtasks": 6,
+      "expansionPrompt": "Break down the 'Implement Advanced Security Features (Login Protection)' task into subtasks for: backend implementation of rate limiting for login attempts, backend logic for account lockout after multiple failed attempts (including unlock mechanisms), secure password reset flow (token generation, email dispatch, token validation, password update), frontend UI for password reset requests and form submission, user notification system for these events, and thorough testing of all protection mechanisms.",
+      "reasoning": "Moderate complexity due to implementing three distinct login protection mechanisms (rate limiting, account lockout, secure password reset). Each requires careful backend logic, state management, potential UI components, and robust security considerations, particularly for the password reset flow to prevent vulnerabilities."
     }
   ]
 }

@@ -7,24 +7,36 @@ import {
   storeAuthToken, 
   storeUserData 
 } from '@/utils/secureStorage';
-import { User, UserRole } from '@/types/auth';
-import { hasPermission, hasMinimumRole } from '@/utils/permissions';
+import { User } from '@/types/user';
+import * as authService from '@/services/authService';
 
 // Authentication context type definition
 interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   user: User | null;
+  token: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
+  register: (userData: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    phone?: string;
+    role?: string;
+  }) => Promise<void>;
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, newPassword: string) => Promise<void>;
   updateProfile: (userData: Partial<User>) => Promise<void>;
-  // Role-based authorization methods
-  hasRole: (role: UserRole) => boolean;
-  hasPermission: (allowedRoles: UserRole[]) => boolean;
-  hasMinimumRole: (minimumRole: UserRole) => boolean;
+  setUser: (user: User) => void;
+  setToken: (token: string) => void;
+  // MFA methods
+  setupMFA: () => Promise<{ secret: string; email: string }>;
+  enableMFA: (code: string) => Promise<void>;
+  disableMFA: (code: string) => Promise<void>;
+  verifyMFA: (email: string, code: string) => Promise<{ token: string; user: User }>;
+  getMFAStatus: () => Promise<boolean>;
 }
 
 // Create context with default values
@@ -32,15 +44,20 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   isLoading: true,
   user: null,
+  token: null,
   login: async () => {},
   register: async () => {},
   logout: async () => {},
   forgotPassword: async () => {},
   resetPassword: async () => {},
   updateProfile: async () => {},
-  hasRole: () => false,
-  hasPermission: () => false,
-  hasMinimumRole: () => false,
+  setUser: () => {},
+  setToken: () => {},
+  setupMFA: async () => ({ secret: '', email: '' }),
+  enableMFA: async () => {},
+  disableMFA: async () => {},
+  verifyMFA: async () => ({ token: '', user: {} as User }),
+  getMFAStatus: async () => false,
 });
 
 // Provider component
@@ -52,15 +69,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
   // Check for existing auth on mount
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const token = await getAuthToken();
+        const storedToken = await getAuthToken();
         const userData = await getUserData<User>();
         
-        if (token && userData) {
+        if (storedToken && userData) {
+          setToken(storedToken);
           setUser(userData);
           setIsAuthenticated(true);
         }
@@ -74,35 +93,45 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkAuth();
   }, []);
 
-  // Mock API calls (replace with real API in production)
+  // Update secure storage when token or user changes
+  useEffect(() => {
+    const updateStorage = async () => {
+      try {
+        if (token && user) {
+          await storeAuthToken(token);
+          await storeUserData(user);
+          setIsAuthenticated(true);
+        } else if (!token && !user) {
+          await clearAuthData();
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
+        console.error('Error updating secure storage:', error);
+      }
+    };
+
+    updateStorage();
+  }, [token, user]);
   
-  // Login function
+  // Login function - this handles the standard email/password login
+  // but we don't actually complete the login flow here if MFA is required
   const login = async (email: string, password: string): Promise<void> => {
     setIsLoading(true);
     
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await authService.login(email, password);
       
-      // This is for demonstration only - in production, use a real API
-      if (email === 'demo@example.com' && password === 'Password123') {
-        // Mock successful login
-        const mockUser: User = {
-          id: '1',
-          name: 'Demo User',
-          email: 'demo@example.com',
-          role: 'propertyManager',
-        };
-        
-        // Save auth data
-        await storeAuthToken('mock-jwt-token');
-        await storeUserData(mockUser);
-        
-        setUser(mockUser);
-        setIsAuthenticated(true);
+      // If MFA is required, we don't set the user or token yet
+      if (response.requireMFA) {
+        return;
+      }
+      
+      // Standard login successful
+      if (response.token && response.user) {
+        setToken(response.token);
+        setUser(response.user);
       } else {
-        // Mock login failure
-        throw new Error('Invalid credentials');
+        throw new Error('Invalid login response');
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -113,32 +142,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
   
   // Register function
-  const register = async (
-    name: string, 
-    email: string, 
-    password: string, 
-    role: UserRole
-  ): Promise<void> => {
+  const register = async (userData: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    phone?: string;
+    role?: string;
+  }): Promise<void> => {
     setIsLoading(true);
     
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const response = await authService.register(userData);
       
-      // This is for demonstration only - in production, use a real API
-      const mockUser: User = {
-        id: '2',
-        name,
-        email,
-        role,
-      };
-      
-      // Save auth data
-      await storeAuthToken('mock-jwt-token');
-      await storeUserData(mockUser);
-      
-      setUser(mockUser);
-      setIsAuthenticated(true);
+      setToken(response.token);
+      setUser(response.user);
     } catch (error) {
       console.error('Registration error:', error);
       throw error;
@@ -153,10 +171,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     
     try {
       // Clear auth data
-      await clearAuthData();
-      
+      setToken(null);
       setUser(null);
-      setIsAuthenticated(false);
     } catch (error) {
       console.error('Logout error:', error);
       Alert.alert('Logout Failed', 'An error occurred while logging out.');
@@ -170,10 +186,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     
     try {
-      // Simulate API call delay
+      // TODO: Implement real API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // In production, implement actual password reset API call
       console.log(`Password reset requested for: ${email}`);
     } catch (error) {
       console.error('Forgot password error:', error);
@@ -184,17 +198,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
   
   // Reset password function
-  const resetPassword = async (token: string, newPassword: string): Promise<void> => {
+  const resetPassword = async (resetToken: string, newPassword: string): Promise<void> => {
     setIsLoading(true);
     
     try {
-      // Simulate API call delay
+      // TODO: Implement real API call
       await new Promise(resolve => setTimeout(resolve, 1200));
-      
-      // In production, implement actual password reset verification API call
-      console.log(`Password reset with token: ${token}, new password length: ${newPassword.length}`);
-      
-      // For demo purposes, we'll consider the reset successful
+      console.log(`Password reset with token: ${resetToken}, new password length: ${newPassword.length}`);
     } catch (error) {
       console.error('Reset password error:', error);
       throw error;
@@ -208,19 +218,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     
     try {
-      if (!user) {
+      if (!user || !token) {
         throw new Error('No user is logged in');
       }
       
-      // Simulate API call delay
+      // TODO: Implement real API call
       await new Promise(resolve => setTimeout(resolve, 800));
       
-      // Update user data
       const updatedUser = { ...user, ...userData };
-      
-      // Save updated user data
-      await storeUserData(updatedUser);
-      
       setUser(updatedUser);
     } catch (error) {
       console.error('Update profile error:', error);
@@ -230,39 +235,124 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
   
-  // Role-based authorization methods
-  
-  // Check if user has a specific role
-  const hasRole = (role: UserRole): boolean => {
-    return user?.role === role;
+  // MFA Setup function
+  const setupMFA = async (): Promise<{ secret: string; email: string }> => {
+    setIsLoading(true);
+    
+    try {
+      if (!token) {
+        throw new Error('No user is logged in');
+      }
+      
+      const response = await authService.setupMFA(token);
+      return response;
+    } catch (error) {
+      console.error('MFA setup error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
   
-  // Check if user has permission based on allowed roles
-  const checkPermission = (allowedRoles: UserRole[]): boolean => {
-    if (!user?.role) return false;
-    return hasPermission(user.role, allowedRoles);
+  // Enable MFA function
+  const enableMFA = async (code: string): Promise<void> => {
+    setIsLoading(true);
+    
+    try {
+      if (!token) {
+        throw new Error('No user is logged in');
+      }
+      
+      await authService.enableMFA(token, code);
+      
+      // Update user profile to reflect MFA status
+      if (user) {
+        setUser({ ...user, mfaEnabled: true });
+      }
+    } catch (error) {
+      console.error('Enable MFA error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
   
-  // Check if user has minimum role level
-  const checkMinimumRole = (minimumRole: UserRole): boolean => {
-    if (!user?.role) return false;
-    return hasMinimumRole(user.role, minimumRole);
+  // Disable MFA function
+  const disableMFA = async (code: string): Promise<void> => {
+    setIsLoading(true);
+    
+    try {
+      if (!token) {
+        throw new Error('No user is logged in');
+      }
+      
+      await authService.disableMFA(token, code);
+      
+      // Update user profile to reflect MFA status
+      if (user) {
+        setUser({ ...user, mfaEnabled: false });
+      }
+    } catch (error) {
+      console.error('Disable MFA error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Verify MFA function (used during login)
+  const verifyMFA = async (email: string, code: string): Promise<{ token: string; user: User }> => {
+    setIsLoading(true);
+    
+    try {
+      const response = await authService.verifyMFACode(email, code);
+      
+      setToken(response.token);
+      setUser(response.user);
+      
+      return response;
+    } catch (error) {
+      console.error('Verify MFA error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Get MFA status function
+  const getMFAStatus = async (): Promise<boolean> => {
+    try {
+      if (!token) {
+        return false;
+      }
+      
+      const response = await authService.getMFAStatus(token);
+      return response.mfaEnabled;
+    } catch (error) {
+      console.error('Get MFA status error:', error);
+      return false;
+    }
   };
 
-  // Provide auth context
+  // Prepare context value
   const contextValue: AuthContextType = {
     isAuthenticated,
     isLoading,
     user,
+    token,
     login,
     register,
     logout,
     forgotPassword,
     resetPassword,
     updateProfile,
-    hasRole,
-    hasPermission: checkPermission,
-    hasMinimumRole: checkMinimumRole,
+    setUser,
+    setToken,
+    setupMFA,
+    enableMFA,
+    disableMFA,
+    verifyMFA,
+    getMFAStatus,
   };
 
   return (
@@ -272,7 +362,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   );
 };
 
-// Custom hook for easy access to auth context
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   
