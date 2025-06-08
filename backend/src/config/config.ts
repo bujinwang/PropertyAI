@@ -18,6 +18,10 @@ export const config = {
     region: process.env.AWS_REGION || 'us-east-1',
     s3Bucket: process.env.AWS_S3_BUCKET || 'property-ai-images',
   },
+  services: {
+    baseUrl: process.env.SERVICES_BASE_URL || 'http://localhost:5000/api',
+    requestTimeout: parseInt(process.env.SERVICES_REQUEST_TIMEOUT || '5000'), // Default: 5 seconds
+  },
   googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || '',
   geocodingCacheTime: parseInt(process.env.GEOCODING_CACHE_TIME || '86400000'), // Default: 24 hours in milliseconds
 }; 

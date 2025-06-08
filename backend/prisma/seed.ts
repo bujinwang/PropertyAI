@@ -5,25 +5,12 @@ import fs from 'fs/promises';
 import path from 'path';
 import mongoManager from '../src/utils/mongoManager';
 import '../src/models/mongoModels'; // Import models to register them with Mongoose
+import { seedAiContent } from './seed/data/aiContent';
 
 // Load environment variables
 dotenv.config({ path: path.resolve(__dirname, '../src/config/database.env') });
 
 const prisma = new PrismaClient();
-
-// --- Data Loading ---
-async function loadJsonData(filePath: string) {
-  const absolutePath = path.join(__dirname, '../../scripts/mongodb-seed/data', filePath);
-  console.log('DEBUG: Attempting to read file at:', absolutePath); // Debug print
-  try {
-    const fileContent = await fs.readFile(absolutePath, 'utf-8');
-    return JSON.parse(fileContent);
-  } catch (error) {
-    console.error(`Error reading or parsing JSON file at ${absolutePath}:`, error);
-    throw error;
-  }
-}
-
 
 // --- PostgreSQL Seeding ---
 async function seedPostgres() {
@@ -127,24 +114,8 @@ async function seedMongo() {
 
     await mongoManager.initializeDatabase();
 
-    const collectionsToSeed = [
-      { name: 'Listing', file: 'listings.json' },
-      { name: 'Application', file: 'applications.json' },
-      { name: 'AIGeneratedContent', file: 'aiGeneratedContent.json' },
-      { name: 'ChatbotConversation', file: 'chatbotConversations.json' },
-      { name: 'PropertyAnalytics', file: 'propertyAnalytics.json' },
-      { name: 'CommunicationTemplate', file: 'communicationTemplates.json' },
-      { name: 'MaintenanceRecord', file: 'maintenanceRecords.json' },
-    ];
-
-    for (const { name, file } of collectionsToSeed) {
-      console.log(`Seeding ${name} collection...`);
-      const data = await loadJsonData(file);
-      const Model = mongoose.model(name);
-      await Model.deleteMany({});
-      await Model.insertMany(data);
-      console.log(`  - Cleared and seeded ${data.length} documents.`);
-    }
+    // Seed AI Content from the new script
+    await seedAiContent();
 
     console.log('Creating MongoDB indexes...');
     await mongoManager.createIndexes();

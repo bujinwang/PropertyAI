@@ -6,13 +6,10 @@ import { ErrorWithStatus, AuthenticationError, AuthorizationError } from '../uti
 const prisma = new PrismaClient();
 
 // Extended Request type to include user information
+import { User } from '@prisma/client';
+
 export interface AuthRequest extends Request {
-  user?: {
-    id: string;
-    email: string;
-    role: string;
-    [key: string]: any;
-  };
+  user?: User;
 }
 
 export const authMiddleware = {
@@ -40,17 +37,10 @@ export const authMiddleware = {
           process.env.JWT_SECRET || 'your-secret-key'
         ) as jwt.JwtPayload;
         
-        // Add user information to request object
-        req.user = {
-          id: decoded.userId,
-          email: decoded.email,
-          role: decoded.role
-        };
-        
+        // Verify the user exists in the database
         // Verify the user exists in the database
         const user = await prisma.user.findUnique({
           where: { id: decoded.userId },
-          select: { id: true, email: true, role: true, isActive: true }
         });
         
         if (!user) {
@@ -60,6 +50,10 @@ export const authMiddleware = {
         if (!user.isActive) {
           throw new AuthenticationError('User account is disabled');
         }
+        
+        // Add user information to request object
+        req.user = user;
+        
         
         next();
       } catch (error) {

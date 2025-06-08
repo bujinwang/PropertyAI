@@ -24,6 +24,9 @@
   ],
   "author": "",
   "license": "ISC",
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.826.0",
     "@googlemaps/google-maps-services-js": "^3.4.1",
