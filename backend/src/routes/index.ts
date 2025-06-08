@@ -18,6 +18,17 @@ import transactionRoutes from './transactionRoutes';
 import publishingRoutes from './publishingRoutes';
 import passwordResetRoutes from './passwordResetRoutes';
 import aiRoutes from './aiRoutes';
+import knowledgeBaseRoutes from './knowledgeBaseRoutes';
+import suggestionRoutes from './suggestionRoutes';
+import transcriptionRoutes from './transcriptionRoutes';
+import documentVerificationRoutes from './documentVerificationRoutes';
+import manualReviewRoutes from './manualReviewRoutes';
+import notificationRoutes from './notificationRoutes';
+import vendorPerformanceRoutes from './vendorPerformanceRoutes';
+import backgroundCheckRoutes from './backgroundCheckRoutes';
+import auditRoutes from './auditRoutes';
+import paymentRoutes from './paymentRoutes';
+import reminderRoutes from './reminderRoutes';
 
 const router = express.Router();
 
@@ -53,6 +64,17 @@ router.use(`${API_PREFIX}/transactions`, transactionRoutes);
 router.use(`${API_PREFIX}/publish`, publishingRoutes);
 router.use(`${API_PREFIX}/password-reset`, passwordResetRoutes);
 router.use(`${API_PREFIX}/ai`, aiRoutes);
+router.use(`${API_PREFIX}/knowledge-base`, knowledgeBaseRoutes);
+router.use(`${API_PREFIX}/suggestions`, suggestionRoutes);
+router.use(`${API_PREFIX}/transcriptions`, transcriptionRoutes);
+router.use(`${API_PREFIX}/document-verification`, documentVerificationRoutes);
+router.use(`${API_PREFIX}/manual-review`, manualReviewRoutes);
+router.use(`${API_PREFIX}/notifications`, notificationRoutes);
+router.use(`${API_PREFIX}/vendor-performance`, vendorPerformanceRoutes);
+router.use(`${API_PREFIX}/background-checks`, backgroundCheckRoutes);
+router.use(`${API_PREFIX}/audit`, auditRoutes);
+router.use(`${API_PREFIX}/payments`, paymentRoutes);
+router.use(`${API_PREFIX}/reminders`, reminderRoutes);
 
 // 404 handler for API routes
 router.use(`${API_PREFIX}/*`, (req, res) => {

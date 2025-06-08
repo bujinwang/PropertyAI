@@ -8,6 +8,10 @@ import { prisma, connectMongoDB, setupPostgreSQL, setupMongoDB, closeDatabaseCon
 import configurePassport from './config/passport';
 import routes from './routes';
 import path from 'path';
+import http from 'http';
+import WebSocketService from './services/webSocketService';
+import VoicemailService from './services/voicemailService';
+import aiOrchestrationService from './services/aiOrchestrationService';
 
 // Load environment variables
 dotenv.config();
@@ -77,8 +81,17 @@ const startServer = async () => {
     await setupPostgreSQL();
     console.log('PostgreSQL setup and configuration completed');
     
+    // Create HTTP server
+    const server = http.createServer(app);
+
+    // Initialize WebSocket service
+    new WebSocketService(server);
+
+    // Initialize Voicemail service
+    new VoicemailService(path.join(__dirname, '../voicemails'), aiOrchestrationService);
+    
     // Start the server
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
   } catch (error) {
