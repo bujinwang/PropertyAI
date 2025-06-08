@@ -76,17 +76,30 @@ export const secureRemove = async (key: string): Promise<void> => {
 };
 
 /**
- * Stores the authentication token securely
+ * Store the authentication token securely
+ * @param token JWT auth token
  */
 export const storeAuthToken = async (token: string): Promise<void> => {
-  await secureStore(STORAGE_KEYS.AUTH_TOKEN, token);
+  try {
+    await SecureStore.setItemAsync(STORAGE_KEYS.AUTH_TOKEN, token);
+  } catch (error) {
+    console.error('Error storing auth token:', error);
+    throw error;
+  }
 };
 
 /**
- * Retrieves the authentication token
+ * Retrieve the stored authentication token
+ * @returns The stored JWT token or null if not found
  */
 export const getAuthToken = async (): Promise<string | null> => {
-  return await secureRetrieve(STORAGE_KEYS.AUTH_TOKEN);
+  try {
+    const token = await SecureStore.getItemAsync(STORAGE_KEYS.AUTH_TOKEN);
+    return token;
+  } catch (error) {
+    console.error('Error retrieving auth token:', error);
+    return null;
+  }
 };
 
 /**
@@ -118,18 +131,36 @@ export const removeRefreshToken = async (): Promise<void> => {
 };
 
 /**
- * Stores user data securely (as JSON string)
+ * Store user data securely
+ * @param userData User data object to store
  */
-export const storeUserData = async <T extends Record<string, unknown>>(userData: T): Promise<void> => {
-  await secureStore(STORAGE_KEYS.USER_DATA, JSON.stringify(userData));
+export const storeUserData = async (userData: Record<string, unknown>): Promise<void> => {
+  try {
+    const userDataString = JSON.stringify(userData);
+    await SecureStore.setItemAsync(STORAGE_KEYS.USER_DATA, userDataString);
+  } catch (error) {
+    console.error('Error storing user data:', error);
+    throw error;
+  }
 };
 
 /**
- * Retrieves and parses user data
+ * Retrieve stored user data
+ * @returns Parsed user data object or null if not found
  */
 export const getUserData = async <T>(): Promise<T | null> => {
-  const data = await secureRetrieve(STORAGE_KEYS.USER_DATA);
-  return data ? JSON.parse(data) as T : null;
+  try {
+    const userDataString = await SecureStore.getItemAsync(STORAGE_KEYS.USER_DATA);
+    
+    if (!userDataString) {
+      return null;
+    }
+    
+    return JSON.parse(userDataString) as T;
+  } catch (error) {
+    console.error('Error retrieving user data:', error);
+    return null;
+  }
 };
 
 /**
@@ -140,10 +171,15 @@ export const removeUserData = async (): Promise<void> => {
 };
 
 /**
- * Clears all authentication-related data
+ * Clear all authentication data from secure storage
  */
 export const clearAuthData = async (): Promise<void> => {
-  await removeAuthToken();
-  await removeRefreshToken();
-  await removeUserData();
+  try {
+    await removeAuthToken();
+    await removeRefreshToken();
+    await removeUserData();
+  } catch (error) {
+    console.error('Error clearing auth data:', error);
+    throw error;
+  }
 }; 

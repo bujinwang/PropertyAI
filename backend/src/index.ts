@@ -1,8 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import session from 'express-session';
+import passport from 'passport';
 import * as dotenv from 'dotenv';
 import { prisma, connectMongoDB, setupPostgreSQL, setupMongoDB, closeDatabaseConnections } from './config/database';
+import configurePassport from './config/passport';
 import routes from './routes';
 import path from 'path';
 
@@ -18,6 +21,22 @@ app.use(helmet()); // Security headers
 app.use(cors()); // CORS configuration
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+
+// Configure express-session
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'keyboard cat',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  }
+}));
+
+// Initialize Passport and configure strategies
+app.use(passport.initialize());
+app.use(passport.session());
+configurePassport();
 
 // Serve static files from the uploads directory
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
