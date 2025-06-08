@@ -8,15 +8,11 @@ const prisma = new PrismaClient();
 // Extended Request type to include user information
 import { User } from '@prisma/client';
 
-export interface AuthRequest extends Request {
-  user?: User;
-}
-
 export const authMiddleware = {
   /**
    * Verify JWT token from Authorization header
    */
-  verifyToken: async (req: AuthRequest, res: Response, next: NextFunction) => {
+  verifyToken: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const authHeader = req.headers.authorization;
       
@@ -74,7 +70,7 @@ export const authMiddleware = {
    * Check if user has one of the allowed roles
    */
   checkRole: (allowedRoles: string[]) => {
-    return (req: AuthRequest, res: Response, next: NextFunction) => {
+    return (req: Request, res: Response, next: NextFunction) => {
       try {
         if (!req.user) {
           throw new AuthenticationError('User information not found');
@@ -97,7 +93,7 @@ export const authMiddleware = {
    * Check if user is the owner or has a specific role
    */
   checkOwnerOrRole: (resourceIdParam: string, allowedRoles: string[] = ['ADMIN']) => {
-    return async (req: AuthRequest, res: Response, next: NextFunction) => {
+    return async (req: Request, res: Response, next: NextFunction) => {
       try {
         if (!req.user) {
           throw new AuthenticationError('User information not found');

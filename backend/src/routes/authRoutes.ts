@@ -1,8 +1,8 @@
-import express, { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import express, { Request, Response, NextFunction } from 'express';
+import { PrismaClient, UserRole } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { authMiddleware, AuthRequest } from '../middleware/authMiddleware';
+import authMiddleware from '../middleware/authMiddleware';
 import mfaService from '../services/mfaService';
 
 const router = express.Router();
@@ -95,7 +95,7 @@ router.post('/login', async (req: Request, res: Response) => {
     }
     
     // Check if MFA is enabled
-    if (user.mfaEnabled) {
+    if (user?.mfaEnabled) {
       // If MFA is enabled, return a flag indicating MFA is required
       return res.json({
         requireMFA: true,
@@ -133,7 +133,7 @@ router.post('/login', async (req: Request, res: Response) => {
  * @desc    Get current user's profile
  * @access  Private
  */
-router.get('/me', authMiddleware.verifyToken, async (req: AuthRequest, res: Response) => {
+router.get('/me', authMiddleware.verifyToken, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?.id;
     
@@ -174,7 +174,7 @@ router.get('/me', authMiddleware.verifyToken, async (req: AuthRequest, res: Resp
  * @desc    Logout user (e.g., by clearing session or token)
  * @access  Private
  */
-router.post('/logout', authMiddleware.verifyToken, (req: AuthRequest, res: Response) => {
+router.post('/logout', authMiddleware.verifyToken, (req: Request, res: Response, next: NextFunction) => {
   // In a token-based system, logout is typically handled on the client-side by deleting the token.
   // For session-based systems, you would destroy the session.
   // req.logout(); // If using sessions
@@ -217,7 +217,7 @@ router.post('/reset-password', async (req, res) => {
  * @desc    Enable MFA for the authenticated user
  * @access  Private
  */
-router.post('/enable-mfa', authMiddleware.verifyToken, async (req: AuthRequest, res: Response) => {
+router.post('/enable-mfa', authMiddleware.verifyToken, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -248,11 +248,11 @@ router.post('/verify-mfa', async (req: Request, res: Response) => {
     }
 
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user || !user.mfaSecret) {
+    if (!user?.mfaSecret) {
       return res.status(400).json({ message: 'Invalid credentials or MFA not enabled' });
     }
 
-    const isValid = mfaService.verifyTOTP(user.mfaSecret, mfaCode);
+    const isValid = mfaService.verifyTOTP(user.mfaSecret!, mfaCode);
     if (!isValid) {
       return res.status(400).json({ message: 'Invalid MFA code' });
     }
@@ -284,7 +284,7 @@ router.post('/verify-mfa', async (req: Request, res: Response) => {
  * @desc    Disable MFA for the authenticated user
  * @access  Private
  */
-router.post('/disable-mfa', authMiddleware.verifyToken, async (req: AuthRequest, res: Response) => {
+router.post('/disable-mfa', authMiddleware.verifyToken, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
