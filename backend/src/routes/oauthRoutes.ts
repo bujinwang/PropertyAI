@@ -5,15 +5,13 @@ import jwt from 'jsonwebtoken';
 const router = express.Router();
 
 // Extend Express request to include user
-interface UserRequest extends Request {
-  user?: any; // Allow any user type since it can come from various strategies
-}
+import { AuthRequest } from '../middleware/authMiddleware';
 
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 router.get('/google/callback', 
   passport.authenticate('google', { session: false, failureRedirect: '/login?error=oauth_failed' }), 
-  (req: UserRequest, res: Response) => {
+  (req: AuthRequest, res: Response) => {
     try {
       const user = req.user;
       if (!user) {

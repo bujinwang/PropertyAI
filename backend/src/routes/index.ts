@@ -10,6 +10,7 @@ import aiContentRoutes from './aiContentRoutes';
 import authRoutes from './authRoutes';
 import oauthRoutes from './oauthRoutes';
 import mfaRoutes from './mfaRoutes';
+import usersRoutes from './usersRoutes';
 
 const router = express.Router();
 
@@ -37,6 +38,7 @@ router.use(`${API_PREFIX}/ai-content`, aiContentRoutes); // AI-generated content
 router.use(`${API_PREFIX}/auth`, authRoutes); // Primary authentication routes
 router.use(`${API_PREFIX}/auth`, oauthRoutes); // OAuth routes for Google authentication
 router.use(`${API_PREFIX}/mfa`, mfaRoutes); // Multi-factor authentication routes
+router.use(`${API_PREFIX}/users`, usersRoutes); // User management routes with inter-service endpoints
 
 // 404 handler for API routes
 router.use(`${API_PREFIX}/*`, (req, res) => {

@@ -67,6 +67,7 @@ model Property {
   images        PropertyImage[] // Relation to property images
   latitude      Float?
   longitude     Float?
+  listings      Listing[]
 }
 
 enum PropertyType {
@@ -116,6 +117,7 @@ model Unit {
   lease           Lease?
   maintenanceRequests MaintenanceRequest[]
   images          UnitImage[] // Relation to unit images
+  listing         Listing?
 }
 
 // UnitImage model for storing unit images
@@ -306,4 +308,75 @@ model MessageReference {
   id             String   @id @default(uuid())
   mongoMessageId String   // The _id from MongoDB
   createdAt      DateTime @default(now())
-} 
+}
+
+// Listing model for marketing and syndication
+model Listing {
+  id              String      @id @default(uuid())
+  title           String
+  description     String      @db.Text
+  price           Float
+  status          ListingStatus @default(DRAFT)
+  publishedAt     DateTime?
+  expiresAt       DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  property        Property    @relation(fields: [propertyId], references: [id])
+  propertyId      String
+  unit            Unit        @relation(fields: [unitId], references: [id])
+  unitId          String      @unique
+  images          ListingImage[]
+  campaigns       MarketingCampaign[]
+}
+
+enum ListingStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+  EXPIRED
+  RENTED
+}
+
+// ListingImage model for storing listing-specific images
+model ListingImage {
+  id              Int         @id @default(autoincrement())
+  listingId       String
+  listing         Listing     @relation(fields: [listingId], references: [id])
+  url             String
+  isFeatured      Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+}
+
+// MarketingCampaign model
+model MarketingCampaign {
+  id              String      @id @default(uuid())
+  name            String
+  platform        String      // e.g., Zillow, Craigslist, Facebook
+  budget          Float?
+  startDate       DateTime
+  endDate         DateTime?
+  status          CampaignStatus @default(PLANNED)
+  listing         Listing     @relation(fields: [listingId], references: [id])
+  listingId       String
+  analytics       CampaignAnalytics[]
+}
+
+enum CampaignStatus {
+  PLANNED
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+// CampaignAnalytics model
+model CampaignAnalytics {
+  id              String      @id @default(uuid())
+  impressions     Int?
+  clicks          Int?
+  conversions     Int?
+  cost            Float?
+  recordedAt      DateTime    @default(now())
+  campaign        MarketingCampaign @relation(fields: [campaignId], references: [id])
+  campaignId      String
+}
