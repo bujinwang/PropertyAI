@@ -28,4 +28,6 @@ export type RootStackParamList = {
   Settings: undefined;
   MaintenanceRequests: undefined;
   MaintenanceRequestDetails: { requestId: string };
+  ManageListings: undefined;
+  EditListing: { listingId?: string };
 };

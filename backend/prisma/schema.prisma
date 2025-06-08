@@ -357,6 +357,7 @@ model ListingImage {
   url        String
   isFeatured Boolean  @default(false)
   createdAt  DateTime @default(now())
+  analysis   AIImageAnalysis?
 }
 
 // MarketingCampaign model
@@ -425,6 +426,18 @@ model AIPricingSuggestion {
   reasoning String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model AIImageAnalysis {
+  id          String   @id @default(cuid())
+  imageId     Int      @unique
+  image       ListingImage @relation(fields: [imageId], references: [id])
+  tags        String[]
+  description String?
+  objects     Json?
+  colors      Json?
+  quality     Float?
+  createdAt   DateTime @default(now())
 }
 
 model Application {

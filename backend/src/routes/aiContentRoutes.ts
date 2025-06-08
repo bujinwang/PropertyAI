@@ -1,5 +1,5 @@
 import express from 'express';
-import { AIGeneratedContent } from '../models/mongoModels';
+import { AiContent as AIGeneratedContent } from '../models/mongoModels';
 import { v4 as uuidv4 } from 'uuid';
 
 const router = express.Router();
@@ -346,4 +346,4 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-export default router; 
+export default router;
