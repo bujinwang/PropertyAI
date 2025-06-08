@@ -1,34 +1,21 @@
-import express, { Request, Response } from 'express';
+import { Router } from 'express';
 import passport from 'passport';
-import jwt from 'jsonwebtoken';
 
-const router = express.Router();
+const router = Router();
 
-// Extend Express request to include user
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+// Redirect to provider for authentication
+router.get('/:provider', (req, res, next) => {
+  const provider = req.params.provider;
+  passport.authenticate(provider, { scope: ['email', 'profile'] })(req, res, next);
+});
 
-router.get('/google/callback',
-  passport.authenticate('google', { session: false, failureRedirect: '/login?error=oauth_failed' }),
-  (req: Request, res: Response) => {
-    try {
-      const user = req.user;
-      if (!user) {
-        return res.redirect('/login?error=user_not_found');
-      }
+// Callback URL for provider
+router.get('/:provider/callback', (req, res, next) => {
+  const provider = req.params.provider;
+  passport.authenticate(provider, {
+    successRedirect: '/dashboard',
+    failureRedirect: '/login',
+  })(req, res, next);
+});
 
-      const token = jwt.sign(
-        { userId: user.id, email: user.email, role: user.role }, 
-        process.env.JWT_SECRET!, 
-        { expiresIn: '1d' }
-      );
-      
-      // Redirect to frontend with token
-      res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:19006'}/oauth-callback?token=${token}`);
-    } catch (error) {
-      console.error('OAuth callback error:', error);
-      res.redirect('/login?error=server_error');
-    }
-  }
-);
-
-export default router; 
+export default router;

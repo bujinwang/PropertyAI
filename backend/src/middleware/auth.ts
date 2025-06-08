@@ -1,43 +1,35 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { PrismaClient } from '@prisma/client';
 
-// Interface for requests with authenticated user
-export interface AuthenticatedRequest extends Request {
-  user?: {
-    userId: string;
-    email: string;
-    role: string;
-  };
-}
+const prisma = new PrismaClient();
 
-/**
- * Authentication middleware
- * Validates JWT token from the request headers and attaches the decoded user to the request object
- */
-export const auth = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  // Get token from header
-  const token = req.header('x-auth-token');
+export const protect = async (req: Request, res: Response, next: NextFunction) => {
+  let token;
 
-  // Check if no token
-  if (!token) {
-    return res.status(401).json({ message: 'No token, authorization denied' });
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    try {
+      token = req.headers.authorization.split(' ')[1];
+
+      const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { id: string };
+
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.id },
+      });
+
+      if (!user) {
+        return res.status(401).json({ message: 'User not found' });
+      }
+
+      req.user = user;
+      next();
+    } catch (error) {
+      console.error(error);
+      return res.status(401).json({ message: 'Not authorized, token failed' });
+    }
   }
 
-  try {
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { 
-      userId: string;
-      email: string;
-      role: string;
-    };
-    
-    // Set the user in request
-    req.user = decoded;
-    next();
-  } catch (error) {
-    console.error('Token verification failed:', error);
-    res.status(401).json({ message: 'Token is not valid' });
+  if (!token) {
+    return res.status(401).json({ message: 'Not authorized, no token' });
   }
 };
-
-export default auth; 

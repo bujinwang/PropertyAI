@@ -1,0 +1,96 @@
+openapi: 3.0.0
+info:
+  title: PropertyAI API
+  description: API specifications for PropertyAI services.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewUser'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid input
+  /auth/login:
+    post:
+      summary: Authenticate a user
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '401':
+          description: Unauthorized
+
+components:
+  schemas:
+    NewUser:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        firstName:
+          type: string
+        lastName:
+          type: string
+        role:
+          type: string
+          enum: [PROPERTY_MANAGER, TENANT, OWNER]
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        role:
+          type: string
+          enum: [PROPERTY_MANAGER, TENANT, OWNER]

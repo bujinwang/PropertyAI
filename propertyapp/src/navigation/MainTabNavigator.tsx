@@ -6,6 +6,8 @@ import { Text, View } from 'react-native';
 import { useAuth } from '@/contexts';
 import { UserRole } from '@/types/auth';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import ManageListingsScreen from '@/screens/ManageListingsScreen';
+import MaintenanceStackNavigator from './MaintenanceStackNavigator';
 
 // Placeholder screens
 const PropertiesScreen = () => (
@@ -60,7 +62,7 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 
 export function MainTabNavigator() {
   const { user } = useAuth();
-  const userRole = user?.role as UserRole;
+  const userRole = user?.role as UserRole | undefined;
   
   return (
     <Tab.Navigator
@@ -98,19 +100,31 @@ export function MainTabNavigator() {
       {/* Show PropertyManager tab only to property managers and admins */}
       {(userRole === 'propertyManager' || userRole === 'admin') && (
         <Tab.Screen 
-          name="PropertyManager" 
-          component={ProtectedPropertyManagerDashboard} 
+          name="ManageListings"
+          component={ManageListingsScreen}
           options={{
-            tabBarLabel: 'Manage',
+            tabBarLabel: 'Manage Listings',
+          }}
+        />
+      )}
+
+      {/* Show Maintenance tab only to property managers and admins */}
+      {(userRole === 'propertyManager' || userRole === 'admin') && (
+        <Tab.Screen
+          name="Maintenance"
+          component={MaintenanceStackNavigator}
+          options={{
+            tabBarLabel: 'Maintenance',
+            headerShown: false,
           }}
         />
       )}
       
       {/* Show Admin tab only to admins */}
       {userRole === 'admin' && (
-        <Tab.Screen 
-          name="Admin" 
-          component={ProtectedAdminDashboard} 
+        <Tab.Screen
+          name="Admin"
+          component={ProtectedAdminDashboard}
           options={{
             tabBarLabel: 'Admin',
           }}

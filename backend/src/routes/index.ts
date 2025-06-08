@@ -11,6 +11,11 @@ import authRoutes from './authRoutes';
 import oauthRoutes from './oauthRoutes';
 import mfaRoutes from './mfaRoutes';
 import usersRoutes from './usersRoutes';
+import tenantRoutes from './tenantRoutes';
+import leaseRoutes from './leaseRoutes';
+import maintenanceRoutes from './maintenanceRoutes';
+import transactionRoutes from './transactionRoutes';
+import publishingRoutes from './publishingRoutes';
 
 const router = express.Router();
 
@@ -39,6 +44,11 @@ router.use(`${API_PREFIX}/auth`, authRoutes); // Primary authentication routes
 router.use(`${API_PREFIX}/auth`, oauthRoutes); // OAuth routes for Google authentication
 router.use(`${API_PREFIX}/mfa`, mfaRoutes); // Multi-factor authentication routes
 router.use(`${API_PREFIX}/users`, usersRoutes); // User management routes with inter-service endpoints
+router.use(`${API_PREFIX}/tenants`, tenantRoutes);
+router.use(`${API_PREFIX}/leases`, leaseRoutes);
+router.use(`${API_PREFIX}/maintenance`, maintenanceRoutes);
+router.use(`${API_PREFIX}/transactions`, transactionRoutes);
+router.use(`${API_PREFIX}/publish`, publishingRoutes);
 
 // 404 handler for API routes
 router.use(`${API_PREFIX}/*`, (req, res) => {
@@ -48,4 +58,4 @@ router.use(`${API_PREFIX}/*`, (req, res) => {
   });
 });
 
-export default router; 
+export default router;

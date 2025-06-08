@@ -7,7 +7,8 @@ export type MainTabParamList = {
   Messages: undefined;
   Profile: undefined;
   // Role-specific tabs
-  PropertyManager: undefined;
+  ManageListings: undefined;
+  Maintenance: undefined;
   Admin: undefined;
 };
 
@@ -25,4 +26,6 @@ export type RootStackParamList = {
   UnitDetail: { unitId: string };
   ChatDetail: { chatId: string; recipientName: string };
   Settings: undefined;
-}; 
+  MaintenanceRequests: undefined;
+  MaintenanceRequestDetails: { requestId: string };
+};
