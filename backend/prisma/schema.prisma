@@ -33,12 +33,15 @@ model User {
   receivedMessages    Message[]            @relation("ReceivedMessages")
   notifications       Notification[]
   listings            Listing[]
+  applications        Application[]
+  oauthConnections    OAuthConnection[]
 }
 
 enum UserRole {
   ADMIN
   PROPERTY_MANAGER
   TENANT
+  USER
 }
 
 // Property model
@@ -330,6 +333,10 @@ model Listing {
   authorId    String
   images      ListingImage[]
   campaigns   MarketingCampaign[]
+  publishedListings PublishedListing[]
+  aiListingSuggestions AIListingSuggestion[]
+  aiPricingSuggestions AIPricingSuggestion[]
+  applications         Application[]
 }
 
 enum ListingStatus {
@@ -382,4 +389,95 @@ model CampaignAnalytics {
   recordedAt  DateTime          @default(now())
   campaign    MarketingCampaign @relation(fields: [campaignId], references: [id])
   campaignId  String
+}
+
+model PublishedListing {
+  id          String    @id @default(cuid())
+  listingId   String
+  listing     Listing   @relation(fields: [listingId], references: [id])
+  platform    String // e.g., Zillow, Realtor.com
+  publishedAt DateTime  @default(now())
+  status      String    @default("ACTIVE") // e.g., ACTIVE, INACTIVE, EXPIRED
+  externalId  String?   @unique
+
+  @@unique([listingId, platform])
+}
+
+model AIListingSuggestion {
+  id        String   @id @default(cuid())
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  title     String?
+  description String?
+  tags      String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AIPricingSuggestion {
+  id        String   @id @default(cuid())
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  suggestedPrice Float
+  confidenceScore Float
+  reasoning String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Application {
+  id          String   @id @default(cuid())
+  listingId   String
+  listing     Listing  @relation(fields: [listingId], references: [id])
+  applicantId String
+  applicant   User     @relation(fields: [applicantId], references: [id])
+  status      ApplicationStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model OAuthConnection {
+  id           String   @id @default(cuid())
+  provider     PublishingPlatform
+  providerUserId String
+  accessToken  String   @db.Text
+  refreshToken String?  @db.Text
+  expiresAt    DateTime?
+  user         User     @relation(fields: [userId], references: [id])
+  userId       String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([provider, userId])
+}
+
+enum PublishingPlatform {
+  ZILLOW
+  REALTOR
+  FACEBOOK
+  CRAIGSLIST
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model MarketData {
+  id          String   @id @default(cuid())
+  propertyId  String?
+  listingId   String?
+  date        DateTime
+  source      String // e.g., Zillow, Redfin, manual
+  price       Float
+  pricePerSqFt Float?
+  bedrooms    Int?
+  bathrooms   Float?
+  zipCode     String
+  city        String
+  state       String
+  propertyType PropertyType?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

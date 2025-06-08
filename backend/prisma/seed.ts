@@ -6,6 +6,7 @@ import path from 'path';
 import mongoManager from '../src/utils/mongoManager';
 import '../src/models/mongoModels'; // Import models to register them with Mongoose
 import { seedAiContent } from './seed/data/aiContent';
+import { seedMarketData } from './seed/data/marketData';
 
 // Load environment variables
 dotenv.config({ path: path.resolve(__dirname, '../src/config/database.env') });
@@ -28,6 +29,7 @@ async function seedPostgres() {
       prisma.unitImage.deleteMany(),
       prisma.unit.deleteMany(),
       prisma.propertyImage.deleteMany(),
+      prisma.marketData.deleteMany(),
       prisma.property.deleteMany(),
       prisma.user.deleteMany(),
     ]);
@@ -132,6 +134,7 @@ async function seedMongo() {
 async function main() {
   try {
     await seedPostgres();
+    await seedMarketData();
     await seedMongo();
   } catch (error) {
     console.error('🔥 A critical error occurred during the seeding process. Halting execution.', error);

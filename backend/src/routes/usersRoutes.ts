@@ -3,8 +3,17 @@ import { prisma } from '../config/database';
 import { handleDatabaseError } from '../utils/dbUtils';
 import { authMiddleware } from '../middleware/authMiddleware';
 import { ServiceCommunicationError } from '../utils/serviceUtils';
+import { createUser, getUsers, getUser, updateUser, deleteUser } from '../controllers/userController';
 
 const router = express.Router();
+
+// Generic User CRUD routes
+router.post('/', authMiddleware.verifyToken, authMiddleware.checkRole(['ADMIN']), createUser);
+router.get('/', authMiddleware.verifyToken, authMiddleware.checkRole(['ADMIN']), getUsers);
+router.get('/:id', authMiddleware.verifyToken, authMiddleware.checkRole(['ADMIN']), getUser);
+router.put('/:id', authMiddleware.verifyToken, authMiddleware.checkRole(['ADMIN']), updateUser);
+router.delete('/:id', authMiddleware.verifyToken, authMiddleware.checkRole(['ADMIN']), deleteUser);
+
 
 /**
  * @route   GET /api/users/validate/:id
@@ -78,66 +87,5 @@ router.get('/basic/:id', async (req, res, next) => {
   }
 });
 
-/**
- * @route   GET /api/users
- * @desc    Get all users with pagination and filtering
- * @access  Private (Admin)
- */
-router.get('/', authMiddleware.verifyToken, authMiddleware.checkRole(['ADMIN']), async (req, res, next) => {
-  try {
-    const { page = '1', limit = '10', search, role } = req.query;
-    
-    const pageNum = parseInt(page as string, 10);
-    const limitNum = parseInt(limit as string, 10);
-    const skip = (pageNum - 1) * limitNum;
-    
-    // Build where clause for filtering
-    const where: any = {
-      ...(search && {
-        OR: [
-          { firstName: { contains: search as string, mode: 'insensitive' } },
-          { lastName: { contains: search as string, mode: 'insensitive' } },
-          { email: { contains: search as string, mode: 'insensitive' } }
-        ]
-      }),
-      ...(role && { role: role as string })
-    };
-    
-    // Get users and total count
-    const [users, total] = await Promise.all([
-      prisma.user.findMany({
-        where,
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          email: true,
-          role: true,
-          createdAt: true,
-          isActive: true,
-          mfaEnabled: true,
-          phone: true
-        },
-        skip,
-        take: limitNum,
-        orderBy: { createdAt: 'desc' }
-      }),
-      prisma.user.count({ where })
-    ]);
-    
-    res.json({
-      users,
-      pagination: {
-        total,
-        page: pageNum,
-        limit: limitNum,
-        totalPages: Math.ceil(total / limitNum)
-      }
-    });
-  } catch (error) {
-    next(handleDatabaseError(error));
-  }
-});
-
 // Export the router
-export default router; 
+export default router;
