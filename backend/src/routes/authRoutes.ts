@@ -1,31 +1,36 @@
 import express from 'express';
-import { register, login } from '../controllers/authController';
-import { validate } from '../middleware/validationMiddleware';
-import { check } from 'express-validator';
+import passport from 'passport';
+import { loginRateLimiter } from '../middleware/rateLimiter';
+import * as authController from '../controllers/authController';
 
 const router = express.Router();
 
-router.post(
-  '/register',
-  [
-    check('email').isEmail(),
-    check('password').isLength({ min: 8 }),
-    check('firstName').not().isEmpty(),
-    check('lastName').not().isEmpty(),
-    check('role').isIn(['PROPERTY_MANAGER', 'TENANT', 'OWNER']),
-  ],
-  validate,
-  register
+router.post('/login', loginRateLimiter, authController.login);
+
+router.post('/forgot-password', authController.forgotPassword);
+
+router.post('/reset-password', authController.resetPassword);
+
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+router.get(
+  '/google/callback',
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  (req, res) => {
+    // Successful authentication, redirect home.
+    res.redirect('/');
+  }
 );
 
-router.post(
-  '/login',
-  [
-    check('email').isEmail(),
-    check('password').exists(),
-  ],
-  validate,
-  login
+router.get('/facebook', passport.authenticate('facebook', { scope: ['email'] }));
+
+router.get(
+  '/facebook/callback',
+  passport.authenticate('facebook', { failureRedirect: '/login' }),
+  (req, res) => {
+    // Successful authentication, redirect home.
+    res.redirect('/');
+  }
 );
 
 export default router;

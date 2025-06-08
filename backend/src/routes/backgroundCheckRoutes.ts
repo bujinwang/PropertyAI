@@ -1,11 +1,8 @@
-import { Router } from 'express';
-import BackgroundCheckController from '../controllers/backgroundCheckController';
+import express from 'express';
+import * as backgroundCheckController from '../controllers/backgroundCheckController';
 
-const router = Router();
+const router = express.Router();
 
-router.post('/candidates', BackgroundCheckController.createCandidate);
-router.post('/reports', BackgroundCheckController.createReport);
-router.get('/reports/:id', BackgroundCheckController.getReport);
-router.post('/webhooks', BackgroundCheckController.handleWebhook);
+router.post('/', backgroundCheckController.performCheck);
 
 export default router;

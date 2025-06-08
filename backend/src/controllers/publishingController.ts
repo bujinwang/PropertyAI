@@ -1,19 +1,22 @@
 import { Request, Response, NextFunction } from 'express';
-import publishingService from '../services/publishingService';
+import { PrismaClient } from '@prisma/client';
+import { AppError } from '../middleware/errorMiddleware';
+import * as publishingService from '../services/publishingService';
 
-export const publishingController = {
-  async publishListing(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { listingId, platform } = req.body;
-      if (!listingId || !platform) {
-        return res.status(400).json({ message: 'Missing listingId or platform' });
-      }
-      const result = await publishingService.publishListing(listingId, platform);
-      res.json(result);
-    } catch (error) {
-      next(error);
+const prisma = new PrismaClient();
+
+export const publishListing = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { listingId, platforms } = req.body;
+    const listing = await prisma.listing.findUnique({ where: { id: listingId } });
+
+    if (!listing) {
+      return next(new AppError('Listing not found', 404));
     }
-  },
-};
 
-export default publishingController;
+    const results = await publishingService.publishToListingPlatforms(listing, platforms);
+    res.json(results);
+  } catch (error) {
+    next(error);
+  }
+};

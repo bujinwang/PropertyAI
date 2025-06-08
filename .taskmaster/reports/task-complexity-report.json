@@ -1,9 +1,9 @@
 {
   "meta": {
-    "generatedAt": "2025-06-08T04:31:53.275Z",
-    "tasksAnalyzed": 2,
-    "totalTasks": 12,
-    "analysisCount": 18,
+    "generatedAt": "2025-06-08T15:18:01.250Z",
+    "tasksAnalyzed": 1,
+    "totalTasks": 157,
+    "analysisCount": 19,
     "thresholdScore": 5,
     "projectName": "Taskmaster",
     "usedResearch": true
@@ -152,6 +152,14 @@
       "recommendedSubtasks": 6,
       "expansionPrompt": "Break down the 'Implement Advanced Security Features (Login Protection)' task into subtasks for: backend implementation of rate limiting for login attempts, backend logic for account lockout after multiple failed attempts (including unlock mechanisms), secure password reset flow (token generation, email dispatch, token validation, password update), frontend UI for password reset requests and form submission, user notification system for these events, and thorough testing of all protection mechanisms.",
       "reasoning": "Moderate complexity due to implementing three distinct login protection mechanisms (rate limiting, account lockout, secure password reset). Each requires careful backend logic, state management, potential UI components, and robust security considerations, particularly for the password reset flow to prevent vulnerabilities."
+    },
+    {
+      "taskId": 70,
+      "taskTitle": "Frontend (Web): UI for Tenant Screening & Application Processing",
+      "complexityScore": 8,
+      "recommendedSubtasks": 6,
+      "expansionPrompt": "Break down the 'UI for Tenant Screening & Application Processing' into subtasks. Consider distinct UI sections for: 1. Applicant data entry forms (e.g., personal info, rental history, income). 2. Document upload functionality for applicants. 3. Landlord/Agent view for initiating screening and viewing consolidated application list. 4. Detailed application view for landlords, including screening results display. 5. UI for landlords to approve, reject, or request more information on applications. 6. Applicant view for tracking application status and communications. Ensure each subtask addresses a specific user flow or UI component.",
+      "reasoning": "This task involves multiple complex UI components and user flows for both applicants and property managers, covering data input, document management, results visualization, and status tracking. A significant number of subtasks is needed for manageable development and clear separation of concerns."
     }
   ]
 }

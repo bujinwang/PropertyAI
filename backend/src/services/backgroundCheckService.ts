@@ -1,34 +1,26 @@
-import Checkr from 'checkr';
+import { Application } from '@prisma/client';
+import { AppError } from '../middleware/errorMiddleware';
 
-class BackgroundCheckService {
-  private checkr: any;
+const TRANSUNION_API_URL = 'https://api.transunion.com/v1';
 
-  constructor() {
-    this.checkr = new Checkr(process.env.CHECKR_API_KEY);
+const getAuthHeaders = () => ({
+  'Authorization': `Bearer ${process.env.TRANSUNION_API_KEY}`,
+  'Content-Type': 'application/json',
+});
+
+export const performBackgroundCheck = async (application: Application): Promise<any> => {
+  const response = await fetch(`${TRANSUNION_API_URL}/background-check`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({
+      applicantId: application.applicantId,
+      // ... other applicant data
+    }),
+  });
+
+  if (!response.ok) {
+    throw new AppError('Failed to perform background check', response.status);
   }
 
-  async createCandidate(data: {
-    first_name: string;
-    last_name: string;
-    email: string;
-    phone: string;
-    zipcode: string;
-    dob: string;
-    ssn: string;
-  }) {
-    return this.checkr.candidates.create(data);
-  }
-
-  async createReport(candidateId: string, pkg: string) {
-    return this.checkr.reports.create({
-      candidate_id: candidateId,
-      package: pkg,
-    });
-  }
-
-  async getReport(reportId: string) {
-    return this.checkr.reports.get(reportId);
-  }
-}
-
-export default new BackgroundCheckService();
+  return response.json();
+};

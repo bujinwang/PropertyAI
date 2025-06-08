@@ -109,6 +109,37 @@ paths:
                   token:
                     type: string
 
+  /mfa/enable:
+    post:
+      summary: Enable MFA for a user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: MFA enabled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  secret:
+                    type: string
+                  qrCode:
+                    type: string
+                  backupCodes:
+                    type: array
+                    items:
+                      type: string
+
+  /mfa/disable:
+    post:
+      summary: Disable MFA for a user
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: No content
+
 components:
   schemas:
     User:

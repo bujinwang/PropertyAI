@@ -1,20 +1,22 @@
-import { Request, Response } from 'express';
-import DocumentVerificationService from '../services/documentVerificationService';
+import { Request, Response, NextFunction } from 'express';
+import { PrismaClient } from '@prisma/client';
+import { AppError } from '../middleware/errorMiddleware';
+import * as documentVerificationService from '../services/documentVerificationService';
 
-class DocumentVerificationController {
-  async analyzeDocument(req: Request, res: Response) {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ message: 'No file uploaded' });
-      }
-      const result = await DocumentVerificationService.analyzeDocument(
-        req.file.path
-      );
-      res.status(200).json(result);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
+const prisma = new PrismaClient();
+
+export const verify = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { documentId } = req.body;
+    const document = await prisma.document.findUnique({ where: { id: documentId } });
+
+    if (!document) {
+      return next(new AppError('Document not found', 404));
     }
-  }
-}
 
-export default new DocumentVerificationController();
+    const verification = await documentVerificationService.verifyDocument(document);
+    res.json(verification);
+  } catch (error) {
+    next(error);
+  }
+};

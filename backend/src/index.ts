@@ -7,6 +7,25 @@ import * as dotenv from 'dotenv';
 import { prisma, connectMongoDB, setupPostgreSQL, setupMongoDB, closeDatabaseConnections } from './config/database';
 import configurePassport from './config/passport';
 import routes from './routes';
+import authRoutes from './routes/authRoutes';
+import aiRoutes from './routes/aiRoutes';
+import publishingRoutes from './routes/publishingRoutes';
+import socialMediaRoutes from './routes/socialMediaRoutes';
+import photoRoutes from './routes/photoRoutes';
+import seoRoutes from './routes/seoRoutes';
+import voiceRoutes from './routes/voiceRoutes';
+import aiRoutingRoutes from './routes/aiRouting.routes';
+import predictiveMaintenanceRoutes from './routes/predictiveMaintenance.routes';
+import costEstimationRoutes from './routes/costEstimation.routes';
+import vendorPerformanceRoutes from './routes/vendorPerformance.routes';
+import photoAnalysisRoutes from './routes/photoAnalysis.routes';
+import maintenanceRequestCategorizationRoutes from './routes/maintenanceRequestCategorization.routes';
+import emergencyRoutingRoutes from './routes/emergencyRouting.routes';
+import maintenanceResponseTimeRoutes from './routes/maintenanceResponseTime.routes';
+import schedulingRoutes from './routes/scheduling.routes';
+import riskAssessmentRoutes from './routes/riskAssessment.routes';
+import tenantIssuePredictionRoutes from './routes/tenantIssuePrediction.routes';
+import backgroundCheckRoutes from './routes/backgroundCheck.routes';
 import path from 'path';
 import http from 'http';
 import WebSocketService from './services/webSocketService';
@@ -46,11 +65,37 @@ configurePassport();
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Register API routes
+app.use('/api/auth', authRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/publishing', publishingRoutes);
+app.use('/api/social-media', socialMediaRoutes);
+app.use('/api/photo', photoRoutes);
+app.use('/api/seo', seoRoutes);
+app.use('/api/voice', voiceRoutes);
+app.use('/api/ai-routing', aiRoutingRoutes);
+app.use('/api/predictive-maintenance', predictiveMaintenanceRoutes);
+app.use('/api/cost-estimation', costEstimationRoutes);
+app.use('/api/vendor-performance', vendorPerformanceRoutes);
+app.use('/api/photo-analysis', photoAnalysisRoutes);
+app.use(
+  '/api/maintenance-request-categorization',
+  maintenanceRequestCategorizationRoutes
+);
+app.use('/api/emergency-routing', emergencyRoutingRoutes);
+app.use('/api/maintenance-response-time', maintenanceResponseTimeRoutes);
+app.use('/api/scheduling', schedulingRoutes);
+app.use('/api/risk-assessment', riskAssessmentRoutes);
+app.use('/api/tenant-issue-prediction', tenantIssuePredictionRoutes);
+app.use('/api/background-check', backgroundCheckRoutes);
 app.use(routes);
 
 // Global error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('Unhandled error:', err);
+  if (err.name === 'RateLimitExceeded') {
+    console.warn(`Rate limit exceeded for IP ${req.ip}: ${err.message}`);
+  } else {
+    console.error('Unhandled error:', err);
+  }
   
   const statusCode = err.statusCode || 500;
   const message = err.message || 'Internal server error';

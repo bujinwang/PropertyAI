@@ -1,0 +1,54 @@
+.oauth-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  color: white;
+  transition: background-color 0.3s;
+}
+
+.oauth-button .icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+}
+
+.oauth-button.google {
+  background-color: #4285F4;
+}
+
+.oauth-button.facebook {
+  background-color: #1877F2;
+}
+
+.oauth-button:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.oauth-button:active:not(:disabled) {
+  opacity: 0.8;
+}
+
+.oauth-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.oauth-button .loader {
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top: 4px solid white;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

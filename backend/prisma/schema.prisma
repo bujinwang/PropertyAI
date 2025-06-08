@@ -26,6 +26,9 @@ model User {
   isActive            Boolean              @default(true)
   passwordResetToken  String?
   passwordResetExpires DateTime?
+  failedLoginAttempts Int                  @default(0)
+  isLocked            Boolean              @default(false)
+  lockedUntil         DateTime?
   propertiesManaged   Property[]           @relation("PropertyManager")
   propertiesOwned     Property[]           @relation("PropertyOwner")
   units               Unit[]               @relation("UnitTenant")
@@ -40,6 +43,8 @@ model User {
   vendorPerformanceRatings VendorPerformanceRating[]
   auditEntries             AuditEntry[]
   leases              Lease[]
+  vendor              Vendor?
+  tenantIssuePredictions TenantIssuePrediction[]
 }
 
 enum UserRole {
@@ -47,6 +52,7 @@ enum UserRole {
   PROPERTY_MANAGER
   TENANT
   USER
+  VENDOR
 }
 
 // Property model
@@ -127,6 +133,7 @@ model Unit {
   maintenanceRequests MaintenanceRequest[]
   images              UnitImage[] // Relation to unit images
   listing             Listing?
+  predictiveMaintenance PredictiveMaintenance[]
 }
 
 // UnitImage model for storing unit images
@@ -204,6 +211,77 @@ enum DocumentType {
   OTHER
 }
 
+model Vendor {
+  id                  String               @id @default(uuid())
+  name                String
+  contactPerson       User?                @relation(fields: [contactPersonId], references: [id])
+  contactPersonId     String?              @unique
+  phone               String
+  email               String               @unique
+  address             String
+  specialty           String // e.g., Plumbing, Electrical
+  workOrders          WorkOrderAssignment[]
+  quotes              WorkOrderQuote[]
+  emergencyRoutingRules EmergencyRoutingRule[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+}
+
+model WorkOrder {
+  id                   String               @id @default(uuid())
+  title                String
+  description          String
+  status               WorkOrderStatus      @default(OPEN)
+  priority             Priority
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  completedAt          DateTime?
+  maintenanceRequest   MaintenanceRequest   @relation(fields: [maintenanceRequestId], references: [id])
+  maintenanceRequestId String               @unique
+  assignments          WorkOrderAssignment[]
+  quotes               WorkOrderQuote[]
+  costEstimation       CostEstimation?
+  scheduledEvent       ScheduledEvent?
+}
+
+enum WorkOrderStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+model WorkOrderAssignment {
+  id          String    @id @default(uuid())
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+  workOrderId String
+  vendor      Vendor    @relation(fields: [vendorId], references: [id])
+  vendorId    String
+  assignedAt  DateTime  @default(now())
+  notes       String?
+}
+
+model WorkOrderQuote {
+  id          String   @id @default(uuid())
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+  workOrderId String
+  vendor      Vendor   @relation(fields: [vendorId], references: [id])
+  vendorId    String
+  amount      Float
+  details     String?
+  status      QuoteStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum QuoteStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
 // Maintenance request model
 model MaintenanceRequest {
   id            String            @id @default(uuid())
@@ -222,11 +300,15 @@ model MaintenanceRequest {
   unitId        String
   requestedBy   User              @relation("RequestedBy", fields: [requestedById], references: [id])
   requestedById String
-  assignedToId  String?
+  workOrder     WorkOrder?
   estimatedCost Float?
   actualCost    Float?
   documents     Document[]
   messages      Message[]
+  photoAnalysis PhotoAnalysis?
+  category      MaintenanceRequestCategory? @relation(fields: [categoryId], references: [id])
+  categoryId    String?
+  responseTime  MaintenanceResponseTime?
 }
 
 enum MaintenanceStatus {
@@ -324,6 +406,7 @@ model MessageReference {
 // Listing model for marketing and syndication
 model Listing {
   id          String              @id @default(uuid())
+  slug        String              @unique
   title       String
   description String              @db.Text
   price       Float
@@ -455,6 +538,8 @@ model Application {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   backgroundChecks BackgroundCheck[]
+  screening   Screening?
+  riskAssessment RiskAssessment?
 }
 
 model OAuthConnection {
@@ -483,6 +568,36 @@ enum ApplicationStatus {
   PENDING
   ACCEPTED
   REJECTED
+}
+
+model Screening {
+  id            String      @id @default(cuid())
+  applicationId String      @unique
+  application   Application @relation(fields: [applicationId], references: [id])
+  status        ScreeningStatus @default(PENDING)
+  creditScore   Int?
+  income        Float?
+  employmentStatus String?
+  rentalHistory String?
+  criminalHistory String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+enum ScreeningStatus {
+  PENDING
+  PASSED
+  FAILED
+}
+
+model RiskAssessment {
+  id            String      @id @default(cuid())
+  applicationId String      @unique
+  application   Application @relation(fields: [applicationId], references: [id])
+  score         Float
+  summary       String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 }
 
 model MarketData {
@@ -554,4 +669,97 @@ model PerformanceMetric {
   scaleType   String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+model PredictiveMaintenance {
+  id                  String    @id @default(cuid())
+  unitId              String
+  unit                Unit      @relation(fields: [unitId], references: [id])
+  predictionDate      DateTime
+  predictedFailureDate DateTime
+  confidence          Float
+  component           String
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+model CostEstimation {
+  id                   String    @id @default(cuid())
+  workOrderId          String    @unique
+  workOrder            WorkOrder @relation(fields: [workOrderId], references: [id])
+  estimatedCost        Float
+  confidence           Float
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+}
+
+model PhotoAnalysis {
+  id                   String             @id @default(cuid())
+  maintenanceRequestId String             @unique
+  maintenanceRequest   MaintenanceRequest @relation(fields: [maintenanceRequestId], references: [id])
+  issuesDetected       String[]
+  severity             String
+  recommendations      String
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+}
+
+model MaintenanceRequestCategory {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  requests    MaintenanceRequest[]
+  emergencyRoutingRules EmergencyRoutingRule[]
+}
+
+model EmergencyRoutingRule {
+  id          String   @id @default(cuid())
+  priority    Priority
+  categoryId  String
+  category    MaintenanceRequestCategory @relation(fields: [categoryId], references: [id])
+  vendorId    String
+  vendor      Vendor   @relation(fields: [vendorId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model MaintenanceResponseTime {
+  id                   String             @id @default(cuid())
+  maintenanceRequestId String             @unique
+  maintenanceRequest   MaintenanceRequest @relation(fields: [maintenanceRequestId], references: [id])
+  responseTime         Int // in minutes
+  createdAt            DateTime           @default(now())
+}
+
+model ScheduledEvent {
+  id                   String    @id @default(cuid())
+  workOrderId          String    @unique
+  workOrder            WorkOrder @relation(fields: [workOrderId], references: [id])
+  startTime            DateTime
+  endTime              DateTime
+  googleCalendarEventId String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+}
+
+model TenantIssuePrediction {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      User     @relation(fields: [tenantId], references: [id])
+  prediction  String
+  confidence  Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SocialMediaPlatformConfig {
+  id           String   @id @default(cuid())
+  platformName String   @unique
+  apiKey       String
+  apiSecret    String
+  accessToken  String
+  clientId     String
+  isEnabled    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
