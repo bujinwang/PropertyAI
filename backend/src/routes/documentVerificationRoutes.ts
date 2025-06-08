@@ -1,14 +1,8 @@
-import { Router } from 'express';
-import DocumentVerificationController from '../controllers/documentVerificationController';
-import multer from 'multer';
+import express from 'express';
+import * as documentVerificationController from '../controllers/documentVerificationController';
 
-const upload = multer({ dest: 'uploads/' });
-const router = Router();
+const router = express.Router();
 
-router.post(
-  '/',
-  upload.single('document'),
-  DocumentVerificationController.analyzeDocument
-);
+router.post('/verify', documentVerificationController.verify);
 
 export default router;

@@ -3,16 +3,18 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 class AuditService {
-  async createEntry(data: {
-    userId: string;
-    action: string;
-    details?: string;
-  }) {
-    return prisma.auditEntry.create({ data });
-  }
-
-  async getEntries() {
-    return prisma.auditEntry.findMany();
+  async createAuditEntry(
+    userId: string,
+    action: string,
+    details?: string
+  ) {
+    await prisma.auditEntry.create({
+      data: {
+        userId,
+        action,
+        details,
+      },
+    });
   }
 }
 

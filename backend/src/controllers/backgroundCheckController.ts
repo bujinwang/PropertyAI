@@ -1,63 +1,22 @@
-import { Request, Response } from 'express';
-import BackgroundCheckService from '../services/backgroundCheckService';
+import { Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { AppError } from '../middleware/errorMiddleware';
+import * as backgroundCheckService from '../services/backgroundCheckService';
 
 const prisma = new PrismaClient();
 
-class BackgroundCheckController {
-  async createCandidate(req: Request, res: Response) {
-    try {
-      const candidate = await BackgroundCheckService.createCandidate(req.body);
-      res.status(201).json(candidate);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  }
+export const performCheck = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { applicationId } = req.body;
+    const application = await prisma.application.findUnique({ where: { id: applicationId } });
 
-  async createReport(req: Request, res: Response) {
-    try {
-      const report = await BackgroundCheckService.createReport(
-        req.body.candidateId,
-        req.body.package
-      );
-      await prisma.backgroundCheck.create({
-        data: {
-          applicationId: req.body.applicationId,
-          vendor: 'checkr',
-          vendorId: report.id,
-          status: report.status,
-        },
-      });
-      res.status(201).json(report);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
+    if (!application) {
+      return next(new AppError('Application not found', 404));
     }
-  }
 
-  async getReport(req: Request, res: Response) {
-    try {
-      const report = await BackgroundCheckService.getReport(req.params.id);
-      res.status(200).json(report);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
+    const checkResult = await backgroundCheckService.performBackgroundCheck(application);
+    res.json(checkResult);
+  } catch (error) {
+    next(error);
   }
-
-  async handleWebhook(req: Request, res: Response) {
-    try {
-      const event = req.body;
-      if (event.type === 'report.completed') {
-        const report = event.data.object;
-        await prisma.backgroundCheck.update({
-          where: { vendorId: report.id },
-          data: { status: report.status },
-        });
-      }
-      res.status(200).send();
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  }
-}
-
-export default new BackgroundCheckController();
+};

@@ -1,26 +1,19 @@
-import { TextractClient, AnalyzeDocumentCommand } from '@aws-sdk/client-textract';
-import fs from 'fs';
+import { Document } from '@prisma/client';
+import { AppError } from '../middleware/errorMiddleware';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-class DocumentVerificationService {
-  private client: TextractClient;
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
-  constructor() {
-    this.client = new TextractClient({ region: 'us-east-1' });
-  }
+export const verifyDocument = async (document: Document): Promise<any> => {
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
 
-  async analyzeDocument(filePath: string) {
-    const file = fs.readFileSync(filePath);
+  const prompt = `Verify the following document and extract key information:
+  
+  Document URL: ${document.url}
+  Document Type: ${document.type}`;
 
-    const command = new AnalyzeDocumentCommand({
-      Document: {
-        Bytes: file,
-      },
-      FeatureTypes: ['FORMS'],
-    });
-
-    const response = await this.client.send(command);
-    return response;
-  }
-}
-
-export default new DocumentVerificationService();
+  const result = await model.generateContent(prompt);
+  const response = await result.response;
+  const verification = response.text();
+  return JSON.parse(verification);
+};

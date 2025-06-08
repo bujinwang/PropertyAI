@@ -1,24 +1,81 @@
 import { Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
-import AppError from '../middleware/errorMiddleware';
-import aiService from '../services/aiService';
+import { AppError } from '../middleware/errorMiddleware';
+import * as aiService from '../services/aiService';
 
 const prisma = new PrismaClient();
 
 export const generateDescription = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { listingId } = req.params;
+    const { propertyId } = req.params;
+    const { photos, details } = req.body;
+
     const listing = await prisma.listing.findUnique({
-      where: { id: listingId },
-      include: { property: true, unit: true },
+      where: { id: propertyId },
     });
 
     if (!listing) {
       return next(new AppError('Listing not found', 404));
     }
 
-    const description = await aiService.generateListingDescription(listing);
+    const description = await aiService.generatePropertyDescription(photos, details);
+    
+    await prisma.listing.update({
+        where: { id: propertyId },
+        data: { description },
+    });
+
     res.json({ description });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const assessRisk = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { applicantData } = req.body;
+    const assessment = await aiService.assessApplicantRisk(applicantData);
+    res.json(assessment);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const followUp = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { conversation } = req.body;
+    const response = await aiService.generateFollowUp(conversation);
+    res.json({ response });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const sentiment = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { text } = req.body;
+    const sentiment = await aiService.analyzeSentiment(text);
+    res.json(sentiment);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const translate = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { text, targetLanguage } = req.body;
+    const translatedText = await aiService.translateText(text, targetLanguage);
+    res.json({ translatedText });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const smartResponse = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { message } = req.body;
+    const response = await aiService.generateSmartResponse(message);
+    res.json({ response });
   } catch (error) {
     next(error);
   }

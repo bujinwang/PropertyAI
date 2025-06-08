@@ -20,3 +20,7 @@ export const verifyToken = (token: string): any => {
     return null;
   }
 };
+
+export const generateRecoveryToken = (): string => {
+  return require('crypto').randomBytes(32).toString('hex');
+};

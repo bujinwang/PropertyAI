@@ -1,37 +1,27 @@
-import { PrismaClient } from '@prisma/client';
+import { Listing } from '@prisma/client';
+import * as zillowService from './zillowService';
+import * as apartmentsComService from './apartmentsComService';
 
-const prisma = new PrismaClient();
+export const publishToListingPlatforms = async (listing: Listing, platforms: string[]) => {
+  const results: any = {};
 
-export const publishingService = {
-  async publishListing(listingId: string, platform: 'Zillow' | 'Realtor.com'): Promise<{ success: boolean; message: string; publishedListing: any }> {
-    const listing = await (prisma as any).listing.findUnique({
-      where: { id: listingId },
-    });
-
-    if (!listing) {
-      throw new Error('Listing not found');
+  if (platforms.includes('zillow')) {
+    try {
+      const result = await zillowService.publishToZillow(listing);
+      results.zillow = { success: true, data: result };
+    } catch (error) {
+      results.zillow = { success: false, error: (error as Error).message };
     }
+  }
 
-    // In a real implementation, this would make an API call to the specified platform.
-    console.log(`Publishing listing ${listingId} to ${platform}...`);
+  if (platforms.includes('apartments.com')) {
+    try {
+      const result = await apartmentsComService.publishToApartmentsCom(listing);
+      results['apartments.com'] = { success: true, data: result };
+    } catch (error) {
+      results['apartments.com'] = { success: false, error: (error as Error).message };
+    }
+  }
 
-    const publishedListing = await (prisma as any).publishedListing.create({
-      data: {
-        listingId,
-        platform,
-        status: 'PUBLISHED',
-        externalId: `https://www.${platform.toLowerCase()}.com/homedetails/${listingId}`,
-      },
-    });
-
-    // Simulate API call
-    return new Promise(resolve => {
-      setTimeout(() => {
-        console.log(`Successfully published listing ${listingId} to ${platform}.`);
-        resolve({ success: true, message: `Listing published to ${platform}`, publishedListing });
-      }, 1000);
-    });
-  },
+  return results;
 };
-
-export default publishingService;

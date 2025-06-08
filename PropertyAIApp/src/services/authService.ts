@@ -35,6 +35,68 @@ class AuthService {
     const credentials = await Keychain.getGenericPassword();
     return credentials ? credentials.password : null;
   }
+
+  async getMfaSetupUri() {
+    const token = await this.getToken();
+    const response = await fetch('/api/mfa/enable', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.json();
+  }
+
+  async getMfaSecret() {
+    const token = await this.getToken();
+    const response = await fetch('/api/mfa/manual-secret', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.json();
+  }
+
+  async verifyMfa(code: string) {
+    const token = await this.getToken();
+    const response = await fetch('/api/mfa/verify-setup', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ code }),
+    });
+    return response.json();
+  }
+
+  async verifyMfaLogin(code: string) {
+    const token = await this.getToken();
+    const response = await fetch('/api/auth/mfa/verify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ code }),
+    });
+    return response.json();
+  }
+
+  async resendMfaCode() {
+    const token = await this.getToken();
+    const response = await fetch('/api/auth/mfa/resend-code', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.json();
+  }
 }
 
 export default new AuthService();

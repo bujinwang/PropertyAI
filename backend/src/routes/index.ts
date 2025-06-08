@@ -29,11 +29,14 @@ import backgroundCheckRoutes from './backgroundCheckRoutes';
 import auditRoutes from './auditRoutes';
 import paymentRoutes from './paymentRoutes';
 import reminderRoutes from './reminderRoutes';
+import { rateLimiter } from '../middleware/rateLimitMiddleware';
 
 const router = express.Router();
 
 // API version prefix
 const API_PREFIX = '/api';
+
+router.use(API_PREFIX, rateLimiter);
 
 // Health check endpoint
 router.get(`${API_PREFIX}/health`, (req, res) => {
