@@ -1,0 +1,10 @@
+data_sources:
+  csv_files:
+    - /path/to/your/data1.csv
+    - /path/to/your/data2.csv
+  sql_database:
+    connection_string: "your_connection_string"
+    query: "SELECT * FROM your_table"
+
+model_artifacts:
+  path: "models/artifacts"

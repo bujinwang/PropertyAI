@@ -18,6 +18,7 @@ import aiContentRoutes from './routes/aiContentRoutes';
 import modelTrainingRoutes from './routes/modelTraining.routes';
 import dataPreprocessingRoutes from './routes/dataPreprocessing.routes';
 import modelRegistryRoutes from './routes/modelRegistry.routes';
+import photoEnhancementRoutes from './routes/photoEnhancement.routes';
 import monitoringRoutes from './routes/monitoring.routes';
 import { responseTimeTracker } from './services/apiPerformance.service';
 import { httpRequestCounter, httpRequestDurationMicroseconds } from './services/monitoring.service';
@@ -69,6 +70,7 @@ app.use('/api/ai-content', aiContentRoutes);
 app.use('/api/model-training', modelTrainingRoutes);
 app.use('/api/data-preprocessing', dataPreprocessingRoutes);
 app.use('/api/model-registry', modelRegistryRoutes);
+app.use('/api/photo-enhancement', photoEnhancementRoutes);
 app.use('/metrics', monitoringRoutes);
 
 // Health check endpoint

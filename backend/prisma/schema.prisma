@@ -50,6 +50,7 @@ model User {
   onCallRotations       OnCallRotation[]
   apiKeys               ApiKey[]
   roles                 Role[]
+  consents            Consent[]
 
   @@index([role])
   @@index([isActive])
@@ -970,4 +971,13 @@ model ApiKey {
   expiresAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Consent {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  consent   Boolean
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

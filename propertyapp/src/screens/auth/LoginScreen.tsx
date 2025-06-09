@@ -13,7 +13,7 @@ import {
   Image,
 } from 'react-native';
 import { FormInput } from '@/components/ui/FormInput';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/@propertyai/shared/components/Button';
 import { COLORS, FONTS, SPACING } from '@/constants/theme';
 import { useAuth } from '@/contexts';
 import { validateEmail, validatePassword } from '@/utils/validation';
