@@ -1,7 +1,7 @@
 import React, { ReactElement } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useAuth } from '@/contexts';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/@propertyai/shared/components/Button';
 import { UserRole } from '@/types/auth';
 
 interface ProtectedRouteProps {

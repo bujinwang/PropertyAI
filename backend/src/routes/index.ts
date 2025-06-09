@@ -15,7 +15,6 @@ import tenantRoutes from './tenantRoutes';
 import leaseRoutes from './leaseRoutes';
 import maintenanceRoutes from './maintenanceRoutes';
 import transactionRoutes from './transactionRoutes';
-import publishingRoutes from './publishingRoutes';
 import passwordResetRoutes from './passwordResetRoutes';
 import aiRoutes from './aiRoutes';
 import knowledgeBaseRoutes from './knowledgeBaseRoutes';
@@ -31,6 +30,11 @@ import paymentRoutes from './paymentRoutes';
 import reminderRoutes from './reminderRoutes';
 import { rateLimiter } from '../middleware/rateLimitMiddleware';
 import databaseOptimizationRoutes from './databaseOptimization.routes';
+import propertyDescriptionRoutes from './propertyDescription.routes';
+import pricingRoutes from './pricing.routes';
+import photoEnhancementRoutes from './photoEnhancement.routes';
+import seoRoutes from './seo.routes';
+import publishingRoutes from './publishing.routes';
 import { cacheMiddleware, clearCache } from '../utils/cache';
 
 const router = express.Router();
@@ -81,6 +85,11 @@ router.use(`${API_PREFIX}/audit`, auditRoutes);
 router.use(`${API_PREFIX}/payments`, paymentRoutes);
 router.use(`${API_PREFIX}/reminders`, reminderRoutes);
 router.use(`${API_PREFIX}/database`, databaseOptimizationRoutes);
+router.use(`${API_PREFIX}/property-descriptions`, propertyDescriptionRoutes);
+router.use(`${API_PREFIX}/pricing`, pricingRoutes);
+router.use(`${API_PREFIX}/photo-enhancement`, photoEnhancementRoutes);
+router.use(`${API_PREFIX}/seo`, seoRoutes);
+router.use(`${API_PREFIX}/publishing`, publishingRoutes);
 
 router.post(`${API_PREFIX}/cache/clear`, (req, res) => {
   const { key } = req.body;

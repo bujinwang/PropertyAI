@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, SafeAreaView, ScrollView } from 'react-native';
-import { Button } from '@components/ui/Button';
+import { Button } from '@@propertyai/shared/components/Button';
 import { useAuth } from '@/contexts';
 import { PermissionGate } from '@/components/auth/PermissionGate';
 
