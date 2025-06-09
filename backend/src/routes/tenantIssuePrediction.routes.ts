@@ -1,8 +1,10 @@
 import { Router } from 'express';
-import { tenantIssuePredictionController } from '../controllers/tenantIssuePrediction.controller';
+import * as tenantIssuePredictionController from '../controllers/tenantIssuePrediction.controller';
 
 const router = Router();
 
-router.post('/predict/:tenantId', tenantIssuePredictionController.predictIssues);
+router.get('/', tenantIssuePredictionController.getTenantIssuePredictions);
+router.get('/:id', tenantIssuePredictionController.getTenantIssuePredictionById);
+router.post('/predict/:tenantId', tenantIssuePredictionController.predictTenantIssues);
 
 export default router;

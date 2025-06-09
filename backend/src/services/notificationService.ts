@@ -1,38 +1,19 @@
-import { User } from '@prisma/client';
-import { Notification } from '../models/mongo/Notification';
+import { sendEmail } from './emailService';
+import { sendSms } from './smsService';
+import { sendPushNotification } from './pushNotificationService';
 
-class NotificationService {
-  async createNotification(
-    userId: string,
-    title: string,
-    message: string,
-    type: string,
-    relatedId?: string,
-    relatedType?: string
-  ) {
-    const notification = new Notification({
-      userId,
-      title,
-      message,
-      type,
-      relatedId,
-      relatedType,
-    });
-    await notification.save();
-    return notification;
+export const sendNotification = async (channel: 'email' | 'sms' | 'push', to: string, subject: string, message: string) => {
+  switch (channel) {
+    case 'email':
+      await sendEmail(to, subject, message);
+      break;
+    case 'sms':
+      await sendSms(to, message);
+      break;
+    case 'push':
+      await sendPushNotification(to, subject, message);
+      break;
+    default:
+      throw new Error(`Invalid notification channel: ${channel}`);
   }
-
-  async getNotifications(userId: string) {
-    return Notification.find({ userId });
-  }
-
-  async markAsRead(notificationId: string) {
-    return Notification.findByIdAndUpdate(
-      notificationId,
-      { isRead: true },
-      { new: true }
-    );
-  }
-}
-
-export default new NotificationService();
+};

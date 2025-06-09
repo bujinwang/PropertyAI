@@ -1,15 +1,15 @@
 import { PrismaClient } from '@prisma/client';
 import mongoose from 'mongoose';
 import * as dotenv from 'dotenv';
-import dbManager from '../utils/dbManager';
+import dbManager, { prisma } from '../utils/dbManager';
+export { prisma };
 import mongoManager from '../utils/mongoManager';
 import { postgresConfig, getDatabaseUrl } from './database.config';
 import { mongoConfig } from './mongodb.config';
 
 dotenv.config();
 
-// Initialize Prisma client with extended options
-export const prisma = dbManager.createPrismaClient();
+// Prisma client is now imported from dbManager
 
 // MongoDB connection function
 export const connectMongoDB = async (): Promise<void> => {
@@ -62,18 +62,18 @@ export const setupPostgreSQL = async (): Promise<void> => {
     console.log('Setting up PostgreSQL...');
     
     // Verify database connection
-    const isConnected = await dbManager.checkDatabaseHealth(prisma);
+    const isConnected = await dbManager.checkDatabaseHealth();
     if (!isConnected) {
       throw new Error('Failed to connect to PostgreSQL database');
     }
     
     // Apply security settings for PostgreSQL
     if (process.env.NODE_ENV === 'production') {
-      await dbManager.applySecuritySettings(prisma);
+      await dbManager.applySecuritySettings();
     }
     
     // Initialize PostgreSQL with recommended settings
-    await dbManager.initializeDatabase(prisma);
+    await dbManager.initializeDatabase();
     
     // Set up scheduled database backups if enabled
     if (postgresConfig.backup.enabled) {
@@ -82,7 +82,7 @@ export const setupPostgreSQL = async (): Promise<void> => {
     
     // Perform database optimization if in production or explicitly requested
     if (process.env.NODE_ENV === 'production' || process.env.OPTIMIZE_DB === 'true') {
-      await dbManager.optimizeDatabase(prisma);
+      await dbManager.optimizeDatabase();
     }
     
     console.log('PostgreSQL setup completed successfully');
@@ -108,7 +108,7 @@ export const checkDatabaseConnections = async (): Promise<{ mongodb: boolean; po
 
   try {
     // Check PostgreSQL connection via dbManager
-    result.postgresql = await dbManager.checkDatabaseHealth(prisma);
+    result.postgresql = await dbManager.checkDatabaseHealth();
   } catch (error) {
     console.error('PostgreSQL connection check failed:', error);
   }
@@ -145,4 +145,4 @@ export const connectRedis = async (): Promise<void> => {
     console.error('Redis connection error:', error);
   }
 };
-*/ 
+*/

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { generateMFASecret, verifyMFAToken } from '../services/mfaService';
-import AppError from '../middleware/errorMiddleware';
+import { generateMFASecret, verifyTOTP } from '../services/mfaService';
+import { AppError } from '../middleware/errorMiddleware';
 
 const prisma = new PrismaClient();
 
@@ -34,7 +34,7 @@ export const enableMFA = async (req: Request, res: Response, next: NextFunction)
       return next(new AppError('MFA not set up', 400));
     }
 
-    const isValid = verifyMFAToken(token, user.mfaSecret);
+    const isValid = verifyTOTP(user.mfaSecret, token);
 
     if (!isValid) {
       return next(new AppError('Invalid MFA token', 400));
@@ -60,7 +60,7 @@ export const disableMFA = async (req: Request, res: Response, next: NextFunction
       return next(new AppError('MFA not set up', 400));
     }
 
-    const isValid = verifyMFAToken(token, user.mfaSecret);
+    const isValid = verifyTOTP(user.mfaSecret, token);
 
     if (!isValid) {
       return next(new AppError('Invalid MFA token', 400));

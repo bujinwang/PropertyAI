@@ -3,16 +3,16 @@ import { prisma } from '../config/database';
 import { handleDatabaseError } from '../utils/dbUtils';
 import { authMiddleware } from '../middleware/authMiddleware';
 import { ServiceCommunicationError } from '../utils/serviceUtils';
-import { createUser, getUsers, getUser, updateUser, deleteUser } from '../controllers/userController';
+import UserController from '../controllers/userController';
 
 const router = express.Router();
 
 // Generic User CRUD routes
-router.post('/', authMiddleware.verifyToken, authMiddleware.checkRole(['ADMIN']), createUser);
-router.get('/', authMiddleware.verifyToken, authMiddleware.checkRole(['ADMIN']), getUsers);
-router.get('/:id', authMiddleware.verifyToken, authMiddleware.checkRole(['ADMIN']), getUser);
-router.put('/:id', authMiddleware.verifyToken, authMiddleware.checkRole(['ADMIN']), updateUser);
-router.delete('/:id', authMiddleware.verifyToken, authMiddleware.checkRole(['ADMIN']), deleteUser);
+router.post('/', authMiddleware.protect, authMiddleware.admin, UserController.createUser);
+router.get('/', authMiddleware.protect, authMiddleware.admin, UserController.getAllUsers);
+router.get('/:id', authMiddleware.protect, authMiddleware.admin, UserController.getUserById);
+router.put('/:id', authMiddleware.protect, authMiddleware.admin, UserController.updateUser);
+router.delete('/:id', authMiddleware.protect, authMiddleware.admin, UserController.deleteUser);
 
 
 /**

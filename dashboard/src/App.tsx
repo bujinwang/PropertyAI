@@ -1,23 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { ThemeProvider, createTheme, CssBaseline, Box, Container } from '@mui/material';
+import { ThemeProvider, createTheme, CssBaseline, Box, Container, CircularProgress } from '@mui/material';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import './App.css';
 import Header from './components/Header';
 import { handleOAuthLogin } from './services/oauthService';
 
-// Import pages (to be created)
-import ApplicationsList from './pages/ApplicationsList';
-import ApplicationDetail from './pages/ApplicationDetail';
-import ApplicationForm from './pages/ApplicationForm';
-import LoginScreen from './pages/LoginScreen';
-import ProtectedRoute from './components/ProtectedRoute';
-import UnitListings from './pages/UnitListings';
-import UnitDetail from './pages/UnitDetail';
-import UnitForm from './pages/UnitForm';
-import Marketing from './pages/Marketing';
-import CommunicationHub from './pages/CommunicationHub';
+// Lazy load pages
+const ApplicationsList = lazy(() => import('./pages/ApplicationsList'));
+const ApplicationDetail = lazy(() => import('./pages/ApplicationDetail'));
+const ApplicationForm = lazy(() => import('./pages/ApplicationForm'));
+const LoginScreen = lazy(() => import('./pages/LoginScreen'));
+const ProtectedRoute = lazy(() => import('./components/ProtectedRoute'));
+const UnitListings = lazy(() => import('./pages/UnitListings'));
+const UnitDetail = lazy(() => import('./pages/UnitDetail'));
+const UnitForm = lazy(() => import('./pages/UnitForm'));
+const Marketing = lazy(() => import('./pages/Marketing'));
+const CommunicationHub = lazy(() => import('./pages/CommunicationHub'));
+const MaintenancePage = lazy(() => import('./pages/MaintenancePage'));
+const FinancialPage = lazy(() => import('./pages/FinancialPage'));
+const MaintenanceDashboard = lazy(() => import('./pages/MaintenanceDashboard'));
 
 const theme = createTheme({
   palette: {
@@ -58,27 +61,32 @@ function AppContent() {
             mt: isAuthenticated ? 8 : 0 // Add margin top if authenticated to account for header
           }}
         >
-          <Routes>
-            <Route path="/login" element={<LoginScreen />} />
-            <Route element={<ProtectedRoute />}>
-              <Route path="/tenant-screening" element={<ApplicationsList />} />
-              <Route path="/tenant-screening/applications/:id" element={<ApplicationDetail />} />
-              <Route path="/tenant-screening/applications/new" element={<ApplicationForm />} />
-              <Route path="/tenant-screening/applications/:id/edit" element={<ApplicationForm />} />
-              <Route path="/units" element={<UnitListings />} />
-              <Route path="/units/new" element={<UnitForm />} />
-              <Route path="/units/:id" element={<UnitDetail />} />
-              <Route path="/units/:id/edit" element={<UnitForm />} />
-              <Route path="/marketing" element={<Marketing />} />
-              <Route path="/communications" element={<CommunicationHub />} />
-              {/* Add more routes as needed */}
-              <Route path="/" element={
-                <div>
-                  Home Page
-                </div>
-              } />
-            </Route>
-          </Routes>
+          <Suspense fallback={<Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>}>
+            <Routes>
+              <Route path="/login" element={<LoginScreen />} />
+              <Route element={<ProtectedRoute />}>
+                <Route path="/tenant-screening" element={<ApplicationsList />} />
+                <Route path="/tenant-screening/applications/:id" element={<ApplicationDetail />} />
+                <Route path="/tenant-screening/applications/new" element={<ApplicationForm />} />
+                <Route path="/tenant-screening/applications/:id/edit" element={<ApplicationForm />} />
+                <Route path="/units" element={<UnitListings />} />
+                <Route path="/units/new" element={<UnitForm />} />
+                <Route path="/units/:id" element={<UnitDetail />} />
+                <Route path="/units/:id/edit" element={<UnitForm />} />
+                <Route path="/marketing" element={<Marketing />} />
+                <Route path="/communications" element={<CommunicationHub />} />
+                <Route path="/maintenance" element={<MaintenancePage />} />
+                <Route path="/financials" element={<FinancialPage />} />
+                <Route path="/maintenance-dashboard" element={<MaintenanceDashboard />} />
+                {/* Add more routes as needed */}
+                <Route path="/" element={
+                  <div>
+                    Home Page
+                  </div>
+                } />
+              </Route>
+            </Routes>
+          </Suspense>
         </Container>
       </Box>
     </Router>

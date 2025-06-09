@@ -7,16 +7,16 @@ const router = Router();
 
 router.get(
   '/',
-  authMiddleware,
+  authMiddleware.protect,
   rbacMiddleware(['ADMIN']),
   UserController.getAllUsers
 );
 router.post('/', UserController.createUser);
-router.get('/:id', authMiddleware, UserController.getUserById);
-router.put('/:id', authMiddleware, UserController.updateUser);
+router.get('/:id', authMiddleware.protect, UserController.getUserById);
+router.put('/:id', authMiddleware.protect, UserController.updateUser);
 router.delete(
   '/:id',
-  authMiddleware,
+  authMiddleware.protect,
   rbacMiddleware(['ADMIN']),
   UserController.deleteUser
 );

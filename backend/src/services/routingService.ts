@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import SmsService from './smsService';
+import { smsService } from './smsService';
 
 const prisma = new PrismaClient();
 

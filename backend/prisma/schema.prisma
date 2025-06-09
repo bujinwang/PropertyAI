@@ -29,6 +29,7 @@ model User {
   failedLoginAttempts Int                  @default(0)
   isLocked            Boolean              @default(false)
   lockedUntil         DateTime?
+  lastLockedAt        DateTime?
   propertiesManaged   Property[]           @relation("PropertyManager")
   propertiesOwned     Property[]           @relation("PropertyOwner")
   units               Unit[]               @relation("UnitTenant")
@@ -45,6 +46,14 @@ model User {
   leases              Lease[]
   vendor              Vendor?
   tenantIssuePredictions TenantIssuePrediction[]
+  escalationPolicyRules EscalationPolicyRule[]
+  onCallRotations       OnCallRotation[]
+  apiKeys               ApiKey[]
+  roles                 Role[]
+
+  @@index([role])
+  @@index([isActive])
+  @@index([email])
 }
 
 enum UserRole {
@@ -83,6 +92,16 @@ model Property {
   latitude            Float?
   longitude           Float?
   listings            Listing[]
+  businessHours       BusinessHours[]
+  emergencyProtocols  EmergencyProtocol[]
+  escalationPolicies  EscalationPolicy[]
+  onCallSchedules     OnCallSchedule[]
+  whiteLabelConfig    WhiteLabelConfig?
+
+  @@index([city])
+  @@index([state])
+  @@index([zipCode])
+  @@index([propertyType])
 }
 
 enum PropertyType {
@@ -134,6 +153,10 @@ model Unit {
   images              UnitImage[] // Relation to unit images
   listing             Listing?
   predictiveMaintenance PredictiveMaintenance[]
+  appliances          Appliance[]
+
+  @@index([isAvailable])
+  @@index([rent])
 }
 
 // UnitImage model for storing unit images
@@ -276,6 +299,59 @@ model WorkOrderQuote {
   updatedAt   DateTime @updatedAt
 }
 
+model FollowUp {
+  id          String   @id @default(cuid())
+  message     Message  @relation(fields: [messageId], references: [id])
+  messageId   String   @unique
+  status      String
+  followUpAt  DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Language {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model WhiteLabelConfig {
+  id          String   @id @default(cuid())
+  property    Property @relation(fields: [propertyId], references: [id])
+  propertyId  String   @unique
+  appName     String
+  logoUrl     String
+  primaryColor String
+  secondaryColor String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model OnCallSchedule {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  property    Property @relation(fields: [propertyId], references: [id])
+  propertyId  String
+  rotations   OnCallRotation[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model OnCallRotation {
+  id          String   @id @default(cuid())
+  schedule    OnCallSchedule @relation(fields: [scheduleId], references: [id])
+  scheduleId  String
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  startDate   DateTime
+  endDate     DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 enum QuoteStatus {
   PENDING
   ACCEPTED
@@ -309,6 +385,12 @@ model MaintenanceRequest {
   category      MaintenanceRequestCategory? @relation(fields: [categoryId], references: [id])
   categoryId    String?
   responseTime  MaintenanceResponseTime?
+
+  @@index([status])
+  @@index([priority])
+  @@index([propertyId])
+  @@index([unitId])
+  @@index([requestedById])
 }
 
 enum MaintenanceStatus {
@@ -326,12 +408,37 @@ enum Priority {
   EMERGENCY
 }
 
+enum Sentiment {
+  POSITIVE
+  NEGATIVE
+  NEUTRAL
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  permissions Permission[]
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  roles       Role[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 // Message model
 model Message {
   id        String   @id @default(uuid())
   content   String   @db.Text
   createdAt DateTime @default(now())
   isRead    Boolean  @default(false)
+  sentiment Sentiment?
+  followUp  FollowUp?
 
   sender      User   @relation("SentMessages", fields: [senderId], references: [id])
   senderId    String
@@ -340,6 +447,9 @@ model Message {
 
   maintenanceRequest   MaintenanceRequest? @relation(fields: [maintenanceRequestId], references: [id])
   maintenanceRequestId String?
+
+  @@index([senderId])
+  @@index([recipientId])
 }
 
 // Notification model
@@ -427,6 +537,8 @@ model Listing {
   aiListingSuggestions AIListingSuggestion[]
   aiPricingSuggestions AIPricingSuggestion[]
   applications         Application[]
+
+  @@index([status])
 }
 
 enum ListingStatus {
@@ -762,4 +874,100 @@ model SocialMediaPlatformConfig {
   isEnabled    Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model FinancialReport {
+  id          String   @id @default(cuid())
+  title       String
+  startDate   DateTime
+  endDate     DateTime
+  generatedAt DateTime @default(now())
+  content     Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model KnowledgeBase {
+  id          String   @id @default(cuid())
+  buildingId  String
+  issue       String
+  solution    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Appliance {
+  id               String    @id @default(cuid())
+  unitId           String
+  unit             Unit      @relation(fields: [unitId], references: [id])
+  type             String
+  brand            String?
+  model            String?
+  serialNumber     String?
+  purchaseDate     DateTime?
+  warrantyExpiry   DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model BusinessHours {
+  id          String    @id @default(cuid())
+  property    Property  @relation(fields: [propertyId], references: [id])
+  propertyId  String
+  dayOfWeek   Int // 0 = Sunday, 6 = Saturday
+  openTime    String // HH:MM format
+  closeTime   String // HH:MM format
+  isClosed    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([propertyId, dayOfWeek])
+}
+
+model EmergencyProtocol {
+  id          String   @id @default(cuid())
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id])
+  priority    Priority
+  contactName String
+  contactPhone String
+  instructions String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([propertyId, priority])
+}
+
+model EscalationPolicy {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  property    Property @relation(fields: [propertyId], references: [id])
+  propertyId  String
+  rules       EscalationPolicyRule[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model EscalationPolicyRule {
+  id          String   @id @default(cuid())
+  policy      EscalationPolicy @relation(fields: [policyId], references: [id])
+  policyId    String
+  priority    Priority
+  escalateTo  User     @relation(fields: [escalateToId], references: [id])
+  escalateToId String
+  delayMinutes Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ApiKey {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  permissions String[]
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

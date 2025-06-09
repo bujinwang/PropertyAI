@@ -30,6 +30,8 @@ import auditRoutes from './auditRoutes';
 import paymentRoutes from './paymentRoutes';
 import reminderRoutes from './reminderRoutes';
 import { rateLimiter } from '../middleware/rateLimitMiddleware';
+import databaseOptimizationRoutes from './databaseOptimization.routes';
+import { cacheMiddleware, clearCache } from '../utils/cache';
 
 const router = express.Router();
 
@@ -39,7 +41,7 @@ const API_PREFIX = '/api';
 router.use(API_PREFIX, rateLimiter);
 
 // Health check endpoint
-router.get(`${API_PREFIX}/health`, (req, res) => {
+router.get(`${API_PREFIX}/health`, cacheMiddleware, (req, res) => {
   res.status(200).json({
     status: 'success',
     message: 'API is running',
@@ -78,10 +80,16 @@ router.use(`${API_PREFIX}/background-checks`, backgroundCheckRoutes);
 router.use(`${API_PREFIX}/audit`, auditRoutes);
 router.use(`${API_PREFIX}/payments`, paymentRoutes);
 router.use(`${API_PREFIX}/reminders`, reminderRoutes);
-router.use(`${API_PREFIX}/listings`, listingRoutes);
-router.use(`${API_PREFIX}/maintenance`, maintenanceRoutes);
-router.use(`${API_PREFIX}/transactions`, transactionRoutes);
-router.use(`${API_PREFIX}/reminders`, reminderRoutes);
+router.use(`${API_PREFIX}/database`, databaseOptimizationRoutes);
+
+router.post(`${API_PREFIX}/cache/clear`, (req, res) => {
+  const { key } = req.body;
+  if (!key) {
+    return res.status(400).json({ error: 'Cache key is required' });
+  }
+  clearCache(key);
+  res.status(200).json({ message: `Cache for key ${key} cleared` });
+});
 
 // 404 handler for API routes
 router.use(`${API_PREFIX}/*`, (req, res) => {

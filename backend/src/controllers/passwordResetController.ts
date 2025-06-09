@@ -1,10 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../utils/dbManager';
 import { generatePasswordResetToken, verifyPasswordResetToken } from '../services/passwordResetService';
-import AppError from '../middleware/errorMiddleware';
+import { AppError } from '../middleware/errorMiddleware';
 import bcrypt from 'bcryptjs';
-
-const prisma = new PrismaClient();
 
 export const forgotPassword = async (req: Request, res: Response, next: NextFunction) => {
   try {

@@ -1,0 +1,1 @@
+{"version":3,"file":"lockout.config.js","sourceRoot":"","sources":["../../src/config/lockout.config.ts"],"names":[],"mappings":";;;;;;AAAA,oDAA4B;AAE5B,gBAAM,CAAC,MAAM,EAAE,CAAC;AAEH,QAAA,aAAa,GAAG;IAC3B,iBAAiB,EAAE,QAAQ,CAAC,OAAO,CAAC,GAAG,CAAC,mBAAmB,IAAI,GAAG,EAAE,EAAE,CAAC;IACvE,sBAAsB,EAAE,QAAQ,CAAC,OAAO,CAAC,GAAG,CAAC,wBAAwB,IAAI,IAAI,EAAE,EAAE,CAAC;CACnF,CAAC"}

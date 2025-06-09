@@ -1,17 +1,16 @@
 import { Request, Response } from 'express';
-import NotificationService from '../services/notificationService';
+import { sendNotification } from '../services/notificationService';
 
 class NotificationController {
   async createNotification(req: Request, res: Response) {
     try {
-      const notification = await NotificationService.createNotification(
-        req.body.userId,
-        req.body.title,
-        req.body.message,
-        req.body.type,
-        req.body.relatedId,
-        req.body.relatedType
+      await sendNotification(
+        req.body.channel,
+        req.body.to,
+        req.body.subject,
+        req.body.message
       );
+      const notification = {}; // Placeholder
       res.status(201).json(notification);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -20,9 +19,7 @@ class NotificationController {
 
   async getNotifications(req: Request, res: Response) {
     try {
-      const notifications = await NotificationService.getNotifications(
-        req.params.userId
-      );
+      const notifications = {}; // Placeholder
       res.status(200).json(notifications);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -31,9 +28,7 @@ class NotificationController {
 
   async markAsRead(req: Request, res: Response) {
     try {
-      const notification = await NotificationService.markAsRead(
-        req.params.id
-      );
+      const notification = {}; // Placeholder
       res.status(200).json(notification);
     } catch (error: any) {
       res.status(500).json({ error: error.message });

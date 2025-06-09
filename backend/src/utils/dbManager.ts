@@ -11,17 +11,17 @@ import util from 'util';
 const execPromise = util.promisify(exec);
 
 // Initialize Prisma client with extended options
-export const createPrismaClient = () => {
-  return new PrismaClient({
-    log: 
-      postgresConfig.prisma.logQueries 
-        ? ['query', 'info', 'warn', 'error'] 
-        : postgresConfig.prisma.logLevel === 'error' 
-          ? ['error'] 
-          : [postgresConfig.prisma.logLevel as any],
-    errorFormat: 'pretty',
-  });
-};
+const prisma = new PrismaClient({
+  log:
+    postgresConfig.prisma.logQueries
+      ? ['query', 'info', 'warn', 'error']
+      : postgresConfig.prisma.logLevel === 'error'
+      ? ['error']
+      : [postgresConfig.prisma.logLevel as any],
+  errorFormat: 'pretty',
+});
+
+export { prisma };
 
 // Initialize S3 client for backups
 const s3Client = new S3Client({
@@ -33,7 +33,7 @@ const s3Client = new S3Client({
 });
 
 // Function to validate database health
-export const checkDatabaseHealth = async (prisma: PrismaClient): Promise<boolean> => {
+export const checkDatabaseHealth = async (): Promise<boolean> => {
   try {
     // Execute a simple query to check connectivity
     await prisma.$queryRaw`SELECT 1`;
@@ -175,7 +175,7 @@ export const setupScheduledBackups = (): void => {
 };
 
 // Function to check and optimize database
-export const optimizeDatabase = async (prisma: PrismaClient): Promise<void> => {
+export const optimizeDatabase = async (): Promise<void> => {
   try {
     console.log('Running database optimization...');
     
@@ -235,7 +235,7 @@ export const optimizeDatabase = async (prisma: PrismaClient): Promise<void> => {
 };
 
 // Function to apply security settings
-export const applySecuritySettings = async (prisma: PrismaClient): Promise<void> => {
+export const applySecuritySettings = async (): Promise<void> => {
   try {
     console.log('Applying database security settings...');
     
@@ -270,7 +270,7 @@ export const applySecuritySettings = async (prisma: PrismaClient): Promise<void>
 };
 
 // Function to initialize database with recommended settings
-export const initializeDatabase = async (prisma: PrismaClient): Promise<void> => {
+export const initializeDatabase = async (): Promise<void> => {
   try {
     console.log('Initializing database with recommended settings...');
     
@@ -298,7 +298,7 @@ export const initializeDatabase = async (prisma: PrismaClient): Promise<void> =>
 };
 
 export default {
-  createPrismaClient,
+  prisma,
   checkDatabaseHealth,
   createDatabaseBackup,
   cleanupOldBackups,
@@ -306,4 +306,4 @@ export default {
   optimizeDatabase,
   applySecuritySettings,
   initializeDatabase,
-}; 
+};

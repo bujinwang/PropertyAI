@@ -34,3 +34,15 @@ export const sendPasswordResetConfirmationEmail = async (to: string) => {
 
   await transporter.sendMail(mailOptions);
 };
+
+export const sendEmail = async (to: string, subject: string, text: string, html?: string) => {
+  const mailOptions = {
+    from: process.env.EMAIL_FROM,
+    to,
+    subject,
+    text,
+    html,
+  };
+
+  await transporter.sendMail(mailOptions);
+};

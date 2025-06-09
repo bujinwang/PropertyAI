@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import redis from 'redis';
 import { promisify } from 'util';
-import config from '../config';
+import { config } from '../config/config';
 
 // Create Redis client for storing rate limit data
 const redisClient = redis.createClient({
@@ -96,7 +96,7 @@ export const rateLimit = (options: RateLimitOptions) => {
       }
       
       // Rate limit exceeded
-      return res.status(429).json({
+      res.status(429).json({
         message,
         retryAfter: windowSeconds,
       });
@@ -152,4 +152,4 @@ export default {
   loginRateLimit,
   passwordResetRateLimit,
   apiRateLimit,
-}; 
+};

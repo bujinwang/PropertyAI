@@ -4,6 +4,6 @@ import { authMiddleware } from '../middleware/authMiddleware';
 
 const router = Router();
 
-router.get('/', authMiddleware, TenantController.getAllTenants);
+router.get('/', authMiddleware.protect, TenantController.getAllTenants);
 
 export default router;

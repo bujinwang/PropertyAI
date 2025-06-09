@@ -4,10 +4,10 @@ import { authMiddleware } from '../middleware/authMiddleware';
 
 const router = Router();
 
-router.get('/', authMiddleware, LeaseController.getAllLeases);
-router.post('/', authMiddleware, LeaseController.createLease);
-router.get('/:id', authMiddleware, LeaseController.getLeaseById);
-router.put('/:id', authMiddleware, LeaseController.updateLease);
-router.delete('/:id', authMiddleware, LeaseController.deleteLease);
+router.get('/', authMiddleware.protect, LeaseController.getAllLeases);
+router.post('/', authMiddleware.protect, LeaseController.createLease);
+router.get('/:id', authMiddleware.protect, LeaseController.getLeaseById);
+router.put('/:id', authMiddleware.protect, LeaseController.updateLease);
+router.delete('/:id', authMiddleware.protect, LeaseController.deleteLease);
 
 export default router;

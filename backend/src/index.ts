@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import session from 'express-session';
 import passport from 'passport';
+import './tracing';
 import * as dotenv from 'dotenv';
 import { prisma, connectMongoDB, setupPostgreSQL, setupMongoDB, closeDatabaseConnections } from './config/database';
 import configurePassport from './config/passport';
@@ -25,12 +26,34 @@ import maintenanceResponseTimeRoutes from './routes/maintenanceResponseTime.rout
 import schedulingRoutes from './routes/scheduling.routes';
 import riskAssessmentRoutes from './routes/riskAssessment.routes';
 import tenantIssuePredictionRoutes from './routes/tenantIssuePrediction.routes';
-import backgroundCheckRoutes from './routes/backgroundCheck.routes';
+import expenseCategorizationRoutes from './routes/expenseCategorization.routes';
+import cashFlowForecastingRoutes from './routes/cashFlowForecasting.routes';
+import roiRoutes from './routes/roi.routes';
+import taxDocumentRoutes from './routes/taxDocument.routes';
+import paymentRoutes from './routes/payment.routes';
+import documentRoutes from './routes/document.routes';
+import legalNoticeRoutes from './routes/legalNotice.routes';
+import signatureRoutes from './routes/signature.routes';
+import knowledgeBaseRoutes from './routes/knowledgeBase.routes';
+import applianceRoutes from './routes/appliance.routes';
+import businessHoursRoutes from './routes/businessHours.routes';
+import emergencyProtocolRoutes from './routes/emergencyProtocol.routes';
+import escalationPolicyRoutes from './routes/escalationPolicy.routes';
+import onCallRoutes from './routes/onCall.routes';
+import whiteLabelRoutes from './routes/whiteLabel.routes';
+import apiKeyRoutes from './routes/apiKey.routes';
+import roleRoutes from './routes/role.routes';
+import languageRoutes from './routes/language.routes';
+import translationRoutes from './routes/translation.routes';
+import sentimentRoutes from './routes/sentiment.routes';
+import conversationRoutes from './routes/conversation.routes';
 import path from 'path';
 import http from 'http';
 import WebSocketService from './services/webSocketService';
 import VoicemailService from './services/voicemailService';
 import aiOrchestrationService from './services/aiOrchestrationService';
+import { rentCollectionService } from './services/rentCollection.service';
+import { documentExpirationService } from './services/documentExpiration.service';
 
 // Load environment variables
 dotenv.config();
@@ -86,7 +109,27 @@ app.use('/api/maintenance-response-time', maintenanceResponseTimeRoutes);
 app.use('/api/scheduling', schedulingRoutes);
 app.use('/api/risk-assessment', riskAssessmentRoutes);
 app.use('/api/tenant-issue-prediction', tenantIssuePredictionRoutes);
-app.use('/api/background-check', backgroundCheckRoutes);
+app.use('/api/expense-categorization', expenseCategorizationRoutes);
+app.use('/api/cash-flow-forecasting', cashFlowForecastingRoutes);
+app.use('/api/roi', roiRoutes);
+app.use('/api/tax-document', taxDocumentRoutes);
+app.use('/api/payment', paymentRoutes);
+app.use('/api/documents', documentRoutes);
+app.use('/api/legal-notices', legalNoticeRoutes);
+app.use('/api/signatures', signatureRoutes);
+app.use('/api/knowledge-base', knowledgeBaseRoutes);
+app.use('/api/appliances', applianceRoutes);
+app.use('/api/business-hours', businessHoursRoutes);
+app.use('/api/emergency-protocols', emergencyProtocolRoutes);
+app.use('/api/escalation-policies', escalationPolicyRoutes);
+app.use('/api/on-call', onCallRoutes);
+app.use('/api/white-label', whiteLabelRoutes);
+app.use('/api/api-keys', apiKeyRoutes);
+app.use('/api/roles', roleRoutes);
+app.use('/api/languages', languageRoutes);
+app.use('/api/translation', translationRoutes);
+app.use('/api/sentiment', sentimentRoutes);
+app.use('/api/conversations', conversationRoutes);
 app.use(routes);
 
 // Global error handler
@@ -135,6 +178,12 @@ const startServer = async () => {
     // Initialize Voicemail service
     new VoicemailService(path.join(__dirname, '../voicemails'), aiOrchestrationService);
     
+    // Initialize Rent Collection service
+    rentCollectionService.initialize();
+
+    // Initialize Document Expiration service
+    documentExpirationService.initialize();
+
     // Start the server
     server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

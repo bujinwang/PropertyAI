@@ -1,0 +1,1 @@
+{"version":3,"file":"forecasting.js","sourceRoot":"","sources":["../../src/predictive-analytics/forecasting.ts"],"names":[],"mappings":";;;AAAO,MAAM,QAAQ,GAAG,KAAK,EAAE,IAAS,EAAgB,EAAE;IACxD,oCAAoC;IACpC,OAAO,CAAC,GAAG,CAAC,gBAAgB,CAAC,CAAC;IAC9B,OAAO;QACL,QAAQ,EAAE,CAAC,CAAC,EAAE,CAAC,EAAE,CAAC,CAAC;KACpB,CAAC;AACJ,CAAC,CAAC;AANW,QAAA,QAAQ,YAMnB"}

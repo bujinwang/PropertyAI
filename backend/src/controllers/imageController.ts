@@ -1,9 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
-import AppError from '../middleware/errorMiddleware';
+import { prisma } from '../utils/dbManager';
+import { AppError } from '../middleware/errorMiddleware';
 import imageService from '../services/imageService';
-
-const prisma = new PrismaClient();
 
 export const uploadListingImage = async (req: Request, res: Response, next: NextFunction) => {
   try {
