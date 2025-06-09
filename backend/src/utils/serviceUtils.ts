@@ -6,7 +6,7 @@ import { config } from '../config/config';
  */
 export class ServiceCommunication {
   private static readonly baseUrl = process.env.NODE_ENV === 'production' 
-    ? config.services.baseUrl 
+    ? process.env.BASE_URL 
     : 'http://localhost:5000/api';
 
   /**
@@ -112,4 +112,4 @@ export class ServiceCommunicationError extends Error {
   }
 }
 
-export default ServiceCommunication; 
+export default ServiceCommunication;

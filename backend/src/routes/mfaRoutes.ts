@@ -1,26 +1,32 @@
 import express, { Request, Response } from 'express';
-import { auth, AuthenticatedRequest } from '../middleware/auth';
-import mfaService from '../services/mfaService';
-import { PrismaClient } from '@prisma/client';
+import { authMiddleware } from '../middleware/authMiddleware';
+import { 
+  isMFAEnabled, 
+  generateMFASecret, 
+  getMFASecret, 
+  verifyTOTP, 
+  enableMFA, 
+  disableMFA 
+} from '../services/mfaService';
+import { prisma } from '../utils/dbManager';
 import jwt from 'jsonwebtoken';
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 /**
  * @route   GET /api/mfa/status
  * @desc    Get the MFA status for the authenticated user
  * @access  Private
  */
-router.get('/status', auth, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/status', authMiddleware.protect, async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.userId;
+    const userId = (req as any).user?.id;
     
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
     
-    const isEnabled = await mfaService.isMFAEnabled(userId);
+    const isEnabled = await isMFAEnabled(userId);
     
     return res.json({ mfaEnabled: isEnabled });
   } catch (error) {
@@ -34,21 +40,24 @@ router.get('/status', auth, async (req: AuthenticatedRequest, res: Response) => 
  * @desc    Generate and save a new MFA secret for the user
  * @access  Private
  */
-router.post('/setup', auth, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/setup', authMiddleware.protect, async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.userId;
+    const userId = (req as any).user?.id;
     
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
     
     // Generate a new secret
-    const secret = mfaService.generateSecret();
+    if (!req.user) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    const secret = await generateMFASecret((req as any).user.email);
     
     // Store the secret for the user (but don't enable MFA yet)
     await prisma.user.update({
       where: { id: userId },
-      data: { mfaSecret: secret }
+      data: { mfaSecret: secret.secret }
     });
     
     // Return the secret to be displayed to the user
@@ -69,9 +78,9 @@ router.post('/setup', auth, async (req: AuthenticatedRequest, res: Response) => 
  * @desc    Verify a code and enable MFA for the user
  * @access  Private
  */
-router.post('/enable', auth, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/enable', authMiddleware.protect, async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.userId;
+    const userId = (req as any).user?.id;
     const { code } = req.body;
     
     if (!userId) {
@@ -83,21 +92,21 @@ router.post('/enable', auth, async (req: AuthenticatedRequest, res: Response) =>
     }
     
     // Get the user's stored secret
-    const secret = await mfaService.getMFASecret(userId);
+    const secret = await getMFASecret(userId);
     
     if (!secret) {
       return res.status(400).json({ message: 'MFA setup not initiated. Please generate a secret first.' });
     }
     
     // Verify the provided code
-    const isValid = mfaService.verifyTOTP(secret, code);
+    const isValid = verifyTOTP(secret, code);
     
     if (!isValid) {
       return res.status(400).json({ message: 'Invalid verification code' });
     }
     
     // Enable MFA for the user
-    await mfaService.enableMFA(userId, secret);
+    await enableMFA(userId);
     
     return res.json({ message: 'MFA enabled successfully' });
   } catch (error) {
@@ -111,9 +120,9 @@ router.post('/enable', auth, async (req: AuthenticatedRequest, res: Response) =>
  * @desc    Disable MFA for the user (requires verification code)
  * @access  Private
  */
-router.post('/disable', auth, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/disable', authMiddleware.protect, async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.userId;
+    const userId = (req as any).user?.id;
     const { code } = req.body;
     
     if (!userId) {
@@ -125,28 +134,28 @@ router.post('/disable', auth, async (req: AuthenticatedRequest, res: Response) =
     }
     
     // Check if MFA is enabled for the user
-    const isEnabled = await mfaService.isMFAEnabled(userId);
+    const isEnabled = await isMFAEnabled(userId);
     
     if (!isEnabled) {
       return res.status(400).json({ message: 'MFA is not enabled for this user' });
     }
     
     // Get the user's stored secret
-    const secret = await mfaService.getMFASecret(userId);
+    const secret = await getMFASecret(userId);
     
     if (!secret) {
       return res.status(500).json({ message: 'MFA secret not found' });
     }
     
     // Verify the provided code
-    const isValid = mfaService.verifyTOTP(secret, code);
+    const isValid = verifyTOTP(secret, code);
     
     if (!isValid) {
       return res.status(400).json({ message: 'Invalid verification code' });
     }
     
     // Disable MFA for the user
-    await mfaService.disableMFA(userId);
+    await disableMFA(userId);
     
     return res.json({ message: 'MFA disabled successfully' });
   } catch (error) {
@@ -183,7 +192,7 @@ router.post('/verify', async (req: Request, res: Response) => {
     }
     
     // Verify the provided code
-    const isValid = mfaService.verifyTOTP(user.mfaSecret, code);
+    const isValid = verifyTOTP(user.mfaSecret, code);
     
     if (!isValid) {
       return res.status(400).json({ message: 'Invalid verification code' });
@@ -212,4 +221,4 @@ router.post('/verify', async (req: Request, res: Response) => {
   }
 });
 
-export default router; 
+export default router;

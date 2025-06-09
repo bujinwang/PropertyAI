@@ -1,9 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 import { Redis } from 'ioredis';
-import config from '../config';
+import { config } from '../config/config';
 
 const prisma = new PrismaClient();
-const redis = new Redis(config.redis.url);
+const redis = config.redis.url ? new Redis(config.redis.url) : new Redis();
 
 // Constants
 const MAX_FAILED_ATTEMPTS = 5;
@@ -181,4 +181,4 @@ export class AccountLockService {
   }
 }
 
-export default new AccountLockService(); 
+export default new AccountLockService();

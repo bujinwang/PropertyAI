@@ -1,5 +1,5 @@
 import { PrismaClient, Listing, Property, Unit } from '@prisma/client';
-import aiService from './aiService';
+import { aiService } from './aiService';
 
 const prisma = new PrismaClient();
 

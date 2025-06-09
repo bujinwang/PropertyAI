@@ -11,6 +11,19 @@ export class AIOrchestrationService {
         console.error(`Error transcribing ${filePath}:`, error);
       });
   }
+
+  public async completion(data: any): Promise<any> {
+    // Placeholder for AI completion logic
+    return {
+      choices: [
+        {
+          message: {
+            content: 'This is a placeholder translation.',
+          },
+        },
+      ],
+    };
+  }
 }
 
 export default new AIOrchestrationService();

@@ -4,10 +4,10 @@ import { authMiddleware } from '../middleware/authMiddleware';
 
 const router = Router();
 
-router.get('/', authMiddleware, ListingController.getAllListings);
-router.post('/', authMiddleware, ListingController.createListing);
-router.get('/:id', authMiddleware, ListingController.getListingById);
-router.put('/:id', authMiddleware, ListingController.updateListing);
-router.delete('/:id', authMiddleware, ListingController.deleteListing);
+router.get('/', authMiddleware.protect, ListingController.getAllListings);
+router.post('/', authMiddleware.protect, ListingController.createListing);
+router.get('/:id', authMiddleware.protect, ListingController.getListingById);
+router.put('/:id', authMiddleware.protect, ListingController.updateListing);
+router.delete('/:id', authMiddleware.protect, ListingController.deleteListing);
 
 export default router;

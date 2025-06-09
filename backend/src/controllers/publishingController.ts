@@ -1,9 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../utils/dbManager';
 import { AppError } from '../middleware/errorMiddleware';
 import * as publishingService from '../services/publishingService';
-
-const prisma = new PrismaClient();
 
 export const publishListing = async (req: Request, res: Response, next: NextFunction) => {
   try {

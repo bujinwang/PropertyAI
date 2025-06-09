@@ -1,29 +1,37 @@
-import { SpeechClient } from '@google-cloud/speech';
-import { AppError } from '../middleware/errorMiddleware';
+import twilio from 'twilio';
 
-const speechClient = new SpeechClient();
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const client = twilio(accountSid, authToken);
+
+export const makeCall = async (to: string, from: string, url: string) => {
+  await client.calls.create({
+    url,
+    to,
+    from,
+  });
+};
 
 export const convertVoiceToText = async (audioBuffer: Buffer): Promise<string> => {
-  try {
-    const audio = {
-      content: audioBuffer.toString('base64'),
-    };
-    const config = {
-      encoding: 'LINEAR16' as const,
-      sampleRateHertz: 16000,
-      languageCode: 'en-US',
-    };
-    const request = {
-      audio: audio,
-      config: config,
-    };
+  const speech = require('@google-cloud/speech');
+  const client = new speech.SpeechClient();
 
-    const [response] = await speechClient.recognize(request);
-    const transcription = response.results
-      ?.map(result => result.alternatives?.[0].transcript)
-      .join('\n');
-    return transcription || '';
-  } catch (error) {
-    throw new AppError('Failed to convert voice to text', 500);
-  }
+  const audio = {
+    content: audioBuffer.toString('base64'),
+  };
+  const config = {
+    encoding: 'LINEAR16',
+    sampleRateHertz: 16000,
+    languageCode: 'en-US',
+  };
+  const request = {
+    audio: audio,
+    config: config,
+  };
+
+  const [response] = await client.recognize(request);
+  const transcription = response.results
+    .map((result: any) => result.alternatives[0].transcript)
+    .join('\n');
+  return transcription;
 };

@@ -16,6 +16,14 @@ class AuditService {
       },
     });
   }
+
+  async getAuditEntries() {
+    return await prisma.auditEntry.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
 }
 
 export default new AuditService();

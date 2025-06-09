@@ -4,8 +4,9 @@ import AuditService from '../services/auditService';
 class AuditController {
   async createEntry(req: Request, res: Response) {
     try {
-      const entry = await AuditService.createEntry(req.body);
-      res.status(201).json(entry);
+      const { userId, action, details } = req.body;
+      await AuditService.createAuditEntry(userId, action, details);
+      res.status(201).json({ message: 'Audit entry created successfully' });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -13,7 +14,7 @@ class AuditController {
 
   async getEntries(req: Request, res: Response) {
     try {
-      const entries = await AuditService.getEntries();
+      const entries = await AuditService.getAuditEntries();
       res.status(200).json(entries);
     } catch (error: any) {
       res.status(500).json({ error: error.message });

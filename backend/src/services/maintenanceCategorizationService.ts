@@ -1,4 +1,4 @@
-import { a } from '@huggingface/inference';
+import { HfInference } from '@huggingface/inference';
 
 class MaintenanceCategorizationService {
   async categorize(text: string, image?: Buffer): Promise<{ urgency: string; type: string }> {

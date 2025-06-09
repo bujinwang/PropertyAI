@@ -1,5 +1,5 @@
 import { PrismaClient, Listing, Property, Unit } from '@prisma/client';
-import AppError from '../middleware/errorMiddleware';
+import { AppError } from '../middleware/errorMiddleware';
 
 const prisma = new PrismaClient();
 

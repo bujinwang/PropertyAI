@@ -4,10 +4,10 @@ import { authMiddleware } from '../middleware/authMiddleware';
 
 const router = Router();
 
-router.get('/', authMiddleware, PropertyController.getAllProperties);
-router.post('/', authMiddleware, PropertyController.createProperty);
-router.get('/:id', authMiddleware, PropertyController.getPropertyById);
-router.put('/:id', authMiddleware, PropertyController.updateProperty);
-router.delete('/:id', authMiddleware, PropertyController.deleteProperty);
+router.get('/', authMiddleware.protect, PropertyController.getAllProperties);
+router.post('/', authMiddleware.protect, PropertyController.createProperty);
+router.get('/:id', authMiddleware.protect, PropertyController.getPropertyById);
+router.put('/:id', authMiddleware.protect, PropertyController.updateProperty);
+router.delete('/:id', authMiddleware.protect, PropertyController.deleteProperty);
 
 export default router;

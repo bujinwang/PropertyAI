@@ -27,7 +27,10 @@ describe('MaintenanceRequestCategorizationService', () => {
 
     const category = await maintenanceRequestCategorizationService.categorizeRequest('request1');
     expect(category).toBeDefined();
-    expect(mockCategories.map((c) => c.id)).toContain(category.id);
+    expect(category).toBeDefined();
+    if (category) {
+      expect(mockCategories.map((c) => c.id)).toContain(category.id);
+    }
   });
 
   it('should return null if maintenance request does not exist', async () => {

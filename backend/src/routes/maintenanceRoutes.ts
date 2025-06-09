@@ -4,21 +4,21 @@ import { authMiddleware } from '../middleware/authMiddleware';
 
 const router = Router();
 
-router.get('/', authMiddleware, MaintenanceController.getAllMaintenanceRequests);
-router.post('/', authMiddleware, MaintenanceController.createMaintenanceRequest);
+router.get('/', authMiddleware.protect, MaintenanceController.getAllMaintenanceRequests);
+router.post('/', authMiddleware.protect, MaintenanceController.createMaintenanceRequest);
 router.get(
   '/:id',
-  authMiddleware,
+  authMiddleware.protect,
   MaintenanceController.getMaintenanceRequestById
 );
 router.put(
   '/:id',
-  authMiddleware,
+  authMiddleware.protect,
   MaintenanceController.updateMaintenanceRequest
 );
 router.delete(
   '/:id',
-  authMiddleware,
+  authMiddleware.protect,
   MaintenanceController.deleteMaintenanceRequest
 );
 

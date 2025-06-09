@@ -1,0 +1,1 @@
+{"version":3,"file":"maintenanceCategorizationService.js","sourceRoot":"","sources":["../../src/services/maintenanceCategorizationService.ts"],"names":[],"mappings":";;AAEA,MAAM,gCAAgC;IACpC,KAAK,CAAC,UAAU,CAAC,IAAY,EAAE,KAAc;QAC3C,sDAAsD;QACtD,OAAO;YACL,OAAO,EAAE,QAAQ;YACjB,IAAI,EAAE,UAAU;SACjB,CAAC;IACJ,CAAC;CACF;AAED,kBAAe,IAAI,gCAAgC,EAAE,CAAC"}

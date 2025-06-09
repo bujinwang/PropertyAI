@@ -35,7 +35,7 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult> {
     const request: GeocodeRequest = {
       params: {
         address,
-        key: config.googleMapsApiKey,
+        key: process.env.GOOGLE_MAPS_API_KEY || '',
       },
     };
 
@@ -96,7 +96,7 @@ export async function reverseGeocode(latitude: number, longitude: number): Promi
     const request: ReverseGeocodeRequest = {
       params: {
         latlng: { lat: latitude, lng: longitude },
-        key: config.googleMapsApiKey,
+        key: process.env.GOOGLE_MAPS_API_KEY || '',
       },
     };
 
@@ -291,4 +291,4 @@ function parseAddressComponents(addressComponents: any[]) {
   });
 
   return components;
-} 
+}
