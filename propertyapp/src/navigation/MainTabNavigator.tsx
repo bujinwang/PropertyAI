@@ -8,14 +8,10 @@ import { UserRole } from '@/types/auth';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import ListingStackNavigator from './ListingStackNavigator';
 import MaintenanceStackNavigator from './MaintenanceStackNavigator';
+import PropertyStackNavigator from './PropertyStackNavigator';
+import { Ionicons } from '@expo/vector-icons';
 
 // Placeholder screens
-const PropertiesScreen = () => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-    <Text>Properties Screen</Text>
-  </View>
-);
-
 const MessagesScreen = () => (
   <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
     <Text>Messages Screen</Text>
@@ -77,14 +73,20 @@ export function MainTabNavigator() {
         component={HomeScreen} 
         options={{
           tabBarLabel: 'Home',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home-outline" size={size} color={color} />
+          ),
         }}
       />
       
       <Tab.Screen 
         name="Properties" 
-        component={PropertiesScreen} 
+        component={PropertyStackNavigator} 
         options={{
           tabBarLabel: 'Properties',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="business-outline" size={size} color={color} />
+          ),
         }}
       />
       
@@ -94,6 +96,9 @@ export function MainTabNavigator() {
         component={MessagesScreen} 
         options={{
           tabBarLabel: 'Messages',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="chatbubble-outline" size={size} color={color} />
+          ),
         }}
       />
       
@@ -103,8 +108,11 @@ export function MainTabNavigator() {
           name="ManageListings"
           component={ListingStackNavigator}
           options={{
-            tabBarLabel: 'Manage Listings',
+            tabBarLabel: 'Listings',
             headerShown: false,
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="list-outline" size={size} color={color} />
+            ),
           }}
         />
       )}
@@ -117,6 +125,9 @@ export function MainTabNavigator() {
           options={{
             tabBarLabel: 'Maintenance',
             headerShown: false,
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="construct-outline" size={size} color={color} />
+            ),
           }}
         />
       )}
@@ -128,6 +139,9 @@ export function MainTabNavigator() {
           component={ProtectedAdminDashboard}
           options={{
             tabBarLabel: 'Admin',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="settings-outline" size={size} color={color} />
+            ),
           }}
         />
       )}
@@ -137,6 +151,9 @@ export function MainTabNavigator() {
         component={ProfileScreen} 
         options={{
           tabBarLabel: 'Profile',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person-outline" size={size} color={color} />
+          ),
         }}
       />
     </Tab.Navigator>
