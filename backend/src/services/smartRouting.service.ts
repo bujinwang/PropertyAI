@@ -6,6 +6,10 @@ type VendorWithPerformance = Vendor & {
   performanceRatings: VendorPerformanceRating[];
 };
 
+type ScoredVendor = Vendor & {
+  score: number;
+};
+
 // Utility: Haversine distance (km)
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const toRad = (x: number) => (x * Math.PI) / 180;
@@ -163,41 +167,16 @@ class SmartRoutingService {
       })
     );
 
-    const scoredVendors = vendorsWithPerformance.map(vendor => ({
-      vendor,
-      score: this.calculateScore(vendor),
-    }));
+    const scoredVendors = await Promise.all(
+        vendorsWithPerformance.map(async (vendor) => {
+        const score = await scoreVendor(vendor, workOrder);
+        return { ...vendor, score };
+      })
+    );
 
     scoredVendors.sort((a, b) => b.score - a.score);
 
-    return scoredVendors.length > 0 ? scoredVendors[0].vendor : null;
-  }
-
-  private calculateScore(vendor: VendorWithPerformance): number {
-    let score = 100;
-
-    // Workload scoring
-    score -= vendor.workload * 5;
-
-    // Performance scoring
-    if (vendor.performanceRatings.length > 0) {
-      const avgRating = vendor.performanceRatings.reduce((acc, r) => acc + r.score, 0) / vendor.performanceRatings.length;
-      score += (avgRating - 3) * 10; // Assuming rating is 1-5, this rewards scores > 3
-    }
-
-    // Cost scoring (lower is better)
-    if (vendor.hourlyRate) {
-        // Normalize based on a baseline rate, e.g., $50/hr
-        const baselineRate = 50;
-        score -= (vendor.hourlyRate - baselineRate) / 5;
-    }
-    
-    // Certification bonus
-    if (vendor.certifications.length > 0) {
-        score += vendor.certifications.length * 2;
-    }
-
-    return score;
+    return scoredVendors.length > 0 ? scoredVendors[0] : null;
   }
 
   async routeWorkOrder(workOrderId: string): Promise<any> {
@@ -227,7 +206,7 @@ class SmartRoutingService {
       contractors = await prisma.vendor.findMany({
         where: {
           specialty: workOrder.maintenanceRequest.categoryId,
-          availability: 'available',
+          availability: 'AVAILABLE',
           serviceAreas: {
             has: workOrder.maintenanceRequest.property.zipCode,
           },
@@ -235,7 +214,7 @@ class SmartRoutingService {
       });
     } else {
       contractors = await prisma.vendor.findMany({
-        where: { availability: 'available' },
+        where: { availability: 'AVAILABLE' },
       });
     }
 

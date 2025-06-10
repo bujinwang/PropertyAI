@@ -83,6 +83,34 @@ class MaintenanceController {
       res.status(500).json({ error: error.message });
     }
   }
+
+  async createWorkOrderFromRequest(req: Request, res: Response) {
+    try {
+      const { maintenanceRequestId } = req.body;
+      const workOrder = await maintenanceService.createWorkOrderFromRequest(maintenanceRequestId);
+      if (workOrder) {
+        res.status(201).json(workOrder);
+      } else {
+        res.status(404).json({ message: 'Maintenance request not found' });
+      }
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  // New: Batch endpoint for creating work orders from multiple requests
+  async createWorkOrdersFromRequests(req: Request, res: Response) {
+    try {
+      const { maintenanceRequestIds } = req.body;
+      if (!Array.isArray(maintenanceRequestIds) || maintenanceRequestIds.length === 0) {
+        return res.status(400).json({ message: 'maintenanceRequestIds must be a non-empty array' });
+      }
+      const workOrders = await maintenanceService.createWorkOrdersFromRequests(maintenanceRequestIds);
+      res.status(201).json(workOrders);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
 }
 
 export default new MaintenanceController();

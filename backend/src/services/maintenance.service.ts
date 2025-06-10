@@ -2,53 +2,101 @@ import { prisma } from '../config/database';
 import { aiRoutingService } from './aiRouting.service';
 import { MaintenanceRequest, WorkOrder } from '@prisma/client';
 import { sendNotification } from './notificationService';
+import { Prisma } from '@prisma/client';
 
 class MaintenanceService {
   public async getAllMaintenanceRequests(): Promise<MaintenanceRequest[]> {
     return prisma.maintenanceRequest.findMany({
-      include: {
-        property: true,
-        unit: true,
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        status: true,
+        priority: true,
+        createdAt: true,
+        updatedAt: true,
+        scheduledDate: true,
+        completedDate: true,
+        propertyId: true,
+        unitId: true,
+        requestedById: true,
+        categoryId: true,
+        property: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        unit: {
+          select: {
+            id: true,
+            unitNumber: true,
+          },
+        },
       },
-    });
+    }) as unknown as MaintenanceRequest[];
   }
 
   public async createWorkOrderFromRequest(maintenanceRequestId: string): Promise<WorkOrder | null> {
-    const maintenanceRequest = await prisma.maintenanceRequest.findUnique({
-      where: { id: maintenanceRequestId },
-    });
+    return await prisma.$transaction(async (tx) => {
+      const maintenanceRequest = await tx.maintenanceRequest.findUnique({
+        where: { id: maintenanceRequestId },
+      });
 
-    if (!maintenanceRequest) {
-      return null;
-    }
+      if (!maintenanceRequest) {
+        return null;
+      }
 
-    const workOrder = await prisma.workOrder.create({
-      data: {
-        title: maintenanceRequest.title,
-        description: maintenanceRequest.description,
-        priority: maintenanceRequest.priority,
-        maintenanceRequestId: maintenanceRequest.id,
-      },
-    });
-
-    const bestVendorId = await aiRoutingService.findBestVendor(workOrder.id);
-
-    if (bestVendorId) {
-      await prisma.workOrderAssignment.create({
+      const workOrder = await tx.workOrder.create({
         data: {
-          workOrderId: workOrder.id,
-          vendorId: bestVendorId,
+          title: maintenanceRequest.title,
+          description: maintenanceRequest.description,
+          priority: maintenanceRequest.priority,
+          maintenanceRequestId: maintenanceRequest.id,
         },
       });
 
-      const vendor = await prisma.vendor.findUnique({ where: { id: bestVendorId } });
-      if (vendor) {
-        const message = `You have been assigned a new work order: ${workOrder.title}.`;
-        await sendNotification('email', vendor.email, 'New Work Order Assignment', message);
-      }
-    }
+      const bestVendorId = await aiRoutingService.findBestVendor(workOrder.id);
 
-    return workOrder;
+      if (bestVendorId) {
+        await tx.workOrderAssignment.create({
+          data: {
+            workOrderId: workOrder.id,
+            vendorId: bestVendorId,
+          },
+        });
+
+        const vendor = await tx.vendor.findUnique({ where: { id: bestVendorId } });
+        if (vendor) {
+          const message = `You have been assigned a new work order: ${workOrder.title}.`;
+          await sendNotification('email', vendor.email, 'New Work Order Assignment', message);
+        }
+      }
+
+      return workOrder;
+    });
+  }
+
+  public async createWorkOrdersFromRequests(maintenanceRequestIds: string[]): Promise<WorkOrder[]> {
+    const workOrders: WorkOrder[] = [];
+    await prisma.$transaction(async (tx) => {
+      for (const maintenanceRequestId of maintenanceRequestIds) {
+        const maintenanceRequest = await tx.maintenanceRequest.findUnique({
+          where: { id: maintenanceRequestId },
+        });
+        if (!maintenanceRequest) continue;
+        const workOrder = await tx.workOrder.create({
+          data: {
+            title: maintenanceRequest.title,
+            description: maintenanceRequest.description,
+            priority: maintenanceRequest.priority,
+            maintenanceRequestId: maintenanceRequest.id,
+          },
+        });
+        workOrders.push(workOrder);
+      }
+    });
+    return workOrders;
   }
 }
 
