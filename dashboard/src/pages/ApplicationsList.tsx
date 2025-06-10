@@ -17,6 +17,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import tenantScreeningService from '../services/tenantScreeningService';
 import { Application } from '../types/tenantScreening';
+import ScreeningAlerts from '../components/tenant-screening/ScreeningAlerts';
 
 const statusColors: Record<string, 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'> = {
   pending: 'warning',
@@ -102,80 +103,83 @@ const ApplicationsList: React.FC = () => {
   }
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Tenant Applications
-        </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          component={RouterLink}
-          to="/tenant-screening/applications/new"
-        >
-          New Application
-        </Button>
-      </Box>
+    <div>
+      <ScreeningAlerts />
+      <Box>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h4" component="h1">
+            Tenant Applications
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            component={RouterLink}
+            to="/tenant-screening/applications/new"
+          >
+            New Application
+          </Button>
+        </Box>
 
-      {error && (
-        <Typography color="error" sx={{ mb: 2 }}>
-          {error}
-        </Typography>
-      )}
+        {error && (
+          <Typography color="error" sx={{ mb: 2 }}>
+            {error}
+          </Typography>
+        )}
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>Property</TableCell>
-              <TableCell>Applicant</TableCell>
-              <TableCell>Submitted</TableCell>
-              <TableCell>Credit Score</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {applications.length > 0 ? (
-              applications.map((application) => (
-                <TableRow key={application.id}>
-                  <TableCell>{application.id}</TableCell>
-                  <TableCell>{application.propertyName}</TableCell>
-                  <TableCell>{application.applicantName}</TableCell>
-                  <TableCell>{formatDate(application.submittedAt)}</TableCell>
-                  <TableCell>{application.creditScore || 'N/A'}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={application.status.charAt(0).toUpperCase() + application.status.slice(1)}
-                      color={statusColors[application.status] || 'default'}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      component={RouterLink}
-                      to={`/tenant-screening/applications/${application.id}`}
-                    >
-                      View
-                    </Button>
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>ID</TableCell>
+                <TableCell>Property</TableCell>
+                <TableCell>Applicant</TableCell>
+                <TableCell>Submitted</TableCell>
+                <TableCell>Credit Score</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {applications.length > 0 ? (
+                applications.map((application) => (
+                  <TableRow key={application.id}>
+                    <TableCell>{application.id}</TableCell>
+                    <TableCell>{application.propertyName}</TableCell>
+                    <TableCell>{application.applicantName}</TableCell>
+                    <TableCell>{formatDate(application.submittedAt)}</TableCell>
+                    <TableCell>{application.creditScore || 'N/A'}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+                        color={statusColors[application.status] || 'default'}
+                        size="small"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        component={RouterLink}
+                        to={`/tenant-screening/applications/${application.id}`}
+                      >
+                        View
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} align="center">
+                    No applications found.
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={7} align="center">
-                  No applications found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Box>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
+    </div>
   );
 };
 

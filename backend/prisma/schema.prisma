@@ -249,6 +249,20 @@ model Vendor {
   emergencyRoutingRules EmergencyRoutingRule[]
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
+  serviceAreas        String[]
+  availability        String
+  certifications      String[]
+  standardRate        Float?
+  latitude            Float?
+  longitude           Float?
+  workload            Int                @default(0) // Number of active work orders
+  hourlyRate          Float?
+}
+
+enum VendorAvailability {
+  AVAILABLE
+  UNAVAILABLE
+  ON_VACATION
 }
 
 model WorkOrder {
@@ -980,4 +994,21 @@ model Consent {
   consent   Boolean
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model ModelPerformance {
+  id          String   @id @default(cuid())
+  modelName   String
+  accuracy    Float?
+  precision   Float?
+  recall      Float?
+  f1Score     Float?
+  recordedAt  DateTime @default(now())
+  version     String?
+  datasetInfo String?
+  parameters  Json?
+  notes       String?  @db.Text
+
+  @@index([modelName])
+  @@index([recordedAt])
 }

@@ -47,3 +47,28 @@ This document outlines the initial zero-trust security framework for the Propert
 - **Centralized Logging:** Use a centralized logging system to collect and analyze logs from all services.
 - **Security Information and Event Management (SIEM):** Use a SIEM to correlate and analyze security events.
 - **User and Entity Behavior Analytics (UEBA):** Use UEBA to detect anomalous user behavior.
+
+# Data Privacy, Compliance, and Ethical AI Considerations
+
+## Data Privacy Compliance (GDPR, CCPA)
+- **Data Minimization:** Only collect and process data strictly necessary for tenant screening and analytics.
+- **User Consent:** Obtain explicit user consent for data collection and processing where required.
+- **Right to Access/Delete:** Provide mechanisms for users to access, correct, or request deletion of their data.
+- **Data Retention:** Define and enforce data retention policies; delete or anonymize data when no longer needed.
+- **Audit Trails:** Maintain detailed logs of data access, changes, and deletion requests for compliance audits.
+
+## Model and API Security
+- **Access Controls:** Restrict access to predictive analytics APIs and model endpoints using RBAC/ABAC and JWT authentication.
+- **Audit Logging:** Log all access to sensitive model endpoints and prediction requests for traceability.
+- **Monitoring:** Continuously monitor model APIs for unusual access patterns or abuse.
+
+## Ethical AI (Bias, Fairness, Explainability)
+- **Bias Monitoring:** Regularly evaluate predictive models for bias, especially in protected attributes (e.g., race, gender, age).
+- **Fairness Checks:** Implement fairness metrics and review model outputs for disparate impact.
+- **Explainability:** Provide explanations for model predictions (e.g., SHAP, LIME) in tenant screening decisions.
+- **Transparency:** Document model logic, data sources, and limitations for stakeholders and users.
+
+## Compliance Documentation and Review
+- **Periodic Reviews:** Conduct regular security, privacy, and ethical AI reviews of all analytics and screening systems.
+- **Privacy Impact Assessments:** Perform DPIAs for new or significantly changed data processing activities.
+- **User-Facing Documentation:** Maintain clear, accessible privacy and AI transparency documentation for end users.

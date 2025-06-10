@@ -22,4 +22,11 @@ router.delete(
   MaintenanceController.deleteMaintenanceRequest
 );
 
+router.post(
+  '/assign-vendor',
+  authMiddleware.protect,
+  authMiddleware.checkRole(['ADMIN', 'PROPERTY_MANAGER']),
+  MaintenanceController.assignVendorToWorkOrder
+);
+
 export default router;
