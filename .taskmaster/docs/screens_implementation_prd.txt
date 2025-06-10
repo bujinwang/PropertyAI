@@ -1,0 +1,145 @@
+# PropertyFlow AI - Screen Implementation PRD
+
+## Project Overview
+This PRD outlines the screens that need to be implemented for the PropertyFlow AI mobile application. It focuses on creating the necessary UI components for all key features outlined in the main PRD, ensuring that both property managers and tenants have appropriate interfaces based on their roles.
+
+## Core Screen Implementation Requirements
+
+### 1. Intelligent Unit Listing & Marketing Screens
+- **Property Creation/Editing Screen**
+  - Create form for property details entry (address, units, amenities, etc.)
+  - Add photo upload/management capabilities
+  - Integrate with AI description generation
+  - Implement pricing recommendation display
+  
+- **Property Photo Management Screen**
+  - Multi-photo upload interface
+  - Photo arrangement and ordering
+  - AI-enhanced photo editing options
+  - Photo quality assessment display
+  
+- **Listing Performance Dashboard**
+  - Chart displays for listing views and inquiries
+  - Platform-specific performance metrics
+  - View response rate and time statistics
+  - Comparison with similar properties
+
+### 2. AI Communication Hub Screens
+- **Inbox Screen**
+  - Unified message view from all sources
+  - AI-suggested quick replies
+  - Priority/sentiment indicators
+  - Unread/read status indicators
+  
+- **Conversation Detail Screen**
+  - Full conversation history display
+  - AI response suggestions in context
+  - Multi-language translation tools
+  - Voice message playback with transcript
+  
+- **Communication Settings Screen**
+  - Auto-response configuration
+  - Language preferences settings
+  - Notification preferences
+  - Follow-up timing configuration
+
+### 3. Tenant Screening & Application Screens
+- **Applicant List Screen**
+  - Sortable/filterable applicant list
+  - AI risk score display
+  - Status indicators (new, processing, approved, denied)
+  - Batch actions functionality
+  
+- **Applicant Detail Screen**
+  - Personal and contact information
+  - Income and employment verification status
+  - Background check results summary
+  - Document verification status
+  - Approval/denial controls
+  
+- **Screening Criteria Configuration**
+  - Minimum requirements settings
+  - Automatic vs. manual screening toggle
+  - Custom screening rule creation
+  - Fair housing compliance settings
+
+### 4. Maintenance Management Screens
+- **Maintenance Request Dashboard**
+  - Request list with priority indicators
+  - Filter by status, property, vendor
+  - AI-recommended priority display
+  - Due date tracking
+  
+- **Maintenance Request Detail**
+  - Issue description and photos
+  - Property and unit information
+  - Vendor assignment interface
+  - Cost estimate display
+  - Status update controls
+  
+- **Vendor Management Screen**
+  - Vendor list with performance metrics
+  - Vendor profile editor
+  - Service category assignment
+  - Availability calendar integration
+
+### 5. Financial Management Screens
+- **Financial Dashboard**
+  - Income vs. expense summary
+  - Cash flow projection chart
+  - Outstanding payment tracking
+  - Expense categorization breakdown
+  
+- **Rent Collection Screen**
+  - Payment status by property/unit
+  - Payment history and schedule
+  - Late fee calculation and application
+  - Payment reminder configuration
+  
+- **Expense Tracking Screen**
+  - Expense entry form with receipt upload
+  - AI-assisted categorization
+  - Tax deduction identification
+  - Expense approval workflow
+
+### 6. Tenant Portal Screens
+- **Tenant Dashboard**
+  - Rent payment status and history
+  - Maintenance request status
+  - Important document notifications
+  - Community announcements
+  
+- **Rent Payment Screen**
+  - Multiple payment method options
+  - Payment schedule display
+  - Payment confirmation receipts
+  - Payment history log
+  
+- **Maintenance Request Form**
+  - Issue description field
+  - Photo/video upload capability
+  - Urgency selection
+  - Scheduling preferences
+  - Access authorization options
+
+## Technical Requirements
+- All screens must follow established design system
+- Implement responsive layouts for different device sizes
+- Support offline functionality where appropriate
+- Ensure accessibility compliance (WCAG 2.1)
+- Optimize performance for smooth navigation and transitions
+- Implement proper error handling and loading states
+
+## Role-Based Access
+- Implement role-based screen access (tenant, property manager, admin)
+- Show/hide features based on user permissions
+- Ensure tenant data isolation and privacy
+
+## Success Criteria
+- All screens render correctly on both iOS and Android
+- Navigation between screens works seamlessly
+- Data loads properly from API endpoints
+- Forms submit correctly and validate input
+- UI remains responsive under various network conditions
+- Screens adapt appropriately to device orientation changes
+- All user actions produce appropriate feedback 

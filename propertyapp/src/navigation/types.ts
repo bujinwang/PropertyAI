@@ -23,6 +23,7 @@ export type RootStackParamList = {
   // Main app screens
   Main: NavigatorScreenParams<MainTabParamList>;
   PropertyDetail: { propertyId: string };
+  PropertyForm: { propertyId?: string };
   UnitDetail: { unitId: string };
   ChatDetail: { chatId: string; recipientName: string };
   Settings: undefined;
