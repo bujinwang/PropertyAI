@@ -1,12 +1,13 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { maintenanceService } from '../services/maintenance.service';
 
 const prisma = new PrismaClient();
 
 class MaintenanceController {
   async getAllMaintenanceRequests(req: Request, res: Response) {
     try {
-      const maintenanceRequests = await prisma.maintenanceRequest.findMany();
+      const maintenanceRequests = await maintenanceService.getAllMaintenanceRequests();
       res.status(200).json(maintenanceRequests);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -57,6 +58,27 @@ class MaintenanceController {
         where: { id: req.params.id },
       });
       res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async assignVendorToWorkOrder(req: Request, res: Response) {
+    const { workOrderId, vendorId } = req.body;
+    try {
+      // First, remove any existing assignments for this work order
+      await prisma.workOrderAssignment.deleteMany({
+        where: { workOrderId },
+      });
+
+      // Then, create the new assignment
+      const assignment = await prisma.workOrderAssignment.create({
+        data: {
+          workOrderId,
+          vendorId,
+        },
+      });
+      res.status(201).json(assignment);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

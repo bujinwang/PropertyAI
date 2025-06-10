@@ -2,34 +2,38 @@ import { Request, Response } from 'express';
 import { paymentService } from '../services/payment.service';
 import logger from '../utils/logger';
 
-export const createPaymentIntent = async (req: Request, res: Response) => {
-  const { amount, currency, customerId } = req.body;
+class PaymentController {
+  async createPaymentIntent(req: Request, res: Response) {
+    const { amount, currency, customerId } = req.body;
 
-  if (!amount || !currency || !customerId) {
-    return res.status(400).json({ error: 'Amount, currency, and customer ID are required' });
+    if (!amount || !currency || !customerId) {
+      return res.status(400).json({ error: 'Missing required fields.' });
+    }
+
+    try {
+      const paymentIntent = await paymentService.createPaymentIntent(amount, currency, customerId);
+      res.status(200).json({ clientSecret: paymentIntent.client_secret });
+    } catch (error) {
+      logger.error(`Error creating PaymentIntent: ${error}`);
+      res.status(500).json({ error: 'Failed to create PaymentIntent.' });
+    }
   }
 
-  try {
-    const paymentIntent = await paymentService.createPaymentIntent(amount, currency, customerId);
-    res.status(200).json(paymentIntent);
-  } catch (error) {
-    logger.error(`Error creating payment intent: ${error}`);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
+  async processPayment(req: Request, res: Response) {
+    const { leaseId } = req.params;
 
-export const handleSuccessfulPayment = async (req: Request, res: Response) => {
-  const { paymentIntentId } = req.body;
+    if (!leaseId) {
+      return res.status(400).json({ error: 'Lease ID is required.' });
+    }
 
-  if (!paymentIntentId) {
-    return res.status(400).json({ error: 'Payment intent ID is required' });
+    try {
+      await paymentService.processPayment(leaseId);
+      res.status(200).json({ message: 'Payment processed successfully.' });
+    } catch (error) {
+      logger.error(`Error processing payment: ${error}`);
+      res.status(500).json({ error: 'Failed to process payment.' });
+    }
   }
+}
 
-  try {
-    const transaction = await paymentService.handleSuccessfulPayment(paymentIntentId);
-    res.status(200).json(transaction);
-  } catch (error) {
-    logger.error(`Error handling successful payment: ${error}`);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
+export const paymentController = new PaymentController();

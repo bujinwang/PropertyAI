@@ -8,3 +8,27 @@ data_sources:
 
 model_artifacts:
   path: "models/artifacts"
+
+application_data:
+  type: csv  # or 'sql'
+  path: ../data/raw/application_data.csv  # or provide SQL connection details
+  # sql_query: "SELECT * FROM applications"
+  # connection_string: "postgresql://user:pass@host:port/db"
+
+user_logs:
+  type: csv
+  path: ../data/raw/user_logs.csv
+  # sql_query: "SELECT * FROM user_logs"
+  # connection_string: "postgresql://user:pass@host:port/db"
+
+ai_outputs:
+  type: csv
+  path: ../data/raw/ai_outputs.csv
+  # sql_query: "SELECT * FROM ai_outputs"
+  # connection_string: "postgresql://user:pass@host:port/db"
+
+system_logs:
+  type: csv
+  path: ../data/raw/system_logs.csv
+  # sql_query: "SELECT * FROM system_logs"
+  # connection_string: "postgresql://user:pass@host:port/db"

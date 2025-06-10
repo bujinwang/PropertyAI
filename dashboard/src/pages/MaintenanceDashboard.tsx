@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
-import ApiService from '../services/apiService';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button } from '@mui/material';
+import axios from 'axios';
 
 const MaintenanceDashboard: React.FC = () => {
   const [tickets, setTickets] = useState<any[]>([]);
-  const apiService = new ApiService('http://localhost:5000/api');
 
   useEffect(() => {
     const fetchTickets = async () => {
       try {
-        const response = await apiService.get('maintenance-requests');
-        setTickets(response);
+        const response = await axios.get<any[]>('http://localhost:5000/api/maintenance');
+        setTickets(response.data);
       } catch (error) {
         console.error('Error fetching maintenance tickets:', error);
       }
@@ -18,6 +17,15 @@ const MaintenanceDashboard: React.FC = () => {
 
     fetchTickets();
   }, []);
+
+  const handlePredictFailure = async (applianceId: string) => {
+    try {
+      const response = await axios.get<{ prediction: string }>(`http://localhost:5000/api/predictive-maintenance/predict/${applianceId}`);
+      alert(`Prediction for appliance ${applianceId}: ${response.data.prediction}`);
+    } catch (error) {
+      console.error('Error predicting failure:', error);
+    }
+  };
 
   return (
     <TableContainer component={Paper}>
@@ -29,6 +37,7 @@ const MaintenanceDashboard: React.FC = () => {
             <TableCell>Priority</TableCell>
             <TableCell>Property</TableCell>
             <TableCell>Unit</TableCell>
+            <TableCell>Actions</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -39,6 +48,18 @@ const MaintenanceDashboard: React.FC = () => {
               <TableCell>{ticket.priority}</TableCell>
               <TableCell>{ticket.property.name}</TableCell>
               <TableCell>{ticket.unit.unitNumber}</TableCell>
+              <TableCell>
+                {ticket.unit.appliances?.map((appliance: any) => (
+                  <Button
+                    key={appliance.id}
+                    variant="contained"
+                    color="secondary"
+                    onClick={() => handlePredictFailure(appliance.id)}
+                  >
+                    Predict Failure for {appliance.type}
+                  </Button>
+                ))}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

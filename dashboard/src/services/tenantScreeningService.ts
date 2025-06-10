@@ -80,6 +80,20 @@ const rejectApplication = async (id: string, reason: string): Promise<Applicatio
   }
 };
 
+/**
+ * Fetches current issue alerts for tenant screening from the backend.
+ * @returns A list of issue alerts.
+ */
+const getScreeningIssueAlerts = async (): Promise<any[]> => {
+  try {
+    const response = await api.get<any[]>('/tenant-screening/alerts');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching screening issue alerts:', error);
+    throw error;
+  }
+};
+
 const tenantScreeningService = {
   getApplications,
   getApplicationById,
@@ -89,6 +103,7 @@ const tenantScreeningService = {
   submitBackgroundCheck,
   approveApplication,
   rejectApplication,
+  getScreeningIssueAlerts,
 };
 
 export default tenantScreeningService; 

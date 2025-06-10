@@ -38,3 +38,33 @@ The framework is designed to be modular and extensible, following a standard mac
 
 - Use the `deploy_model.py` script to deploy your model as a REST API.
 - The API will be available at `http://localhost:5000/predict`.
+
+## Tenant Screening Predictive Analytics: Required Data Sources & Schemas
+
+To implement predictive analytics for tenant screening issue identification, the following data sources are required:
+
+### 1. Application Data
+- **Description:** Records of tenant applications, including timestamps, status at each stage, and field values.
+- **Expected Schema Example:**
+  | application_id | user_id | submitted_at | status | stage | field_values (JSON) |
+  |---------------|---------|--------------|--------|-------|---------------------|
+
+### 2. User Interaction Logs
+- **Description:** Logs of user actions within the tenant screening and application processing UI.
+- **Expected Schema Example:**
+  | log_id | user_id | action | timestamp | metadata (JSON) |
+  |--------|---------|--------|-----------|----------------|
+
+### 3. AI System Outputs
+- **Description:** Results from AI-powered modules such as risk assessment, document verification, and background checks.
+- **Expected Schema Example:**
+  | application_id | risk_score | doc_verification_status | background_check_status | ai_outputs (JSON) |
+  |---------------|------------|------------------------|------------------------|-------------------|
+
+### 4. System/Server Logs
+- **Description:** Backend logs relevant to the processing of tenant applications (e.g., errors, performance metrics).
+- **Expected Schema Example:**
+  | log_id | service | event_type | timestamp | details (JSON) |
+  |--------|---------|------------|-----------|---------------|
+
+**Note:** Place sample or real data for each source in `data/raw/` as CSV or configure SQL access in `config/config.yml`. Update ingestion scripts as needed to match these schemas.

@@ -1,19 +1,28 @@
 import { Request, Response } from 'express';
-import { photoAnalysisService } from '../services/photoAnalysis.service';
+import { analyzeImage, storeAnalysisResult } from '../services/photoAnalysis.service';
+import logger from '../utils/logger';
 
-class PhotoAnalysisController {
-  public async analyzeMaintenancePhoto(req: Request, res: Response): Promise<void> {
-    try {
-      const { maintenanceRequestId, photoUrl } = req.body;
-      const photoAnalysis = await photoAnalysisService.analyzeMaintenancePhoto(
-        maintenanceRequestId,
-        photoUrl
-      );
-      res.status(201).json(photoAnalysis);
-    } catch (error) {
-      res.status(500).json({ message: 'Error analyzing maintenance photo.', error });
-    }
+/**
+ * Handles the analysis of an uploaded image for a maintenance request.
+ * @param req The request object.
+ * @param res The response object.
+ */
+export const analyzeMaintenancePhoto = async (req: Request, res: Response): Promise<void> => {
+  const { maintenanceRequestId } = req.params;
+  const { imageUrl } = req.body;
+
+  if (!imageUrl) {
+    res.status(400).json({ error: 'Image URL is required.' });
+    return;
   }
-}
 
-export const photoAnalysisController = new PhotoAnalysisController();
+  try {
+    const analysisResult = await analyzeImage(imageUrl);
+    await storeAnalysisResult(maintenanceRequestId, analysisResult);
+
+    res.status(200).json(analysisResult);
+  } catch (error) {
+    logger.error('Error analyzing maintenance photo:', error);
+    res.status(500).json({ error: 'Failed to analyze photo.' });
+  }
+};

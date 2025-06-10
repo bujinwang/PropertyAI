@@ -1,61 +1,87 @@
 import { prisma } from '../config/database';
-import { MaintenanceRequest } from '@prisma/client';
+import { Appliance } from '@prisma/client';
+import { spawn } from 'child_process';
+import * as path from 'path';
+import * as fs from 'fs';
 
 class PredictiveMaintenanceService {
-  public async collectMaintenanceData(): Promise<MaintenanceRequest[]> {
-    const maintenanceData = await prisma.maintenanceRequest.findMany({
-      where: {
-        status: 'COMPLETED',
-      },
-    });
-    return maintenanceData;
-  }
+  private modelPath = path.join(__dirname, '../predictive-maintenance/predictive_maintenance_model.pkl');
 
-  public async processMaintenanceData(data: MaintenanceRequest[]): Promise<any[]> {
-    // This is a placeholder for the actual data processing logic.
-    // In a real application, this would involve feature engineering and
-    // preparing the data for the machine learning model.
-    const processedData = data.map((request) => ({
-      unitId: request.unitId,
-      completedDate: request.completedDate,
-      cost: request.actualCost,
-      priority: request.priority,
-    }));
-    return processedData;
-  }
-
-  public async predictMaintenance(unitId: string): Promise<any | null> {
-    // This is a placeholder for the actual predictive maintenance model.
-    // In a real application, this would involve using a machine learning model
-    // to predict the next failure date based on historical data.
-    // For now, we'll use a simple rule-based approach.
-    const maintenanceHistory = await prisma.maintenanceRequest.findMany({
-      where: {
-        unitId,
-        status: 'COMPLETED',
-      },
-      orderBy: {
-        completedDate: 'desc',
-      },
-      take: 1,
-    });
-
-    if (maintenanceHistory.length > 0) {
-      const lastMaintenanceDate = maintenanceHistory[0].completedDate;
-      if (lastMaintenanceDate) {
-        const nextFailureDate = new Date(lastMaintenanceDate);
-        nextFailureDate.setMonth(nextFailureDate.getMonth() + 6); // Predict failure in 6 months
-        return {
-          unitId,
-          predictionDate: new Date(),
-          predictedFailureDate: nextFailureDate,
-          confidence: 0.75,
-          component: 'HVAC',
-        };
-      }
+  public async predictFailure(applianceId: string): Promise<any> {
+    if (!fs.existsSync(this.modelPath)) {
+      throw new Error('Model not found. Please train the model first.');
     }
 
-    return null;
+    const appliance = await this.getApplianceData(applianceId);
+    if (!appliance) {
+      throw new Error('Appliance not found');
+    }
+
+    const features = this.extractFeatures(appliance);
+    
+    return new Promise((resolve, reject) => {
+      const pythonProcess = spawn('python3', [
+        path.join(__dirname, '../predictive-maintenance/predict.py'),
+        JSON.stringify(features),
+      ]);
+
+      let prediction = '';
+      pythonProcess.stdout.on('data', (data) => {
+        prediction += data.toString();
+      });
+
+      pythonProcess.stderr.on('data', (data) => {
+        console.error(`stderr: ${data}`);
+      });
+
+      pythonProcess.on('close', (code) => {
+        if (code === 0) {
+          resolve(JSON.parse(prediction));
+        } else {
+          reject(new Error(`Python script exited with code ${code}`));
+        }
+      });
+    });
+  }
+
+  private async getApplianceData(applianceId: string): Promise<any> {
+    return prisma.appliance.findUnique({
+      where: { id: applianceId },
+      include: {
+        unit: {
+          include: {
+            maintenanceRequests: {
+              include: {
+                workOrder: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  private extractFeatures(appliance: any): any {
+    const features: any = {};
+    
+    features.age = (new Date().getTime() - new Date(appliance.purchaseDate).getTime()) / (1000 * 60 * 60 * 24 * 365);
+    features.maintenance_count = appliance.unit.maintenanceRequests.length;
+    features.time_since_last_maintenance = appliance.lastMaintenanceDate 
+      ? (new Date().getTime() - new Date(appliance.lastMaintenanceDate).getTime()) / (1000 * 60 * 60 * 24)
+      : 0;
+
+    const typeFeatures: any = {
+      'REFRIGERATOR': { 'type_REFRIGERATOR': 1, 'type_OVEN': 0, 'type_DISHWASHER': 0 },
+      'OVEN': { 'type_REFRIGERATOR': 0, 'type_OVEN': 1, 'type_DISHWASHER': 0 },
+      'DISHWASHER': { 'type_REFRIGERATOR': 0, 'type_OVEN': 0, 'type_DISHWASHER': 1 },
+    };
+
+    const applianceType = appliance.type.toUpperCase();
+    if (typeFeatures[applianceType]) {
+      Object.assign(features, typeFeatures[applianceType]);
+    }
+
+    return features;
   }
 }
 

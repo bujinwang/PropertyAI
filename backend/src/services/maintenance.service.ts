@@ -1,8 +1,18 @@
 import { prisma } from '../config/database';
 import { aiRoutingService } from './aiRouting.service';
 import { MaintenanceRequest, WorkOrder } from '@prisma/client';
+import { sendNotification } from './notificationService';
 
 class MaintenanceService {
+  public async getAllMaintenanceRequests(): Promise<MaintenanceRequest[]> {
+    return prisma.maintenanceRequest.findMany({
+      include: {
+        property: true,
+        unit: true,
+      },
+    });
+  }
+
   public async createWorkOrderFromRequest(maintenanceRequestId: string): Promise<WorkOrder | null> {
     const maintenanceRequest = await prisma.maintenanceRequest.findUnique({
       where: { id: maintenanceRequestId },
@@ -30,6 +40,12 @@ class MaintenanceService {
           vendorId: bestVendorId,
         },
       });
+
+      const vendor = await prisma.vendor.findUnique({ where: { id: bestVendorId } });
+      if (vendor) {
+        const message = `You have been assigned a new work order: ${workOrder.title}.`;
+        await sendNotification('email', vendor.email, 'New Work Order Assignment', message);
+      }
     }
 
     return workOrder;
