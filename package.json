@@ -12,6 +12,7 @@
     "@types/pdfkit": "^0.13.9",
     "googleapis": "^150.0.1",
     "node-schedule": "^2.1.1",
-    "pdfkit": "^0.17.1"
+    "pdfkit": "^0.17.1",
+    "react-native-tab-view": "^4.1.1"
   }
 }

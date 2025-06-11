@@ -19,6 +19,7 @@ export enum Resource {
   SETTINGS = 'settings',
   USERS = 'users',
   AI_FEATURES = 'ai_features',
+  COMPLIANCE = 'compliance',
 }
 
 /**
@@ -129,6 +130,12 @@ export const Permissions = {
   AI_FEATURES_CREATE: `${Resource.AI_FEATURES}.${Action.CREATE}` as Permission,
   AI_FEATURES_EDIT: `${Resource.AI_FEATURES}.${Action.EDIT}` as Permission,
   AI_FEATURES_GENERATE: `${Resource.AI_FEATURES}.${Action.GENERATE}` as Permission,
+  
+  // Compliance permissions
+  COMPLIANCE_VIEW: `${Resource.COMPLIANCE}.${Action.VIEW}` as Permission,
+  COMPLIANCE_EXPORT: `${Resource.COMPLIANCE}.${Action.EXPORT}` as Permission,
+  COMPLIANCE_GENERATE: `${Resource.COMPLIANCE}.${Action.GENERATE}` as Permission,
+  COMPLIANCE_EDIT: `${Resource.COMPLIANCE}.${Action.EDIT}` as Permission,
 };
 
 /**
@@ -167,6 +174,7 @@ const TENANT_PERMISSIONS: Permission[] = [
   Permissions.SETTINGS_VIEW,
   Permissions.AI_FEATURES_VIEW,
   Permissions.AI_FEATURES_GENERATE,
+  Permissions.COMPLIANCE_VIEW, // All users can view their compliance settings
 ];
 
 // Define property manager specific permissions
@@ -206,6 +214,9 @@ const ADMIN_PERMISSIONS: Permission[] = [
   Permissions.USERS_CREATE,
   Permissions.USERS_EDIT,
   Permissions.USERS_DELETE,
+  Permissions.COMPLIANCE_EXPORT,
+  Permissions.COMPLIANCE_GENERATE,
+  Permissions.COMPLIANCE_EDIT,
 ];
 
 /**
@@ -268,6 +279,7 @@ export const PERMISSION_SCOPES: Record<UserRole, Partial<Record<Resource, Permis
     [Resource.MAINTENANCE]: PermissionScope.OWNED,
     [Resource.PAYMENTS]: PermissionScope.OWNED,
     [Resource.DOCUMENTS]: PermissionScope.OWNED,
+    [Resource.COMPLIANCE]: PermissionScope.OWNED,
   },
   
   propertyManager: {
@@ -275,6 +287,7 @@ export const PERMISSION_SCOPES: Record<UserRole, Partial<Record<Resource, Permis
     [Resource.UNITS]: PermissionScope.ASSIGNED,
     [Resource.TENANTS]: PermissionScope.ASSIGNED,
     [Resource.MAINTENANCE]: PermissionScope.ASSIGNED,
+    [Resource.COMPLIANCE]: PermissionScope.ASSIGNED,
   },
   
   admin: {
@@ -283,5 +296,6 @@ export const PERMISSION_SCOPES: Record<UserRole, Partial<Record<Resource, Permis
     [Resource.TENANTS]: PermissionScope.ALL,
     [Resource.MAINTENANCE]: PermissionScope.ALL,
     [Resource.USERS]: PermissionScope.ALL,
+    [Resource.COMPLIANCE]: PermissionScope.ALL,
   },
 }; 

@@ -9,824 +9,600 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  SafeAreaView,
+  Animated,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '@/navigation/types';
+import { RootStackParamList, NavigationProps } from '../navigation/types';
 import { COLORS, FONTS, SPACING } from '@/constants/theme';
 import { StepIndicator } from '@/components/ui/StepIndicator';
 import { RoleSelector } from '@/components/ui/RoleSelector';
 import { Button } from '@/components/ui/Button';
 import { FormInput } from '@/components/ui/FormInput';
 import { Checkbox } from '@/components/ui/Checkbox';
-import { useAuth } from '@/contexts';
+import { useAuth } from '../contexts/AuthContext';
 
-type AIGuidedSetupWizardScreenNavigationProp = NativeStackNavigationProp<
-  RootStackParamList,
-  'AIGuidedSetupWizard'
->;
+// Components
+import ProgressSteps from '../components/setup-wizard/ProgressSteps';
+import PortfolioSizeForm from '../components/setup-wizard/PortfolioSizeForm';
+import CommunicationPreferences, { CommunicationPreference } from '../components/setup-wizard/CommunicationPreferences';
+import RecommendationsScreen from '../components/setup-wizard/RecommendationsScreen';
+import RoleSelectorCard from '../components/setup-wizard/RoleSelectorCard';
 
-type UserRole = 'admin' | 'propertyManager' | 'tenant';
+// Types and services
+import { AIRecommendation, PortfolioSize } from '../services/setupWizardService';
+import { UserRole } from '../types/user';
 
-// AI suggestions types
-interface NotificationSuggestion {
-  id: string;
-  type: string;
-  channel: 'email' | 'push' | 'sms';
-  frequency: 'immediate' | 'daily' | 'weekly';
-  enabled: boolean;
+type SetupStep = 'welcome' | 'role' | 'portfolio' | 'communication' | 'notifications' | 'features' | 'privacy' | 'summary';
+
+interface SetupWizardState {
+  currentStep: SetupStep;
+  selectedRole: UserRole;
+  portfolioSize: PortfolioSize;
+  communicationPreference: CommunicationPreference;
+  notificationRecommendations: AIRecommendation[];
+  featureRecommendations: AIRecommendation[];
+  privacyRecommendations: AIRecommendation[];
 }
 
-interface FeatureSuggestion {
-  id: string;
-  name: string;
-  description: string;
-  enabled: boolean;
-  priority: 'high' | 'medium' | 'low';
+// Define the user settings interface to match what updateUserSettings expects
+interface UserSettings {
+  setupCompleted?: boolean;
+  communicationPreference?: CommunicationPreference;
+  portfolioSize?: PortfolioSize;
+  enabledNotifications?: string[];
+  enabledFeatures?: string[];
+  privacySettings?: string[];
+  privacy?: { [key: string]: boolean };
 }
 
-export const AIGuidedSetupWizardScreen: React.FC = () => {
-  const navigation = useNavigation<AIGuidedSetupWizardScreenNavigationProp>();
+const AIGuidedSetupWizardScreen: React.FC<NavigationProps<'AIGuidedSetupWizard'>> = ({ route }) => {
+  const { isFirstLogin, role: routeRole, portfolioSize: routePortfolioSize } = route.params || {};
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user, updateUserSettings } = useAuth();
   
-  // Step control
-  const steps = [
-    'Role Selection',
-    'Profile Setup',
-    'Notifications',
-    'AI Personalization',
-    'Summary'
-  ];
+  // Get user role from context or route params
+  const userRole = routeRole || (user?.role as UserRole) || UserRole.TENANT;
   
-  const [currentStep, setCurrentStep] = useState(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingAISuggestions, setIsLoadingAISuggestions] = useState(false);
+  // Setup state
+  const [state, setState] = useState<SetupWizardState>({
+    currentStep: 'welcome',
+    selectedRole: userRole,
+    portfolioSize: routePortfolioSize || { properties: 0, units: 0 },
+    communicationPreference: 'balanced',
+    notificationRecommendations: [],
+    featureRecommendations: [],
+    privacyRecommendations: [],
+  });
   
-  // Form state
-  const [role, setRole] = useState<UserRole>(user?.role || 'propertyManager');
-  const [portfolioSize, setPortfolioSize] = useState<string>(user?.portfolioSize || '');
-  const [communicationStyle, setCommunicationStyle] = useState<'formal' | 'casual'>('casual');
-  const [notificationPreferences, setNotificationPreferences] = useState<NotificationSuggestion[]>([]);
-  const [suggestedFeatures, setSuggestedFeatures] = useState<FeatureSuggestion[]>([]);
-  const [aiAutomationLevel, setAiAutomationLevel] = useState<'minimal' | 'balanced' | 'full'>('balanced');
-  const [acceptedAiTerms, setAcceptedAiTerms] = useState(false);
+  const [fadeAnim] = useState(new Animated.Value(1));
   
-  // Generate AI suggestions based on role and portfolio size
-  useEffect(() => {
-    if (currentStep === 2 || currentStep === 3) {
-      generateAISuggestions();
+  // Define the steps based on user role
+  const getSteps = (): { id: SetupStep; label: string }[] => {
+    const steps: { id: SetupStep; label: string }[] = [
+      { id: 'welcome', label: 'Welcome' },
+      { id: 'role', label: 'Role' },
+      { id: 'communication', label: 'Communication' },
+      { id: 'notifications', label: 'Notifications' },
+      { id: 'features', label: 'Features' },
+      { id: 'privacy', label: 'Privacy' },
+      { id: 'summary', label: 'Summary' },
+    ];
+    if (state.selectedRole === UserRole.PROPERTY_MANAGER) {
+      steps.splice(2, 0, { id: 'portfolio', label: 'Portfolio' });
     }
-  }, [currentStep, role, portfolioSize]);
+    return steps;
+  };
   
-  const generateAISuggestions = async () => {
-    // In a real implementation, this would call an API to get AI suggestions
-    setIsLoadingAISuggestions(true);
-    
-    // Simulate network delay
-    setTimeout(() => {
-      // Generate notification suggestions based on role
-      if (currentStep === 2) {
-        let suggestions: NotificationSuggestion[] = [];
-        
-        if (role === 'propertyManager') {
-          suggestions = [
-            { id: '1', type: 'New tenant applications', channel: 'push', frequency: 'immediate', enabled: true },
-            { id: '2', type: 'Maintenance requests', channel: 'push', frequency: 'immediate', enabled: true },
-            { id: '3', type: 'Lease renewals', channel: 'email', frequency: 'weekly', enabled: true },
-            { id: '4', type: 'Payment reminders', channel: 'email', frequency: 'weekly', enabled: true },
-            { id: '5', type: 'Market updates', channel: 'email', frequency: 'weekly', enabled: false },
-          ];
-        } else if (role === 'tenant') {
-          suggestions = [
-            { id: '1', type: 'Maintenance updates', channel: 'push', frequency: 'immediate', enabled: true },
-            { id: '2', type: 'Payment reminders', channel: 'push', frequency: 'immediate', enabled: true },
-            { id: '3', type: 'Building announcements', channel: 'push', frequency: 'immediate', enabled: true },
-            { id: '4', type: 'Lease expiration', channel: 'email', frequency: 'weekly', enabled: true },
-            { id: '5', type: 'Community events', channel: 'email', frequency: 'weekly', enabled: false },
-          ];
-        } else if (role === 'admin') {
-          suggestions = [
-            { id: '1', type: 'System alerts', channel: 'push', frequency: 'immediate', enabled: true },
-            { id: '2', type: 'User registrations', channel: 'email', frequency: 'daily', enabled: true },
-            { id: '3', type: 'Security events', channel: 'push', frequency: 'immediate', enabled: true },
-            { id: '4', type: 'Performance reports', channel: 'email', frequency: 'weekly', enabled: true },
-            { id: '5', type: 'Audit logs', channel: 'email', frequency: 'daily', enabled: false },
-          ];
-        }
-        
-        setNotificationPreferences(suggestions);
-      } 
+  const steps = getSteps();
+  const currentStepIndex = steps.findIndex(step => step.id === state.currentStep);
+
+  // Helper to animate step transitions
+  const animateStep = (callback: () => void) => {
+    Animated.sequence([
+      Animated.timing(fadeAnim, { toValue: 0, duration: 120, useNativeDriver: true }),
+    ]).start(() => {
+      callback();
+      Animated.timing(fadeAnim, { toValue: 1, duration: 120, useNativeDriver: true }).start();
+    });
+  };
+
+  // Handle next step navigation
+  const handleNext = () => {
+    const steps = getSteps();
+    const currentIndex = steps.findIndex(step => step.id === state.currentStep);
+    if (currentIndex < steps.length - 1) {
+      animateStep(() => {
+        setState(prev => ({
+          ...prev,
+          currentStep: steps[currentIndex + 1].id,
+        }));
+      });
+    }
+  };
+
+  // Handle previous step navigation
+  const handleBack = () => {
+    const steps = getSteps();
+    const currentIndex = steps.findIndex(step => step.id === state.currentStep);
+    if (currentIndex > 0) {
+      animateStep(() => {
+        setState(prev => ({
+          ...prev,
+          currentStep: steps[currentIndex - 1].id,
+        }));
+      });
+    } else {
+      // First step, confirm exit
+      Alert.alert(
+        "Exit Setup",
+        "Are you sure you want to exit the setup wizard? Your progress will not be saved.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { 
+            text: "Exit", 
+            style: "destructive",
+            onPress: () => navigation.goBack()
+          }
+        ]
+      );
+    }
+  };
+
+  // Handle portfolio size update
+  const handleUpdatePortfolioSize = (size: PortfolioSize) => {
+    setState(prev => ({
+      ...prev,
+      portfolioSize: size,
+    }));
+  };
+
+  // Handle communication preference update
+  const handleUpdateCommunicationPreference = (preference: CommunicationPreference) => {
+    setState(prev => ({
+      ...prev,
+      communicationPreference: preference,
+    }));
+  };
+
+  // Handle notification recommendations update
+  const handleUpdateNotificationRecommendations = (recommendations: AIRecommendation[]) => {
+    setState(prev => ({
+      ...prev,
+      notificationRecommendations: recommendations,
+    }));
+  };
+
+  // Handle feature recommendations update
+  const handleUpdateFeatureRecommendations = (recommendations: AIRecommendation[]) => {
+    setState(prev => ({
+      ...prev,
+      featureRecommendations: recommendations,
+    }));
+  };
+
+  // Handle privacy recommendations update
+  const handleUpdatePrivacyRecommendations = (recommendations: AIRecommendation[]) => {
+    setState(prev => ({
+      ...prev,
+      privacyRecommendations: recommendations,
+    }));
+  };
+
+  // Role selection handler with portfolio reset
+  const handleRoleSelect = (role: UserRole) => {
+    setState((prev) => ({
+      ...prev,
+      selectedRole: role,
+      portfolioSize: role === UserRole.PROPERTY_MANAGER ? prev.portfolioSize : { properties: 0, units: 0 },
+    }));
+  };
+
+  // Handle wizard completion
+  const handleComplete = async () => {
+    try {
+      // Filter enabled recommendations
+      const enabledNotifications = state.notificationRecommendations
+        .filter(rec => rec.enabled)
+        .map(rec => rec.id);
       
-      // Generate feature suggestions based on role and portfolio size
-      else if (currentStep === 3) {
-        let suggestions: FeatureSuggestion[] = [];
+      const enabledFeatures = state.featureRecommendations
+        .filter(rec => rec.enabled)
+        .map(rec => rec.id);
+      
+      const enabledPrivacySettings = state.privacyRecommendations
+        .filter(rec => rec.enabled)
+        .map(rec => rec.id);
+      
+      // Update user settings in context
+      if (user) {
+        // Create settings object that matches the expected type
+        const settings: UserSettings = {
+          privacy: {},
+        };
         
-        if (role === 'propertyManager') {
-          suggestions = [
-            { 
-              id: '1', 
-              name: 'AI Tenant Screening', 
-              description: 'Automatically screen tenant applications using AI', 
-              enabled: true, 
-              priority: 'high' 
-            },
-            { 
-              id: '2', 
-              name: 'Predictive Maintenance', 
-              description: 'Predict maintenance issues before they occur', 
-              enabled: true, 
-              priority: 'medium' 
-            },
-            { 
-              id: '3', 
-              name: 'Automated Responses', 
-              description: 'AI-powered responses to common tenant inquiries', 
-              enabled: true, 
-              priority: 'medium' 
-            },
-            { 
-              id: '4', 
-              name: 'Market Analysis', 
-              description: 'AI-driven rental market analysis', 
-              enabled: portfolioSize === 'large', 
-              priority: portfolioSize === 'large' ? 'high' : 'low' 
-            },
-          ];
-        } else if (role === 'tenant') {
-          suggestions = [
-            { 
-              id: '1', 
-              name: 'Smart Maintenance Requests', 
-              description: 'AI-enhanced maintenance request submission', 
-              enabled: true, 
-              priority: 'high' 
-            },
-            { 
-              id: '2', 
-              name: 'Digital Concierge', 
-              description: 'AI assistant for property-related questions', 
-              enabled: true, 
-              priority: 'medium' 
-            },
-            { 
-              id: '3', 
-              name: 'Payment Forecasting', 
-              description: 'Predict future expenses based on your payment history', 
-              enabled: true, 
-              priority: 'medium' 
-            },
-            { 
-              id: '4', 
-              name: 'Community Recommendations', 
-              description: 'Get AI recommendations for local services', 
-              enabled: false, 
-              priority: 'low' 
-            },
-          ];
-        } else if (role === 'admin') {
-          suggestions = [
-            { 
-              id: '1', 
-              name: 'System Health Monitoring', 
-              description: 'AI-powered system performance monitoring', 
-              enabled: true, 
-              priority: 'high' 
-            },
-            { 
-              id: '2', 
-              name: 'User Behavior Analytics', 
-              description: 'Analyze user behavior patterns', 
-              enabled: true, 
-              priority: 'high' 
-            },
-            { 
-              id: '3', 
-              name: 'Fraud Detection', 
-              description: 'AI-powered fraud detection system', 
-              enabled: true, 
-              priority: 'high' 
-            },
-            { 
-              id: '4', 
-              name: 'Predictive Resource Allocation', 
-              description: 'Optimize system resources based on usage patterns', 
-              enabled: true, 
-              priority: 'medium' 
-            },
-          ];
+        // Add the additional properties
+        settings.setupCompleted = true;
+        settings.communicationPreference = state.communicationPreference;
+        if (state.selectedRole === UserRole.PROPERTY_MANAGER) {
+          settings.portfolioSize = state.portfolioSize;
         }
+        settings.enabledNotifications = enabledNotifications;
+        settings.enabledFeatures = enabledFeatures;
+        settings.privacySettings = enabledPrivacySettings;
         
-        setSuggestedFeatures(suggestions);
+        await updateUserSettings(settings);
       }
       
-      setIsLoadingAISuggestions(false);
-    }, 1500);
-  };
-  
-  const handleNext = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      handleComplete();
-    }
-  };
-  
-  const handleBack = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    } else {
-      navigation.goBack();
-    }
-  };
-  
-  const handleComplete = async () => {
-    setIsSubmitting(true);
-    
-    try {
-      // In a real implementation, this would call an API to update user settings
-      await updateUserSettings({
-        role,
-        portfolioSize,
-        communicationStyle,
-        notificationPreferences,
-        suggestedFeatures: suggestedFeatures.filter(f => f.enabled),
-        aiAutomationLevel,
+      // Navigate to home screen - using the appropriate navigation type
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Main' }],
       });
       
+      // Show success message
       Alert.alert(
-        'Setup Complete',
-        'Your account has been successfully configured. You can adjust these settings anytime from your profile.',
-        [{ text: 'Continue', onPress: () => navigation.navigate('Home') }]
+        "Setup Complete",
+        "Your personalized AI settings have been applied.",
+        [{ text: "OK" }]
       );
     } catch (error) {
+      console.error('Error saving setup settings:', error);
       Alert.alert(
-        'Setup Failed',
-        'There was a problem saving your settings. Please try again.',
-        [{ text: 'OK' }]
+        "Error",
+        "Failed to save your settings. Please try again or contact support.",
+        [{ text: "OK" }]
       );
-    } finally {
-      setIsSubmitting(false);
     }
   };
-  
-  // Toggle notification preference
-  const toggleNotification = (id: string) => {
-    setNotificationPreferences(prev => 
-      prev.map(item => 
-        item.id === id ? { ...item, enabled: !item.enabled } : item
-      )
-    );
-  };
-  
-  // Toggle feature suggestion
-  const toggleFeature = (id: string) => {
-    setSuggestedFeatures(prev => 
-      prev.map(item => 
-        item.id === id ? { ...item, enabled: !item.enabled } : item
-      )
-    );
-  };
-  
-  // Render current step content
+
+  // Render the current step content
   const renderStepContent = () => {
-    switch (currentStep) {
-      case 0:
+    switch (state.currentStep) {
+      case 'welcome':
         return (
           <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>Select Your Role</Text>
-            <Text style={styles.stepDescription}>
-              This helps us personalize your experience and suggest the most relevant features for you.
+            <Text style={styles.welcomeTitle}>Welcome to Property AI</Text>
+            <Text style={styles.welcomeSubtitle}>
+              Let&apos;s set up your personalized AI experience
             </Text>
-            
-            <RoleSelector
-              selectedRole={role}
-              onRoleChange={setRole}
-              style={styles.roleSelector}
-            />
-          </View>
-        );
-        
-      case 1:
-        return (
-          <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>Profile Setup</Text>
-            <Text style={styles.stepDescription}>
-              Tell us a bit more about yourself so we can customize your experience.
+            <Text style={styles.welcomeDescription}>
+              This wizard will help you configure AI-powered features tailored to your needs.
+              Our AI will recommend settings based on your role, preferences, and property portfolio.
             </Text>
-            
-            {role === 'propertyManager' && (
-              <View style={styles.formGroup}>
-                <Text style={styles.inputLabel}>Property Portfolio Size</Text>
-                <View style={styles.radioGroup}>
-                  {['small', 'medium', 'large'].map((size) => (
-                    <TouchableOpacity
-                      key={size}
-                      style={[
-                        styles.radioButton,
-                        portfolioSize === size && styles.radioButtonSelected,
-                      ]}
-                      onPress={() => setPortfolioSize(size)}
-                    >
-                      <Text 
-                        style={[
-                          styles.radioButtonText,
-                          portfolioSize === size && styles.radioButtonTextSelected,
-                        ]}
-                      >
-                        {size.charAt(0).toUpperCase() + size.slice(1)}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-            )}
-            
-            <View style={styles.formGroup}>
-              <Text style={styles.inputLabel}>Preferred Communication Style</Text>
-              <View style={styles.radioGroup}>
-                <TouchableOpacity
-                  style={[
-                    styles.radioButton,
-                    communicationStyle === 'formal' && styles.radioButtonSelected,
-                  ]}
-                  onPress={() => setCommunicationStyle('formal')}
-                >
-                  <Text 
-                    style={[
-                      styles.radioButtonText,
-                      communicationStyle === 'formal' && styles.radioButtonTextSelected,
-                    ]}
-                  >
-                    Formal
-                  </Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                  style={[
-                    styles.radioButton,
-                    communicationStyle === 'casual' && styles.radioButtonSelected,
-                  ]}
-                  onPress={() => setCommunicationStyle('casual')}
-                >
-                  <Text 
-                    style={[
-                      styles.radioButtonText,
-                      communicationStyle === 'casual' && styles.radioButtonTextSelected,
-                    ]}
-                  >
-                    Casual
-                  </Text>
-                </TouchableOpacity>
-              </View>
+            <View style={styles.infoBox}>
+              <Text style={styles.infoTitle}>About Your AI Assistant</Text>
+              <Text style={styles.infoText}>
+                Property AI uses artificial intelligence to help you manage properties more efficiently.
+                Your data is secure and you have full control over how AI is used in your experience.
+              </Text>
             </View>
           </View>
         );
-        
-      case 2:
+      
+      case 'role':
         return (
           <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>Notification Preferences</Text>
-            <Text style={styles.stepDescription}>
-              Based on your role as a {role}, we recommend the following notification settings:
-            </Text>
-            
-            {isLoadingAISuggestions ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={COLORS.primary} />
-                <Text style={styles.loadingText}>Generating AI suggestions...</Text>
-              </View>
-            ) : (
-              <View style={styles.suggestionsContainer}>
-                <Text style={styles.aiSuggestionHeader}>
-                  <Text style={{ fontWeight: FONTS.weights.bold }}>AI-Suggested</Text> Notification Settings
-                </Text>
-                
-                {notificationPreferences.map((notification) => (
-                  <View key={notification.id} style={styles.checkboxRow}>
-                    <Checkbox
-                      checked={notification.enabled}
-                      onPress={() => toggleNotification(notification.id)}
-                      label={notification.type}
-                    />
-                    <Text style={styles.suggestionDetail}>
-                      {notification.channel === 'push' ? 'Push' : notification.channel === 'email' ? 'Email' : 'SMS'}{' · '}
-                      {notification.frequency === 'immediate' ? 'Immediate' : 
-                       notification.frequency === 'daily' ? 'Daily' : 'Weekly'}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            )}
+            <Text style={styles.welcomeTitle}>What is your role?</Text>
+            <Text style={styles.welcomeDescription}>Select your role to personalize your experience.</Text>
+            <RoleSelectorCard
+              role={UserRole.PROPERTY_MANAGER}
+              selected={state.selectedRole === UserRole.PROPERTY_MANAGER}
+              onSelect={handleRoleSelect}
+              icon={<Text style={{ fontSize: 32 }}>🏢</Text>}
+              label="Property Manager"
+              description="Manage multiple properties, tenants, and maintenance."
+            />
+            <RoleSelectorCard
+              role={UserRole.TENANT}
+              selected={state.selectedRole === UserRole.TENANT}
+              onSelect={handleRoleSelect}
+              icon={<Text style={{ fontSize: 32 }}>👤</Text>}
+              label="Tenant"
+              description="View your unit, submit requests, and communicate."
+            />
           </View>
         );
-        
-      case 3:
+      
+      case 'portfolio':
         return (
           <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>AI Personalization</Text>
-            <Text style={styles.stepDescription}>
-              Customize how AI assists you in the PropertyAI platform.
+            <PortfolioSizeForm
+              initialValue={state.portfolioSize}
+              onUpdate={handleUpdatePortfolioSize}
+            />
+          </View>
+        );
+      
+      case 'communication':
+        return (
+          <View style={styles.stepContent}>
+            <CommunicationPreferences
+              initialValue={state.communicationPreference}
+              onUpdate={handleUpdateCommunicationPreference}
+            />
+          </View>
+        );
+      
+      case 'notifications':
+        return (
+          <View style={styles.stepContent}>
+            <RecommendationsScreen
+              category="notifications"
+              role={state.selectedRole}
+              portfolioSize={state.portfolioSize}
+              communicationPreference={state.communicationPreference}
+              onUpdateRecommendations={handleUpdateNotificationRecommendations}
+            />
+          </View>
+        );
+      
+      case 'features':
+        return (
+          <View style={styles.stepContent}>
+            <RecommendationsScreen
+              category="features"
+              role={state.selectedRole}
+              portfolioSize={state.portfolioSize}
+              communicationPreference={state.communicationPreference}
+              onUpdateRecommendations={handleUpdateFeatureRecommendations}
+            />
+          </View>
+        );
+      
+      case 'privacy':
+        return (
+          <View style={styles.stepContent}>
+            <RecommendationsScreen
+              category="privacy"
+              role={state.selectedRole}
+              onUpdateRecommendations={handleUpdatePrivacyRecommendations}
+            />
+          </View>
+        );
+      
+      case 'summary':
+        return (
+          <View style={styles.stepContent}>
+            <Text style={styles.summaryTitle}>Setup Summary</Text>
+            <Text style={styles.summarySubtitle}>
+              Here&apos;s a summary of your personalized AI setup
             </Text>
             
-            <View style={styles.formGroup}>
-              <Text style={styles.inputLabel}>AI Automation Level</Text>
-              <View style={styles.radioGroup}>
-                {[
-                  { value: 'minimal', label: 'Minimal' },
-                  { value: 'balanced', label: 'Balanced' },
-                  { value: 'full', label: 'Full' }
-                ].map((option) => (
-                  <TouchableOpacity
-                    key={option.value}
-                    style={[
-                      styles.radioButton,
-                      aiAutomationLevel === option.value && styles.radioButtonSelected,
-                    ]}
-                    onPress={() => setAiAutomationLevel(option.value as any)}
-                  >
-                    <Text 
-                      style={[
-                        styles.radioButtonText,
-                        aiAutomationLevel === option.value && styles.radioButtonTextSelected,
-                      ]}
-                    >
-                      {option.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+            {state.selectedRole === UserRole.PROPERTY_MANAGER && (
+              <View style={styles.summarySection}>
+                <Text style={styles.sectionTitle}>Portfolio Size</Text>
+                <Text style={styles.sectionText}>
+                  {state.portfolioSize.properties} properties with {state.portfolioSize.units} units
+                </Text>
               </View>
-              <Text style={styles.helperText}>
-                {aiAutomationLevel === 'minimal' 
-                  ? 'AI will only provide suggestions when explicitly requested.'
-                  : aiAutomationLevel === 'balanced'
-                  ? 'AI will provide occasional suggestions and automate routine tasks.'
-                  : 'AI will proactively automate tasks and provide continuous suggestions.'}
+            )}
+            
+            <View style={styles.summarySection}>
+              <Text style={styles.sectionTitle}>Communication Style</Text>
+              <Text style={styles.sectionText}>
+                {state.communicationPreference === 'efficient' ? 'Minimal' : 
+                 state.communicationPreference === 'balanced' ? 'Balanced' : 'Comprehensive'}
               </Text>
             </View>
             
-            {isLoadingAISuggestions ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={COLORS.primary} />
-                <Text style={styles.loadingText}>Analyzing your profile...</Text>
-              </View>
-            ) : (
-              <View style={styles.suggestionsContainer}>
-                <Text style={styles.aiSuggestionHeader}>
-                  <Text style={{ fontWeight: FONTS.weights.bold }}>AI-Suggested</Text> Features
-                </Text>
-                
-                {suggestedFeatures.map((feature) => (
-                  <View key={feature.id} style={styles.featureItem}>
-                    <View style={styles.featureHeader}>
-                      <Checkbox
-                        checked={feature.enabled}
-                        onPress={() => toggleFeature(feature.id)}
-                        label={feature.name}
-                      />
-                      <View style={[
-                        styles.priorityBadge,
-                        feature.priority === 'high' ? styles.priorityHigh :
-                        feature.priority === 'medium' ? styles.priorityMedium :
-                        styles.priorityLow
-                      ]}>
-                        <Text style={styles.priorityText}>{feature.priority}</Text>
-                      </View>
-                    </View>
-                    <Text style={styles.featureDescription}>{feature.description}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-            
-            <Checkbox
-              checked={acceptedAiTerms}
-              onPress={() => setAcceptedAiTerms(!acceptedAiTerms)}
-              label="I understand that AI features use my data to provide personalized recommendations and automate tasks."
-              containerStyle={styles.termsCheckbox}
-            />
-          </View>
-        );
-        
-      case 4:
-        return (
-          <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>Setup Summary</Text>
-            <Text style={styles.stepDescription}>
-              Review your configuration before finalizing your setup.
-            </Text>
-            
-            <View style={styles.summaryCard}>
-              <Text style={styles.summarySection}>Role</Text>
-              <Text style={styles.summaryValue}>{role}</Text>
-              
-              {role === 'propertyManager' && (
-                <>
-                  <Text style={styles.summarySection}>Portfolio Size</Text>
-                  <Text style={styles.summaryValue}>{portfolioSize}</Text>
-                </>
-              )}
-              
-              <Text style={styles.summarySection}>Communication Style</Text>
-              <Text style={styles.summaryValue}>{communicationStyle}</Text>
-              
-              <Text style={styles.summarySection}>AI Automation Level</Text>
-              <Text style={styles.summaryValue}>{aiAutomationLevel}</Text>
-              
-              <Text style={styles.summarySection}>Enabled Notifications</Text>
-              <View style={styles.summaryList}>
-                {notificationPreferences
-                  .filter(n => n.enabled)
-                  .map(n => (
-                    <Text key={n.id} style={styles.summaryListItem}>• {n.type}</Text>
-                  ))
-                }
-              </View>
-              
-              <Text style={styles.summarySection}>Enabled AI Features</Text>
-              <View style={styles.summaryList}>
-                {suggestedFeatures
-                  .filter(f => f.enabled)
-                  .map(f => (
-                    <Text key={f.id} style={styles.summaryListItem}>• {f.name}</Text>
-                  ))
-                }
-              </View>
+            <View style={styles.summarySection}>
+              <Text style={styles.sectionTitle}>Enabled Features</Text>
+              <Text style={styles.sectionText}>
+                {state.featureRecommendations.filter(r => r.enabled).length} of {state.featureRecommendations.length} recommended features
+              </Text>
             </View>
             
-            <Text style={styles.summaryNote}>
-              You can modify these settings at any time from your profile.
+            <View style={styles.summarySection}>
+              <Text style={styles.sectionTitle}>Notification Preferences</Text>
+              <Text style={styles.sectionText}>
+                {state.notificationRecommendations.filter(r => r.enabled).length} of {state.notificationRecommendations.length} notifications enabled
+              </Text>
+            </View>
+            
+            <View style={styles.summarySection}>
+              <Text style={styles.sectionTitle}>Privacy Settings</Text>
+              <Text style={styles.sectionText}>
+                {state.privacyRecommendations.filter(r => r.enabled).length} of {state.privacyRecommendations.length} privacy features enabled
+              </Text>
+            </View>
+            
+            <Text style={styles.completionText}>
+              Your AI-powered experience is ready! You can always adjust these settings later in your profile.
             </Text>
           </View>
         );
-        
+      
       default:
         return null;
     }
   };
-  
+
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={handleBack}
-            disabled={isSubmitting}
-          >
-            <Text style={styles.backButtonText}>← Back</Text>
-          </TouchableOpacity>
-          
-          <Text style={styles.title}>Setup Wizard</Text>
-          
-          <View style={styles.aiIndicator}>
-            <Text style={styles.aiIndicatorText}>AI-Guided</Text>
-          </View>
-        </View>
-        
-        <StepIndicator
-          steps={steps}
-          currentStep={currentStep}
-          onStepPress={(step) => currentStep > step && setCurrentStep(step)}
-          allowStepSkip={false}
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>AI Setup Wizard</Text>
+      </View>
+      
+      <View style={styles.progressContainer}>
+        <ProgressSteps 
+          steps={steps.map(step => step.label)}
+          currentStep={currentStepIndex}
         />
-        
-        {renderStepContent()}
-        
-        <View style={styles.buttonContainer}>
-          <Button
-            title={currentStep === steps.length - 1 ? 'Complete Setup' : 'Continue'}
-            onPress={handleNext}
-            disabled={
-              isSubmitting || 
-              isLoadingAISuggestions || 
-              (currentStep === 3 && !acceptedAiTerms)
-            }
-            style={styles.continueButton}
-          />
-          
-          {isSubmitting && (
-            <ActivityIndicator
-              size="small"
-              color={COLORS.primary}
-              style={styles.submitIndicator}
-            />
-          )}
-        </View>
+      </View>
+      
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        <Animated.View style={{ opacity: fadeAnim }}>{renderStepContent()}</Animated.View>
       </ScrollView>
-    </KeyboardAvoidingView>
+      
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={[styles.backButton, currentStepIndex === 0 && { opacity: 0.5 }]}
+          onPress={handleBack}
+          disabled={currentStepIndex === 0}
+        >
+          <Text style={styles.backButtonText}>
+            {currentStepIndex === 0 ? 'Exit' : 'Back'}
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[
+            styles.nextButton,
+            (state.currentStep === 'role' && !state.selectedRole) && { opacity: 0.5 },
+            (state.currentStep === 'summary') && { backgroundColor: '#38a169' },
+          ]}
+          onPress={currentStepIndex === steps.length - 1 ? handleComplete : handleNext}
+          disabled={
+            (state.currentStep === 'role' && !state.selectedRole) ||
+            (state.currentStep === 'summary' ? false : false)
+          }
+        >
+          <Text style={styles.nextButtonText}>
+            {currentStepIndex === steps.length - 1 ? 'Complete' : 'Next'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    padding: SPACING.lg,
+    backgroundColor: '#f9fafb',
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: SPACING.lg,
+    padding: 16,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
   },
-  title: {
-    fontSize: FONTS.sizes.xl,
-    fontWeight: FONTS.weights.bold as '700',
-    color: COLORS.text.primary,
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
     textAlign: 'center',
   },
-  backButton: {
-    padding: SPACING.xs,
+  progressContainer: {
+    paddingHorizontal: 16,
+    backgroundColor: '#ffffff',
   },
-  backButtonText: {
-    fontSize: FONTS.sizes.sm,
-    fontWeight: FONTS.weights.medium as '500',
-    color: COLORS.primary,
+  scrollView: {
+    flex: 1,
   },
-  aiIndicator: {
-    backgroundColor: `${COLORS.primary}20`,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: 20,
-  },
-  aiIndicatorText: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.primary,
-    fontWeight: FONTS.weights.medium as '500',
+  scrollContent: {
+    padding: 16,
   },
   stepContent: {
-    marginTop: SPACING.lg,
-    marginBottom: SPACING.xl,
+    flex: 1,
+    minHeight: 300,
   },
-  stepTitle: {
-    fontSize: FONTS.sizes.lg,
-    fontWeight: FONTS.weights.semiBold as '600',
-    color: COLORS.text.primary,
-    marginBottom: SPACING.xs,
-  },
-  stepDescription: {
-    fontSize: FONTS.sizes.sm,
-    color: COLORS.text.secondary,
-    marginBottom: SPACING.lg,
-  },
-  roleSelector: {
-    marginTop: SPACING.md,
-  },
-  buttonContainer: {
-    marginTop: SPACING.lg,
-    marginBottom: SPACING.xl,
-  },
-  continueButton: {
-    marginTop: SPACING.md,
-  },
-  submitIndicator: {
-    marginTop: SPACING.sm,
-  },
-  formGroup: {
-    marginBottom: SPACING.lg,
-  },
-  inputLabel: {
-    fontSize: FONTS.sizes.sm,
-    fontWeight: FONTS.weights.medium as '500',
-    color: COLORS.text.primary,
-    marginBottom: SPACING.sm,
-  },
-  radioGroup: {
+  footer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
-  },
-  radioButton: {
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 20,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    backgroundColor: COLORS.background,
-  },
-  radioButtonSelected: {
-    borderColor: COLORS.primary,
-    backgroundColor: `${COLORS.primary}10`,
-  },
-  radioButtonText: {
-    fontSize: FONTS.sizes.sm,
-    color: COLORS.text.secondary,
-  },
-  radioButtonTextSelected: {
-    color: COLORS.primary,
-    fontWeight: FONTS.weights.medium as '500',
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    padding: SPACING.lg,
-  },
-  loadingText: {
-    marginTop: SPACING.md,
-    fontSize: FONTS.sizes.sm,
-    color: COLORS.text.secondary,
-  },
-  suggestionsContainer: {
-    marginTop: SPACING.md,
-  },
-  aiSuggestionHeader: {
-    fontSize: FONTS.sizes.md,
-    color: COLORS.text.primary,
-    marginBottom: SPACING.md,
-  },
-  checkboxRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: SPACING.sm,
+    padding: 16,
+    backgroundColor: '#ffffff',
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
   },
-  suggestionDetail: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.text.secondary,
-  },
-  featureItem: {
-    marginBottom: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    paddingBottom: SPACING.sm,
-  },
-  featureHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: SPACING.xs,
-  },
-  featureDescription: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.text.secondary,
-    marginLeft: 24, // Aligned with checkbox label
-  },
-  priorityBadge: {
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
-    borderRadius: 12,
-  },
-  priorityHigh: {
-    backgroundColor: `${COLORS.primary}20`,
-  },
-  priorityMedium: {
-    backgroundColor: `${COLORS.secondary}20`,
-  },
-  priorityLow: {
-    backgroundColor: `${COLORS.border}60`,
-  },
-  priorityText: {
-    fontSize: FONTS.sizes.xs,
-    fontWeight: FONTS.weights.medium as '500',
-  },
-  termsCheckbox: {
-    marginTop: SPACING.lg,
-  },
-  helperText: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.text.secondary,
-    marginTop: SPACING.xs,
-  },
-  summaryCard: {
-    backgroundColor: COLORS.card,
-    padding: SPACING.lg,
+  backButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 8,
-    marginVertical: SPACING.md,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#4b5563',
+    fontWeight: '500',
+  },
+  nextButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    backgroundColor: '#3182ce',
+    borderRadius: 8,
+  },
+  nextButtonText: {
+    fontSize: 16,
+    color: '#ffffff',
+    fontWeight: '500',
+  },
+  // Welcome step styles
+  welcomeTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 8,
+    color: '#2d3748',
+  },
+  welcomeSubtitle: {
+    fontSize: 18,
+    marginBottom: 16,
+    color: '#4a5568',
+  },
+  welcomeDescription: {
+    fontSize: 16,
+    lineHeight: 24,
+    marginBottom: 24,
+    color: '#4a5568',
+  },
+  infoBox: {
+    backgroundColor: '#ebf8ff',
+    padding: 16,
+    borderRadius: 8,
+    marginVertical: 16,
+  },
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+    color: '#2b6cb0',
+  },
+  infoText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#2c5282',
+  },
+  // Summary step styles
+  summaryTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 8,
+    color: '#2d3748',
+  },
+  summarySubtitle: {
+    fontSize: 16,
+    marginBottom: 24,
+    color: '#4a5568',
   },
   summarySection: {
-    fontSize: FONTS.sizes.sm,
-    fontWeight: FONTS.weights.semiBold as '600',
-    color: COLORS.text.primary,
-    marginTop: SPACING.md,
-    marginBottom: SPACING.xs,
+    marginBottom: 16,
+    padding: 16,
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  summaryValue: {
-    fontSize: FONTS.sizes.sm,
-    color: COLORS.text.secondary,
-    textTransform: 'capitalize',
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+    color: '#2d3748',
   },
-  summaryList: {
-    marginTop: SPACING.xs,
+  sectionText: {
+    fontSize: 14,
+    color: '#4a5568',
   },
-  summaryListItem: {
-    fontSize: FONTS.sizes.sm,
-    color: COLORS.text.secondary,
-    marginBottom: SPACING.xs,
-  },
-  summaryNote: {
-    fontSize: FONTS.sizes.sm,
-    color: COLORS.text.secondary,
+  completionText: {
+    fontSize: 16,
     fontStyle: 'italic',
+    marginTop: 24,
     textAlign: 'center',
-    marginTop: SPACING.md,
+    color: '#2d3748',
   },
 });
 
