@@ -38,6 +38,7 @@ const ExternalSystemsIntegrationDashboard = lazy(() => import('./pages/ExternalS
 const SecuritySettingsDashboard = lazy(() => import('./pages/SecuritySettingsDashboard'));
 const AccessControlManagementScreen = lazy(() => import('./pages/AccessControlManagementScreen'));
 const CommunityEngagementPortal = lazy(() => import('./pages/CommunityEngagementPortal'));
+const DigitalConciergeScreen = lazy(() => import('./pages/DigitalConciergeScreen'));
 
 const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID_HERE"; // Fallback to placeholder
 
@@ -94,6 +95,7 @@ function AppContent() {
                 <Route path="/security-settings" element={<SecuritySettingsDashboard />} />
                 <Route path="/access-control" element={<AccessControlManagementScreen />} />
                 <Route path="/community-engagement" element={<CommunityEngagementPortal />} />
+                <Route path="/digital-concierge" element={<DigitalConciergeScreen />} />
                 {/* Add more routes as needed */}
                 <Route path="/" element={
                   <div>

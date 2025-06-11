@@ -1,13 +1,11 @@
-import { aiOrchestrationService } from './aiOrchestration.service';
+import { generativeAIService } from './generativeAI.service';
 
 class PropertyDescriptionService {
   async generateDescription(propertyData: any): Promise<string> {
-    const prompt = `Generate a compelling property description for a property with the following details: ${JSON.stringify(
+    const prompt = `Generate a compelling, SEO-optimized property description for a property with the following details: ${JSON.stringify(
       propertyData,
-    )}`;
-    const workflow = { name: 'text-generation' };
-    const result = await aiOrchestrationService.submitWorkflow(workflow, { prompt });
-    return result.generatedText;
+    )}. Include a catchy title and a detailed description that highlights the key features and benefits of the property.`;
+    return generativeAIService.generateText(prompt);
   }
 }
 

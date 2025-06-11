@@ -1,0 +1,103 @@
+name: Property App CI/CD
+
+on:
+  push:
+    branches: [ main, development ]
+    paths:
+      - 'propertyapp/**'
+      - '.github/workflows/propertyapp-ci.yml'
+  pull_request:
+    branches: [ main, development ]
+    paths:
+      - 'propertyapp/**'
+      - '.github/workflows/propertyapp-ci.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [20.x]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: propertyapp/package-lock.json
+    
+    - name: Install dependencies
+      working-directory: ./propertyapp
+      run: npm ci
+    
+    - name: Lint
+      working-directory: ./propertyapp
+      run: npm run lint
+    
+    - name: Run tests
+      working-directory: ./propertyapp
+      run: npm test
+      
+    # For Expo apps, we can use EAS to build
+    # This is commented out since it requires setup
+    # - name: Install EAS CLI
+    #   run: npm install -g eas-cli
+    #
+    # - name: Build preview
+    #   working-directory: ./propertyapp
+    #   run: eas build --platform all --profile preview --non-interactive
+    
+  # For actual app store deployment, you would add a separate job
+  # with specific triggers, e.g., when a tag is pushed
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+        cache-dependency-path: propertyapp/package-lock.json
+    
+    - name: Install dependencies
+      working-directory: ./propertyapp
+      run: npm ci
+    
+    # This is commented out as it would require Expo credentials
+    # - name: Install EAS CLI
+    #   run: npm install -g eas-cli
+    # 
+    # - name: Configure EAS
+    #   working-directory: ./propertyapp
+    #   env:
+    #     EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+    #   run: echo $EXPO_TOKEN | eas login
+    # 
+    # - name: Build and deploy
+    #   working-directory: ./propertyapp
+    #   run: |
+    #     # For internal testing
+    #     eas build --platform all --profile preview --non-interactive
+    #     
+    #     # For production (uncomment when ready)
+    #     # eas build --platform all --profile production --non-interactive
+    #     # eas submit -p ios --profile production --non-interactive
+    #     # eas submit -p android --profile production --non-interactive
+    
+    # Placeholder for now
+    - name: Deploy
+      run: |
+        echo "Setting up for mobile app deployment..."
+        # In a real scenario, you would:
+        # 1. Build the app for iOS and Android
+        # 2. Submit to App Store and Google Play
+        # 3. Or deploy to internal testing platforms 

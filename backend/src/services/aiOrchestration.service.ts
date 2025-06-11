@@ -1,6 +1,11 @@
+import { generativeAIService } from './generativeAI.service';
 import { riskAssessmentModelService } from './riskAssessmentModel.service';
 
 class AiOrchestrationService {
+  async generateText(prompt: string): Promise<string> {
+    return generativeAIService.generateText(prompt);
+  }
+
   async submitWorkflow(workflow: any, data: any): Promise<any> {
     // This is a mock implementation.
     // In a real implementation, this would submit the workflow to a message broker.

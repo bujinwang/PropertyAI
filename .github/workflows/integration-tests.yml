@@ -1,0 +1,114 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [ main, development ]
+  pull_request:
+    branches: [ main, development ]
+  # Run integration tests weekly to ensure system health
+  schedule:
+    - cron: '0 0 * * 1'  # Every Monday at midnight
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+    
+    services:
+      # Spin up a Postgres container for tests
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: propertyai_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      # Spin up a Redis container for tests
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+      
+      # Spin up a MongoDB container for tests
+      mongodb:
+        image: mongo:6
+        env:
+          MONGO_INITDB_ROOT_USERNAME: mongo
+          MONGO_INITDB_ROOT_PASSWORD: mongo
+        ports:
+          - 27017:27017
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+    
+    # Install dependencies for all components
+    - name: Install backend dependencies
+      working-directory: ./backend
+      run: npm ci
+    
+    - name: Install dashboard dependencies
+      working-directory: ./dashboard
+      run: npm ci
+    
+    # Generate Prisma client and run migrations
+    - name: Setup database
+      working-directory: ./backend
+      run: |
+        npm run prisma:generate
+        npx prisma migrate deploy
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/propertyai_test
+    
+    # Build backend and start it for integration tests
+    - name: Build and start backend in background
+      working-directory: ./backend
+      run: |
+        npm run build
+        npm start &
+        sleep 10  # Give it time to start
+      env:
+        NODE_ENV: test
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/propertyai_test
+        REDIS_URL: redis://localhost:6379
+        MONGODB_URI: mongodb://mongo:mongo@localhost:27017/propertyai_test
+        JWT_SECRET: integration-test-secret
+        PORT: 3001
+    
+    # Run the integration tests
+    - name: Run API integration tests
+      working-directory: ./backend
+      run: |
+        # This would be replaced by your actual integration tests command
+        # For example:
+        # npm run test:integration
+        echo "Running integration tests..."
+        curl -f http://localhost:3001/api/health || exit 1
+      
+    # Run the full-stack integration tests if available
+    # - name: Run full-stack integration tests
+    #   run: |
+    #     cd e2e-tests
+    #     npm ci
+    #     npm test
+    
+    # Cleanup
+    - name: Cleanup processes
+      if: always()
+      run: |
+        pkill -f "node" || true  # Terminate any node processes 

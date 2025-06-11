@@ -49,11 +49,12 @@ import sentimentRoutes from './routes/sentiment.routes';
 import conversationRoutes from './routes/conversation.routes';
 import path from 'path';
 import http from 'http';
-import WebSocketService from './services/webSocketService';
+import { initializeWebSocket } from './services/webSocket.service';
 import VoicemailService from './services/voicemailService';
-import aiOrchestrationService from './services/aiOrchestrationService';
+import { aiOrchestrationService } from './services/aiOrchestration.service';
 import { rentCollectionService } from './services/rentCollection.service';
 import { documentExpirationService } from './services/documentExpiration.service';
+import './services/pubSub.service';
 
 // Load environment variables
 dotenv.config();
@@ -173,7 +174,7 @@ const startServer = async () => {
     const server = http.createServer(app);
 
     // Initialize WebSocket service
-    new WebSocketService(server);
+    initializeWebSocket(server);
 
     // Initialize Voicemail service
     new VoicemailService(path.join(__dirname, '../voicemails'), aiOrchestrationService);
