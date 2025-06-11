@@ -8,9 +8,17 @@ export type UserRole = 'admin' | 'propertyManager' | 'tenant';
  */
 export interface User {
   id: string;
-  name: string;
   email: string;
+  name: string;
+  firstName?: string;
+  lastName?: string;
   role: UserRole;
+  createdAt?: string;
+  updatedAt?: string;
+  isActive?: boolean;
+  phone?: string;
+  mfaEnabled?: boolean;
+  lastLogin?: string;
   [key: string]: unknown;
 }
 
@@ -57,4 +65,13 @@ export interface RegistrationData {
 export interface ResetPasswordData {
   token: string;
   newPassword: string;
+}
+
+/**
+ * MFA Verification response
+ */
+export interface MFAVerificationResponse {
+  token: string;
+  user: User;
+  requireMFA?: boolean;
 } 

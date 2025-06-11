@@ -1,6 +1,17 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { API_URL } from '../constants/api';
-import { User } from '../types/user';
+import { User } from '../types/auth';
+import { apiService } from './apiService';
+import { MFAVerificationResponse } from '../types/auth';
+
+// Define error types for better type safety
+type ErrorWithResponse = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+};
 
 interface LoginResponse {
   token?: string;
@@ -8,11 +19,6 @@ interface LoginResponse {
   requireMFA?: boolean;
   email?: string;
   message?: string;
-}
-
-interface MFAVerificationResponse {
-  token: string;
-  user: User;
 }
 
 export type OAuthProvider = 'google' | 'facebook' | 'github' | 'microsoft';
@@ -26,6 +32,7 @@ interface OAuthLoginResponse {
   url?: string; // URL to redirect for OAuth flow
 }
 
+// Login does not use apiService because the user is not yet authenticated
 export const login = async (email: string, password: string): Promise<LoginResponse> => {
   try {
     const response = await axios.post(`${API_URL}/auth/login`, {
@@ -33,15 +40,24 @@ export const login = async (email: string, password: string): Promise<LoginRespo
       password
     });
     
-    return response.data;
-  } catch (error: any) {
-    if (error.response && error.response.data) {
-      throw new Error(error.response.data.message || 'Login failed');
+    // If login is successful and we get a token, set it in the apiService
+    if (response.data.token) {
+      apiService.setToken(response.data.token);
     }
-    throw new Error('Network error. Please try again.');
+    
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as AxiosError<{ message: string }> | ErrorWithResponse;
+    if (axios.isAxiosError(err) && err.response?.data?.message) {
+      throw new Error(err.response.data.message);
+    } else if ('response' in err && err.response?.data?.message) {
+      throw new Error(err.response.data.message);
+    }
+    throw new Error('Login failed. Please try again.');
   }
 };
 
+// Register does not use apiService because the user is not yet authenticated
 export const register = async (userData: {
   email: string;
   password: string;
@@ -52,15 +68,25 @@ export const register = async (userData: {
 }): Promise<{ token: string; user: User }> => {
   try {
     const response = await axios.post(`${API_URL}/auth/register`, userData);
-    return response.data;
-  } catch (error: any) {
-    if (error.response && error.response.data) {
-      throw new Error(error.response.data.message || 'Registration failed');
+    
+    // If registration is successful and we get a token, set it in the apiService
+    if (response.data.token) {
+      apiService.setToken(response.data.token);
     }
-    throw new Error('Network error. Please try again.');
+    
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as AxiosError<{ message: string }> | ErrorWithResponse;
+    if (axios.isAxiosError(err) && err.response?.data?.message) {
+      throw new Error(err.response.data.message);
+    } else if ('response' in err && err.response?.data?.message) {
+      throw new Error(err.response.data.message);
+    }
+    throw new Error('Registration failed. Please try again.');
   }
 };
 
+// MFA verification does not use apiService because the user is not yet fully authenticated
 export const verifyMFACode = async (email: string, code: string): Promise<MFAVerificationResponse> => {
   try {
     const response = await axios.post(`${API_URL}/mfa/verify`, {
@@ -68,123 +94,88 @@ export const verifyMFACode = async (email: string, code: string): Promise<MFAVer
       code
     });
     
-    return response.data;
-  } catch (error: any) {
-    if (error.response && error.response.data) {
-      throw new Error(error.response.data.message || 'MFA verification failed');
+    // If MFA verification is successful and we get a token, set it in the apiService
+    if (response.data.token) {
+      apiService.setToken(response.data.token);
     }
-    throw new Error('Network error. Please try again.');
-  }
-};
-
-export const getUserProfile = async (token: string): Promise<User> => {
-  try {
-    const response = await axios.get(`${API_URL}/auth/me`, {
-      headers: {
-        'x-auth-token': token
-      }
-    });
     
     return response.data;
-  } catch (error: any) {
-    if (error.response && error.response.data) {
-      throw new Error(error.response.data.message || 'Failed to get profile');
+  } catch (error: unknown) {
+    const err = error as AxiosError<{ message: string }> | ErrorWithResponse;
+    if (axios.isAxiosError(err) && err.response?.data?.message) {
+      throw new Error(err.response.data.message);
+    } else if ('response' in err && err.response?.data?.message) {
+      throw new Error(err.response.data.message);
     }
-    throw new Error('Network error. Please try again.');
+    throw new Error('MFA verification failed. Please try again.');
   }
 };
 
-export const setupMFA = async (token: string): Promise<{ secret: string; email: string }> => {
+// All authenticated requests below use the apiService
+
+export const getUserProfile = async (): Promise<User> => {
   try {
-    const response = await axios.post(
-      `${API_URL}/mfa/setup`,
-      {},
-      {
-        headers: {
-          'x-auth-token': token
-        }
-      }
-    );
-    
+    const response = await apiService.get<User>('/auth/me');
     return response.data;
-  } catch (error: any) {
-    if (error.response && error.response.data) {
-      throw new Error(error.response.data.message || 'Failed to set up MFA');
-    }
-    throw new Error('Network error. Please try again.');
+  } catch (error: unknown) {
+    const err = error as Error;
+    throw new Error(err.message || 'Failed to get profile');
   }
 };
 
-export const enableMFA = async (token: string, code: string): Promise<{ message: string }> => {
+export const setupMFA = async (): Promise<{ secret: string; email: string }> => {
   try {
-    const response = await axios.post(
-      `${API_URL}/mfa/enable`,
-      { code },
-      {
-        headers: {
-          'x-auth-token': token
-        }
-      }
-    );
-    
+    const response = await apiService.post<{ secret: string; email: string }>('/mfa/setup');
     return response.data;
-  } catch (error: any) {
-    if (error.response && error.response.data) {
-      throw new Error(error.response.data.message || 'Failed to enable MFA');
-    }
-    throw new Error('Network error. Please try again.');
+  } catch (error: unknown) {
+    const err = error as Error;
+    throw new Error(err.message || 'Failed to set up MFA');
   }
 };
 
-export const disableMFA = async (token: string, code: string): Promise<{ message: string }> => {
+export const enableMFA = async (code: string): Promise<{ message: string }> => {
   try {
-    const response = await axios.post(
-      `${API_URL}/mfa/disable`,
-      { code },
-      {
-        headers: {
-          'x-auth-token': token
-        }
-      }
-    );
-    
+    const response = await apiService.post<{ message: string }>('/mfa/enable', { code });
     return response.data;
-  } catch (error: any) {
-    if (error.response && error.response.data) {
-      throw new Error(error.response.data.message || 'Failed to disable MFA');
-    }
-    throw new Error('Network error. Please try again.');
+  } catch (error: unknown) {
+    const err = error as Error;
+    throw new Error(err.message || 'Failed to enable MFA');
   }
 };
 
-export const getMFAStatus = async (token: string): Promise<{ mfaEnabled: boolean }> => {
+export const disableMFA = async (code: string): Promise<{ message: string }> => {
   try {
-    const response = await axios.get(`${API_URL}/mfa/status`, {
-      headers: {
-        'x-auth-token': token
-      }
-    });
-    
+    const response = await apiService.post<{ message: string }>('/mfa/disable', { code });
     return response.data;
-  } catch (error: any) {
-    if (error.response && error.response.data) {
-      throw new Error(error.response.data.message || 'Failed to get MFA status');
-    }
-    throw new Error('Network error. Please try again.');
+  } catch (error: unknown) {
+    const err = error as Error;
+    throw new Error(err.message || 'Failed to disable MFA');
   }
 };
 
+export const getMFAStatus = async (): Promise<{ mfaEnabled: boolean }> => {
+  try {
+    const response = await apiService.get<{ mfaEnabled: boolean }>('/mfa/status');
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as Error;
+    throw new Error(err.message || 'Failed to get MFA status');
+  }
+};
+
+// OAuth login and callback don't use apiService because the user is not yet authenticated
 export const loginWithOAuth = async (provider: OAuthProvider): Promise<OAuthLoginResponse> => {
   try {
-    // First, get the OAuth URL from backend
     const response = await axios.get(`${API_URL}/auth/oauth/${provider}`);
-    
     return response.data;
-  } catch (error: any) {
-    if (error.response && error.response.data) {
-      throw new Error(error.response.data.message || `Failed to login with ${provider}`);
+  } catch (error: unknown) {
+    const err = error as AxiosError<{ message: string }> | ErrorWithResponse;
+    if (axios.isAxiosError(err) && err.response?.data?.message) {
+      throw new Error(err.response.data.message);
+    } else if ('response' in err && err.response?.data?.message) {
+      throw new Error(err.response.data.message);
     }
-    throw new Error('Network error. Please try again.');
+    throw new Error(`Failed to login with ${provider}. Please try again.`);
   }
 };
 
@@ -192,11 +183,59 @@ export const handleOAuthCallback = async (provider: OAuthProvider, code: string)
   try {
     const response = await axios.post(`${API_URL}/auth/oauth/${provider}/callback`, { code });
     
-    return response.data;
-  } catch (error: any) {
-    if (error.response && error.response.data) {
-      throw new Error(error.response.data.message || `Failed to complete ${provider} login`);
+    // If OAuth callback is successful and we get a token, set it in the apiService
+    if (response.data.token) {
+      apiService.setToken(response.data.token);
     }
-    throw new Error('Network error. Please try again.');
+    
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as AxiosError<{ message: string }> | ErrorWithResponse;
+    if (axios.isAxiosError(err) && err.response?.data?.message) {
+      throw new Error(err.response.data.message);
+    } else if ('response' in err && err.response?.data?.message) {
+      throw new Error(err.response.data.message);
+    }
+    throw new Error(`Failed to complete ${provider} login. Please try again.`);
+  }
+};
+
+// Helper function to clear token on logout
+export const clearAuthToken = (): void => {
+  apiService.clearToken();
+};
+
+// Forgot password doesn't use apiService because it doesn't require authentication
+export const forgotPassword = async (email: string): Promise<{ message: string }> => {
+  try {
+    const response = await axios.post(`${API_URL}/auth/forgot-password`, { email });
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as AxiosError<{ message: string }> | ErrorWithResponse;
+    if (axios.isAxiosError(err) && err.response?.data?.message) {
+      throw new Error(err.response.data.message);
+    } else if ('response' in err && err.response?.data?.message) {
+      throw new Error(err.response.data.message);
+    }
+    throw new Error('Failed to process password reset request. Please try again.');
+  }
+};
+
+// Reset password doesn't use apiService because it uses a special token
+export const resetPassword = async (resetToken: string, newPassword: string): Promise<{ message: string }> => {
+  try {
+    const response = await axios.post(`${API_URL}/auth/reset-password`, { 
+      token: resetToken, 
+      newPassword 
+    });
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as AxiosError<{ message: string }> | ErrorWithResponse;
+    if (axios.isAxiosError(err) && err.response?.data?.message) {
+      throw new Error(err.response.data.message);
+    } else if ('response' in err && err.response?.data?.message) {
+      throw new Error(err.response.data.message);
+    }
+    throw new Error('Failed to reset password. Please try again.');
   }
 }; 

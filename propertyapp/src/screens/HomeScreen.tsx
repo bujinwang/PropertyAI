@@ -1,11 +1,23 @@
 import React from 'react';
 import { StyleSheet, Text, View, SafeAreaView, ScrollView } from 'react-native';
-import { Button } from '@@propertyai/shared/components/Button';
+import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/contexts';
 import { PermissionGate } from '@/components/auth/PermissionGate';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '@/navigation/types';
+import { Card } from '@/components/ui/Card';
+import { Permissions, Resource, Action } from '@/types/permissions';
+
+type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export const HomeScreen: React.FC = () => {
   const { user, logout } = useAuth();
+  const navigation = useNavigation<HomeScreenNavigationProp>();
+  
+  const handleSetupWizard = () => {
+    navigation.navigate('AIGuidedSetupWizard');
+  };
   
   return (
     <SafeAreaView style={styles.container}>
@@ -16,10 +28,27 @@ export const HomeScreen: React.FC = () => {
           
           {user && (
             <View style={styles.welcomeContainer}>
-              <Text style={styles.welcomeText}>Welcome, {user.name}</Text>
+              <Text style={styles.welcomeText}>Welcome, {user.firstName || 'User'}</Text>
               <Text style={styles.roleText}>Role: {user.role}</Text>
             </View>
           )}
+        </View>
+
+        {/* AI Setup Wizard */}
+        <View style={styles.aiWizardContainer}>
+          <View style={styles.aiWizardContent}>
+            <Text style={styles.aiWizardTitle}>Get Personalized AI Experience</Text>
+            <Text style={styles.aiWizardDescription}>
+              Use our AI-guided setup wizard to configure your preferences, notification settings, 
+              and enable AI features that matter most to you.
+            </Text>
+            <Button 
+              title="Start AI Setup Wizard" 
+              variant="primary" 
+              onPress={handleSetupWizard}
+              style={styles.aiWizardButton}
+            />
+          </View>
         </View>
 
         {/* Features section visible to all */}
@@ -48,103 +77,115 @@ export const HomeScreen: React.FC = () => {
           </View>
         </View>
         
-        {/* Content visible only to property managers and admins */}
-        <PermissionGate allowedRoles={['propertyManager', 'admin']}>
-          <View style={styles.managerSection}>
-            <Text style={styles.sectionTitle}>Property Management</Text>
-            <Text style={styles.sectionDescription}>
-              As a property manager, you have access to property listing, tenant management, 
-              and maintenance request features.
-            </Text>
-            
-            <View style={styles.statsContainer}>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>12</Text>
-                <Text style={styles.statLabel}>Properties</Text>
-              </View>
-              
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>48</Text>
-                <Text style={styles.statLabel}>Units</Text>
-              </View>
-              
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>5</Text>
-                <Text style={styles.statLabel}>Requests</Text>
-              </View>
-            </View>
-            
-            <Button 
-              title="Manage Properties" 
-              variant="secondary" 
-              style={styles.button}
-            />
-          </View>
+        {/* Property Manager Section */}
+        <PermissionGate permissions={[Permissions.PROPERTIES_VIEW, Permissions.PROPERTIES_EDIT]}>
+          <Card style={styles.section}>
+            <Card.Title title="Property Management" />
+            <Card.Content>
+              <Text>Manage your properties, units, and listings.</Text>
+            </Card.Content>
+            <Card.Actions>
+              <Button 
+                mode="contained" 
+                onPress={() => navigation.navigate('PropertyList')}
+              >
+                View Properties
+              </Button>
+              <PermissionGate resource={Resource.PROPERTIES} action={Action.CREATE}>
+                <Button 
+                  mode="outlined" 
+                  onPress={() => navigation.navigate('AddProperty')}
+                >
+                  Add Property
+                </Button>
+              </PermissionGate>
+            </Card.Actions>
+          </Card>
         </PermissionGate>
         
-        {/* Content visible only to admins */}
-        <PermissionGate allowedRoles={['admin']}>
-          <View style={styles.adminSection}>
-            <Text style={styles.sectionTitle}>Administrator Dashboard</Text>
-            <Text style={styles.sectionDescription}>
-              As an administrator, you have full access to all system features, 
-              including user management and system configuration.
-            </Text>
-            
-            <View style={styles.statsContainer}>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>24</Text>
-                <Text style={styles.statLabel}>Users</Text>
-              </View>
-              
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>4</Text>
-                <Text style={styles.statLabel}>Managers</Text>
-              </View>
-              
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>95%</Text>
-                <Text style={styles.statLabel}>Uptime</Text>
-              </View>
-            </View>
-            
-            <Button 
-              title="System Settings" 
-              variant="primary" 
-              style={styles.button}
-            />
-          </View>
+        {/* Admin Section */}
+        <PermissionGate minimumRole="admin">
+          <Card style={styles.section}>
+            <Card.Title title="Administration" />
+            <Card.Content>
+              <Text>Access administrative features and settings.</Text>
+            </Card.Content>
+            <Card.Actions>
+              <Button 
+                mode="contained" 
+                onPress={() => navigation.navigate('AdminDashboard')}
+              >
+                Admin Dashboard
+              </Button>
+              <PermissionGate permissions={[Permissions.USERS_VIEW, Permissions.USERS_EDIT]}>
+                <Button 
+                  mode="outlined" 
+                  onPress={() => navigation.navigate('UserManagement')}
+                >
+                  Manage Users
+                </Button>
+              </PermissionGate>
+            </Card.Actions>
+          </Card>
         </PermissionGate>
         
-        {/* Content visible only to tenants */}
-        <PermissionGate allowedRoles={['tenant']}>
-          <View style={styles.tenantSection}>
-            <Text style={styles.sectionTitle}>Tenant Portal</Text>
-            <Text style={styles.sectionDescription}>
-              Welcome to your tenant portal! Here you can pay rent, submit maintenance 
-              requests, and communicate with your property manager.
-            </Text>
-            
-            <View style={styles.alertBox}>
-              <Text style={styles.alertTitle}>Rent Due</Text>
-              <Text style={styles.alertText}>
-                Your rent payment of $1,200 is due in 5 days.
-              </Text>
-            </View>
-            
-            <Button 
-              title="Pay Rent" 
-              variant="primary" 
-              style={styles.button}
-            />
-            
-            <Button 
-              title="Submit Maintenance Request" 
-              variant="secondary" 
-              style={styles.button}
-            />
-          </View>
+        {/* Tenant Section */}
+        <PermissionGate anyPermission={[
+          Permissions.MAINTENANCE_CREATE,
+          Permissions.PAYMENTS_VIEW,
+          Permissions.DOCUMENTS_VIEW
+        ]}>
+          <Card style={styles.section}>
+            <Card.Title title="Tenant Portal" />
+            <Card.Content>
+              <Text>Access your tenant resources and services.</Text>
+            </Card.Content>
+            <Card.Actions>
+              <PermissionGate resource={Resource.MAINTENANCE} action={Action.CREATE}>
+                <Button 
+                  mode="contained" 
+                  onPress={() => navigation.navigate('MaintenanceRequest')}
+                >
+                  Maintenance Request
+                </Button>
+              </PermissionGate>
+              <PermissionGate resource={Resource.PAYMENTS} action={Action.VIEW}>
+                <Button 
+                  mode="outlined" 
+                  onPress={() => navigation.navigate('Payments')}
+                >
+                  View Payments
+                </Button>
+              </PermissionGate>
+            </Card.Actions>
+          </Card>
         </PermissionGate>
+
+        {/* AI Features Section - Available to all users */}
+        <Card style={styles.section}>
+          <Card.Title title="AI Features" />
+          <Card.Content>
+            <Text>Access AI-powered features and tools.</Text>
+          </Card.Content>
+          <Card.Actions>
+            <PermissionGate resource={Resource.AI_FEATURES} action={Action.VIEW}>
+              <Button 
+                mode="contained" 
+                onPress={() => navigation.navigate('AIGuidedSetupWizard')}
+              >
+                Setup Wizard
+              </Button>
+            </PermissionGate>
+            <PermissionGate resource={Resource.AI_FEATURES} action={Action.GENERATE}>
+              <Button 
+                mode="outlined" 
+                onPress={() => navigation.navigate('AIRecommendations')}
+              >
+                Get Recommendations
+              </Button>
+            </PermissionGate>
+          </Card.Actions>
+        </Card>
 
         <View style={styles.buttonContainer}>
           <Button 
@@ -229,63 +270,39 @@ const styles = StyleSheet.create({
     color: '#666',
     lineHeight: 20,
   },
-  managerSection: {
-    backgroundColor: '#f0f7ff',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 30,
-  },
-  adminSection: {
-    backgroundColor: '#fff0f0',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 30,
-  },
-  tenantSection: {
-    backgroundColor: '#f0fff0',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 30,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  section: {
     marginBottom: 20,
-  },
-  statItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  statLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  alertBox: {
-    backgroundColor: '#ffe8e8',
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 20,
-  },
-  alertTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#c53030',
-    marginBottom: 5,
-  },
-  alertText: {
-    fontSize: 14,
-    color: '#666',
   },
   buttonContainer: {
     marginTop: 10,
   },
   button: {
     marginBottom: 12,
+  },
+  aiWizardContainer: {
+    marginBottom: 30,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#e0f2fe',
+    backgroundColor: '#f0f9ff',
+  },
+  aiWizardContent: {
+    padding: 20,
+  },
+  aiWizardTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#0369a1',
+    marginBottom: 10,
+  },
+  aiWizardDescription: {
+    fontSize: 16,
+    color: '#075985',
+    marginBottom: 15,
+    lineHeight: 22,
+  },
+  aiWizardButton: {
+    marginTop: 5,
   },
 }); 
