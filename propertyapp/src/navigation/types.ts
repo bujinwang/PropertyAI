@@ -20,6 +20,9 @@ export type RootStackParamList = {
   ForgotPassword: undefined;
   ResetPassword: { token: string };
   
+  // Onboarding
+  AIGuidedSetupWizard: undefined;
+  
   // Main app screens
   Main: NavigatorScreenParams<MainTabParamList>;
   PropertyDetail: { propertyId: string };
@@ -31,4 +34,13 @@ export type RootStackParamList = {
   MaintenanceRequestDetails: { requestId: string };
   ManageListings: undefined;
   EditListing: { listingId?: string };
+  
+  // Additional screens for RBAC implementation
+  PropertyList: undefined;
+  AddProperty: undefined;
+  AdminDashboard: undefined;
+  UserManagement: undefined;
+  MaintenanceRequest: undefined;
+  Payments: undefined;
+  AIRecommendations: undefined;
 };

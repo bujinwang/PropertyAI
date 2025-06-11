@@ -11,6 +11,7 @@ import { ForgotPasswordScreen } from '@/screens/auth/ForgotPasswordScreen';
 import { RegisterScreen } from '@/screens/auth/RegisterScreen';
 import { ResetPasswordScreen } from '@/screens/auth/ResetPasswordScreen';
 import { LoadingIndicator } from '@/components/ui/LoadingIndicator';
+import AIGuidedSetupWizardScreen from '@/screens/AIGuidedSetupWizardScreen';
 
 // Placeholder screens
 const PropertyDetailScreen = () => (
@@ -59,6 +60,10 @@ export function RootNavigator() {
           // Authenticated screens
           <>
             <Stack.Screen name="Main" component={MainTabNavigator} />
+            <Stack.Screen
+              name="AIGuidedSetupWizard"
+              component={AIGuidedSetupWizardScreen}
+            />
             <Stack.Screen 
               name="PropertyDetail" 
               component={PropertyDetailScreen} 

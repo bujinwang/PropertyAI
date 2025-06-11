@@ -7,14 +7,52 @@ import {
   storeAuthToken, 
   storeUserData 
 } from '@/utils/secureStorage';
-import { User } from '@/types/user';
+import { User, UserRole } from '@/types/auth';
 import * as authService from '@/services/authService';
+import { apiService } from '@/services/apiService';
+import {
+  hasPermission as checkPermission,
+  hasMinimumRole as checkMinimumRole,
+  hasAnyPermission as checkAnyPermission,
+  hasAllPermissions as checkAllPermissions,
+  hasResourcePermission as checkResourcePermission,
+  hasResourceAccess as checkResourceAccess
+} from '@/utils/rbac';
+import { Permission, Resource, Action } from '@/types/permissions';
+
+// Interface for user settings
+interface UserSettings {
+  role?: string;
+  portfolioSize?: string;
+  communicationStyle?: 'formal' | 'casual';
+  notificationPreferences?: Array<{
+    id: string;
+    type: string;
+    channel: 'email' | 'push' | 'sms';
+    frequency: 'immediate' | 'daily' | 'weekly';
+    enabled: boolean;
+  }>;
+  suggestedFeatures?: Array<{
+    id: string;
+    name: string;
+    description: string;
+    enabled: boolean;
+    priority: 'high' | 'medium' | 'low';
+  }>;
+  aiAutomationLevel?: 'minimal' | 'balanced' | 'full';
+  [key: string]: unknown; // Allow other settings with unknown type
+}
+
+// Extend User type to include settings
+interface ExtendedUser extends User {
+  settings?: UserSettings;
+}
 
 // Authentication context type definition
 interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
-  user: User | null;
+  user: ExtendedUser | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (userData: {
@@ -28,15 +66,24 @@ interface AuthContextType {
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, newPassword: string) => Promise<void>;
-  updateProfile: (userData: Partial<User>) => Promise<void>;
-  setUser: (user: User) => void;
+  updateProfile: (userData: Partial<ExtendedUser>) => Promise<void>;
+  updateUserSettings: (settings: UserSettings) => Promise<void>;
+  setUser: (user: ExtendedUser) => void;
   setToken: (token: string) => void;
   // MFA methods
   setupMFA: () => Promise<{ secret: string; email: string }>;
   enableMFA: (code: string) => Promise<void>;
   disableMFA: (code: string) => Promise<void>;
-  verifyMFA: (email: string, code: string) => Promise<{ token: string; user: User }>;
+  verifyMFA: (email: string, code: string) => Promise<{ token: string; user: ExtendedUser }>;
   getMFAStatus: () => Promise<boolean>;
+  // Permission methods
+  hasPermission: (permission: Permission) => boolean;
+  hasAnyPermission: (permissions: Permission[]) => boolean;
+  hasAllPermissions: (permissions: Permission[]) => boolean;
+  hasMinimumRole: (minimumRole: UserRole) => boolean;
+  hasResourcePermission: (resource: Resource, action: Action) => boolean;
+  hasResourceAccess: (resource: Resource, resourceOwnerId?: string, isAssigned?: boolean) => boolean;
+  checkRoleIs: (roles: UserRole[]) => boolean;
 }
 
 // Create context with default values
@@ -51,13 +98,22 @@ const AuthContext = createContext<AuthContextType>({
   forgotPassword: async () => {},
   resetPassword: async () => {},
   updateProfile: async () => {},
+  updateUserSettings: async () => {},
   setUser: () => {},
   setToken: () => {},
   setupMFA: async () => ({ secret: '', email: '' }),
   enableMFA: async () => {},
   disableMFA: async () => {},
-  verifyMFA: async () => ({ token: '', user: {} as User }),
+  verifyMFA: async () => ({ token: '', user: {} as ExtendedUser }),
   getMFAStatus: async () => false,
+  // Permission methods
+  hasPermission: () => false,
+  hasAnyPermission: () => false,
+  hasAllPermissions: () => false,
+  hasMinimumRole: () => false,
+  hasResourcePermission: () => false,
+  hasResourceAccess: () => false,
+  checkRoleIs: () => false,
 });
 
 // Provider component
@@ -68,7 +124,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<ExtendedUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
 
   // Check for existing auth on mount
@@ -170,12 +226,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     
     try {
-      // Clear auth data
+      // Clear token in API service
+      authService.clearAuthToken();
+      
+      // Clear local state
       setToken(null);
       setUser(null);
+      
+      // Clear secure storage is already handled by the useEffect
     } catch (error) {
       console.error('Logout error:', error);
-      Alert.alert('Logout Failed', 'An error occurred while logging out.');
+      Alert.alert('Error', 'Failed to log out. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -186,9 +247,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     
     try {
-      // TODO: Implement real API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log(`Password reset requested for: ${email}`);
+      // Use direct axios call since this doesn't require authentication
+      await authService.forgotPassword(email);
     } catch (error) {
       console.error('Forgot password error:', error);
       throw error;
@@ -202,9 +262,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     
     try {
-      // TODO: Implement real API call
-      await new Promise(resolve => setTimeout(resolve, 1200));
-      console.log(`Password reset with token: ${resetToken}, new password length: ${newPassword.length}`);
+      // Use direct axios call since this doesn't require authentication
+      await authService.resetPassword(resetToken, newPassword);
     } catch (error) {
       console.error('Reset password error:', error);
       throw error;
@@ -214,19 +273,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
   
   // Update profile function
-  const updateProfile = async (userData: Partial<User>): Promise<void> => {
+  const updateProfile = async (userData: Partial<ExtendedUser>): Promise<void> => {
     setIsLoading(true);
     
     try {
-      if (!user || !token) {
-        throw new Error('No user is logged in');
-      }
+      // Use the apiService for authenticated requests
+      const response = await apiService.put<User>('/auth/profile', userData);
       
-      // TODO: Implement real API call
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      const updatedUser = { ...user, ...userData };
-      setUser(updatedUser);
+      // Update local user data
+      setUser((currentUser) => 
+        currentUser ? { ...currentUser, ...response.data } : null
+      );
     } catch (error) {
       console.error('Update profile error:', error);
       throw error;
@@ -235,19 +292,40 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
   
-  // MFA Setup function
+  // Update user settings function
+  const updateUserSettings = async (settings: UserSettings): Promise<void> => {
+    setIsLoading(true);
+    
+    try {
+      // Use the apiService for authenticated requests
+      const response = await apiService.put<{ settings: UserSettings }>('/auth/settings', { settings });
+      
+      // Update local user data with new settings
+      setUser((currentUser) => {
+        if (!currentUser) return null;
+        
+        return {
+          ...currentUser,
+          settings: response.data.settings,
+        };
+      });
+    } catch (error) {
+      console.error('Update settings error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Setup MFA function
   const setupMFA = async (): Promise<{ secret: string; email: string }> => {
     setIsLoading(true);
     
     try {
-      if (!token) {
-        throw new Error('No user is logged in');
-      }
-      
-      const response = await authService.setupMFA(token);
-      return response;
+      // Use updated authService which uses apiService internally
+      return await authService.setupMFA();
     } catch (error) {
-      console.error('MFA setup error:', error);
+      console.error('Setup MFA error:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -259,16 +337,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     
     try {
-      if (!token) {
-        throw new Error('No user is logged in');
-      }
+      // Use updated authService which uses apiService internally
+      await authService.enableMFA(code);
       
-      await authService.enableMFA(token, code);
-      
-      // Update user profile to reflect MFA status
-      if (user) {
-        setUser({ ...user, mfaEnabled: true });
-      }
+      // Update user data to reflect MFA status
+      setUser((currentUser) => {
+        if (!currentUser) return null;
+        
+        return {
+          ...currentUser,
+          mfaEnabled: true,
+        };
+      });
     } catch (error) {
       console.error('Enable MFA error:', error);
       throw error;
@@ -282,16 +362,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     
     try {
-      if (!token) {
-        throw new Error('No user is logged in');
-      }
+      // Use updated authService which uses apiService internally
+      await authService.disableMFA(code);
       
-      await authService.disableMFA(token, code);
-      
-      // Update user profile to reflect MFA status
-      if (user) {
-        setUser({ ...user, mfaEnabled: false });
-      }
+      // Update user data to reflect MFA status
+      setUser((currentUser) => {
+        if (!currentUser) return null;
+        
+        return {
+          ...currentUser,
+          mfaEnabled: false,
+        };
+      });
     } catch (error) {
       console.error('Disable MFA error:', error);
       throw error;
@@ -300,17 +382,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
   
-  // Verify MFA function (used during login)
-  const verifyMFA = async (email: string, code: string): Promise<{ token: string; user: User }> => {
+  // Verify MFA function
+  const verifyMFA = async (email: string, code: string): Promise<{ token: string; user: ExtendedUser }> => {
     setIsLoading(true);
     
     try {
       const response = await authService.verifyMFACode(email, code);
-      
-      setToken(response.token);
-      setUser(response.user);
-      
-      return response;
+      return response as { token: string; user: ExtendedUser };
     } catch (error) {
       console.error('Verify MFA error:', error);
       throw error;
@@ -322,16 +400,44 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Get MFA status function
   const getMFAStatus = async (): Promise<boolean> => {
     try {
-      if (!token) {
-        return false;
-      }
-      
-      const response = await authService.getMFAStatus(token);
+      // Use updated authService which uses apiService internally
+      const response = await authService.getMFAStatus();
       return response.mfaEnabled;
     } catch (error) {
       console.error('Get MFA status error:', error);
-      return false;
+      throw error;
     }
+  };
+
+  // Permission methods
+  const hasPermission = (permission: Permission): boolean => {
+    return checkPermission(user?.role as UserRole, permission);
+  };
+
+  const hasAnyPermission = (permissions: Permission[]): boolean => {
+    return checkAnyPermission(user?.role as UserRole, permissions);
+  };
+
+  const hasAllPermissions = (permissions: Permission[]): boolean => {
+    return checkAllPermissions(user?.role as UserRole, permissions);
+  };
+
+  const hasMinimumRole = (minimumRole: UserRole): boolean => {
+    return checkMinimumRole(user?.role as UserRole, minimumRole);
+  };
+
+  const hasResourcePermission = (resource: Resource, action: Action): boolean => {
+    return checkResourcePermission(user?.role as UserRole, resource, action);
+  };
+
+  const hasResourceAccess = (resource: Resource, resourceOwnerId?: string, isAssigned?: boolean): boolean => {
+    if (!user) return false;
+    return checkResourceAccess(user.role as UserRole, resource, user.id, resourceOwnerId, isAssigned);
+  };
+
+  const checkRoleIs = (roles: UserRole[]): boolean => {
+    if (!user?.role) return false;
+    return roles.includes(user.role as UserRole);
   };
 
   // Prepare context value
@@ -346,6 +452,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     forgotPassword,
     resetPassword,
     updateProfile,
+    updateUserSettings,
     setUser,
     setToken,
     setupMFA,
@@ -353,6 +460,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     disableMFA,
     verifyMFA,
     getMFAStatus,
+    // Permission methods
+    hasPermission,
+    hasAnyPermission,
+    hasAllPermissions,
+    hasMinimumRole,
+    hasResourcePermission,
+    hasResourceAccess,
+    checkRoleIs,
   };
 
   return (
