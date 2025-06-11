@@ -1,11 +1,12 @@
 import React, { useState, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { ThemeProvider, createTheme, CssBaseline, Box, Container, CircularProgress } from '@mui/material';
+import { ThemeProvider, CssBaseline, Box, Container, CircularProgress } from '@mui/material';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import './App.css';
 import Header from './components/Header';
 import { handleOAuthLogin } from './services/oauthService';
+import theme from './design-system/theme';
 
 // Lazy load pages
 const ApplicationsList = lazy(() => import('./pages/ApplicationsList'));
@@ -21,23 +22,22 @@ const CommunicationHub = lazy(() => import('./pages/CommunicationHub'));
 const MaintenancePage = lazy(() => import('./pages/MaintenancePage'));
 const FinancialPage = lazy(() => import('./pages/FinancialPage'));
 const MaintenanceDashboard = lazy(() => import('./pages/MaintenanceDashboard'));
-
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#1976d2',
-    },
-    secondary: {
-      main: '#dc004e',
-    },
-    background: {
-      default: '#f5f5f5',
-    },
-  },
-  typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-  },
-});
+const PredictiveMaintenanceDashboard = lazy(() => import('./pages/PredictiveMaintenanceDashboard'));
+const AIPersonalizationDashboard = lazy(() => import('./pages/AIPersonalizationDashboard'));
+const AIRiskAssessmentDashboard = lazy(() => import('./pages/AIRiskAssessmentDashboard'));
+const DocumentVerificationStatusScreen = lazy(() => import('./pages/DocumentVerificationStatusScreen'));
+const BuildingHealthMonitorScreen = lazy(() => import('./pages/BuildingHealthMonitorScreen'));
+const AIInsightsDashboard = lazy(() => import('./pages/AIInsightsDashboard'));
+const AICommunicationTrainingScreen = lazy(() => import('./pages/AICommunicationTrainingScreen'));
+const MarketIntelligenceScreen = lazy(() => import('./pages/MarketIntelligenceScreen'));
+const TenantSentimentDashboard = lazy(() => import('./pages/TenantSentimentDashboard'));
+const EmergencyResponseCenterScreen = lazy(() => import('./pages/EmergencyResponseCenterScreen'));
+const VendorPerformanceAnalyticsScreen = lazy(() => import('./pages/VendorPerformanceAnalyticsScreen'));
+const VendorBiddingPlatformScreen = lazy(() => import('./pages/VendorBiddingPlatformScreen'));
+const ExternalSystemsIntegrationDashboard = lazy(() => import('./pages/ExternalSystemsIntegrationDashboard'));
+const SecuritySettingsDashboard = lazy(() => import('./pages/SecuritySettingsDashboard'));
+const AccessControlManagementScreen = lazy(() => import('./pages/AccessControlManagementScreen'));
+const CommunityEngagementPortal = lazy(() => import('./pages/CommunityEngagementPortal'));
 
 const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID_HERE"; // Fallback to placeholder
 
@@ -78,6 +78,22 @@ function AppContent() {
                 <Route path="/maintenance" element={<MaintenancePage />} />
                 <Route path="/financials" element={<FinancialPage />} />
                 <Route path="/maintenance-dashboard" element={<MaintenanceDashboard />} />
+                <Route path="/predictive-maintenance" element={<PredictiveMaintenanceDashboard />} />
+                <Route path="/ai-personalization" element={<AIPersonalizationDashboard />} />
+                <Route path="/ai-risk-assessment" element={<AIRiskAssessmentDashboard />} />
+                <Route path="/document-verification" element={<DocumentVerificationStatusScreen />} />
+                <Route path="/building-health" element={<BuildingHealthMonitorScreen />} />
+                <Route path="/ai-insights" element={<AIInsightsDashboard />} />
+                <Route path="/ai-communication-training" element={<AICommunicationTrainingScreen />} />
+                <Route path="/market-intelligence" element={<MarketIntelligenceScreen />} />
+                <Route path="/tenant-sentiment" element={<TenantSentimentDashboard />} />
+                <Route path="/emergency-response" element={<EmergencyResponseCenterScreen />} />
+                <Route path="/vendor-performance" element={<VendorPerformanceAnalyticsScreen />} />
+                <Route path="/vendor-bidding" element={<VendorBiddingPlatformScreen />} />
+                <Route path="/external-integrations" element={<ExternalSystemsIntegrationDashboard />} />
+                <Route path="/security-settings" element={<SecuritySettingsDashboard />} />
+                <Route path="/access-control" element={<AccessControlManagementScreen />} />
+                <Route path="/community-engagement" element={<CommunityEngagementPortal />} />
                 {/* Add more routes as needed */}
                 <Route path="/" element={
                   <div>

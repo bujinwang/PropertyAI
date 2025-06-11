@@ -1,46 +1,51 @@
+import { RouteProp } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { PortfolioSize } from '../services/setupWizardService';
+import { UserRole } from '../types/user';
 import { NavigatorScreenParams } from '@react-navigation/native';
 
-// Tab navigation params
+// Main tab navigator param list
 export type MainTabParamList = {
   Home: undefined;
   Properties: undefined;
+  Maintenance: undefined;
   Messages: undefined;
   Profile: undefined;
-  // Role-specific tabs
-  ManageListings: undefined;
-  Maintenance: undefined;
-  Admin: undefined;
 };
 
-// Stack navigation params
+// Add AIGuidedSetupWizardScreen to RootStackParamList
 export type RootStackParamList = {
-  // Auth screens
   Login: undefined;
   Register: undefined;
   ForgotPassword: undefined;
-  ResetPassword: { token: string };
-  
-  // Onboarding
-  AIGuidedSetupWizard: undefined;
-  
-  // Main app screens
-  Main: NavigatorScreenParams<MainTabParamList>;
-  PropertyDetail: { propertyId: string };
+  Main: NavigatorScreenParams<MainTabParamList> | undefined;
   PropertyForm: { propertyId?: string };
-  UnitDetail: { unitId: string };
-  ChatDetail: { chatId: string; recipientName: string };
-  Settings: undefined;
-  MaintenanceRequests: undefined;
-  MaintenanceRequestDetails: { requestId: string };
-  ManageListings: undefined;
-  EditListing: { listingId?: string };
-  
-  // Additional screens for RBAC implementation
-  PropertyList: undefined;
-  AddProperty: undefined;
-  AdminDashboard: undefined;
-  UserManagement: undefined;
-  MaintenanceRequest: undefined;
-  Payments: undefined;
-  AIRecommendations: undefined;
+  PropertyDetail: { propertyId: string };
+  MaintenanceRequestForm: { propertyId?: string; unitId?: string };
+  MaintenanceRequestDetail: { requestId: string };
+  PropertyPhotos: { propertyId: string };
+  PhotoManagement: { propertyId: string };
+  Chat: { conversationId: string };
+  AIGuidedSetupWizard: {
+    isFirstLogin?: boolean;
+    role?: UserRole;
+    portfolioSize?: PortfolioSize;
+  };
+  DataPrivacyCompliance: undefined;
+  SecuritySettings: undefined;
 };
+
+// Navigation props for screens
+export type NavigationProps<T extends keyof RootStackParamList> = {
+  navigation: NativeStackNavigationProp<RootStackParamList, T>;
+  route: RouteProp<RootStackParamList, T>;
+};
+
+// Type declaration for React Navigation to have proper typing
+export {};
+declare global {
+  // Extend React Navigation to use our RootStackParamList types
+  export namespace ReactNavigation {
+    export interface RootParamList extends RootStackParamList {}
+  }
+}

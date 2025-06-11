@@ -4,6 +4,24 @@ export enum UserRole {
   TENANT = 'TENANT'
 }
 
+export interface UserSettings {
+  privacy?: {
+    marketingCommunications: boolean;
+    dataSharing: boolean;
+    locationTracking: boolean;
+    analyticsCollection: boolean;
+    personalization: boolean;
+  };
+  notifications?: {
+    email: boolean;
+    push: boolean;
+    sms: boolean;
+  };
+  aiAutomationLevel?: 'minimal' | 'balanced' | 'full';
+  // Allow for future settings to be added
+  [key: string]: unknown;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -15,6 +33,7 @@ export interface User {
   createdAt?: string;
   updatedAt?: string;
   isActive?: boolean;
+  settings?: UserSettings;
 }
 
 export interface UserProfile extends User {

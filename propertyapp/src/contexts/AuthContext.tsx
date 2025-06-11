@@ -19,6 +19,8 @@ import {
   hasResourceAccess as checkResourceAccess
 } from '@/utils/rbac';
 import { Permission, Resource, Action } from '@/types/permissions';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { PrivacySettings } from '../types/privacy';
 
 // Interface for user settings
 interface UserSettings {
@@ -40,6 +42,7 @@ interface UserSettings {
     priority: 'high' | 'medium' | 'low';
   }>;
   aiAutomationLevel?: 'minimal' | 'balanced' | 'full';
+  privacy?: Partial<PrivacySettings>;
   [key: string]: unknown; // Allow other settings with unknown type
 }
 
@@ -67,7 +70,7 @@ interface AuthContextType {
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, newPassword: string) => Promise<void>;
   updateProfile: (userData: Partial<ExtendedUser>) => Promise<void>;
-  updateUserSettings: (settings: UserSettings) => Promise<void>;
+  updateUserSettings: (settings: Partial<{ privacy: Partial<PrivacySettings> }>) => Promise<void>;
   setUser: (user: ExtendedUser) => void;
   setToken: (token: string) => void;
   // MFA methods
@@ -84,6 +87,7 @@ interface AuthContextType {
   hasResourcePermission: (resource: Resource, action: Action) => boolean;
   hasResourceAccess: (resource: Resource, resourceOwnerId?: string, isAssigned?: boolean) => boolean;
   checkRoleIs: (roles: UserRole[]) => boolean;
+  updateUserProfile: (userData: Partial<ExtendedUser>) => Promise<void>;
 }
 
 // Create context with default values
@@ -114,6 +118,7 @@ const AuthContext = createContext<AuthContextType>({
   hasResourcePermission: () => false,
   hasResourceAccess: () => false,
   checkRoleIs: () => false,
+  updateUserProfile: async () => {},
 });
 
 // Provider component
@@ -293,7 +298,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
   
   // Update user settings function
-  const updateUserSettings = async (settings: UserSettings): Promise<void> => {
+  const updateUserSettings = async (settings: Partial<{ privacy: Partial<PrivacySettings> }>): Promise<void> => {
     setIsLoading(true);
     
     try {
@@ -440,6 +445,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return roles.includes(user.role as UserRole);
   };
 
+  // Update user profile function
+  const updateUserProfile = async (userData: Partial<ExtendedUser>): Promise<void> => {
+    setIsLoading(true);
+    
+    try {
+      // Use the apiService for authenticated requests
+      const response = await apiService.put<User>('/auth/profile', userData);
+      
+      // Update local user data
+      setUser((currentUser) => 
+        currentUser ? { ...currentUser, ...response.data } : null
+      );
+    } catch (error) {
+      console.error('Update user profile error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Prepare context value
   const contextValue: AuthContextType = {
     isAuthenticated,
@@ -468,6 +493,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     hasResourcePermission,
     hasResourceAccess,
     checkRoleIs,
+    updateUserProfile,
   };
 
   return (

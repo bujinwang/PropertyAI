@@ -187,6 +187,24 @@ export const HomeScreen: React.FC = () => {
           </Card.Actions>
         </Card>
 
+        {/* Privacy & Compliance Section - Available to all users */}
+        <Card style={styles.section}>
+          <Card.Title title="Privacy & Compliance" />
+          <Card.Content>
+            <Text>Manage your data privacy settings and compliance preferences.</Text>
+          </Card.Content>
+          <Card.Actions>
+            <PermissionGate resource={Resource.COMPLIANCE} action={Action.VIEW}>
+              <Button 
+                mode="contained" 
+                onPress={() => navigation.navigate('DataPrivacyCompliance')}
+              >
+                Privacy Center
+              </Button>
+            </PermissionGate>
+          </Card.Actions>
+        </Card>
+
         <View style={styles.buttonContainer}>
           <Button 
             title="Log Out" 
