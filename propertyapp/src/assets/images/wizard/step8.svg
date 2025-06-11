@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Completion Icon -->
+  <circle cx="50" cy="50" r="45" stroke="#4C84FF" stroke-width="2" fill="#EBF2FF"/>
+  <!-- Success Circle -->
+  <circle cx="50" cy="45" r="25" fill="#4C84FF" opacity="0.1"/>
+  <circle cx="50" cy="45" r="20" fill="#4C84FF" opacity="0.3"/>
+  <!-- Checkmark -->
+  <path d="M35 45L45 55L65 35" stroke="#4C84FF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Celebration Stars -->
+  <path d="M20 30L22 25L24 30L29 32L24 34L22 39L20 34L15 32L20 30Z" fill="#4C84FF" opacity="0.8"/>
+  <path d="M80 30L82 25L84 30L89 32L84 34L82 39L80 34L75 32L80 30Z" fill="#4C84FF" opacity="0.8"/>
+  <path d="M70 65L72 60L74 65L79 67L74 69L72 74L70 69L65 67L70 65Z" fill="#4C84FF" opacity="0.8"/>
+  <path d="M30 65L32 60L34 65L39 67L34 69L32 74L30 69L25 67L30 65Z" fill="#4C84FF" opacity="0.8"/>
+  <text x="50" y="85" font-family="Arial" font-size="10" fill="#4C84FF" text-anchor="middle">Completion</text>
+</svg> 

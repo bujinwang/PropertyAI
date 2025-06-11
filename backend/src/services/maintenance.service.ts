@@ -1,8 +1,9 @@
 import { prisma } from '../config/database';
 import { aiRoutingService } from './aiRouting.service';
-import { MaintenanceRequest, WorkOrder } from '@prisma/client';
+import { MaintenanceRequest, WorkOrder, MaintenanceStatus } from '@prisma/client';
 import { sendNotification } from './notificationService';
 import { Prisma } from '@prisma/client';
+import { pubSubService } from './pubSub.service';
 
 class MaintenanceService {
   public async getAllMaintenanceRequests(): Promise<MaintenanceRequest[]> {
@@ -75,6 +76,22 @@ class MaintenanceService {
 
       return workOrder;
     });
+  }
+
+  public async updateMaintenanceRequestStatus(id: string, status: MaintenanceStatus): Promise<MaintenanceRequest | null> {
+    const updatedRequest = await prisma.maintenanceRequest.update({
+      where: { id },
+      data: { status },
+    });
+
+    if (updatedRequest) {
+      pubSubService.publish('dashboard-updates', JSON.stringify({
+        type: 'MAINTENANCE_REQUEST_UPDATE',
+        payload: updatedRequest,
+      }));
+    }
+
+    return updatedRequest;
   }
 
   public async createWorkOrdersFromRequests(maintenanceRequestIds: string[]): Promise<WorkOrder[]> {

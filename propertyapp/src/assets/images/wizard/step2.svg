@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Profile Setup Icon -->
+  <circle cx="50" cy="50" r="45" stroke="#4C84FF" stroke-width="2" fill="#EBF2FF"/>
+  <!-- User Icon -->
+  <circle cx="50" cy="40" r="15" fill="#4C84FF" opacity="0.8"/>
+  <!-- User Body -->
+  <path d="M30 75C30 65 40 60 50 60C60 60 70 65 70 75" stroke="#4C84FF" stroke-width="8" stroke-linecap="round"/>
+  <!-- Form Lines -->
+  <line x1="35" y1="85" x2="65" y2="85" stroke="#4C84FF" stroke-width="2"/>
+  <line x1="35" y1="90" x2="55" y2="90" stroke="#4C84FF" stroke-width="2"/>
+  <text x="50" y="25" font-family="Arial" font-size="10" fill="#4C84FF" text-anchor="middle">Profile Setup</text>
+</svg> 

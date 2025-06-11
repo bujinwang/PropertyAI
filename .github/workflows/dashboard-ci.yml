@@ -1,0 +1,78 @@
+name: Dashboard CI/CD
+
+on:
+  push:
+    branches: [ main, development ]
+    paths:
+      - 'dashboard/**'
+      - '.github/workflows/dashboard-ci.yml'
+  pull_request:
+    branches: [ main, development ]
+    paths:
+      - 'dashboard/**'
+      - '.github/workflows/dashboard-ci.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [20.x]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: dashboard/package-lock.json
+    
+    - name: Install dependencies
+      working-directory: ./dashboard
+      run: npm ci
+    
+    - name: Build
+      working-directory: ./dashboard
+      run: npm run build
+      
+    # Add tests when they are available
+    # - name: Run tests
+    #   working-directory: ./dashboard
+    #   run: npm test
+    
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+        cache-dependency-path: dashboard/package-lock.json
+    
+    - name: Install dependencies
+      working-directory: ./dashboard
+      run: npm ci
+    
+    - name: Build
+      working-directory: ./dashboard
+      run: npm run build
+    
+    # Here you would add deployment steps (e.g., to S3, Netlify, Vercel)
+    # This is a placeholder for actual deployment commands
+    - name: Deploy
+      run: |
+        echo "Deploying dashboard to production..."
+        # Add deployment commands here
+        # Examples:
+        # - AWS S3 + CloudFront: aws s3 sync ./dashboard/build s3://your-bucket/
+        # - Netlify: npx netlify-cli deploy --prod --dir=./dashboard/build
+        # - Vercel: npx vercel --prod ./dashboard/build 

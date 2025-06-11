@@ -1,89 +1,71 @@
 import Stripe from 'stripe';
-import { prisma } from '../config/database';
-import logger from '../utils/logger';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-05-28.basil',
-});
+import paypal from '@paypal/checkout-server-sdk';
+import { config } from '../config/config';
 
 class PaymentService {
+  private stripe: Stripe;
+  private payPalClient: any;
+
+  constructor() {
+    if (!config.stripe.secretKey) {
+      throw new Error('Stripe secret key is not defined');
+    }
+    this.stripe = new Stripe(config.stripe.secretKey, {
+      apiVersion: '2025-04-10',
+    } as any);
+
+    if (!config.paypal.clientId || !config.paypal.clientSecret) {
+      throw new Error('PayPal client ID or secret is not defined');
+    }
+    const environment = new paypal.core.SandboxEnvironment(
+      config.paypal.clientId,
+      config.paypal.clientSecret
+    );
+    this.payPalClient = new paypal.core.PayPalHttpClient(environment);
+  }
+
+  async createStripePaymentIntent(amount: number, currency: string) {
+    return this.stripe.paymentIntents.create({
+      amount,
+      currency,
+    });
+  }
+
   async createCustomer(email: string, name: string) {
-    try {
-      const customer = await stripe.customers.create({
-        email,
-        name,
-      });
-      return customer;
-    } catch (error) {
-      logger.error(`Error creating Stripe customer: ${error}`);
-      throw new Error('Failed to create customer.');
-    }
+    return this.stripe.customers.create({ email, name });
   }
 
-  async createPaymentIntent(amount: number, currency: string, customerId: string) {
-    try {
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount,
-        currency,
-        customer: customerId,
-        payment_method_types: ['card'],
-      });
-      return paymentIntent;
-    } catch (error) {
-      logger.error(`Error creating PaymentIntent: ${error}`);
-      throw new Error('Failed to create PaymentIntent.');
-    }
+  async createSubscription(customerId: string, priceId: string) {
+    return this.stripe.subscriptions.create({
+      customer: customerId,
+      items: [{ price: priceId }],
+    });
   }
 
-  async processPayment(leaseId: string) {
-    const lease = await prisma.lease.findUnique({
-      where: { id: leaseId },
-      include: { tenant: true },
+  async handleFailedPayment(paymentIntentId: string) {
+    const paymentIntent = await this.stripe.paymentIntents.retrieve(
+      paymentIntentId
+    );
+    // Notify user and admin
+    console.log('Payment failed:', paymentIntent.last_payment_error?.message);
+  }
+
+  async createPayPalOrder(amount: number, currency: string) {
+    const request = new paypal.orders.OrdersCreateRequest();
+    request.prefer("return=representation");
+    request.requestBody({
+      intent: 'CAPTURE',
+      purchase_units: [
+        {
+          amount: {
+            currency_code: currency,
+            value: amount.toString(),
+          },
+        },
+      ],
     });
 
-    if (!lease || !lease.tenant) {
-      throw new Error('Lease or tenant not found.');
-    }
-
-    // This is a placeholder. In a real application, you would retrieve the Stripe customer ID
-    // associated with the tenant.
-    const stripeCustomerId = 'cus_...'; // Placeholder
-
-    try {
-      const paymentIntent = await this.createPaymentIntent(
-        lease.rentAmount * 100, // Stripe expects amount in cents
-        'usd',
-        stripeCustomerId
-      );
-
-      // In a real application, you would confirm the payment on the client-side
-      // using the client_secret from the PaymentIntent.
-      // For this service, we'll simulate a successful payment.
-
-      await prisma.transaction.create({
-        data: {
-          amount: lease.rentAmount,
-          type: 'RENT',
-          status: 'COMPLETED',
-          leaseId: lease.id,
-          paymentMethod: 'stripe',
-          reference: paymentIntent.id,
-        },
-      });
-
-      logger.info(`Successfully processed rent payment for lease ${leaseId}`);
-    } catch (error) {
-      logger.error(`Failed to process rent payment for lease ${leaseId}: ${error}`);
-      await prisma.transaction.create({
-        data: {
-          amount: lease.rentAmount,
-          type: 'RENT',
-          status: 'FAILED',
-          leaseId: lease.id,
-          paymentMethod: 'stripe',
-        },
-      });
-    }
+    return this.payPalClient.execute(request);
   }
 }
 

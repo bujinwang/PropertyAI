@@ -1,0 +1,91 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [ main, development ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    branches: [ main, development ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [20.x]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+    
+    - name: Install dependencies
+      working-directory: ./backend
+      run: npm ci
+    
+    - name: Lint
+      working-directory: ./backend
+      run: npm run lint
+    
+    - name: Build
+      working-directory: ./backend
+      run: npm run build
+    
+    - name: Run tests
+      working-directory: ./backend
+      run: npm test
+      
+    - name: Generate Prisma client
+      working-directory: ./backend
+      run: npm run prisma:generate
+      
+  # Add deployment job if needed for production
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+    
+    - name: Install dependencies
+      working-directory: ./backend
+      run: npm ci
+    
+    - name: Build
+      working-directory: ./backend
+      run: npm run build
+    
+    - name: Generate Prisma client
+      working-directory: ./backend
+      run: npm run prisma:generate
+    
+    # Here you would add deployment steps (e.g., to AWS, GCP, Azure)
+    # This is a placeholder for actual deployment commands
+    - name: Deploy
+      run: |
+        echo "Deploying backend to production..."
+        # Add deployment commands here (e.g., deploy to ECS, GKE, etc.)
+        # For example, you might use AWS CLI, Google Cloud SDK, or Azure CLI
+        # Or deploy to a PaaS like Heroku or Render
+        
+        # Example with AWS (would require setting up AWS credentials):
+        # aws deploy create-deployment --application-name PropertyAI --deployment-group-name backend --github-location repository=${{ github.repository }},commitId=${{ github.sha }} 
