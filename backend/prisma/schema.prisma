@@ -18,6 +18,8 @@ model User {
   firstName           String
   lastName            String
   phone               String?
+  // This 'role' field uses an enum for a simple, single-role system.
+  // It defaults to TENANT.
   role                UserRole             @default(TENANT)
   mfaEnabled          Boolean              @default(false)
   mfaSecret           String?
@@ -49,6 +51,9 @@ model User {
   escalationPolicyRules EscalationPolicyRule[]
   onCallRotations       OnCallRotation[]
   apiKeys               ApiKey[]
+  // This 'roles' field establishes a many-to-many relationship with the Role model.
+  // A user can have multiple roles, and a role can be assigned to many users.
+  // Prisma implicitly creates a join table named `_RoleToUser` to manage this.
   roles                 Role[]
   consents            Consent[]
 
@@ -433,6 +438,7 @@ model Role {
   id          String   @id @default(cuid())
   name        String   @unique
   permissions Permission[]
+  // This 'users' field is the other side of the many-to-many relationship with the User model.
   users       User[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

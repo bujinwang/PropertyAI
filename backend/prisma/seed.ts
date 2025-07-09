@@ -20,6 +20,8 @@ async function seedPostgres() {
     // Clear existing data in a specific order to avoid foreign key constraints
     console.log('Clearing existing PostgreSQL data...');
     await prisma.$transaction([
+      prisma.permission.deleteMany(),
+      prisma.role.deleteMany(),
       prisma.transaction.deleteMany(),
       prisma.notification.deleteMany(),
       prisma.message.deleteMany(),
@@ -35,15 +37,76 @@ async function seedPostgres() {
     ]);
     console.log('PostgreSQL data cleared.');
 
-    // Seed Users
-    const users = await prisma.user.createManyAndReturn({
-      data: [
-        { id: 'user_admin_1', email: 'admin@propertyai.com', password: 'hashed_password_placeholder', firstName: 'Admin', lastName: 'User', role: 'ADMIN' },
-        { id: 'user_manager_1', email: 'manager@propertyai.com', password: 'hashed_password_placeholder', firstName: 'Manager', lastName: 'Person', role: 'PROPERTY_MANAGER' },
-        { id: 'user_tenant_1', email: 'tenant1@propertyai.com', password: 'hashed_password_placeholder', firstName: 'Jane', lastName: 'Doe', role: 'TENANT' },
-        { id: 'user_tenant_2', email: 'tenant2@propertyai.com', password: 'hashed_password_placeholder', firstName: 'John', lastName: 'Smith', role: 'TENANT' },
-      ],
+    // Seed Permissions
+    const permissions = await prisma.permission.createManyAndReturn({
+        data: [
+            { name: 'create:user' },
+            { name: 'read:user' },
+            { name: 'update:user' },
+            { name: 'delete:user' },
+            { name: 'create:property' },
+            { name: 'read:property' },
+            { name: 'update:property' },
+            { name: 'delete:property' },
+        ]
     });
+    console.log(`Seeded ${permissions.length} permissions.`);
+
+    // Seed Roles and associate permissions
+    const adminRole = await prisma.role.create({
+        data: {
+            name: 'ADMIN',
+            permissions: {
+                connect: permissions.map(p => ({ id: p.id }))
+            }
+        }
+    });
+
+    const managerRole = await prisma.role.create({
+        data: {
+            name: 'PROPERTY_MANAGER',
+            permissions: {
+                connect: permissions.filter(p => p.name.includes('property')).map(p => ({ id: p.id }))
+            }
+        }
+    });
+
+    const tenantRole = await prisma.role.create({
+        data: {
+            name: 'TENANT',
+            permissions: {
+                connect: [{ id: permissions.find(p => p.name === 'read:property')!.id }]
+            }
+        }
+    });
+    console.log('Seeded 3 roles and associated permissions.');
+
+    // Seed Users
+    const adminUser = await prisma.user.create({
+        data: {
+            id: 'user_admin_1', email: 'admin@propertyai.com', password: 'hashed_password_placeholder', firstName: 'Admin', lastName: 'User',
+            roles: { connect: { id: adminRole.id } }
+        }
+    });
+    const managerUser = await prisma.user.create({
+        data: {
+            id: 'user_manager_1', email: 'manager@propertyai.com', password: 'hashed_password_placeholder', firstName: 'Manager', lastName: 'Person',
+            roles: { connect: { id: managerRole.id } }
+        }
+    });
+    const tenant1User = await prisma.user.create({
+        data: {
+            id: 'user_tenant_1', email: 'tenant1@propertyai.com', password: 'hashed_password_placeholder', firstName: 'Jane', lastName: 'Doe',
+            roles: { connect: { id: tenantRole.id } }
+        }
+    });
+    const tenant2User = await prisma.user.create({
+        data: {
+            id: 'user_tenant_2', email: 'tenant2@propertyai.com', password: 'hashed_password_placeholder', firstName: 'John', lastName: 'Smith',
+            roles: { connect: { id: tenantRole.id } }
+        }
+    });
+    const users = [adminUser, managerUser, tenant1User, tenant2User];
     console.log(`Seeded ${users.length} users.`);
 
     // Seed Properties
@@ -58,8 +121,8 @@ async function seedPostgres() {
         country: 'USA',
         propertyType: 'APARTMENT',
         totalUnits: 10,
-        managerId: users.find(u => u.role === 'PROPERTY_MANAGER')?.id!,
-        ownerId: users.find(u => u.role === 'ADMIN')?.id!,
+        managerId: managerUser.id,
+        ownerId: adminUser.id,
       },
     });
     console.log(`Seeded 1 property: "${property.name}".`);
