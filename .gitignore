@@ -26,4 +26,16 @@ node_modules/
 
 # Task files
 tasks.json
-tasks/ 
+tasks/
+
+# Expo
+.expo/
+
+# Serena
+.serena/
+
+# Build output
+dist/
+
+# iOS project
+propertyapp/ios/
