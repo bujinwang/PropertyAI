@@ -1,0 +1,25 @@
+[
+  {
+    "contentId": "ai_001",
+    "contentType": "property-description",
+    "originalPrompt": "Generate a modern, appealing description for a 2BR apartment.",
+    "generatedContent": "Experience city living in this modern 2-bedroom apartment with smart features and a private balcony.",
+    "relatedEntityId": "listing_1",
+    "relatedEntityType": "listing",
+    "modelName": "gpt-4",
+    "modelVersion": "4.0",
+    "parameters": {"temperature": 0.7},
+    "createdAt": "2024-06-07T08:30:00Z",
+    "updatedAt": "2024-06-07T08:30:00Z",
+    "createdBy": "manager_1",
+    "status": "published",
+    "feedback": [
+      {"userId": "tenant_2", "rating": 5, "comments": "Very helpful!", "timestamp": "2024-06-07T09:00:00Z"}
+    ],
+    "revisionHistory": [
+      {"version": 1, "content": "Initial version.", "timestamp": "2024-06-07T08:30:00Z"}
+    ],
+    "tags": ["modern", "2BR", "balcony"],
+    "usageMetrics": {"views": 50, "conversions": 3, "engagement": 20}
+  }
+] 

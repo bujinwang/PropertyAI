@@ -1,0 +1,21 @@
+[
+  {
+    "propertyId": "prop_1",
+    "timestamp": "2024-06-07T00:00:00Z",
+    "occupancyRate": 0.95,
+    "averageRent": 1800,
+    "maintenanceCosts": 200,
+    "revenue": 5400,
+    "expenses": 2200,
+    "netIncome": 3200,
+    "historicalData": [
+      {"date": "2024-05-01T00:00:00Z", "occupancyRate": 0.93, "revenue": 5300, "expenses": 2100, "netIncome": 3200}
+    ],
+    "predictions": [
+      {"date": "2024-07-01T00:00:00Z", "occupancyRate": 0.96, "revenue": 5500, "expenses": 2100, "netIncome": 3400, "confidence": 0.85}
+    ],
+    "marketComparisons": [
+      {"metric": "averageRent", "propertyValue": 1800, "marketAverage": 1750, "percentDifference": 2.86}
+    ]
+  }
+] 

@@ -1,0 +1,71 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dev-debug.log
+
+# Dependency directories
+node_modules/
+
+# Environment variables
+.env
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS specific
+.DS_Store
+
+# Task files
+tasks.json
+tasks/
+
+# Expo
+.expo/
+
+# Serena
+.serena/
+
+# Build output
+dist/
+
+# iOS project
+propertyapp/ios/
+.cursor/mcp.json
+.cursor/rules/cursor_rules.mdc
+.cursor/rules/dev_workflow.mdc
+.cursor/rules/self_improve.mdc
+.cursor/rules/taskmaster.mdc
+.github/workflows/backend-ci.yml
+.github/workflows/dashboard-ci.yml
+.github/workflows/integration-tests.yml
+.github/workflows/master-ci.yml
+.github/workflows/propertyapp-ci.yml
+.github/workflows/README.md
+.github/workflows/security-scan.yml
+.roo/mcp.json
+.roo/rules/dev_workflow.md
+.roo/rules/roo_rules.md
+.roo/rules/self_improve.md
+.roo/rules/taskmaster.md
+.roo/rules-architect/architect-rules
+.roo/rules-ask/ask-rules
+.roo/rules-boomerang/boomerang-rules
+.roo/rules-code/code-rules
+.roo/rules-debug/debug-rules
+.roo/rules-test/test-rules
+.taskmaster/config.json
+.taskmaster/.taskmaster/config.json
+.taskmaster/docs/prd_marketing.txt
+.taskmaster/docs/prd.txt
+.taskmaster/docs/screens_implementation_prd.txt
+.taskmaster/reports/task-complexity-report.json
+.taskmaster/templates/example_prd.txt

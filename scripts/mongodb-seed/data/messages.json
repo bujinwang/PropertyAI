@@ -1,0 +1,23 @@
+[
+  {
+    "content": "Hello, your maintenance request has been received.",
+    "senderId": "user_1",
+    "receiverId": "manager_1",
+    "sentAt": "2024-06-07T10:00:00Z",
+    "readAt": "2024-06-07T10:05:00Z",
+    "maintenanceRequestId": "maint_101",
+    "attachments": ["/uploads/image1.jpg"],
+    "isAIGenerated": false,
+    "sentiment": "neutral",
+    "conversationId": "conv_1"
+  },
+  {
+    "content": "Thank you for the update. When will it be fixed?",
+    "senderId": "tenant_2",
+    "receiverId": "manager_1",
+    "sentAt": "2024-06-07T10:10:00Z",
+    "isAIGenerated": false,
+    "sentiment": "urgent",
+    "conversationId": "conv_1"
+  }
+] 
