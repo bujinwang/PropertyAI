@@ -10,6 +10,7 @@
   "dependencies": {
     "@types/node-schedule": "^2.1.7",
     "@types/pdfkit": "^0.13.9",
+    "axios": "^1.10.0",
     "googleapis": "^150.0.1",
     "node-schedule": "^2.1.1",
     "pdfkit": "^0.17.1",

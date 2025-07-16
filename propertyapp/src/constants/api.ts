@@ -1,4 +1,4 @@
-export const API_URL = 'http://localhost:5000/api';
+export const API_URL = 'http://localhost:5001/api';
 
 // Timeout for API requests in milliseconds
 export const API_TIMEOUT = 15000;

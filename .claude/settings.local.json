@@ -1,9 +1,38 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm test)",
+      "Bash(*)",
+      "Terminal(*)",
+      "Edit(*)",
+      "MultiEdit(*)",
+      "Read(*)",
+      "Glob(*)",
+      "Grep(*)",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "TodoRead(*)",
+      "TodoWrite(*)",
+      "Task(*)",
+      "Bash(npm run dev)",
+      "Bash(npm run:*)",
+      "Bash(curl:*)",
+      "Bash(npm start)",
+      "Bash(node:*)",
+      "Bash(-H \"Content-Type: application/json\" )",
+      "Bash(-d '{\"\"email\"\":\"\"testuser@example.com\"\",\"\"password\"\":\"\"Test123!\"\",\"\"firstName\"\":\"\"Test\"\",\"\"lastName\"\":\"\"User\"\",\"\"role\"\":\"\"PROPERTY_MANAGER\"\"}')",
+      "Bash(npm start:*)",
+      "Bash(pip install:*)",
+      "Bash(tsc:*)",
+      "Bash(npx tsc --noEmit)",
       "Bash(npm install:*)",
-      "Bash(npx jest:*)"
+      "Bash(TS_NODE transpileOnly=true node --require ts-node/register/transpile-only src/index.ts)",
+      "Bash(TS_NODE_TRANSPILE_ONLY=true node --require ts-node/register src/index.ts)",
+      "Bash(ls:*)",
+      "Bash(pkill:*)",
+      "Bash(npx:*)",
+      "Bash(gh pr:*)",
+      "Bash(grep:*)",
+      "Bash(rg:*)"
     ],
     "deny": []
   }

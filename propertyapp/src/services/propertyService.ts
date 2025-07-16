@@ -1,34 +1,40 @@
 import { api } from './api';
-import { Property } from '../types/property'; // Import Property type
-
-interface PricingRequest {
-  address: {
-    street: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  };
-  propertyType: string;
-  bedrooms: string;
-  bathrooms: string;
-  squareFeet: string;
-}
-
-interface PricingResponse {
-  recommendedPrice: number;
-}
-
-const getPricingRecommendation = (data: PricingRequest): Promise<PricingResponse> => {
-  return api.post('/pricing/recommend-price', data);
-};
+import { Property, CreatePropertyRequest, UpdatePropertyRequest } from '../types/property';
 
 const getProperties = async (): Promise<Property[]> => {
-  const response = await api.get<Property[]>('/listings'); // Explicitly type the response data
-  return response; // Return response directly, assuming it's the array
+  const response = await api.get<Property[]>('/properties');
+  return response;
+};
+
+const getPropertyById = async (id: string): Promise<Property> => {
+  const response = await api.get<Property>(`/properties/${id}`);
+  return response;
+};
+
+const createProperty = async (propertyData: CreatePropertyRequest): Promise<Property> => {
+  const response = await api.post<Property>('/properties', propertyData);
+  return response;
+};
+
+const updateProperty = async (id: string, propertyData: UpdatePropertyRequest): Promise<Property> => {
+  const response = await api.put<Property>(`/properties/${id}`, propertyData);
+  return response;
+};
+
+const deleteProperty = async (id: string): Promise<void> => {
+  await api.delete(`/properties/${id}`);
+};
+
+const getPropertyUnits = async (propertyId: string) => {
+  const response = await api.get(`/properties/${propertyId}/units`);
+  return response;
 };
 
 export const propertyService = {
-  getPricingRecommendation,
-  getProperties, // Add the new function
+  getProperties,
+  getPropertyById,
+  createProperty,
+  updateProperty,
+  deleteProperty,
+  getPropertyUnits,
 };

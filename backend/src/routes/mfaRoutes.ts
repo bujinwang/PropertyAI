@@ -64,7 +64,7 @@ router.post('/setup', authMiddleware.protect, async (req: Request, res: Response
     return res.json({ 
       secret,
       // Include the user's email for QR code generation on the client side
-      email: req.user?.email,
+      email: (req.user as any)?.email,
       message: 'MFA setup initiated. Complete setup by verifying a code.' 
     });
   } catch (error) {

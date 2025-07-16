@@ -50,8 +50,11 @@ describe('Properties Endpoints', () => {
           city: 'Test City',
           state: 'TS',
           zipCode: '12345',
-          propertyType: 'apartment',
-          totalUnits: 10
+          country: 'USA',
+          propertyType: 'APARTMENT',
+          totalUnits: 10,
+          managerId: userId,
+          ownerId: userId
         });
 
       expect(response.status).toBe(201);
@@ -67,7 +70,12 @@ describe('Properties Endpoints', () => {
           address: '123 Test St',
           city: 'Test City',
           state: 'TS',
-          zipCode: '12345'
+          zipCode: '12345',
+          country: 'USA',
+          propertyType: 'APARTMENT',
+          totalUnits: 10,
+          managerId: userId,
+          ownerId: userId
         });
 
       expect(response.status).toBe(401);
@@ -83,9 +91,11 @@ describe('Properties Endpoints', () => {
           city: 'Test City',
           state: 'TS',
           zipCode: '12345',
-          propertyType: 'apartment',
+          country: 'USA',
+          propertyType: 'APARTMENT',
           totalUnits: 5,
-          ownerId: userId
+          ownerId: userId,
+          managerId: userId
         }
       });
     });
@@ -112,9 +122,11 @@ describe('Properties Endpoints', () => {
           city: 'Test City',
           state: 'TS',
           zipCode: '12345',
-          propertyType: 'house',
+          country: 'USA',
+          propertyType: 'HOUSE',
           totalUnits: 1,
-          ownerId: userId
+          ownerId: userId,
+          managerId: userId
         }
       });
       propertyId = property.id;
@@ -150,9 +162,11 @@ describe('Properties Endpoints', () => {
           city: 'Test City',
           state: 'TS',
           zipCode: '12345',
-          propertyType: 'apartment',
+          country: 'USA',
+          propertyType: 'APARTMENT',
           totalUnits: 8,
-          ownerId: userId
+          ownerId: userId,
+          managerId: userId
         }
       });
       propertyId = property.id;
@@ -184,9 +198,11 @@ describe('Properties Endpoints', () => {
           city: 'Test City',
           state: 'TS',
           zipCode: '12345',
-          propertyType: 'apartment',
+          country: 'USA',
+          propertyType: 'APARTMENT',
           totalUnits: 3,
-          ownerId: userId
+          ownerId: userId,
+          managerId: userId
         }
       });
       propertyId = property.id;

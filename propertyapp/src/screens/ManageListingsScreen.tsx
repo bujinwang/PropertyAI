@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Listing } from '../types/listing'; // Import the Listing type
+import { Property } from '../types/property'; // Import the Property type
 import { listingService } from '../services/listingService'; // Import listing service
 import { RootStackParamList } from '../navigation/types'; // Import RootStackParamList
 import { StackScreenProps } from '@react-navigation/stack'; // Import StackScreenProps
@@ -10,7 +10,7 @@ import { PropertyStackParamList } from '../navigation/PropertyStackNavigator'; /
 type ManageListingsScreenProps = StackScreenProps<PropertyStackParamList, 'PropertyList'>; // Use PropertyStackParamList
 
 const ManageListingsScreen = ({ navigation }: ManageListingsScreenProps) => { // Use typed props
-  const [listings, setListings] = useState<Listing[]>([]);
+  const [listings, setListings] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,32 +37,25 @@ const ManageListingsScreen = ({ navigation }: ManageListingsScreenProps) => { //
 
   const handleEditProperty = (propertyId: string) => {
     // Navigate to PropertyFormScreen for editing
-    navigation.navigate({ name: 'PropertyForm', params: { propertyId } });
+    navigation.navigate('PropertyForm', { propertyId });
   };
 
   const handleAddProperty = () => {
     // Navigate to PropertyFormScreen for adding new property
-    navigation.navigate({ name: 'PropertyForm', params: {} });
+    navigation.navigate('PropertyForm');
   };
 
-  const renderListingItem = ({ item }: { item: Listing }) => (
+  const renderListingItem = ({ item }: { item: Property }) => (
     <View style={styles.propertyItem}>
       <View style={styles.listingHeader}>
-        <Text style={styles.propertyTitle}>{item.title}</Text>
-        <View style={[styles.statusBadge, styles[`status${item.status}`]]}>
-          <Text style={styles.statusText}>{item.status}</Text>
+        <Text style={styles.propertyTitle}>{item.name || item.title}</Text>
+        <View style={[styles.statusBadge, styles.statusACTIVE]}>
+          <Text style={styles.statusText}>ACTIVE</Text>
         </View>
       </View>
-      <Text style={styles.propertyDescription}>{item.description}</Text>
-      <Text style={styles.propertyPrice}>${item.price.toLocaleString()}</Text>
-      {item.property && (
-        <Text style={styles.propertyAddress}>{item.property.address}</Text>
-      )}
-      {item.unit && (
-        <Text style={styles.unitInfo}>
-          Unit {item.unit.unitNumber} • {item.unit.bedrooms}BR/{item.unit.bathrooms}BA
-        </Text>
-      )}
+      <Text style={styles.propertyDescription}>{item.description || `${item.propertyType} in ${item.city}`}</Text>
+      <Text style={styles.propertyPrice}>${item.totalUnits ? `${item.totalUnits} units` : 'Price on request'}</Text>
+      <Text style={styles.propertyAddress}>{item.address}, {item.city}, {item.state} {item.zipCode}</Text>
       <TouchableOpacity 
         style={styles.editButton} 
         onPress={() => handleEditProperty(item.id)}

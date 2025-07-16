@@ -1,14 +1,12 @@
 import fs from 'fs';
 import path from 'path';
-import { AIOrchestrationService } from './aiOrchestrationService';
+import { aiOrchestrationService } from './aiOrchestrationService';
 
 class VoicemailService {
   private watchDir: string;
-  private aiOrchestrationService: AIOrchestrationService;
 
-  constructor(watchDir: string, aiOrchestrationService: AIOrchestrationService) {
+  constructor(watchDir: string) {
     this.watchDir = watchDir;
-    this.aiOrchestrationService = aiOrchestrationService;
     this.initialize();
   }
 
@@ -16,7 +14,7 @@ class VoicemailService {
     fs.watch(this.watchDir, (eventType, filename) => {
       if (eventType === 'rename' && filename) {
         const filePath = path.join(this.watchDir, filename);
-        this.aiOrchestrationService.startTranscriptionWorkflow(filePath);
+        aiOrchestrationService.startTranscriptionWorkflow(filePath);
       }
     });
   }

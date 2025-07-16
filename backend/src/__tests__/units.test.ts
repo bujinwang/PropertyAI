@@ -35,9 +35,11 @@ describe('Units Endpoints', () => {
         city: 'Test City',
         state: 'TS',
         zipCode: '12345',
-        propertyType: 'apartment',
+        country: 'USA',
+        propertyType: 'APARTMENT',
         totalUnits: 10,
-        ownerId: userId
+        ownerId: userId,
+        managerId: userId
       }
     });
     propertyId = property.id;
@@ -64,9 +66,10 @@ describe('Units Endpoints', () => {
         .send({
           unitNumber: 'A101',
           propertyId: propertyId,
-          type: '1-bedroom',
-          monthlyRent: 1200,
-          squareFootage: 750
+          bedrooms: 1,
+          bathrooms: 1,
+          rent: 1200,
+          size: 750
         });
 
       expect(response.status).toBe(201);
@@ -94,9 +97,10 @@ describe('Units Endpoints', () => {
         data: {
           unitNumber: 'A201',
           propertyId: propertyId,
-          type: '2-bedroom',
-          monthlyRent: 1800,
-          squareFootage: 1100
+          bedrooms: 2,
+          bathrooms: 2,
+          rent: 1800,
+          size: 1100
         }
       });
     });
@@ -133,9 +137,10 @@ describe('Units Endpoints', () => {
         data: {
           unitNumber: 'A301',
           propertyId: propertyId,
-          type: 'studio',
-          monthlyRent: 900,
-          squareFootage: 500
+          bedrooms: 0,
+          bathrooms: 1,
+          rent: 900,
+          size: 500
         }
       });
       unitId = unit.id;
@@ -168,9 +173,10 @@ describe('Units Endpoints', () => {
         data: {
           unitNumber: 'A401',
           propertyId: propertyId,
-          type: '1-bedroom',
-          monthlyRent: 1100,
-          squareFootage: 700
+          bedrooms: 1,
+          bathrooms: 1,
+          rent: 1100,
+          size: 700
         }
       });
       unitId = unit.id;
@@ -210,9 +216,10 @@ describe('Units Endpoints', () => {
         data: {
           unitNumber: 'A501',
           propertyId: propertyId,
-          type: '3-bedroom',
-          monthlyRent: 2000,
-          squareFootage: 1200
+          bedrooms: 3,
+          bathrooms: 2,
+          rent: 2000,
+          size: 1200
         }
       });
       unitId = unit.id;

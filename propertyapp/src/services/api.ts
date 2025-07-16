@@ -151,22 +151,38 @@ class ApiService {
   }
 
   // Refresh authentication token
-  // This is currently a mock implementation
   private async refreshToken(): Promise<string> {
-    // Call refresh token endpoint
-    // In a real app, this would be a real API call
-    // This is a mock implementation for demonstration purposes
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    
-    // Mock refresh token response
-    const newToken = `new-token-${Date.now()}`;
-    const newRefreshToken = `new-refresh-token-${Date.now()}`;
-    
-    // Store new tokens
-    await storeAuthToken(newToken);
-    await storeRefreshToken(newRefreshToken);
-    
-    return newToken;
+    try {
+      const refreshToken = await getRefreshToken();
+      if (!refreshToken) {
+        throw new Error('No refresh token available');
+      }
+
+      const response = await this.instance.post('/auth/refresh', {
+        refreshToken
+      });
+
+      const { accessToken, refreshToken: newRefreshToken } = response.data;
+      
+      // Store new tokens
+      await storeAuthToken(accessToken);
+      await storeRefreshToken(newRefreshToken);
+      
+      return accessToken;
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        throw new AuthError(
+          'Refresh token expired or invalid',
+          AuthErrorType.INVALID_REFRESH
+        );
+      }
+      
+      console.error('Token refresh failed:', error);
+      throw new AuthError(
+        'Failed to refresh token',
+        AuthErrorType.SERVER_ERROR
+      );
+    }
   }
 
   // Format API errors

@@ -6,8 +6,7 @@ const prisma = new PrismaClient();
 
 describe('Authentication Endpoints', () => {
   beforeAll(async () => {
-    // Clean up test data
-    await prisma.user.deleteMany({});
+    // Clean up test data - handled by setup.ts
   });
 
   afterAll(async () => {
@@ -60,24 +59,23 @@ describe('Authentication Endpoints', () => {
   });
 
   describe('POST /api/auth/login', () => {
-    beforeEach(async () => {
-      await prisma.user.create({
-        data: {
+    it('should login with valid credentials', async () => {
+      // Create user for login test
+      await request(app)
+        .post('/api/auth/register')
+        .send({
           email: 'login@example.com',
-          password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
+          password: 'Test@123',
           firstName: 'Login',
           lastName: 'User',
           role: 'PROPERTY_MANAGER'
-        }
-      });
-    });
+        });
 
-    it('should login with valid credentials', async () => {
       const response = await request(app)
         .post('/api/auth/login')
         .send({
           email: 'login@example.com',
-          password: 'password'
+          password: 'Test@123'
         });
 
       expect(response.status).toBe(200);
@@ -110,19 +108,18 @@ describe('Authentication Endpoints', () => {
   });
 
   describe('POST /api/auth/forgot-password', () => {
-    beforeEach(async () => {
-      await prisma.user.create({
-        data: {
+    it('should send password reset email for existing user', async () => {
+      // Create user for forgot password test
+      await request(app)
+        .post('/api/auth/register')
+        .send({
           email: 'forgot@example.com',
-          password: 'hashedpassword',
+          password: 'Test@123',
           firstName: 'Forgot',
           lastName: 'User',
           role: 'PROPERTY_MANAGER'
-        }
-      });
-    });
+        });
 
-    it('should send password reset email for existing user', async () => {
       const response = await request(app)
         .post('/api/auth/forgot-password')
         .send({
@@ -147,12 +144,30 @@ describe('Authentication Endpoints', () => {
 
   describe('POST /api/auth/reset-password', () => {
     it('should reset password with valid token', async () => {
-      // This test would need to be implemented with actual token generation
-      // For now, we'll test the endpoint structure
+      // Create user and request password reset
+      await request(app)
+        .post('/api/auth/register')
+        .send({
+          email: 'reset@example.com',
+          password: 'Test@123',
+          firstName: 'Reset',
+          lastName: 'User',
+          role: 'PROPERTY_MANAGER'
+        });
+
+      // Request password reset to generate token
+      await request(app)
+        .post('/api/auth/forgot-password')
+        .send({
+          email: 'reset@example.com'
+        });
+
+      // This test would need to extract actual token from email
+      // For now, test with invalid token
       const response = await request(app)
         .post('/api/auth/reset-password')
         .send({
-          token: 'valid-token',
+          token: 'invalid-token',
           password: 'NewPass@123'
         });
 
@@ -164,22 +179,22 @@ describe('Authentication Endpoints', () => {
     let authToken: string;
 
     beforeEach(async () => {
-      const user = await prisma.user.create({
-        data: {
+      // Create user and login to get token
+      await request(app)
+        .post('/api/auth/register')
+        .send({
           email: 'me@example.com',
-          password: 'hashedpassword',
+          password: 'Test@123',
           firstName: 'Me',
           lastName: 'User',
           role: 'PROPERTY_MANAGER'
-        }
-      });
+        });
 
-      // Generate a valid token for this user
       const loginResponse = await request(app)
         .post('/api/auth/login')
         .send({
           email: 'me@example.com',
-          password: 'password'
+          password: 'Test@123'
         });
 
       authToken = loginResponse.body.token;

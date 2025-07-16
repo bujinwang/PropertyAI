@@ -15,7 +15,10 @@ export interface Listing {
   // Related data that might be included in API responses
   property?: {
     id: string;
+    name: string;
     address: string;
+    city: string;
+    state: string;
     propertyType: string;
   };
   unit?: {

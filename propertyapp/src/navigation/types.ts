@@ -21,6 +21,10 @@ export type RootStackParamList = {
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
   PropertyForm: { propertyId?: string };
   PropertyDetail: { propertyId: string };
+  UnitList: { propertyId: string; propertyName: string };
+  UnitForm: { propertyId: string; unitId?: string };
+  UnitDetail: { unitId: string };
+  CreateListing: { unitId: string; propertyId: string };
   MaintenanceRequestForm: { propertyId?: string; unitId?: string };
   MaintenanceRequestDetail: { requestId: string };
   PropertyPhotos: { propertyId: string };

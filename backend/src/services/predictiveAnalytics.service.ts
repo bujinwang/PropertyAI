@@ -26,6 +26,34 @@ class PredictiveAnalyticsService {
       throw new Error(`Prediction API error: ${error}`);
     }
   }
+
+  async getTenantScreeningAlerts(): Promise<any> {
+    try {
+      // Mock implementation for now - replace with actual API call when available
+      return {
+        alerts: [
+          {
+            id: 1,
+            type: 'credit_score',
+            severity: 'high',
+            message: 'Credit score below threshold',
+            tenantId: 'tenant_123',
+            createdAt: new Date().toISOString()
+          },
+          {
+            id: 2,
+            type: 'income_verification',
+            severity: 'medium',
+            message: 'Income verification pending',
+            tenantId: 'tenant_456',
+            createdAt: new Date().toISOString()
+          }
+        ]
+      };
+    } catch (error) {
+      throw new Error(`Failed to fetch tenant screening alerts: ${error}`);
+    }
+  }
 }
 
 export const predictiveAnalyticsService = new PredictiveAnalyticsService();

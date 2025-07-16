@@ -37,9 +37,11 @@ describe('Maintenance Endpoints', () => {
         city: 'Test City',
         state: 'TS',
         zipCode: '12345',
-        propertyType: 'apartment',
+        country: 'USA',
+        propertyType: 'APARTMENT',
         totalUnits: 5,
-        ownerId: userId
+        ownerId: userId,
+        managerId: userId
       }
     });
     propertyId = property.id;
@@ -49,9 +51,10 @@ describe('Maintenance Endpoints', () => {
       data: {
         unitNumber: 'M101',
         propertyId: propertyId,
-        type: '1-bedroom',
-        monthlyRent: 1000,
-        squareFootage: 750
+        bedrooms: 1,
+        bathrooms: 1,
+        rent: 1000,
+        size: 750
       }
     });
     unitId = unit.id;
@@ -80,15 +83,14 @@ describe('Maintenance Endpoints', () => {
           unitId: unitId,
           title: 'Leaky faucet',
           description: 'Kitchen faucet is leaking',
-          category: 'plumbing',
-          priority: 'medium',
-          requestedBy: userId
+          priority: 'MEDIUM',
+          requestedById: userId
         });
 
       expect(response.status).toBe(201);
       expect(response.body).toHaveProperty('id');
       expect(response.body.title).toBe('Leaky faucet');
-      expect(response.body.status).toBe('pending');
+      expect(response.body.status).toBe('OPEN');
     });
 
     it('should fail without required fields', async () => {
@@ -112,10 +114,10 @@ describe('Maintenance Endpoints', () => {
           unitId: unitId,
           title: 'Test maintenance request',
           description: 'Test description',
-          category: 'electrical',
-          priority: 'high',
-          requestedBy: userId,
-          status: 'pending'
+          categoryId: 'electrical',
+          priority: 'HIGH',
+          requestedById: userId,
+          status: 'OPEN'
         }
       });
     });
@@ -147,12 +149,12 @@ describe('Maintenance Endpoints', () => {
       const response = await request(app)
         .get('/api/maintenance')
         .set('Authorization', `Bearer ${authToken}`)
-        .query({ status: 'pending' });
+        .query({ status: 'OPEN' });
 
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body)).toBe(true);
       response.body.forEach((request: any) => {
-        expect(request.status).toBe('pending');
+        expect(request.status).toBe('OPEN');
       });
     });
   });
@@ -167,10 +169,10 @@ describe('Maintenance Endpoints', () => {
           unitId: unitId,
           title: 'Specific maintenance request',
           description: 'Detailed description',
-          category: 'hvac',
-          priority: 'low',
-          requestedBy: userId,
-          status: 'in_progress'
+          categoryId: 'hvac',
+          priority: 'LOW',
+          requestedById: userId,
+          status: 'IN_PROGRESS'
         }
       });
       maintenanceId = maintenance.id;
@@ -205,10 +207,10 @@ describe('Maintenance Endpoints', () => {
           unitId: unitId,
           title: 'Update maintenance request',
           description: 'Update description',
-          category: 'general',
-          priority: 'medium',
-          requestedBy: userId,
-          status: 'pending'
+          categoryId: 'general',
+          priority: 'MEDIUM',
+          requestedById: userId,
+          status: 'OPEN'
         }
       });
       maintenanceId = maintenance.id;
@@ -219,14 +221,14 @@ describe('Maintenance Endpoints', () => {
         .put(`/api/maintenance/${maintenanceId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({
-          status: 'completed',
+          status: 'COMPLETED',
           assignedTo: userId,
           estimatedCost: 150,
           scheduledDate: new Date().toISOString()
         });
 
       expect(response.status).toBe(200);
-      expect(response.body.status).toBe('completed');
+      expect(response.body.status).toBe('COMPLETED');
       expect(response.body.assignedTo).toBe(userId);
     });
 
@@ -235,7 +237,7 @@ describe('Maintenance Endpoints', () => {
         .put('/api/maintenance/non-existent-id')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
-          status: 'completed'
+          status: 'COMPLETED'
         });
 
       expect(response.status).toBe(404);
@@ -252,10 +254,10 @@ describe('Maintenance Endpoints', () => {
           unitId: unitId,
           title: 'Delete maintenance request',
           description: 'Delete description',
-          category: 'appliance',
-          priority: 'low',
-          requestedBy: userId,
-          status: 'cancelled'
+          categoryId: 'appliance',
+          priority: 'LOW',
+          requestedById: userId,
+          status: 'CANCELLED'
         }
       });
       maintenanceId = maintenance.id;

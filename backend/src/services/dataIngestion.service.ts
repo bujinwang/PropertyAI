@@ -21,6 +21,27 @@ class DataIngestionService {
     logger.info('Ingesting data from CSV...');
     // Add your CSV data processing logic here
   }
+
+  async getApplicantData(applicantId: string) {
+    // Mock implementation
+    return {
+      id: applicantId,
+      creditScore: 720,
+      income: 75000,
+      employmentHistory: 3.5,
+      previousRentals: 2
+    };
+  }
+
+  async preprocessData(data: any) {
+    // Mock implementation
+    return {
+      ...data,
+      normalizedCreditScore: data.creditScore / 850,
+      normalizedIncome: data.income / 100000,
+      riskFactor: (850 - data.creditScore) / 850 + (100000 - data.income) / 100000
+    };
+  }
 }
 
 export const dataIngestionService = new DataIngestionService();

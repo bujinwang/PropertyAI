@@ -21,13 +21,17 @@ class PaymentController {
 
   async processPayment(req: Request, res: Response) {
     const { leaseId } = req.params;
-
+    const { paymentMethodId, amount, currency } = req.body;
+    
     if (!leaseId) {
       return res.status(400).json({ error: 'Lease ID is required.' });
     }
+    if (!paymentMethodId || !amount || !currency) {
+      return res.status(400).json({ error: 'Payment method ID, amount, and currency are required.' });
+    }
 
     try {
-      await paymentService.processPayment(leaseId);
+      await paymentService.processPayment(paymentMethodId, amount, currency);
       res.status(200).json({ message: 'Payment processed successfully.' });
     } catch (error) {
       logger.error(`Error processing payment: ${error}`);

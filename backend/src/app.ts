@@ -95,9 +95,30 @@ app.get('/health', (req, res) => {
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err.stack);
-  res.status(500).json({
+  
+  // Handle Prisma unique constraint violations
+  if (err.code === 'P2002') {
+    return res.status(409).json({
+      status: 'error',
+      message: 'User with this email already exists'
+    });
+  }
+  
+  // Handle AppError instances
+  if (err.name === 'AppError') {
+    return res.status(err.statusCode).json({
+      status: 'error',
+      message: err.message
+    });
+  }
+  
+  const statusCode = err.statusCode || 500;
+  const message = err.message || 'Internal server error';
+  
+  res.status(statusCode).json({
     status: 'error',
-    message: 'Internal server error',
+    message,
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
 });
 

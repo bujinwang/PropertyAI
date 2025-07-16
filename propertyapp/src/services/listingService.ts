@@ -11,6 +11,11 @@ const getListingById = async (id: string): Promise<Listing> => {
   return response;
 };
 
+const getUnitListings = async (unitId: string): Promise<Listing[]> => {
+  const response = await api.get<Listing[]>(`/units/${unitId}/listings`);
+  return response;
+};
+
 const createListing = async (listingData: CreateListingRequest): Promise<Listing> => {
   const response = await api.post<Listing>('/listings', listingData);
   return response;
@@ -26,18 +31,19 @@ const deleteListing = async (id: string): Promise<void> => {
 };
 
 const publishListing = async (id: string): Promise<Listing> => {
-  const response = await api.put<Listing>(`/listings/${id}`, { status: 'ACTIVE' });
+  const response = await api.put<Listing>(`/listings/${id}/publish`);
   return response;
 };
 
 const unpublishListing = async (id: string): Promise<Listing> => {
-  const response = await api.put<Listing>(`/listings/${id}`, { status: 'INACTIVE' });
+  const response = await api.put<Listing>(`/listings/${id}/unpublish`);
   return response;
 };
 
 export const listingService = {
   getListings,
   getListingById,
+  getUnitListings,
   createListing,
   updateListing,
   deleteListing,

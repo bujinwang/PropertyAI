@@ -1,4 +1,5 @@
 import { UserRole } from '../types/auth';
+import { api } from './api';
 
 export interface AIRecommendation {
   id: string;
@@ -35,12 +36,29 @@ const setupWizardService = {
     role: UserRole,
     portfolioSize?: PortfolioSize
   ): Promise<AIRecommendation[]> => {
-    // In a real implementation, this would make an API call to an AI service
-    // For now, we'll return mock data based on the role
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
+    try {
+      const response = await api.post('/ai/setup-recommendations/notifications', {
+        role,
+        portfolioSize
+      });
+      return response.recommendations;
+    } catch (error) {
+      console.error('Error fetching notification recommendations:', error);
+      // Fallback to client-side logic if API fails
+      return setupWizardService.getNotificationRecommendationsClient(role, portfolioSize);
+    }
+  },
+
+  /**
+   * Client-side fallback for notification recommendations
+   * @param role User role
+   * @param portfolioSize Size of property portfolio
+   * @returns Promise containing notification recommendations
+   */
+  getNotificationRecommendationsClient: async (
+    role: UserRole,
+    portfolioSize?: PortfolioSize
+  ): Promise<AIRecommendation[]> => {
     if (role === 'tenant') {
       return [
         {
@@ -81,7 +99,6 @@ const setupWizardService = {
         }
       ];
     } else if (role === 'propertyManager') {
-      // Adjust recommendations based on portfolio size
       const highVolume = portfolioSize && (portfolioSize.properties > 10 || portfolioSize.units > 50);
       
       return [
@@ -136,7 +153,6 @@ const setupWizardService = {
         }
       ];
     } else {
-      // Admin role
       return [
         {
           id: 'system_alerts',
@@ -177,12 +193,24 @@ const setupWizardService = {
   getFeatureRecommendations: async (
     request: AIRecommendationRequest
   ): Promise<AIRecommendation[]> => {
-    // In a real implementation, this would make an API call to an AI service
-    // For now, we'll return mock data based on the role
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1200));
-    
+    try {
+      const response = await api.post('/ai/setup-recommendations/features', request);
+      return response.recommendations;
+    } catch (error) {
+      console.error('Error fetching feature recommendations:', error);
+      // Fallback to client-side logic if API fails
+      return setupWizardService.getFeatureRecommendationsClient(request);
+    }
+  },
+
+  /**
+   * Client-side fallback for feature recommendations
+   * @param request Request parameters including user role and preferences
+   * @returns Promise containing feature recommendations
+   */
+  getFeatureRecommendationsClient: async (
+    request: AIRecommendationRequest
+  ): Promise<AIRecommendation[]> => {
     const { role, portfolioSize, communicationPreference } = request;
     
     if (role === 'tenant') {
@@ -225,7 +253,6 @@ const setupWizardService = {
         }
       ];
     } else if (role === 'propertyManager') {
-      // Adjust recommendations based on portfolio size
       const highVolume = portfolioSize && (portfolioSize.properties > 10 || portfolioSize.units > 50);
       
       return [
@@ -278,7 +305,6 @@ const setupWizardService = {
         }
       ];
     } else {
-      // Admin role
       return [
         {
           id: 'user_management',
@@ -317,13 +343,22 @@ const setupWizardService = {
    * @returns Promise containing privacy recommendations
    */
   getPrivacyRecommendations: async (role: UserRole): Promise<AIRecommendation[]> => {
-    // In a real implementation, this would make an API call to an AI service
-    // For now, we'll return mock data based on the role
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Both roles get similar privacy recommendations, with some differences
+    try {
+      const response = await api.post('/ai/setup-recommendations/privacy', { role });
+      return response.recommendations;
+    } catch (error) {
+      console.error('Error fetching privacy recommendations:', error);
+      // Fallback to client-side logic if API fails
+      return setupWizardService.getPrivacyRecommendationsClient(role);
+    }
+  },
+
+  /**
+   * Client-side fallback for privacy recommendations
+   * @param role User role
+   * @returns Promise containing privacy recommendations
+   */
+  getPrivacyRecommendationsClient: async (role: UserRole): Promise<AIRecommendation[]> => {
     const baseRecommendations: AIRecommendation[] = [
       {
         id: 'data_minimization',
@@ -390,7 +425,6 @@ const setupWizardService = {
         }
       ];
     } else {
-      // Admin role
       return [
         ...baseRecommendations,
         {

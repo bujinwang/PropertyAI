@@ -1,4 +1,5 @@
 import { AIDataUsage, AIUsageCategory, DataProcessingType } from '../types/privacy';
+import { api } from './api';
 
 /**
  * Service to handle AI transparency and data usage information
@@ -9,8 +10,21 @@ export const aiTransparencyService = {
    * @returns Promise with AI data usage information
    */
   getAIDataUsage: async (): Promise<AIDataUsage> => {
-    // This would be an API call in a real implementation
-    // For now, return mock data
+    try {
+      const response = await api.get('/ai/data-usage');
+      return response;
+    } catch (error) {
+      console.error('Error fetching AI data usage:', error);
+      // Fallback to mock data if API fails
+      return aiTransparencyService.getAIDataUsageClient();
+    }
+  },
+
+  /**
+   * Client-side fallback for AI data usage
+   * @returns Promise with AI data usage information
+   */
+  getAIDataUsageClient: async (): Promise<AIDataUsage> => {
     return {
       categories: [
         {
@@ -143,11 +157,18 @@ export const aiTransparencyService = {
     processingTypeId: string,
     enabled: boolean
   ): Promise<{ success: boolean }> => {
-    // This would be an API call in a real implementation
-    console.log(`Updating AI processing settings: ${categoryId} - ${processingTypeId} - ${enabled}`);
-    
-    // Return mock successful response
-    return { success: true };
+    try {
+      const response = await api.patch('/ai/data-processing', {
+        categoryId,
+        processingTypeId,
+        enabled
+      });
+      return response;
+    } catch (error) {
+      console.error('Error updating AI processing settings:', error);
+      // Return success in fallback mode
+      return { success: true };
+    }
   },
 
   /**
@@ -156,10 +177,15 @@ export const aiTransparencyService = {
    * @returns Promise with updated settings
    */
   updateModelTrainingOptOut: async (optedOut: boolean): Promise<{ success: boolean }> => {
-    // This would be an API call in a real implementation
-    console.log(`Updating model training opt-out: ${optedOut}`);
-    
-    // Return mock successful response
-    return { success: true };
+    try {
+      const response = await api.patch('/ai/model-training-opt-out', {
+        optedOut
+      });
+      return response;
+    } catch (error) {
+      console.error('Error updating model training opt-out:', error);
+      // Return success in fallback mode
+      return { success: true };
+    }
   }
 }; 

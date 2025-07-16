@@ -186,7 +186,7 @@ const startServer = async () => {
     console.log('PostgreSQL setup and configuration completed');
     
     // Initialize Voicemail service
-    new VoicemailService(path.join(__dirname, '../voicemails'), aiOrchestrationService);
+    new VoicemailService(path.join(__dirname, '../voicemails'));
     
     // Initialize Rent Collection service
     rentCollectionService.initialize();

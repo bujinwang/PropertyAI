@@ -50,6 +50,23 @@ class PaymentService {
     console.log('Payment failed:', paymentIntent.last_payment_error?.message);
   }
 
+  async createPaymentIntent(amount: number, currency: string, customerId: string) {
+    return this.stripe.paymentIntents.create({
+      amount,
+      currency,
+      customer: customerId,
+    });
+  }
+
+  async processPayment(paymentMethodId: string, amount: number, currency: string) {
+    return this.stripe.paymentIntents.create({
+      amount,
+      currency,
+      payment_method: paymentMethodId,
+      confirm: true,
+    });
+  }
+
   // async createPayPalOrder(amount: number, currency: string) {
   //   const request = new paypal.orders.OrdersCreateRequest();
   //   request.prefer("return=representation");
