@@ -3,6 +3,6 @@ import { propertyDescriptionController } from '../controllers/propertyDescriptio
 
 const router = Router();
 
-router.post('/generate-description', propertyDescriptionController.generateDescription);
+router.post('/:propertyId/generate-description', propertyDescriptionController.generateDescription);
 
 export default router;

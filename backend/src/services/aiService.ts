@@ -5,16 +5,42 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 export const generatePropertyDescription = async (photos: string[], details: any): Promise<string> => {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
 
-  const prompt = `Generate a compelling property description based on the following details and photos:
+  // Modified prompt to ask for a single description
+  const prompt = `Generate a single, compelling property description based on the following details and photos. The description should be concise and highlight key features:
   
   Details: ${JSON.stringify(details, null, 2)}
   
   Photos: ${photos.join(', ')}`;
 
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
-  const text = response.text();
-  return text;
+  try {
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Gemini API call timed out after 30 seconds')), 30000) // 30 seconds timeout
+    );
+
+    const result = await Promise.race([
+      model.generateContent(prompt),
+      timeoutPromise
+    ]);
+    
+    const response = await result.response;
+    let text = response.text();
+    console.log('[DEBUG] Raw Gemini API response text:', text);
+
+    // Extract only the first description if multiple are returned
+    // This is a heuristic and might need refinement based on actual Gemini output patterns
+    const descriptions = text.split(/\n\s*\n|\n\*\s*/).filter(d => d.trim() !== '');
+    if (descriptions.length > 0) {
+      text = descriptions[0].trim();
+    } else {
+      text = "A compelling description could not be generated."; // Fallback if no description is found
+    }
+
+    console.log('[DEBUG] Extracted property description:', text);
+    return text;
+  } catch (error) {
+    console.error('[ERROR] Error during Gemini API call:', error);
+    throw error; // Re-throw to be caught by the controller's error middleware
+  }
 };
 
 export const assessApplicantRisk = async (applicantData: any): Promise<any> => {

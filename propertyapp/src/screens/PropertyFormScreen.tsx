@@ -67,7 +67,9 @@ const propertyTypes = [
   { label: 'House', value: 'house' },
   { label: 'Condo', value: 'condo' },
   { label: 'Townhouse', value: 'townhouse' },
-  { label: 'Multi-family', value: 'multifamily' },
+  { label: 'Commercial', value: 'commercial' },
+  { label: 'Industrial', value: 'industrial' },
+  { label: 'Other', value: 'other' },
 ];
 
 const amenityOptions = [
@@ -122,7 +124,6 @@ export function PropertyFormScreen() {
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [isPricingLoading, setIsPricingLoading] = useState(false);
   const [property, setProperty] = useState<PropertyFormValues>(initialValues);
-  const [stateLabel, setStateLabel] = useState('State');
 
   const steps = [
     'Basic Info',
@@ -133,6 +134,7 @@ export function PropertyFormScreen() {
   ];
 
   useEffect(() => {
+    console.log('PropertyFormScreen mounted. Property ID:', propertyId);
     if (isEditing) {
       fetchPropertyDetails();
     }
@@ -144,9 +146,10 @@ export function PropertyFormScreen() {
     try {
       setIsLoading(true);
       const propertyData = await propertyService.getPropertyById(propertyId);
+      console.log('Fetched property data:', propertyData);
       
       // Map API response to form values
-      setProperty({
+      const newPropertyState = {
         name: propertyData.name || '',
         description: propertyData.description || '',
         address: {
@@ -156,16 +159,18 @@ export function PropertyFormScreen() {
           zipCode: propertyData.zipCode || '',
           country: propertyData.country || 'US',
         },
-        propertyType: propertyData.propertyType || '',
+        propertyType: propertyData.propertyType?.toLowerCase() || '',
         amenities: propertyData.amenities || [],
         yearBuilt: propertyData.yearBuilt?.toString() || '',
         totalUnits: propertyData.totalUnits?.toString() || '1',
         images: propertyData.images?.map((img: any) => ({
           uri: img.url || img.uri,
-          name: img.name || 'property-image.jpg',
-          type: img.type || 'image/jpeg'
+          name: img.originalFilename || img.filename || 'property-image.jpg',
+          type: img.mimetype || 'image/jpeg'
         })) || [],
-      });
+      };
+      setProperty(newPropertyState);
+      console.log('Set property state to:', newPropertyState);
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching property details:', error);
@@ -185,14 +190,14 @@ export function PropertyFormScreen() {
         state: values.address.state,
         zipCode: values.address.zipCode,
         country: values.address.country,
-        propertyType: values.propertyType as PropertyType,
+        propertyType: values.propertyType.toUpperCase() as PropertyType,
         amenities: values.amenities,
         yearBuilt: parseInt(values.yearBuilt, 10),
         totalUnits: parseInt(values.totalUnits, 10),
         // images are handled separately
       };
 
-      let response;
+      let response: any;
       if (isEditing) {
         response = await propertyService.updateProperty(propertyId, submissionData);
       } else {
@@ -213,6 +218,10 @@ export function PropertyFormScreen() {
   };
 
   const generateAIDescription = async (values: PropertyFormValues, setFieldValue: FormikProps<PropertyFormValues>['setFieldValue']) => {
+    if (!propertyId) {
+      Alert.alert('Error', 'Property must be saved before generating AI description.');
+      return;
+    }
     if (values.images.length === 0) {
       Alert.alert('Error', 'Please upload at least one image to generate description');
       return;
@@ -230,7 +239,7 @@ export function PropertyFormScreen() {
         images: values.images
       };
 
-      const response = await aiService.generatePropertyDescription(propertyDetails);
+      const response = await aiService.generatePropertyDescription(propertyId, propertyDetails);
       setFieldValue('description', response.description);
       setIsAiGenerating(false);
       Alert.alert('Success', 'AI-generated description has been added');
@@ -310,14 +319,7 @@ export function PropertyFormScreen() {
         enableReinitialize
       >
         {({ handleChange, handleBlur, handleSubmit, values, errors, touched, setFieldValue }: FormikProps<PropertyFormValues>) => {
-          useEffect(() => {
-            if (values.address.country === 'Canada') {
-              setStateLabel('Province');
-            } else {
-              setStateLabel('State');
-            }
-          }, [values.address.country]);
-
+          const stateLabel = values.address.country === 'Canada' ? 'Province' : 'State';
           return (
             <>
               <View style={styles.header}>
@@ -430,7 +432,7 @@ export function PropertyFormScreen() {
                         setFieldValue('address.country', value);
                       }}
                       options={[
-                        { label: 'United States', value: 'US' },
+                        { label: 'United States', value: 'USA' },
                         { label: 'Canada', value: 'CA' },
                       ]}
                       error={touched.address?.country ? errors.address?.country : undefined}
@@ -580,7 +582,6 @@ export function PropertyFormScreen() {
                 )}
               </View>
             </>
-          );
           );
         }}
       </Formik>

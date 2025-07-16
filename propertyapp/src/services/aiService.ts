@@ -1,7 +1,8 @@
 import { api } from './api';
+import { GenerateDescriptionResponse, PricingRecommendationResponse } from '../types/ai';
 
 export const aiService = {
-  generatePropertyDescription: async (propertyData: {
+  generatePropertyDescription: async (propertyId: string, propertyData: {
     propertyType: string;
     bedrooms: string;
     bathrooms: string;
@@ -9,7 +10,7 @@ export const aiService = {
     images: Array<{ uri: string; name: string; type: string }>;
   }) => {
     try {
-      const response = await api.post('/ai/generate-description', {
+      const response = await api.post<GenerateDescriptionResponse>(`/ai/properties/${propertyId}/generate-description`, {
         propertyType: propertyData.propertyType,
         bedrooms: parseInt(propertyData.bedrooms),
         bathrooms: parseFloat(propertyData.bathrooms),
@@ -41,7 +42,7 @@ export const aiService = {
     yearBuilt?: string;
   }) => {
     try {
-      const response = await api.post('/ai/pricing-recommendation', {
+      const response = await api.post<PricingRecommendationResponse>('/ai/pricing-recommendation', {
         address: propertyData.address,
         propertyType: propertyData.propertyType,
         bedrooms: parseInt(propertyData.bedrooms),

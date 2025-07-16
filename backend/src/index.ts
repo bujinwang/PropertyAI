@@ -10,6 +10,7 @@ import configurePassport from './config/passport';
 import routes from './routes';
 import authRoutes from './routes/authRoutes';
 import aiRoutes from './routes/aiRoutes';
+import propertyDescriptionRoutes from './routes/propertyDescription.routes'; // New import
 import publishingRoutes from './routes/publishingRoutes';
 import socialMediaRoutes from './routes/socialMediaRoutes';
 import photoRoutes from './routes/photoRoutes';
@@ -73,6 +74,7 @@ app.use(cors({
   origin: [
     'http://localhost:3000', // Dashboard
     'http://localhost:5000', // PropertyApp frontend
+    'http://localhost:5001', // Backend API
     'http://localhost:8081', // Expo web app
     'exp://localhost:19000', // Expo development
     'http://localhost:19006' // Expo web alternative port
@@ -81,8 +83,8 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 })); // CORS configuration
-app.use(express.json()); // Parse JSON bodies
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+app.use(express.json({ limit: '50mb' })); // Parse JSON bodies with increased limit
+app.use(express.urlencoded({ extended: true, limit: '50mb' })); // Parse URL-encoded bodies with increased limit
 
 // Configure express-session
 app.use(session({
@@ -107,6 +109,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use(routes);
 app.use('/api/auth', authRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/ai/properties', propertyDescriptionRoutes); // New route mounting
 app.use('/api/publishing', publishingRoutes);
 app.use('/api/social-media', socialMediaRoutes);
 app.use('/api/photo', photoRoutes);

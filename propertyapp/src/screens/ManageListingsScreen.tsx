@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, 
 import { Ionicons } from '@expo/vector-icons';
 import { Property } from '../types/property'; // Import the Property type
 import { listingService } from '../services/listingService'; // Import listing service
+import { propertyService } from '../services/propertyService'; // Import property service
 import { RootStackParamList } from '../navigation/types'; // Import RootStackParamList
 import { StackScreenProps } from '@react-navigation/stack'; // Import StackScreenProps
 import { PropertyStackParamList } from '../navigation/PropertyStackNavigator'; // Import PropertyStackParamList
@@ -23,7 +24,7 @@ const ManageListingsScreen = ({ navigation }: ManageListingsScreenProps) => { //
     setLoading(true);
     setError(null);
     try {
-      const fetchedListings = await listingService.getListings();
+      const fetchedListings = await propertyService.getProperties();
       setListings(fetchedListings);
       console.log('Fetched listings:', fetchedListings);
     } catch (err) {
@@ -42,13 +43,13 @@ const ManageListingsScreen = ({ navigation }: ManageListingsScreenProps) => { //
 
   const handleAddProperty = () => {
     // Navigate to PropertyFormScreen for adding new property
-    navigation.navigate('PropertyForm');
+    navigation.navigate('PropertyForm', {});
   };
 
   const renderListingItem = ({ item }: { item: Property }) => (
     <View style={styles.propertyItem}>
       <View style={styles.listingHeader}>
-        <Text style={styles.propertyTitle}>{item.name || item.title}</Text>
+        <Text style={styles.propertyTitle}>{item.name}</Text>
         <View style={[styles.statusBadge, styles.statusACTIVE]}>
           <Text style={styles.statusText}>ACTIVE</Text>
         </View>
