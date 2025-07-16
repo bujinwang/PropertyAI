@@ -4,7 +4,7 @@ dotenv.config();
 
 export const config = {
   google: {
-    apiKey: process.env.GOOGLE_API_KEY,
+    apiKey: process.env.GEMINI_API_KEY,
     clientEmail: process.env.GOOGLE_CLIENT_EMAIL,
     privateKey: process.env.GOOGLE_PRIVATE_KEY,
     projectId: process.env.GOOGLE_PROJECT_ID,

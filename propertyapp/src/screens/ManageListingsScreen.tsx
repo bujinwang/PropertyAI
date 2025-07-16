@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Property } from '../types/property'; // Import the Property type
-import { propertyService } from '../services/propertyService'; // Import property service
+import { Listing } from '../types/listing'; // Import the Listing type
+import { listingService } from '../services/listingService'; // Import listing service
 import { RootStackParamList } from '../navigation/types'; // Import RootStackParamList
 import { StackScreenProps } from '@react-navigation/stack'; // Import StackScreenProps
 import { PropertyStackParamList } from '../navigation/PropertyStackNavigator'; // Import PropertyStackParamList
@@ -10,26 +10,26 @@ import { PropertyStackParamList } from '../navigation/PropertyStackNavigator'; /
 type ManageListingsScreenProps = StackScreenProps<PropertyStackParamList, 'PropertyList'>; // Use PropertyStackParamList
 
 const ManageListingsScreen = ({ navigation }: ManageListingsScreenProps) => { // Use typed props
-  const [properties, setProperties] = useState<Property[]>([]);
+  const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log('Fetching properties on mount');
-    fetchProperties();
+    console.log('Fetching listings on mount');
+    fetchListings();
   }, []);
 
-  const fetchProperties = async () => {
+  const fetchListings = async () => {
     setLoading(true);
     setError(null);
     try {
-      const fetchedProperties = await propertyService.getProperties();
-      setProperties(fetchedProperties);
-      console.log('Fetched properties:', fetchedProperties);
+      const fetchedListings = await listingService.getListings();
+      setListings(fetchedListings);
+      console.log('Fetched listings:', fetchedListings);
     } catch (err) {
-      console.error('Failed to fetch properties:', err);
-      setError('Failed to load properties. Please try again later.');
-      Alert.alert('Error', 'Failed to load properties. Please try again later.');
+      console.error('Failed to fetch listings:', err);
+      setError('Failed to load listings. Please try again later.');
+      Alert.alert('Error', 'Failed to load listings. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -45,12 +45,24 @@ const ManageListingsScreen = ({ navigation }: ManageListingsScreenProps) => { //
     navigation.navigate({ name: 'PropertyForm', params: {} });
   };
 
-  const renderPropertyItem = ({ item }: { item: Property }) => (
+  const renderListingItem = ({ item }: { item: Listing }) => (
     <View style={styles.propertyItem}>
-      <Text style={styles.propertyTitle}>{item.title}</Text>
-      <Text style={styles.propertyAddress}>{item.address}</Text>
-      <Text style={styles.propertyType}>{item.propertyType}</Text>
-      <Text style={styles.propertyPrice}>${item.price}/month</Text>
+      <View style={styles.listingHeader}>
+        <Text style={styles.propertyTitle}>{item.title}</Text>
+        <View style={[styles.statusBadge, styles[`status${item.status}`]]}>
+          <Text style={styles.statusText}>{item.status}</Text>
+        </View>
+      </View>
+      <Text style={styles.propertyDescription}>{item.description}</Text>
+      <Text style={styles.propertyPrice}>${item.price.toLocaleString()}</Text>
+      {item.property && (
+        <Text style={styles.propertyAddress}>{item.property.address}</Text>
+      )}
+      {item.unit && (
+        <Text style={styles.unitInfo}>
+          Unit {item.unit.unitNumber} • {item.unit.bedrooms}BR/{item.unit.bathrooms}BA
+        </Text>
+      )}
       <TouchableOpacity 
         style={styles.editButton} 
         onPress={() => handleEditProperty(item.id)}
@@ -61,7 +73,7 @@ const ManageListingsScreen = ({ navigation }: ManageListingsScreenProps) => { //
   );
 
   console.log('Rendering ManageListingsScreen', {
-    propertiesLength: properties.length,
+    listingsLength: listings.length,
     loading,
     error
   });
@@ -78,7 +90,7 @@ const ManageListingsScreen = ({ navigation }: ManageListingsScreenProps) => { //
     return (
       <View style={styles.centered}>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchProperties}>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchListings}>
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
       </View>
@@ -88,20 +100,22 @@ const ManageListingsScreen = ({ navigation }: ManageListingsScreenProps) => { //
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Manage Listings</Text>
-      {properties.length === 0 ? (
+      {listings.length === 0 ? (
         <View style={styles.centered}>
-          <Text>No properties found. Add your first property!</Text>
+          <Text>No listings found. Create your first listing!</Text>
           <TouchableOpacity style={styles.addButton} onPress={handleAddProperty}>
             <Ionicons name="add-circle-outline" size={30} color="#FFFFFF" />
-            <Text style={styles.addButtonText}>Add New Property</Text>
+            <Text style={styles.addButtonText}>Add New Listing</Text>
           </TouchableOpacity>
         </View>
       ) : (
         <FlatList
-          data={properties}
+          data={listings}
           keyExtractor={(item) => item.id}
-          renderItem={renderPropertyItem}
+          renderItem={renderListingItem}
           contentContainerStyle={styles.listContent}
+          refreshing={loading}
+          onRefresh={fetchListings}
         />
       )}
       <TouchableOpacity style={styles.fab} onPress={handleAddProperty}>
@@ -114,65 +128,137 @@ const ManageListingsScreen = ({ navigation }: ManageListingsScreenProps) => { //
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#f5f5f5',
+    padding: 16,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#333',
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#e74c3c',
     textAlign: 'center',
-    color: '#333',
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: '#3498db',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 5,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   listContent: {
-    paddingBottom: 80, // Space for FAB
+    paddingBottom: 20,
   },
   propertyItem: {
-    backgroundColor: '#FFFFFF',
-    padding: 15,
+    backgroundColor: '#fff',
+    padding: 16,
+    marginBottom: 12,
     borderRadius: 8,
-    marginBottom: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
-    elevation: 2,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  listingHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   propertyTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
+    flex: 1,
+    marginRight: 8,
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    minWidth: 60,
+    alignItems: 'center',
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  statusDRAFT: {
+    backgroundColor: '#95a5a6',
+  },
+  statusACTIVE: {
+    backgroundColor: '#27ae60',
+  },
+  statusINACTIVE: {
+    backgroundColor: '#e67e22',
+  },
+  statusEXPIRED: {
+    backgroundColor: '#e74c3c',
+  },
+  statusRENTED: {
+    backgroundColor: '#8e44ad',
+  },
+  propertyDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
+    lineHeight: 20,
   },
   propertyAddress: {
     fontSize: 14,
     color: '#666',
-    marginTop: 5,
+    marginBottom: 4,
   },
   propertyType: {
     fontSize: 14,
-    color: '#666',
+    color: '#888',
+    marginBottom: 4,
   },
   propertyPrice: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#007AFF',
-    marginTop: 5,
+    color: '#2ecc71',
+    marginBottom: 8,
+  },
+  unitInfo: {
+    fontSize: 14,
+    color: '#7f8c8d',
+    marginBottom: 8,
+    fontStyle: 'italic',
   },
   editButton: {
-    marginTop: 10,
-    backgroundColor: '#007AFF',
-    paddingVertical: 8,
+    backgroundColor: '#3498db',
     paddingHorizontal: 12,
-    borderRadius: 5,
+    paddingVertical: 6,
+    borderRadius: 4,
     alignSelf: 'flex-start',
   },
   editButtonText: {
-    color: '#FFFFFF',
+    color: '#fff',
+    fontSize: 14,
     fontWeight: 'bold',
   },
   fab: {
@@ -192,33 +278,19 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   addButton: {
+    backgroundColor: '#2ecc71',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#007AFF',
-    paddingVertical: 10,
     paddingHorizontal: 20,
+    paddingVertical: 12,
     borderRadius: 8,
     marginTop: 20,
   },
   addButtonText: {
-    color: '#FFFFFF',
+    color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
-    marginLeft: 10,
-  },
-  errorText: {
-    color: 'red',
-    marginBottom: 10,
-  },
-  retryButton: {
-    backgroundColor: '#FF3B30',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-  },
-  retryButtonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+    marginLeft: 8,
   },
 });
 

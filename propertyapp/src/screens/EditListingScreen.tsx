@@ -18,10 +18,13 @@ const EditListingScreen: React.FC<Props> = ({ route, navigation }) => {
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
 
-  const handleSave = () => {
-    // TODO: Implement save logic
-    console.log({ title, description, price });
-    navigation.goBack();
+  const handleSave = async () => {
+    try {
+      await propertyService.updateListing(listingId, { title, description, price });
+      navigation.goBack();
+    } catch (error) {
+      console.error('Error saving listing:', error);
+    }
   };
 
   return (

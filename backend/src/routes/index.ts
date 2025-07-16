@@ -39,6 +39,7 @@ import pricingRoutes from './pricing.routes';
 import photoEnhancementRoutes from './photoEnhancement.routes';
 import seoRoutes from './seo.routes';
 import publishingRoutes from './publishing.routes';
+import legacyPublishingRoutes from './publishingRoutes';
 import { cacheMiddleware, clearCache } from '../utils/cache';
 
 const router = express.Router();
@@ -74,7 +75,7 @@ router.use(`${API_PREFIX}/tenants`, tenantRoutes);
 router.use(`${API_PREFIX}/leases`, leaseRoutes);
 router.use(`${API_PREFIX}/maintenance`, maintenanceRoutes);
 router.use(`${API_PREFIX}/transactions`, transactionRoutes);
-router.use(`${API_PREFIX}/publish`, publishingRoutes);
+router.use(`${API_PREFIX}/publish`, legacyPublishingRoutes);
 router.use(`${API_PREFIX}/password-reset`, passwordResetRoutes);
 router.use(`${API_PREFIX}/ai`, aiRoutes);
 router.use(`${API_PREFIX}/knowledge-base`, knowledgeBaseRoutes);

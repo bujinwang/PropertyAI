@@ -5,7 +5,11 @@ class GenerativeAIService {
   private generativeAI: GoogleGenerativeAI;
 
   constructor() {
-    this.generativeAI = new GoogleGenerativeAI(config.google.apiKey);
+    const apiKey = config.google.apiKey;
+    if (!apiKey) {
+      throw new Error('Gemini API key is not defined in the configuration.');
+    }
+    this.generativeAI = new GoogleGenerativeAI(apiKey);
   }
 
   async generateText(prompt: string): Promise<string> {

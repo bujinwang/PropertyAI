@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import aios from './aiOrchestrationService';
+import { aiOrchestrationService } from './aiOrchestrationService';
 import logger from '../utils/logger';
 
 const prisma = new PrismaClient();
@@ -156,7 +156,7 @@ class ModelTrainingService {
     } catch (error) {
       job.status = 'failed';
       job.endTime = new Date();
-      job.error = error.message;
+      job.error = error instanceof Error ? error.message : 'Unknown error';
       logger.error(`Training job ${jobId} failed: ${(error as Error).message}`);
       throw error;
     }

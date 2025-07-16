@@ -61,11 +61,26 @@ dotenv.config();
 
 // Initialize Express app
 const app = express();
-const PORT = process.env.PORT || 3000;
+
+const PORT = process.env.PORT || 3001;
+
+// Global server reference for graceful shutdown (moved to top)
+let globalServer: http.Server | null = null;
 
 // Middleware
 app.use(helmet()); // Security headers
-app.use(cors()); // CORS configuration
+app.use(cors({
+  origin: [
+    'http://localhost:3000', // Dashboard
+    'http://localhost:5000', // PropertyApp frontend
+    'http://localhost:8081', // Expo web app
+    'exp://localhost:19000', // Expo development
+    'http://localhost:19006' // Expo web alternative port
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+})); // CORS configuration
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 
@@ -170,12 +185,6 @@ const startServer = async () => {
     await setupPostgreSQL();
     console.log('PostgreSQL setup and configuration completed');
     
-    // Create HTTP server
-    const server = http.createServer(app);
-
-    // Initialize WebSocket service
-    initializeWebSocket(server);
-
     // Initialize Voicemail service
     new VoicemailService(path.join(__dirname, '../voicemails'), aiOrchestrationService);
     
@@ -185,10 +194,52 @@ const startServer = async () => {
     // Initialize Document Expiration service
     documentExpirationService.initialize();
 
-    // Start the server
-    server.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
+    // Start the server with proper cleanup to prevent race conditions
+    const startListening = (port: number) => {
+      // Clean up any existing server instance
+      if (globalServer) {
+        globalServer.removeAllListeners();
+        if (globalServer.listening) {
+          globalServer.close();
+        }
+      }
+      
+      // Create a fresh server instance for each attempt
+      const serverInstance = http.createServer(app);
+      
+      // Re-initialize WebSocket service with the new server instance
+      initializeWebSocket(serverInstance);
+      
+      const onError = (err: NodeJS.ErrnoException) => {
+        // Remove listeners to prevent memory leaks
+        serverInstance.removeAllListeners();
+        
+        if (err.code === 'EADDRINUSE' && process.env.NODE_ENV !== 'production') {
+          console.log(`Port ${port} is busy, trying port ${port + 1}...`);
+          // Use setTimeout to prevent stack overflow in rapid succession
+          setTimeout(() => startListening(port + 1), 100);
+        } else {
+          console.error(`Failed to start server on port ${port}: ${err.message}`);
+          process.exit(1);
+        }
+      };
+
+      const onListening = () => {
+        // Assign to global reference only on successful startup
+        globalServer = serverInstance;
+        console.log(`Server successfully started on port ${port}`);
+        console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      };
+
+      // Attach error listener BEFORE calling listen to prevent unhandled errors
+      serverInstance.on('error', onError);
+      serverInstance.once('listening', onListening);
+      
+      // Start listening
+      serverInstance.listen(port);
+    };
+
+    startListening(Number(PORT));
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);
@@ -198,12 +249,22 @@ const startServer = async () => {
 // Handle graceful shutdown
 process.on('SIGINT', async () => {
   console.log('Shutting down server...');
+  if (globalServer && globalServer.listening) {
+    globalServer.close(() => {
+      console.log('Server closed.');
+    });
+  }
   await closeDatabaseConnections();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
   console.log('Shutting down server...');
+  if (globalServer && globalServer.listening) {
+    globalServer.close(() => {
+      console.log('Server closed.');
+    });
+  }
   await closeDatabaseConnections();
   process.exit(0);
 });

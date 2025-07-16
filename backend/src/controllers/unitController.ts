@@ -1,6 +1,12 @@
 import { Request, Response } from 'express';
 import { unitService, CreateUnitDto, UpdateUnitDto } from '../services/unitService';
-import { propertyService } from '../services/propertyService';
+import { PropertyService } from '../services/propertyService';
+import { TenantService } from '../services/tenantService';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+const propertyService = new PropertyService();
+const tenantService = new TenantService(prisma);
 
 /**
  * Unit controller to handle HTTP requests related to unit management
@@ -392,6 +398,10 @@ export class UnitController {
       }
       
       // TODO: Check if tenant exists
+      const tenant = await tenantService.getTenantById(tenantId);
+      if (!tenant) {
+          return res.status(404).json({ status: 'error', message: 'Tenant not found' });
+      }
       
       const updatedUnit = await unitService.assignTenant(id, tenantId);
       
@@ -565,4 +575,4 @@ export class UnitController {
 }
 
 // Export singleton instance
-export const unitController = new UnitController(); 
+export const unitController = new UnitController();

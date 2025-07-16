@@ -11,6 +11,25 @@ redisClient.on('error', (err) => console.log('Redis Client Error', err));
   await redisClient.connect();
 })();
 
+// Add the missing cache functions
+export const getCache = async (key: string): Promise<any> => {
+  try {
+    const data = await redisClient.get(key);
+    return data ? JSON.parse(data) : null;
+  } catch (err) {
+    console.error('Redis get error:', err);
+    return null;
+  }
+};
+
+export const setCache = async (key: string, value: any, ttl: number = 3600): Promise<void> => {
+  try {
+    await redisClient.setEx(key, ttl, JSON.stringify(value));
+  } catch (err) {
+    console.error('Redis set error:', err);
+  }
+};
+
 export const cacheMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   const key = req.originalUrl;
   try {
@@ -31,6 +50,10 @@ export const cacheMiddleware = async (req: Request, res: Response, next: NextFun
   }
 };
 
-export const clearCache = (key: string) => {
-  redisClient.del(key);
+export const clearCache = async (key: string): Promise<void> => {
+  try {
+    await redisClient.del(key);
+  } catch (err) {
+    console.error('Redis delete error:', err);
+  }
 };

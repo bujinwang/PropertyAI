@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import { getRefreshToken, storeAuthToken, storeRefreshToken, clearAuthData, getAuthToken } from '../utils/secureStorage';
 import { API_URL } from '../constants/api';
-import { getAuthToken, storeAuthToken } from '@/utils/secureStorage';
 import { Permission } from '@/types/permissions';
 
 // Define response interface for better typing
@@ -420,10 +420,37 @@ class ApiService {
     
     throw error;
   }
+  
+  // Add the refreshToken method inside the class
+  private async refreshToken(): Promise<string | null> {
+    try {
+      const refreshToken = await getRefreshToken();
+      if (!refreshToken) {
+        throw new Error('No refresh token found');
+      }
+      
+      const response = await axios.post(`${API_URL}/auth/refresh`, {
+        refreshToken
+      });
+      
+      const { token: newAccessToken, refreshToken: newRefreshToken } = response.data;
+      
+      // Store new tokens
+      await storeAuthToken(newAccessToken);
+      await storeRefreshToken(newRefreshToken);
+      
+      return newAccessToken;
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      // Clear all auth data on refresh failure
+      await clearAuthData();
+      throw new Error('Session expired');
+    }
+  }
 }
 
 // Create and export a singleton instance
 export const apiService = new ApiService();
 
 // Export the class for testing or special use cases
-export default ApiService; 
+export default ApiService;

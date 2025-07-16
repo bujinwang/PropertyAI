@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-import { generateToken, generateRecoveryToken } from '../services/tokenService';
+import { generateToken, generateRecoveryToken, generateRefreshToken, verifyRefreshToken } from '../services/tokenService';
 import { sendRecoveryEmail, sendPasswordResetConfirmationEmail } from '../services/emailService';
 import { AppError } from '../middleware/errorMiddleware';
 import { lockoutConfig } from '../config/lockout.config';
@@ -138,23 +138,30 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
       const updatedUser = await prisma.user.update({
         where: { id: user.id },
         data: { failedLoginAttempts: 0, isLocked: false, lockedUntil: null, lastLogin: new Date() },
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-          role: true,
-          isActive: true,
-          phone: true,
-          mfaEnabled: true,
-          lastLogin: true
-        }
       });
-      const token = generateToken(updatedUser);
+      
+      const accessToken = generateToken(updatedUser);
+      const refreshToken = generateRefreshToken(updatedUser);
+      
+      // Store refresh token in database
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { refreshToken }
+      });
+      
       res.json({ 
-        token,
+        token: accessToken,
+        refreshToken: refreshToken,
         user: {
-          ...updatedUser,
+          id: updatedUser.id,
+          email: updatedUser.email,
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName,
+          role: updatedUser.role,
+          isActive: updatedUser.isActive,
+          phone: updatedUser.phone,
+          mfaEnabled: updatedUser.mfaEnabled,
+          lastLogin: updatedUser.lastLogin,
           name: `${updatedUser.firstName} ${updatedUser.lastName}`
         }
       });
@@ -213,6 +220,60 @@ export const updateSettings = async (req: Request, res: Response, next: NextFunc
     });
 
     res.json({ settings: updatedUser.settings });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const refreshToken = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { refreshToken } = req.body;
+    
+    if (!refreshToken) {
+      return next(new AppError('Refresh token required', 401));
+    }
+    
+    const decoded = verifyRefreshToken(refreshToken);
+    if (!decoded) {
+      return next(new AppError('Invalid refresh token', 401));
+    }
+    
+    const user = await prisma.user.findUnique({
+      where: { 
+        id: decoded.id,
+        refreshToken: refreshToken // Verify token matches stored token
+      }
+    });
+    
+    if (!user) {
+      return next(new AppError('Invalid refresh token', 401));
+    }
+    
+    const newAccessToken = generateToken(user);
+    const newRefreshToken = generateRefreshToken(user);
+    
+    // Update stored refresh token
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { refreshToken: newRefreshToken }
+    });
+    
+    res.json({
+      token: newAccessToken,
+      refreshToken: newRefreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        isActive: user.isActive,
+        phone: user.phone,
+        mfaEnabled: user.mfaEnabled,
+        lastLogin: user.lastLogin,
+        name: `${user.firstName} ${user.lastName}`
+      }
+    });
   } catch (error) {
     next(error);
   }

@@ -1,6 +1,8 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { AiContent as AIGeneratedContent } from '../models/mongoModels';
 import { v4 as uuidv4 } from 'uuid';
+import { protect as authMiddleware, admin as adminMiddleware } from '../middleware/auth';
+import { generativeAIService } from '../services/generativeAI.service';
 
 const router = express.Router();
 
@@ -117,16 +119,15 @@ router.post('/generate', async (req, res) => {
       });
     }
     
-    // TODO: This is where we would actually call the AI service to generate content
-    // For now, simulate AI-generated content
-    const simulatedAIResponse = `Sample AI-generated content for prompt: "${prompt}"\n\nThis would be replaced with actual AI-generated content in production.`;
+    // Generate content using AI service
+    const generatedContent = await generativeAIService.generateText(prompt);
     
     // Create new AI content record
     const newAIContent = new AIGeneratedContent({
       contentId: uuidv4(),
       contentType,
       originalPrompt: prompt,
-      generatedContent: simulatedAIResponse,
+      generatedContent: generatedContent, // Fixed: use actual generated content
       relatedEntityId,
       relatedEntityType,
       modelName,
@@ -318,32 +319,29 @@ router.post('/:id/feedback', async (req, res) => {
  * @desc    Delete AI content
  * @access  Private (admin only)
  */
-router.delete('/:id', async (req, res) => {
-  try {
-    const aiContent = await AIGeneratedContent.findOne({ contentId: req.params.id });
-    
-    if (!aiContent) {
-      return res.status(404).json({
-        status: 'error',
-        message: 'AI content not found'
-      });
+router.delete('/:id', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
+    try {
+        const contentId = req.params.id;
+        const deletedContent = await AIGeneratedContent.findOneAndDelete({ contentId });
+        
+        if (!deletedContent) {
+            return res.status(404).json({ 
+                status: 'error', 
+                message: 'Content not found' 
+            });
+        }
+        
+        res.json({ 
+            status: 'success', 
+            message: 'Content deleted successfully' 
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            status: 'error', 
+            message: 'Error deleting content', 
+            error 
+        });
     }
-    
-    // TODO: Add authorization check
-    
-    await aiContent.deleteOne();
-    
-    res.json({
-      status: 'success',
-      message: 'AI content deleted successfully'
-    });
-  } catch (error) {
-    console.error('Error deleting AI content:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Server error deleting AI content'
-    });
-  }
 });
 
 export default router;

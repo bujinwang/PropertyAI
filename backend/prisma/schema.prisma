@@ -58,6 +58,7 @@ model User {
   roles                 Role[]
   consents            Consent[]
   settings            Json? // New field to store user settings as JSON
+  refreshToken        String?
 
   @@index([role])
   @@index([isActive])

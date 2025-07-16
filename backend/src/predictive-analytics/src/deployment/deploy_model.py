@@ -20,4 +20,4 @@ def predict():
     return jsonify([2100])
 
 if __name__ == '__main__':
-    app.run(port=5000)
+    app.run(port=5001)  # Changed from 5000 to 5001

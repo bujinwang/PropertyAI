@@ -27,24 +27,12 @@ router.post('/tenant-screening/predict-issues', async (req, res) => {
  * For now, returns mock data.
  */
 router.get('/tenant-screening/alerts', async (req, res) => {
-  // TODO: Replace with real alert fetching logic
-  const mockAlerts = [
-    {
-      id: 'alert-1',
-      message: 'Unusual delay in application processing for Application #1234',
-      severity: 'high',
-      timestamp: new Date().toISOString(),
-      context: { applicationId: '1234', stage: 'Background Check' },
-    },
-    {
-      id: 'alert-2',
-      message: 'Spike in document verification failures detected',
-      severity: 'medium',
-      timestamp: new Date().toISOString(),
-      context: { affectedApplications: 7 },
-    },
-  ];
-  res.json(mockAlerts);
+  try {
+    const alerts = await predictiveAnalyticsService.getTenantScreeningAlerts();
+    res.json(alerts);
+  } catch (error: any) {
+    res.status(500).json({ error: error?.message || String(error) || 'Failed to fetch alerts' });
+  }
 });
 
 export default router;

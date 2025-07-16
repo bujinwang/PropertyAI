@@ -148,11 +148,11 @@ export function PropertyFormScreen() {
     if (!propertyId) return;
     
     try {
+      // In fetchPropertyDetails
       setIsLoading(true);
-      // TODO: Replace with actual API call
-      // const response = await propertyService.getPropertyById(propertyId);
-      // setProperty(response.data);
-      
+      const response = await propertyService.getPropertyById(propertyId);
+      setProperty(response.data);
+      setIsLoading(false);
       // Mock data for development
       setTimeout(() => {
         setProperty({
@@ -200,34 +200,25 @@ export function PropertyFormScreen() {
   };
 
   const handleSubmit = async (values: PropertyFormValues) => {
+    setIsSubmitting(true);
     try {
-      setIsLoading(true);
-      
-      // TODO: Replace with actual API call
-      // if (isEditing) {
-      //   await propertyService.updateProperty(propertyId, values);
-      // } else {
-      //   await propertyService.createProperty(values);
-      // }
-      
-      // Mock API call
-      setTimeout(() => {
-        setIsLoading(false);
-        Alert.alert(
-          'Success',
-          isEditing ? 'Property updated successfully' : 'Property created successfully',
-          [
-            {
-              text: 'OK',
-              onPress: () => navigation.goBack(),
-            },
-          ]
-        );
-      }, 1500);
+      let response;
+      if (isEditing) {
+        response = await propertyService.updateProperty(propertyId, values);
+      } else {
+        response = await propertyService.createProperty(values);
+      }
+      console.log('API response:', response);
+      Alert.alert(
+        isEditing ? 'Property Updated' : 'Property Created',
+        isEditing ? 'Your property has been successfully updated.' : 'Your new property has been successfully created.',
+        [{ text: 'OK', onPress: () => navigation.goBack() }]
+      );
     } catch (error) {
-      console.error('Error submitting form:', error);
-      Alert.alert('Error', 'Failed to save property');
-      setIsLoading(false);
+      console.error('Error submitting property:', error);
+      Alert.alert('Error', 'There was an error submitting the property. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -239,15 +230,15 @@ export function PropertyFormScreen() {
 
     try {
       setIsAiGenerating(true);
-      
-      // TODO: Replace with actual AI API call
-      // const response = await aiService.generatePropertyDescription({
-      //   propertyType: values.propertyType,
-      //   bedrooms: values.bedrooms,
-      //   bathrooms: values.bathrooms,
-      //   amenities: values.amenities,
-      //   images: values.images
-      // });
+      const response = await aiService.generatePropertyDescription({
+        propertyType: values.propertyType,
+        bedrooms: values.bedrooms,
+        bathrooms: values.bathrooms,
+        amenities: values.amenities,
+        images: values.images
+      });
+      setFieldValue('description', response.description);
+      setIsAiGenerating(false);
       
       // Mock AI generation
       setTimeout(() => {

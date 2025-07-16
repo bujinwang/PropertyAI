@@ -6,7 +6,7 @@ class PropertyController {
   async getAllProperties(req: Request, res: Response) {
     const { skip, take } = req.query;
     const cacheKey = `properties-skip:${skip}-take:${take}`;
-    const cachedProperties = getCache(cacheKey);
+    const cachedProperties = await getCache(cacheKey);
 
     if (cachedProperties) {
       return res.status(200).json(cachedProperties);
@@ -17,7 +17,7 @@ class PropertyController {
         skip: skip ? parseInt(skip as string) : undefined,
         take: take ? parseInt(take as string) : undefined,
       });
-      setCache(cacheKey, properties, 300000);
+      await setCache(cacheKey, properties, 300);
       res.status(200).json(properties);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -27,7 +27,7 @@ class PropertyController {
   async createProperty(req: Request, res: Response) {
     try {
       const property = await prisma.property.create({ data: req.body });
-      clearCache('properties-skip:undefined-take:undefined');
+      await clearCache('properties-skip:undefined-take:undefined');
       res.status(201).json(property);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -36,7 +36,7 @@ class PropertyController {
 
   async getPropertyById(req: Request, res: Response) {
     const cacheKey = `property-${req.params.id}`;
-    const cachedProperty = getCache(cacheKey);
+    const cachedProperty = await getCache(cacheKey);
 
     if (cachedProperty) {
       return res.status(200).json(cachedProperty);
@@ -47,7 +47,7 @@ class PropertyController {
         where: { id: req.params.id },
       });
       if (property) {
-        setCache(cacheKey, property, 300000);
+        await setCache(cacheKey, property, 300);
         res.status(200).json(property);
       } else {
         res.status(404).json({ message: 'Property not found' });
@@ -63,8 +63,8 @@ class PropertyController {
         where: { id: req.params.id },
         data: req.body,
       });
-      clearCache(`property-${req.params.id}`);
-      clearCache('properties-skip:undefined-take:undefined');
+      await clearCache(`property-${req.params.id}`);
+      await clearCache('properties-skip:undefined-take:undefined');
       res.status(200).json(property);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -74,8 +74,8 @@ class PropertyController {
   async deleteProperty(req: Request, res: Response) {
     try {
       await prisma.property.delete({ where: { id: req.params.id } });
-      clearCache(`property-${req.params.id}`);
-      clearCache('properties-skip:undefined-take:undefined');
+      await clearCache(`property-${req.params.id}`);
+      await clearCache('properties-skip:undefined-take:undefined');
       res.status(204).send();
     } catch (error: any) {
       res.status(500).json({ error: error.message });

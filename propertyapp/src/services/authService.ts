@@ -3,6 +3,7 @@ import { API_URL } from '../constants/api';
 import { User } from '../types/auth';
 import { apiService } from './apiService';
 import { MFAVerificationResponse } from '../types/auth';
+import { storeRefreshToken } from '../utils/secureStorage';
 
 // Define error types for better type safety
 type ErrorWithResponse = {
@@ -40,9 +41,13 @@ export const login = async (email: string, password: string): Promise<LoginRespo
       password
     });
     
-    // If login is successful and we get a token, set it in the apiService
+    // Store both access and refresh tokens
     if (response.data.token) {
       apiService.setToken(response.data.token);
+    }
+    
+    if (response.data.refreshToken) {
+      await storeRefreshToken(response.data.refreshToken);
     }
     
     return response.data;
@@ -72,6 +77,10 @@ export const register = async (userData: {
     // If registration is successful and we get a token, set it in the apiService
     if (response.data.token) {
       apiService.setToken(response.data.token);
+    }
+    
+    if (response.data.refreshToken) {
+      await storeRefreshToken(response.data.refreshToken);
     }
     
     return response.data;
@@ -238,4 +247,4 @@ export const resetPassword = async (resetToken: string, newPassword: string): Pr
     }
     throw new Error('Failed to reset password. Please try again.');
   }
-}; 
+};

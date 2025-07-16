@@ -36,6 +36,7 @@ app.use(helmet()); // Security headers
 app.use(cors({
   origin: [
     'http://localhost:3000', // Dashboard
+    'http://localhost:5000', // PropertyApp frontend
     'http://localhost:8081', // Expo web app
     'exp://localhost:19000', // Expo development
     'http://localhost:19006' // Expo web alternative port
@@ -100,17 +101,6 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
-// Start server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
 
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err: any) => {
-  console.error('Unhandled Promise Rejection:', err);
-  // Close server & exit process
-  // server.close(() => process.exit(1));
-});
 
 export default app;
