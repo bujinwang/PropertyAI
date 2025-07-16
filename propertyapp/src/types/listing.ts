@@ -10,7 +10,7 @@ export interface Listing {
   createdAt: string;
   updatedAt: string;
   propertyId: string;
-  unitId: string;
+  unitId?: string;
   authorId: string;
   // Related data that might be included in API responses
   property?: {
@@ -57,7 +57,7 @@ export interface CreateListingRequest {
   description: string;
   price: number;
   propertyId: string;
-  unitId: string;
+  unitId?: string;
   status?: ListingStatus;
 }
 

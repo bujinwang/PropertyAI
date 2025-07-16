@@ -24,6 +24,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { propertyService } from '@/services/propertyService';
 import { aiService } from '@/services/aiService';
 import { RootStackParamList } from '@/navigation/types';
+import { Property, PropertyType } from '@/types/property';
 
 type PropertyFormScreenRouteProp = RouteProp<RootStackParamList, 'PropertyForm'>;
 
@@ -42,10 +43,6 @@ interface PropertyFormValues {
   yearBuilt: string;
   totalUnits: string;
   images: Array<{ uri: string; name: string; type: string }>;
-  bedrooms: string;
-  bathrooms: string;
-  squareFeet: string;
-  price: string;
 }
 
 const initialValues: PropertyFormValues = {
@@ -63,10 +60,6 @@ const initialValues: PropertyFormValues = {
   yearBuilt: '',
   totalUnits: '1',
   images: [],
-  bedrooms: '2',
-  bathrooms: '2',
-  squareFeet: '',
-  price: '',
 };
 
 const propertyTypes = [
@@ -93,11 +86,13 @@ const amenityOptions = [
 const validationSchema = Yup.object().shape({
   name: Yup.string().required('Property name is required'),
   description: Yup.string().required('Description is required'),
-  address: Yup.string().required('Street address is required'),
-  city: Yup.string().required('City is required'),
-  state: Yup.string().required('State is required'),
-  zipCode: Yup.string().required('ZIP code is required'),
-  country: Yup.string().required('Country is required'),
+  address: Yup.object().shape({
+    street: Yup.string().required('Street address is required'),
+    city: Yup.string().required('City is required'),
+    state: Yup.string().required('State is required'),
+    zipCode: Yup.string().required('ZIP code is required'),
+    country: Yup.string().required('Country is required'),
+  }),
   propertyType: Yup.string().required('Property type is required'),
   yearBuilt: Yup.string()
     .required('Year built is required')
@@ -148,19 +143,18 @@ export function PropertyFormScreen() {
     
     try {
       setIsLoading(true);
-      const response = await propertyService.getPropertyById(propertyId);
-      const propertyData = response.data;
+      const propertyData = await propertyService.getPropertyById(propertyId);
       
       // Map API response to form values
       setProperty({
         name: propertyData.name || '',
         description: propertyData.description || '',
         address: {
-          street: propertyData.address?.street || '',
-          city: propertyData.address?.city || '',
-          state: propertyData.address?.state || '',
-          zipCode: propertyData.address?.zipCode || '',
-          country: propertyData.address?.country || 'US',
+          street: propertyData.address || '',
+          city: propertyData.city || '',
+          state: propertyData.state || '',
+          zipCode: propertyData.zipCode || '',
+          country: propertyData.country || 'US',
         },
         propertyType: propertyData.propertyType || '',
         amenities: propertyData.amenities || [],
@@ -171,10 +165,6 @@ export function PropertyFormScreen() {
           name: img.name || 'property-image.jpg',
           type: img.type || 'image/jpeg'
         })) || [],
-        bedrooms: '', // These fields are now handled by units
-        bathrooms: '',
-        squareFeet: '',
-        price: '',
       });
       setIsLoading(false);
     } catch (error) {
@@ -187,11 +177,26 @@ export function PropertyFormScreen() {
   const handleSubmit = async (values: PropertyFormValues) => {
     setIsSubmitting(true);
     try {
+      const submissionData = {
+        name: values.name,
+        description: values.description,
+        address: values.address.street,
+        city: values.address.city,
+        state: values.address.state,
+        zipCode: values.address.zipCode,
+        country: values.address.country,
+        propertyType: values.propertyType as PropertyType,
+        amenities: values.amenities,
+        yearBuilt: parseInt(values.yearBuilt, 10),
+        totalUnits: parseInt(values.totalUnits, 10),
+        // images are handled separately
+      };
+
       let response;
       if (isEditing) {
-        response = await propertyService.updateProperty(propertyId, values);
+        response = await propertyService.updateProperty(propertyId, submissionData);
       } else {
-        response = await propertyService.createProperty(values);
+        response = await propertyService.createProperty(submissionData);
       }
       console.log('API response:', response);
       Alert.alert(
@@ -216,22 +221,11 @@ export function PropertyFormScreen() {
     try {
       setIsAiGenerating(true);
       
-      // Use comprehensive property data for AI generation
+      // Use property data for AI generation
       const propertyDetails = {
-        name: values.name,
-        address: {
-          street: values.address.street,
-          city: values.address.city,
-          state: values.address.state,
-          zipCode: values.address.zipCode,
-          country: values.address.country
-        },
         propertyType: values.propertyType,
-        yearBuilt: values.yearBuilt,
-        totalUnits: values.totalUnits,
-        bedrooms: values.bedrooms,
-        bathrooms: values.bathrooms,
-        squareFeet: values.squareFeet,
+        bedrooms: '2', // Default value for AI generation
+        bathrooms: '2', // Default value for AI generation
         amenities: values.amenities,
         images: values.images
       };
@@ -239,31 +233,7 @@ export function PropertyFormScreen() {
       const response = await aiService.generatePropertyDescription(propertyDetails);
       setFieldValue('description', response.description);
       setIsAiGenerating(false);
-      
-      // Mock AI generation with full context
-      setTimeout(() => {
-        const amenityLabels = values.amenities.map(amenity => 
-          amenityOptions.find(option => option.value === amenity)?.label || amenity
-        );
-        
-        const location = `${values.address.city}, ${values.address.state}`;
-        const builtYear = new Date().getFullYear() - parseInt(values.yearBuilt);
-        const builtText = builtYear <= 5 ? 'newly built' : builtYear <= 15 ? 'recently built' : 'well-maintained';
-        
-        const generatedDescription = `
-Welcome to ${values.name}, a stunning ${values.bedrooms}-bedroom, ${values.bathrooms}-bathroom ${values.propertyType} located in ${location}. 
-
-This ${builtText} property from ${values.yearBuilt} offers ${values.squareFeet} square feet of modern living space with ${values.amenities.length > 0 ? amenityLabels.join(', ') : 'essential amenities'}.
-
-${values.address.street} is conveniently located in ${values.address.city} with easy access to local shopping, dining, and transportation. The property features ${values.totalUnits} total unit${values.totalUnits !== '1' ? 's' : ''}, making it perfect for ${values.propertyType === 'apartment' ? 'urban living' : 'family life'}.
-
-Key features include ${amenityLabels.slice(0, 3).join(', ')}${amenityLabels.length > 3 ? ', and more' : ''}. This move-in ready space combines comfort, style, and convenience in one of ${values.address.city}'s most desirable neighborhoods.
-        `.trim();
-        
-        setFieldValue('description', generatedDescription);
-        setIsAiGenerating(false);
-        Alert.alert('Success', 'AI-generated description has been added using your complete property details');
-      }, 2000);
+      Alert.alert('Success', 'AI-generated description has been added');
     } catch (error) {
       console.error('Error generating AI description:', error);
       Alert.alert('Error', 'Failed to generate AI description');
@@ -275,57 +245,28 @@ Key features include ${amenityLabels.slice(0, 3).join(', ')}${amenityLabels.leng
     try {
       setIsPricingLoading(true);
       
-      // Use comprehensive property data for pricing analysis
+      // Use property data for pricing analysis
       const propertyDetails = {
-        name: values.name,
         address: {
           street: values.address.street,
           city: values.address.city,
           state: values.address.state,
           zipCode: values.address.zipCode,
-          country: values.address.country
         },
         propertyType: values.propertyType,
-        yearBuilt: values.yearBuilt,
-        totalUnits: values.totalUnits,
-        bedrooms: values.bedrooms,
-        bathrooms: values.bathrooms,
-        squareFeet: values.squareFeet,
+        bedrooms: '2', // Default value for pricing
+        bathrooms: '2', // Default value for pricing
+        squareFeet: '1000', // Default value for pricing
         amenities: values.amenities,
-        images: values.images
+        yearBuilt: values.yearBuilt
       };
 
-      const response = await propertyService.getPricingRecommendation(propertyDetails);
-      setFieldValue('price', response.recommendedPrice.toString());
+      const response = await aiService.generatePricingRecommendations(propertyDetails);
       
-      // Mock pricing with full context
-      setTimeout(() => {
-        const basePrice = parseInt(values.squareFeet) * 2.0; // Base $2/sqft
-        const locationMultiplier = values.address.city.toLowerCase().includes('los angeles') ? 1.3 : 
-                                  values.address.city.toLowerCase().includes('austin') ? 1.1 : 1.0;
-        
-        const amenityBonus = values.amenities.length * 50;
-        const yearAdjustment = (2024 - parseInt(values.yearBuilt)) <= 5 ? 200 : 0;
-        
-        const recommendedPrice = Math.round((basePrice * locationMultiplier) + amenityBonus + yearAdjustment);
-        
-        setFieldValue('price', recommendedPrice.toString());
-        
-        const pricingRationale = `
-Based on comprehensive market analysis for:
-• ${values.name} (${values.bedrooms}BR/${values.bathrooms}BA)
-• ${values.address.city}, ${values.address.state} ${values.address.zipCode}
-• ${values.squareFeet} sq ft, built ${values.yearBuilt}
-• ${values.amenities.length} amenities: ${values.amenities.slice(0, 3).join(', ')}
-
-Recommended monthly rent: $${recommendedPrice}
-        `.trim();
-        
-        Alert.alert(
-          'Pricing Recommendation', 
-          pricingRationale
-        );
-      }, 1500);
+      Alert.alert(
+        'Pricing Recommendation', 
+        `Recommended monthly rent: $${response.recommendedPrice}\nRange: $${response.priceRange.min} - $${response.priceRange.max}`
+      );
       
     } catch (error) {
       console.error('Error getting pricing recommendation:', error);
@@ -441,19 +382,19 @@ Recommended monthly rent: $${recommendedPrice}
                     
                     <TextInput
                       label="Street Address"
-                      value={values.address}
-                      onChangeText={handleChange('address')}
-                      onBlur={handleBlur('address')}
-                      error={touched.address ? errors.address : undefined}
+                      value={values.address.street}
+                      onChangeText={handleChange('address.street')}
+                      onBlur={handleBlur('address.street')}
+                      error={touched.address?.street ? errors.address?.street : undefined}
                       placeholder="Enter street address"
                     />
 
                     <TextInput
                       label="City"
-                      value={values.city}
-                      onChangeText={handleChange('city')}
-                      onBlur={handleBlur('city')}
-                      error={touched.city ? errors.city : undefined}
+                      value={values.address.city}
+                      onChangeText={handleChange('address.city')}
+                      onBlur={handleBlur('address.city')}
+                      error={touched.address?.city ? errors.address?.city : undefined}
                       placeholder="Enter city"
                     />
 
@@ -461,10 +402,10 @@ Recommended monthly rent: $${recommendedPrice}
                       <View style={styles.halfColumn}>
                         <TextInput
                           label={stateLabel}
-                          value={values.state}
-                          onChangeText={handleChange('state')}
-                          onBlur={handleBlur('state')}
-                          error={touched.state ? errors.state : undefined}
+                          value={values.address.state}
+                          onChangeText={handleChange('address.state')}
+                          onBlur={handleBlur('address.state')}
+                          error={touched.address?.state ? errors.address?.state : undefined}
                           placeholder={stateLabel}
                         />
                       </View>
@@ -472,10 +413,10 @@ Recommended monthly rent: $${recommendedPrice}
                       <View style={styles.halfColumn}>
                         <TextInput
                           label="ZIP Code"
-                          value={values.zipCode}
-                          onChangeText={handleChange('zipCode')}
-                          onBlur={handleBlur('zipCode')}
-                          error={touched.zipCode ? errors.zipCode : undefined}
+                          value={values.address.zipCode}
+                          onChangeText={handleChange('address.zipCode')}
+                          onBlur={handleBlur('address.zipCode')}
+                          error={touched.address?.zipCode ? errors.address?.zipCode : undefined}
                           placeholder="ZIP Code"
                           keyboardType="numeric"
                         />
@@ -484,15 +425,15 @@ Recommended monthly rent: $${recommendedPrice}
 
                     <SelectInput
                       label="Country"
-                      value={values.country}
+                      value={values.address.country}
                       onChange={(value) => {
-                        setFieldValue('country', value);
+                        setFieldValue('address.country', value);
                       }}
                       options={[
                         { label: 'United States', value: 'US' },
                         { label: 'Canada', value: 'CA' },
                       ]}
-                      error={touched.country ? errors.country : undefined}
+                      error={touched.address?.country ? errors.address?.country : undefined}
                     />
                   </View>
                 )}
@@ -602,6 +543,7 @@ Recommended monthly rent: $${recommendedPrice}
                               amenityOptions.find(option => option.value === amenity)?.label
                             ).join(', ')
                           : 'None specified'}
+                      </Text>
                       
                       <Text style={styles.reviewLabel}>Images</Text>
                       <Text style={styles.reviewValue}>
@@ -638,6 +580,7 @@ Recommended monthly rent: $${recommendedPrice}
                 )}
               </View>
             </>
+          );
           );
         }}
       </Formik>

@@ -551,8 +551,8 @@ model Listing {
   updatedAt   DateTime            @updatedAt
   property    Property            @relation(fields: [propertyId], references: [id])
   propertyId  String
-  unit        Unit                @relation(fields: [unitId], references: [id])
-  unitId      String              @unique
+  unit        Unit?               @relation(fields: [unitId], references: [id])
+  unitId      String?             @unique
   author      User                @relation(fields: [authorId], references: [id])
   authorId    String
   images      ListingImage[]

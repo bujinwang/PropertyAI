@@ -32,7 +32,8 @@
       "Bash(npx:*)",
       "Bash(gh pr:*)",
       "Bash(grep:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(sed:*)"
     ],
     "deny": []
   }
