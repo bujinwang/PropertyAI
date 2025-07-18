@@ -7,6 +7,8 @@ import { propertyService } from '../services/propertyService'; // Import propert
 import { RootStackParamList } from '../navigation/types'; // Import RootStackParamList
 import { StackScreenProps } from '@react-navigation/stack'; // Import StackScreenProps
 import { PropertyStackParamList } from '../navigation/PropertyStackNavigator'; // Import PropertyStackParamList
+import { useNavigation } from '@react-navigation/native'; // Import useNavigation
+import { AuthError, AuthErrorType } from '../services/api'; // Import AuthError and AuthErrorType
 
 type ManageListingsScreenProps = StackScreenProps<PropertyStackParamList, 'PropertyList'>; // Use PropertyStackParamList
 
@@ -14,6 +16,7 @@ const ManageListingsScreen = ({ navigation }: ManageListingsScreenProps) => { //
   const [listings, setListings] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const rootNavigation = useNavigation(); // Get root navigation for login redirect
 
   useEffect(() => {
     console.log('Fetching listings on mount');
@@ -29,8 +32,16 @@ const ManageListingsScreen = ({ navigation }: ManageListingsScreenProps) => { //
       console.log('Fetched listings:', fetchedListings);
     } catch (err) {
       console.error('Failed to fetch listings:', err);
-      setError('Failed to load listings. Please try again later.');
-      Alert.alert('Error', 'Failed to load listings. Please try again later.');
+      if (err instanceof AuthError && (err.type === AuthErrorType.EXPIRED_TOKEN || err.type === AuthErrorType.INVALID_REFRESH)) {
+        // If it's an authentication error, navigate to login
+        Alert.alert('Session Expired', 'Your session has expired. Please log in again.', [
+          { text: 'OK', onPress: () => rootNavigation.navigate('Login') } // Assuming 'Login' is the route name for your login screen
+        ]);
+      } else {
+        // Handle other errors generically
+        setError('Failed to load listings. Please try again later.');
+        Alert.alert('Error', 'Failed to load listings. Please try again later.');
+      }
     } finally {
       setLoading(false);
     }
@@ -54,7 +65,7 @@ const ManageListingsScreen = ({ navigation }: ManageListingsScreenProps) => { //
           <Text style={styles.statusText}>ACTIVE</Text>
         </View>
       </View>
-      <Text style={styles.propertyDescription}>{item.description || `${item.propertyType} in ${item.city}`}</Text>
+      <Text style={styles.propertyDescription}>{item.aiGeneratedDescription || item.description || `${item.propertyType} in ${item.city}`}</Text>
       <Text style={styles.propertyPrice}>${item.totalUnits ? `${item.totalUnits} units` : 'Price on request'}</Text>
       <Text style={styles.propertyAddress}>{item.address}, {item.city}, {item.state} {item.zipCode}</Text>
       <TouchableOpacity 

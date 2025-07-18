@@ -81,6 +81,62 @@ class PropertyController {
       res.status(500).json({ error: error.message });
     }
   }
+
+  async getPublicProperties(req: Request, res: Response) {
+    const { skip, take, city, state, propertyType } = req.query;
+    const cacheKey = `public-properties-skip:${skip}-take:${take}-city:${city}-state:${state}-type:${propertyType}`;
+    const cachedProperties = await getCache(cacheKey);
+
+    if (cachedProperties) {
+      return res.status(200).json(cachedProperties);
+    }
+
+    try {
+      const where: any = {};
+      
+      // Add filters for public view
+      if (city) where.city = city;
+      if (state) where.state = state;
+      if (propertyType) where.propertyType = propertyType;
+
+      const properties = await prisma.property.findMany({
+        skip: skip ? parseInt(skip as string) : undefined,
+        take: take ? parseInt(take as string) : 20,
+        where,
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          address: true,
+          city: true,
+          state: true,
+          zipCode: true,
+          propertyType: true,
+          amenities: true,
+          yearBuilt: true,
+          totalUnits: true,
+          images: {
+            select: {
+              id: true,
+              url: true,
+              filename: true,
+              mimetype: true,
+            }
+          },
+          createdAt: true,
+          updatedAt: true,
+        },
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
+
+      await setCache(cacheKey, properties, 300);
+      res.status(200).json(properties);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
 }
 
 export default new PropertyController();

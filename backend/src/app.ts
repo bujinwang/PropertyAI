@@ -21,6 +21,7 @@ import dataPreprocessingRoutes from './routes/dataPreprocessing.routes';
 import modelRegistryRoutes from './routes/modelRegistry.routes';
 import photoEnhancementRoutes from './routes/photoEnhancement.routes';
 import monitoringRoutes from './routes/monitoring.routes';
+import searchRoutes from './routes/searchRoutes';
 import { responseTimeTracker } from './services/apiPerformance.service';
 import { httpRequestCounter, httpRequestDurationMicroseconds } from './services/monitoring.service';
 
@@ -45,8 +46,8 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 })); // Enable CORS
-app.use(express.json()); // Parse JSON bodies
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+app.use(express.json({ limit: '10mb' })); // Parse JSON bodies with increased limit
+app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Parse URL-encoded bodies with increased limit
 app.use(morgan('dev')); // Logging
 
 // Monitoring middleware
@@ -86,6 +87,7 @@ app.use('/api/data-preprocessing', dataPreprocessingRoutes);
 app.use('/api/model-registry', modelRegistryRoutes);
 app.use('/api/photo-enhancement', photoEnhancementRoutes);
 app.use('/metrics', monitoringRoutes);
+app.use('/api/search', searchRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

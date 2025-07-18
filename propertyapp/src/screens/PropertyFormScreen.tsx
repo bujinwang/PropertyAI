@@ -24,7 +24,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { propertyService } from '@/services/propertyService';
 import { aiService } from '@/services/aiService';
 import { RootStackParamList } from '@/navigation/types';
-import { Property, PropertyType } from '@/types/property';
+import { Property, PropertyType, PropertyImage } from '@/types/property';
 
 type PropertyFormScreenRouteProp = RouteProp<RootStackParamList, 'PropertyForm'>;
 
@@ -163,8 +163,8 @@ export function PropertyFormScreen() {
         amenities: propertyData.amenities || [],
         yearBuilt: propertyData.yearBuilt?.toString() || '',
         totalUnits: propertyData.totalUnits?.toString() || '1',
-        images: propertyData.images?.map((img: any) => ({
-          uri: img.url || img.uri,
+        images: propertyData.images?.map((img: PropertyImage) => ({
+          uri: img.url || img.uri || '',
           name: img.originalFilename || img.filename || 'property-image.jpg',
           type: img.mimetype || 'image/jpeg'
         })) || [],
@@ -185,7 +185,7 @@ export function PropertyFormScreen() {
       const submissionData = {
         name: values.name,
         description: values.description,
-        address: values.address.street,
+        address: values.address.street, // Flatten address
         city: values.address.city,
         state: values.address.state,
         zipCode: values.address.zipCode,
@@ -197,7 +197,7 @@ export function PropertyFormScreen() {
         // images are handled separately
       };
 
-      let response: any;
+      let response: Property; // Use Property type for response
       if (isEditing) {
         response = await propertyService.updateProperty(propertyId, submissionData);
       } else {
@@ -207,7 +207,20 @@ export function PropertyFormScreen() {
       Alert.alert(
         isEditing ? 'Property Updated' : 'Property Created',
         isEditing ? 'Your property has been successfully updated.' : 'Your new property has been successfully created.',
-        [{ text: 'OK', onPress: () => navigation.goBack() }]
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              if (isEditing) {
+                // Navigate back to property listings after edit
+                navigation.navigate('Main', { screen: 'Properties' });
+              } else {
+                // Navigate to property detail for new property
+                navigation.navigate('PropertyDetail', { propertyId: response.id });
+              }
+            }
+          }
+        ]
       );
     } catch (error) {
       console.error('Error submitting property:', error);
@@ -242,7 +255,12 @@ export function PropertyFormScreen() {
       const response = await aiService.generatePropertyDescription(propertyId, propertyDetails);
       setFieldValue('description', response.description);
       setIsAiGenerating(false);
-      Alert.alert('Success', 'AI-generated description has been added');
+      Alert.alert(
+        'AI Description Generated',
+        response.description,
+        [{ text: 'OK' }],
+        { cancelable: true }
+      );
     } catch (error) {
       console.error('Error generating AI description:', error);
       Alert.alert('Error', 'Failed to generate AI description');
@@ -273,8 +291,8 @@ export function PropertyFormScreen() {
       const response = await aiService.generatePricingRecommendations(propertyDetails);
       
       Alert.alert(
-        'Pricing Recommendation', 
-        `Recommended monthly rent: $${response.recommendedPrice}\nRange: $${response.priceRange.min} - $${response.priceRange.max}`
+        'Pricing Recommendation Generated', 
+        `Recommended Monthly Rent: $${response.recommendedPrice}\n\nPrice Range: $${response.priceRange.min} - $${response.priceRange.max}\n\nMarket Analysis: ${response.marketAnalysis || 'Based on current market conditions'}\n\nConfidence: ${response.confidence || 'High'}`
       );
       
     } catch (error) {
@@ -518,11 +536,11 @@ export function PropertyFormScreen() {
                       Please review the details of your property listing before submitting.
                     </Text>
 
-                    <View style={styles.reviewSection}>
-                      <Text style={styles.reviewTitle}>{values.name}</Text>
-                      <Text style={styles.reviewDescription}>{values.description}</Text>
-                      
-                      <Text style={styles.reviewLabel}>Property Type</Text>
+                  <View style={styles.reviewSection}>
+                    <Text style={styles.reviewTitle}>{values.name}</Text>
+                    <Text style={styles.reviewLabel}>Description</Text>
+                    <Text style={styles.reviewDescription}>{values.description}</Text>
+                    <Text style={styles.reviewLabel}>Property Type</Text>
                       <Text style={styles.reviewValue}>
                         {propertyTypes.find(type => type.value === values.propertyType)?.label}
                       </Text>

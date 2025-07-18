@@ -1,3 +1,5 @@
+import { Unit } from './unit';
+
 export interface Property {
   id: string;
   name: string;
@@ -30,6 +32,7 @@ export interface PropertyImage {
   mimetype: string;
   size: number;
   url: string;
+  uri?: string; // Add uri field for local images
   isFeatured: boolean;
   createdAt: string;
   updatedAt: string;
@@ -47,11 +50,13 @@ export enum PropertyType {
 
 export interface CreatePropertyRequest {
   name: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
   description?: string;
   propertyType: PropertyType;
   yearBuilt?: number;
@@ -63,11 +68,13 @@ export interface CreatePropertyRequest {
 
 export interface UpdatePropertyRequest {
   name?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zipCode?: string;
-  country?: string;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+  };
   description?: string;
   propertyType?: PropertyType;
   yearBuilt?: number;

@@ -17,7 +17,16 @@ export const getSeoData = async (req: Request, res: Response, next: NextFunction
       return next(new AppError('Listing not found', 404));
     }
 
-    const seoData = seoService.prepareListingSeoData(listing);
+    if (!listing.unit || listing.unit.length === 0) {
+      return next(new AppError('No units found for this listing', 404));
+    }
+
+    const listingWithSingleUnit = {
+      ...listing,
+      unit: listing.unit[0],
+    };
+
+    const seoData = seoService.prepareListingSeoData(listingWithSingleUnit);
     const metaTags = seoService.generateMetaTags(seoData);
     const jsonLd = seoService.generateJsonLd(seoData);
 

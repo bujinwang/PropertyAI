@@ -216,9 +216,11 @@ class ApiService {
       }
     } else if (error.request) {
       // The request was made but no response was received
+      console.error('API Error: No response received from server. Request details:', error.request);
       return new Error('No response from server. Please check your internet connection.');
     } else {
       // Something else happened while setting up the request
+      console.error('API Error: Unexpected error during request setup:', error.message);
       return new Error(error.message || 'An unexpected error occurred');
     }
   }

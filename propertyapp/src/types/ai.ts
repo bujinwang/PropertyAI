@@ -1,5 +1,6 @@
 export interface GenerateDescriptionResponse {
   description: string;
+  aiGeneratedDescription?: string;
 }
 
 export interface PricingRecommendationResponse {
@@ -9,4 +10,5 @@ export interface PricingRecommendationResponse {
     max: number;
   };
   marketAnalysis: string;
+  confidence?: string;
 }

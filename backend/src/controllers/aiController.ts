@@ -6,7 +6,7 @@ import * as aiService from '../services/aiService';
 export const generateDescription = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { propertyId } = req.params;
-    const { photos, details } = req.body;
+    const { details } = req.body;
 
     console.log(`[DEBUG] Received propertyId: ${propertyId}`);
 
@@ -53,7 +53,9 @@ export const generateDescription = async (req: Request, res: Response, next: Nex
     
     await prisma.property.update({ // Update Property description, not Listing
         where: { id: propertyId },
-        data: { description },
+        data: { 
+          description: description
+        },
     });
 
     console.log(`[DEBUG] Sending response for propertyId: ${propertyId}`);

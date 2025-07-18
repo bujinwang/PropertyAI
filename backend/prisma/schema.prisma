@@ -160,7 +160,8 @@ model Unit {
   lease               Lease?
   maintenanceRequests MaintenanceRequest[]
   images              UnitImage[] // Relation to unit images
-  listing             Listing?
+  listing             Listing?             @relation(fields: [listingId], references: [id])
+  listingId           String?
   predictiveMaintenance PredictiveMaintenance[]
   appliances          Appliance[]
 
@@ -551,8 +552,7 @@ model Listing {
   updatedAt   DateTime            @updatedAt
   property    Property            @relation(fields: [propertyId], references: [id])
   propertyId  String
-  unit        Unit?               @relation(fields: [unitId], references: [id])
-  unitId      String?             @unique
+  unit        Unit[]
   author      User                @relation(fields: [authorId], references: [id])
   authorId    String
   images      ListingImage[]

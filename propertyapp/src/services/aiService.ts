@@ -16,7 +16,7 @@ export const aiService = {
         bathrooms: parseFloat(propertyData.bathrooms),
         amenities: propertyData.amenities,
         imageUrls: propertyData.images.map(img => img.uri)
-      });
+      }, { timeout: 120000 }); // Set timeout to 120 seconds
       return response;
     } catch (error) {
       console.error('Error generating property description:', error);

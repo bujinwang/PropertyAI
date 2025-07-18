@@ -14,7 +14,7 @@ export const generatePropertyDescription = async (photos: string[], details: any
 
   try {
     const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Gemini API call timed out after 30 seconds')), 30000) // 30 seconds timeout
+      setTimeout(() => reject(new Error('Gemini API call timed out after 120 seconds')), 120000) // 120 seconds timeout
     );
 
     const result = await Promise.race([
@@ -23,19 +23,8 @@ export const generatePropertyDescription = async (photos: string[], details: any
     ]);
     
     const response = await result.response;
-    let text = response.text();
+    const text = response.text();
     console.log('[DEBUG] Raw Gemini API response text:', text);
-
-    // Extract only the first description if multiple are returned
-    // This is a heuristic and might need refinement based on actual Gemini output patterns
-    const descriptions = text.split(/\n\s*\n|\n\*\s*/).filter(d => d.trim() !== '');
-    if (descriptions.length > 0) {
-      text = descriptions[0].trim();
-    } else {
-      text = "A compelling description could not be generated."; // Fallback if no description is found
-    }
-
-    console.log('[DEBUG] Extracted property description:', text);
     return text;
   } catch (error) {
     console.error('[ERROR] Error during Gemini API call:', error);
