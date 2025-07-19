@@ -1,5 +1,5 @@
-import React, { useState, Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { useState, Suspense, lazy, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { ThemeProvider, CssBaseline, Box, Container, CircularProgress } from '@mui/material';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -7,6 +7,11 @@ import './App.css';
 import Header from './components/Header';
 import { handleOAuthLogin } from './services/oauthService';
 import theme from './design-system/theme';
+import { AIErrorBoundary } from './components/error-boundary';
+import { analytics, trackPageView, setUserProperties } from './utils/analytics';
+import { monitoring, setUserContext, addBreadcrumb } from './utils/monitoring';
+import { config, isProduction } from './config/environment';
+import AIPerformanceMonitor from './components/performance/AIPerformanceMonitor';
 
 // Lazy load pages
 const ApplicationsList = lazy(() => import('./pages/ApplicationsList'));
@@ -39,31 +44,65 @@ const SecuritySettingsDashboard = lazy(() => import('./pages/SecuritySettingsDas
 const AccessControlManagementScreen = lazy(() => import('./pages/AccessControlManagementScreen'));
 const CommunityEngagementPortal = lazy(() => import('./pages/CommunityEngagementPortal'));
 const DigitalConciergeScreen = lazy(() => import('./pages/DigitalConciergeScreen'));
+const AIComponentsDemo = lazy(() => import('./pages/AIComponentsDemo'));
 
 const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID_HERE"; // Fallback to placeholder
 
+// Component to track page views
+function PageTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    trackPageView(location.pathname + location.search, document.title);
+    addBreadcrumb(`Navigated to ${location.pathname}`, 'navigation', 'info');
+  }, [location]);
+
+  return null;
+}
+
 function AppContent() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handleDrawerToggle = () => {
     setDrawerOpen(!drawerOpen);
   };
 
+  // Set user context for monitoring when user changes
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      setUserContext({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      });
+      
+      setUserProperties({
+        user_id: user.id,
+        user_role: user.role,
+        environment: config.environment,
+      });
+
+      addBreadcrumb('User authenticated', 'auth', 'info');
+    }
+  }, [isAuthenticated, user]);
+
   return (
     <Router>
-      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-        {isAuthenticated && <Header onMenuToggle={handleDrawerToggle} />}
-        <Container 
-          component="main" 
-          sx={{ 
-            flexGrow: 1, 
-            py: 3,
-            mt: isAuthenticated ? 8 : 0 // Add margin top if authenticated to account for header
-          }}
-        >
-          <Suspense fallback={<Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>}>
-            <Routes>
+      <PageTracker />
+      <AIErrorBoundary>
+        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+          {isAuthenticated && <Header onMenuToggle={handleDrawerToggle} />}
+          <Container 
+            component="main" 
+            sx={{ 
+              flexGrow: 1, 
+              py: 3,
+              mt: isAuthenticated ? 8 : 0 // Add margin top if authenticated to account for header
+            }}
+          >
+            <Suspense fallback={<Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>}>
+              <Routes>
               <Route path="/login" element={<LoginScreen />} />
               <Route element={<ProtectedRoute />}>
                 <Route path="/tenant-screening" element={<ApplicationsList />} />
@@ -96,6 +135,7 @@ function AppContent() {
                 <Route path="/access-control" element={<AccessControlManagementScreen />} />
                 <Route path="/community-engagement" element={<CommunityEngagementPortal />} />
                 <Route path="/digital-concierge" element={<DigitalConciergeScreen />} />
+                <Route path="/ai-components-demo" element={<AIComponentsDemo />} />
                 {/* Add more routes as needed */}
                 <Route path="/" element={
                   <div>
@@ -103,24 +143,49 @@ function AppContent() {
                   </div>
                 } />
               </Route>
-            </Routes>
-          </Suspense>
-        </Container>
-      </Box>
+              </Routes>
+            </Suspense>
+          </Container>
+        </Box>
+        {/* Performance Monitor - Development Only */}
+        <AIPerformanceMonitor />
+      </AIErrorBoundary>
     </Router>
   );
 }
 
 function App() {
+  useEffect(() => {
+    // Initialize monitoring and analytics
+    addBreadcrumb('Application started', 'app', 'info');
+    
+    // Log environment info in development
+    if (!isProduction) {
+      console.log('PropertyFlow AI Dashboard', {
+        version: config.version,
+        environment: config.environment,
+        buildDate: config.buildDate,
+        features: config.features,
+      });
+    }
+
+    // Cleanup monitoring on unmount
+    return () => {
+      monitoring.cleanup();
+    };
+  }, []);
+
   return (
-    <GoogleOAuthProvider clientId={clientId}>
-      <AuthProvider>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <AppContent />
-        </ThemeProvider>
-      </AuthProvider>
-    </GoogleOAuthProvider>
+    <AIErrorBoundary>
+      <GoogleOAuthProvider clientId={clientId}>
+        <AuthProvider>
+          <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <AppContent />
+          </ThemeProvider>
+        </AuthProvider>
+      </GoogleOAuthProvider>
+    </AIErrorBoundary>
   );
 }
 

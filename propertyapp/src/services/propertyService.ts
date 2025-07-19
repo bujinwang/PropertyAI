@@ -16,6 +16,14 @@ interface CreatePropertyRequest {
   amenities?: string[];
   latitude?: number;
   longitude?: number;
+  images?: Array<{
+    url: string;
+    filename: string;
+    originalFilename: string;
+    type: string;
+    size: number;
+    isFeatured: boolean;
+  }>;
 }
 
 interface UpdatePropertyRequest {
@@ -32,6 +40,14 @@ interface UpdatePropertyRequest {
   amenities?: string[];
   latitude?: number;
   longitude?: number;
+  images?: Array<{
+    url: string;
+    filename: string;
+    originalFilename: string;
+    type: string;
+    size: number;
+    isFeatured: boolean;
+  }>;
 }
 
 const getProperties = async (publicAccess = false): Promise<Property[]> => {

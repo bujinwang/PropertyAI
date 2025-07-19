@@ -16,6 +16,18 @@ class PropertyController {
       const properties = await prisma.property.findMany({
         skip: skip ? parseInt(skip as string) : undefined,
         take: take ? parseInt(take as string) : undefined,
+        include: {
+          images: {
+            select: {
+              id: true,
+              url: true,
+              filename: true,
+              originalFilename: true,
+              mimetype: true,
+              isFeatured: true,
+            }
+          }
+        }
       });
       await setCache(cacheKey, properties, 300);
       res.status(200).json(properties);
@@ -26,9 +38,47 @@ class PropertyController {
 
   async createProperty(req: Request, res: Response) {
     try {
-      const property = await prisma.property.create({ data: req.body });
+      const { images, ...propertyData } = req.body;
+      
+      // Create property basic info
+      const property = await prisma.property.create({ data: propertyData });
+
+      // Handle images if provided
+      if (images && Array.isArray(images) && images.length > 0) {
+        const imageData = images.map((image: any, index: number) => ({
+          propertyId: property.id,
+          url: image.url || image.uri,
+          filename: image.filename || image.name,
+          originalFilename: image.originalFilename || image.name,
+          mimetype: image.mimetype || image.type,
+          size: image.size || 0,
+          isFeatured: index === 0, // First image is featured
+        }));
+
+        await prisma.propertyImage.createMany({
+          data: imageData
+        });
+      }
+
+      // Fetch created property with images
+      const createdProperty = await prisma.property.findUnique({
+        where: { id: property.id },
+        include: {
+          images: {
+            select: {
+              id: true,
+              url: true,
+              filename: true,
+              originalFilename: true,
+              mimetype: true,
+              isFeatured: true,
+            }
+          }
+        }
+      });
+
       await clearCache('properties-skip:undefined-take:undefined');
-      res.status(201).json(property);
+      res.status(201).json(createdProperty);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -45,6 +95,18 @@ class PropertyController {
     try {
       const property = await prisma.property.findUnique({
         where: { id: req.params.id },
+        include: {
+          images: {
+            select: {
+              id: true,
+              url: true,
+              filename: true,
+              originalFilename: true,
+              mimetype: true,
+              isFeatured: true,
+            }
+          }
+        }
       });
       if (property) {
         await setCache(cacheKey, property, 300);
@@ -59,13 +121,59 @@ class PropertyController {
 
   async updateProperty(req: Request, res: Response) {
     try {
+      const { images, ...propertyData } = req.body;
+      
+      // Update property basic info
       const property = await prisma.property.update({
         where: { id: req.params.id },
-        data: req.body,
+        data: propertyData,
       });
+
+      // Handle images if provided
+      if (images && Array.isArray(images)) {
+        // Remove existing images
+        await prisma.propertyImage.deleteMany({
+          where: { propertyId: req.params.id }
+        });
+
+        // Add new images
+        if (images.length > 0) {
+          const imageData = images.map((image: any, index: number) => ({
+            propertyId: req.params.id,
+            url: image.url || image.uri,
+            filename: image.filename || image.name,
+            originalFilename: image.originalFilename || image.name,
+            mimetype: image.mimetype || image.type,
+            size: image.size || 0,
+            isFeatured: index === 0, // First image is featured
+          }));
+
+          await prisma.propertyImage.createMany({
+            data: imageData
+          });
+        }
+      }
+
+      // Fetch updated property with images
+      const updatedProperty = await prisma.property.findUnique({
+        where: { id: req.params.id },
+        include: {
+          images: {
+            select: {
+              id: true,
+              url: true,
+              filename: true,
+              originalFilename: true,
+              mimetype: true,
+              isFeatured: true,
+            }
+          }
+        }
+      });
+
       await clearCache(`property-${req.params.id}`);
       await clearCache('properties-skip:undefined-take:undefined');
-      res.status(200).json(property);
+      res.status(200).json(updatedProperty);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

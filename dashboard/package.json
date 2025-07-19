@@ -43,7 +43,15 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint src --ext .ts,.tsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "type-check": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "analyze": "npm run build && node scripts/analyze-bundle.js",
+    "analyze:vite": "npm run build && npx vite-bundle-analyzer build/stats.html"
   },
   "eslintConfig": {
     "extends": [

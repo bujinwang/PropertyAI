@@ -8,3 +8,9 @@ export interface Message {
   sender: 'user' | 'ai';
   sentiment?: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL';
 }
+
+// Re-export AI types for convenience
+export * from './ai';
+
+// Re-export risk assessment types for convenience
+export * from './risk-assessment';

@@ -194,7 +194,14 @@ export function PropertyFormScreen() {
         amenities: values.amenities,
         yearBuilt: parseInt(values.yearBuilt, 10),
         totalUnits: parseInt(values.totalUnits, 10),
-        // images are handled separately
+        images: values.images.map((image, index) => ({
+          url: image.uri,
+          filename: image.name,
+          originalFilename: image.name,
+          type: image.type,
+          size: 0, // Default size since we don't have actual file size
+          isFeatured: index === 0,
+        })),
       };
 
       let response: Property; // Use Property type for response
@@ -212,8 +219,8 @@ export function PropertyFormScreen() {
             text: 'OK',
             onPress: () => {
               if (isEditing) {
-                // Navigate back to property listings after edit
-                navigation.navigate('Main', { screen: 'Properties' });
+                // Simply go back to the previous screen (PropertyList)
+                navigation.goBack();
               } else {
                 // Navigate to property detail for new property
                 navigation.navigate('PropertyDetail', { propertyId: response.id });
@@ -594,7 +601,7 @@ export function PropertyFormScreen() {
                   <Button
                     title={isEditing ? 'Update Property' : 'Create Property'}
                     onPress={() => handleSubmit()}
-                    loading={isLoading}
+                    loading={isSubmitting}
                     style={styles.footerButton}
                   />
                 )}

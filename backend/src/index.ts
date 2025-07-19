@@ -8,19 +8,12 @@ import * as dotenv from 'dotenv';
 import { prisma, connectMongoDB, setupPostgreSQL, setupMongoDB, closeDatabaseConnections } from './config/database';
 import configurePassport from './config/passport';
 import routes from './routes';
-import authRoutes from './routes/authRoutes';
-import aiRoutes from './routes/aiRoutes';
-import propertyDescriptionRoutes from './routes/propertyDescription.routes'; // New import
-import publishingRoutes from './routes/publishingRoutes';
+// Import only routes that are NOT in the centralized routes file
 import socialMediaRoutes from './routes/socialMediaRoutes';
 import photoRoutes from './routes/photoRoutes';
-import seoRoutes from './routes/seoRoutes';
 import voiceRoutes from './routes/voiceRoutes';
 import aiRoutingRoutes from './routes/aiRouting.routes';
-import predictiveMaintenanceRoutes from './routes/predictiveMaintenance.routes';
 import costEstimationRoutes from './routes/costEstimation.routes';
-import vendorPerformanceRoutes from './routes/vendorPerformance.routes';
-import photoAnalysisRoutes from './routes/photoAnalysis.routes';
 import maintenanceRequestCategorizationRoutes from './routes/maintenanceRequestCategorization.routes';
 import emergencyRoutingRoutes from './routes/emergencyRouting.routes';
 import maintenanceResponseTimeRoutes from './routes/maintenanceResponseTime.routes';
@@ -31,11 +24,9 @@ import expenseCategorizationRoutes from './routes/expenseCategorization.routes';
 import cashFlowForecastingRoutes from './routes/cashFlowForecasting.routes';
 import roiRoutes from './routes/roi.routes';
 import taxDocumentRoutes from './routes/taxDocument.routes';
-import paymentRoutes from './routes/payment.routes';
 import documentRoutes from './routes/document.routes';
 import legalNoticeRoutes from './routes/legalNotice.routes';
 import signatureRoutes from './routes/signature.routes';
-import knowledgeBaseRoutes from './routes/knowledgeBase.routes';
 import applianceRoutes from './routes/appliance.routes';
 import businessHoursRoutes from './routes/businessHours.routes';
 import emergencyProtocolRoutes from './routes/emergencyProtocol.routes';
@@ -68,8 +59,10 @@ const PORT = process.env.PORT || 3001;
 // Global server reference for graceful shutdown (moved to top)
 let globalServer: http.Server | null = null;
 
-// Middleware
+// Middleware - Order is important!
 app.use(helmet()); // Security headers
+
+// CORS configuration
 app.use(cors({
   origin: [
     'http://localhost:3000', // Dashboard
@@ -82,9 +75,20 @@ app.use(cors({
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
-})); // CORS configuration
-app.use(express.json({ limit: '50mb' })); // Parse JSON bodies with increased limit
-app.use(express.urlencoded({ extended: true, limit: '50mb' })); // Parse URL-encoded bodies with increased limit
+}));
+
+// Body parser configuration - MUST be before routes
+// Enhanced configuration to handle large payloads
+app.use(express.json({ 
+  limit: '100mb',
+  parameterLimit: 50000,
+  type: ['application/json', 'text/plain']
+})); // Parse JSON bodies with increased limit
+app.use(express.urlencoded({ 
+  extended: true, 
+  limit: '100mb',
+  parameterLimit: 50000
+})); // Parse URL-encoded bodies with increased limit
 
 // Configure express-session
 app.use(session({
@@ -106,24 +110,16 @@ configurePassport();
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Register API routes
+// First, use the centralized routes (includes /api prefix)
 app.use(routes);
-app.use('/api/auth', authRoutes);
-app.use('/api/ai', aiRoutes);
-app.use('/api/ai/properties', propertyDescriptionRoutes); // New route mounting
-app.use('/api/publishing', publishingRoutes);
+
+// Then add routes that are NOT in the centralized routes file
 app.use('/api/social-media', socialMediaRoutes);
 app.use('/api/photo', photoRoutes);
-app.use('/api/seo', seoRoutes);
 app.use('/api/voice', voiceRoutes);
 app.use('/api/ai-routing', aiRoutingRoutes);
-app.use('/api/predictive-maintenance', predictiveMaintenanceRoutes);
 app.use('/api/cost-estimation', costEstimationRoutes);
-app.use('/api/vendor-performance', vendorPerformanceRoutes);
-app.use('/api/photo-analysis', photoAnalysisRoutes);
-app.use(
-  '/api/maintenance-request-categorization',
-  maintenanceRequestCategorizationRoutes
-);
+app.use('/api/maintenance-request-categorization', maintenanceRequestCategorizationRoutes);
 app.use('/api/emergency-routing', emergencyRoutingRoutes);
 app.use('/api/maintenance-response-time', maintenanceResponseTimeRoutes);
 app.use('/api/scheduling', schedulingRoutes);
@@ -133,11 +129,9 @@ app.use('/api/expense-categorization', expenseCategorizationRoutes);
 app.use('/api/cash-flow-forecasting', cashFlowForecastingRoutes);
 app.use('/api/roi', roiRoutes);
 app.use('/api/tax-document', taxDocumentRoutes);
-app.use('/api/payment', paymentRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/legal-notices', legalNoticeRoutes);
 app.use('/api/signatures', signatureRoutes);
-app.use('/api/knowledge-base', knowledgeBaseRoutes);
 app.use('/api/appliances', applianceRoutes);
 app.use('/api/business-hours', businessHoursRoutes);
 app.use('/api/emergency-protocols', emergencyProtocolRoutes);
@@ -155,6 +149,14 @@ app.use('/api/conversations', conversationRoutes);
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   if (err.name === 'RateLimitExceeded') {
     console.warn(`Rate limit exceeded for IP ${req.ip}: ${err.message}`);
+  } else if (err.type === 'entity.too.large') {
+    console.error('Payload too large error:', err);
+    return res.status(413).json({
+      status: 'error',
+      message: 'Request payload too large. Maximum allowed size is 100MB.',
+      limit: '100MB',
+      received: err.length ? `${Math.round(err.length / 1024)}KB` : 'unknown'
+    });
   } else {
     console.error('Unhandled error:', err);
   }
