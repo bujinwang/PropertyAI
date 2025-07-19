@@ -7,6 +7,9 @@ export { RiskAssessmentDashboard } from './RiskAssessmentDashboard';
 export { SummaryMetrics } from './SummaryMetrics';
 export { ApplicantList } from './ApplicantList';
 export { RiskLevelIndicator } from './RiskLevelIndicator';
+export { RiskFactorBreakdown } from './RiskFactorBreakdown';
+export { ApplicantComparison } from './ApplicantComparison';
+export { AccessibilityEnhancements, SkipNavigation, KeyboardInstructions } from './AccessibilityEnhancements';
 
 // Re-export types for convenience
 export type {
@@ -14,6 +17,8 @@ export type {
   SummaryMetricsProps,
   ApplicantListProps,
   RiskLevelIndicatorProps,
+  RiskFactorBreakdownProps,
+  ApplicantComparisonProps,
   RiskAssessment,
   Applicant,
   RiskAssessmentMetrics,

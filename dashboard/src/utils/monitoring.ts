@@ -53,7 +53,7 @@ class MonitoringService {
   }
 
   private initializeSentry() {
-    if (!config.monitoring.sentryDsn) {
+    if (!config.monitoring.sentry.dsn) {
       debugLog('Sentry DSN not configured');
       return;
     }
@@ -75,7 +75,7 @@ class MonitoringService {
   }
 
   private initializePerformanceObserver() {
-    if (!config.monitoring.performanceMonitoring) {
+    if (!config.performance.memoryMonitoring) {
       return;
     }
 
@@ -208,7 +208,7 @@ class MonitoringService {
     }
 
     try {
-      await fetch(`${config.apiBaseUrl}/monitoring/errors`, {
+      await fetch(`${config.api.baseUrl}/monitoring/errors`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -227,7 +227,7 @@ class MonitoringService {
     }
 
     try {
-      await fetch(`${config.apiBaseUrl}/monitoring/performance`, {
+      await fetch(`${config.api.baseUrl}/monitoring/performance`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -263,7 +263,7 @@ class MonitoringService {
       timestamp: error.timestamp || new Date().toISOString(),
       userAgent: error.userAgent || navigator.userAgent,
       url: error.url || window.location.href,
-      userId: error.userId || this.getUserId(),
+      userId: error.userId || this.getUserId() || undefined,
       environment: config.environment,
       version: config.version,
       severity: error.severity || 'medium',
@@ -285,7 +285,7 @@ class MonitoringService {
    * Report a performance metric
    */
   reportPerformance(metric: Partial<PerformanceReport>) {
-    if (!this.initialized || !config.monitoring.performanceMonitoring) {
+    if (!this.initialized || !config.performance.memoryMonitoring) {
       return;
     }
 

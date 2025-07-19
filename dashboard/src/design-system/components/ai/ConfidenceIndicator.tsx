@@ -8,6 +8,13 @@ import {
 } from '@mui/material';
 import { ConfidenceIndicatorProps } from '../../../types/ai';
 import ExplanationTooltip from './ExplanationTooltip';
+import { 
+  useConfidenceLevel, 
+  useConfidenceColor, 
+  useAIExplanation,
+  useAIPerformanceMonitor,
+  useCachedAICalculation
+} from '../../../utils/ai-performance';
 
 const ConfidenceIndicator: React.FC<ConfidenceIndicatorProps> = memo(({ 
   confidence,
@@ -19,19 +26,12 @@ const ConfidenceIndicator: React.FC<ConfidenceIndicatorProps> = memo(({
   showNumericalScore = true,
   ...props 
 }) => {
-  // Memoize expensive calculations
-  const confidenceLevel = useMemo(() => {
-    if (confidence >= 80) return 'high';
-    if (confidence >= 60) return 'medium';
-    return 'low';
-  }, [confidence]);
+  // Performance monitoring
+  const { startRender, endRender, startCalculation, endCalculation } = useAIPerformanceMonitor('ConfidenceIndicator');
 
-  const confidenceColor = useMemo(() => {
-    if (!colorCoded) return 'primary';
-    if (confidence >= 80) return 'success';
-    if (confidence >= 60) return 'warning';
-    return 'error';
-  }, [confidence, colorCoded]);
+  // Use optimized hooks for calculations
+  const confidenceLevel = useConfidenceLevel(confidence);
+  const confidenceColor = useConfidenceColor(confidence, colorCoded);
 
   const sizeProps = useMemo(() => {
     switch (size) {
@@ -61,22 +61,15 @@ const ConfidenceIndicator: React.FC<ConfidenceIndicatorProps> = memo(({
 
   const { height, circularSize, typography, chipSize } = sizeProps;
 
-  const progressBarColor = useMemo(() => {
-    return confidence >= 80 ? '#4caf50' : confidence >= 60 ? '#ff9800' : '#f44336';
-  }, [confidence]);
+  // Cache expensive color calculations
+  const progressBarColor = useCachedAICalculation(
+    'progressBarColor',
+    () => confidence >= 80 ? '#4caf50' : confidence >= 60 ? '#ff9800' : '#f44336',
+    [confidence]
+  );
 
-  const defaultExplanation = useMemo(() => {
-    const level = confidenceLevel;
-    const baseExplanation = `This AI prediction has a ${level} confidence level (${Math.round(confidence)}%).`;
-    
-    if (level === 'high') {
-      return `${baseExplanation} The model is very confident in this prediction based on strong data patterns and high-quality input data. This prediction is highly reliable.`;
-    } else if (level === 'medium') {
-      return `${baseExplanation} The model has moderate confidence in this prediction. While generally reliable, consider reviewing additional factors or seeking expert validation for critical decisions.`;
-    } else {
-      return `${baseExplanation} The model has low confidence in this prediction due to limited data or conflicting patterns. Manual review and expert validation are strongly recommended before making decisions.`;
-    }
-  }, [confidence, confidenceLevel]);
+  // Use optimized explanation hook
+  const defaultExplanation = useAIExplanation(confidence, explanation);
 
   const renderLinearIndicator = () => (
     <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
@@ -153,8 +146,10 @@ const ConfidenceIndicator: React.FC<ConfidenceIndicatorProps> = memo(({
     </Box>
   );
 
-  const renderIndicator = () => {
+  const renderIndicator = useMemo(() => {
+    startCalculation();
     const indicator = variant === 'circular' ? renderCircularIndicator() : renderLinearIndicator();
+    endCalculation();
     
     if (showTooltip) {
       const tooltipContent = explanation || defaultExplanation;
@@ -173,13 +168,21 @@ const ConfidenceIndicator: React.FC<ConfidenceIndicatorProps> = memo(({
     }
     
     return indicator;
-  };
+  }, [variant, showTooltip, explanation, defaultExplanation, renderCircularIndicator, renderLinearIndicator, startCalculation, endCalculation]);
 
 
+
+  // Track render performance
+  React.useEffect(() => {
+    startRender();
+    return () => {
+      endRender();
+    };
+  });
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-      {renderIndicator()}
+      {renderIndicator}
       {colorCoded && (
         <Chip
           label={confidenceLevel}

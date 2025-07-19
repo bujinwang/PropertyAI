@@ -8,6 +8,14 @@
 const fs = require('fs');
 const path = require('path');
 
+// Try to load gzip-size for compression analysis
+let gzipSize;
+try {
+  gzipSize = require('gzip-size');
+} catch (e) {
+  console.log('📝 Note: Install gzip-size for compression analysis: npm install --save-dev gzip-size');
+}
+
 // Bundle size thresholds (in KB)
 const BUNDLE_THRESHOLDS = {
   WARNING: 250,
@@ -56,13 +64,32 @@ function analyzeBundleSize() {
   
   if (jsFiles.length > 0) {
     console.log('📦 JavaScript Bundles:');
-    jsFiles.forEach(file => {
+    for (const file of jsFiles) {
       const filePath = path.join(assetsDir, file);
       const stats = fs.statSync(filePath);
       const sizeKB = Math.round(stats.size / 1024);
       totalSize += sizeKB;
 
+      let gzippedInfo = '';
+      if (gzipSize) {
+        try {
+          const content = fs.readFileSync(filePath, 'utf8');
+          const gzipped = gzipSize.sync(content);
+          const gzippedKB = Math.round(gzipped / 1024);
+          gzippedInfo = ` (${gzippedKB}KB gzipped)`;
+        } catch (e) {
+          // Ignore gzip errors
+        }
+      }
+
       let status = '✅';
+      let aiFlag = '';
+      
+      // Check if this is an AI component bundle
+      if (file.includes('ai-') || file.includes('AI')) {
+        aiFlag = '🤖 ';
+      }
+      
       if (sizeKB > BUNDLE_THRESHOLDS.ERROR) {
         status = '❌';
         errors.push(`${file}: ${sizeKB}KB (exceeds ${BUNDLE_THRESHOLDS.ERROR}KB limit)`);
@@ -71,8 +98,8 @@ function analyzeBundleSize() {
         warnings.push(`${file}: ${sizeKB}KB (exceeds ${BUNDLE_THRESHOLDS.WARNING}KB warning)`);
       }
 
-      console.log(`  ${status} ${file}: ${sizeKB}KB`);
-    });
+      console.log(`  ${status} ${aiFlag}${file}: ${sizeKB}KB${gzippedInfo}`);
+    }
   }
 
   if (cssFiles.length > 0) {

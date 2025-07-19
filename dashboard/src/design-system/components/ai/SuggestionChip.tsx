@@ -16,6 +16,11 @@ import {
   Feedback 
 } from '@mui/icons-material';
 import { SuggestionChipProps, AIFeedback } from '../../../types/ai';
+import { 
+  useDebouncedAIFeedback, 
+  useAIPerformanceMonitor,
+  useCachedAICalculation
+} from '../../../utils/ai-performance';
 
 const SuggestionChip: React.FC<SuggestionChipProps> = memo(({ 
   label,
@@ -30,6 +35,9 @@ const SuggestionChip: React.FC<SuggestionChipProps> = memo(({
   const [feedbackComment, setFeedbackComment] = useState('');
   const [submittedFeedback, setSubmittedFeedback] = useState<'positive' | 'negative' | null>(null);
 
+  // Performance monitoring
+  const { startRender, endRender } = useAIPerformanceMonitor('SuggestionChip');
+
   const handleFeedbackClick = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   }, []);
@@ -39,6 +47,15 @@ const SuggestionChip: React.FC<SuggestionChipProps> = memo(({
     setFeedbackComment('');
   }, []);
 
+  // Use debounced feedback to prevent rapid submissions
+  const debouncedFeedback = useDebouncedAIFeedback(async (feedback: AIFeedback) => {
+    try {
+      await onFeedback?.(feedback);
+    } catch (error) {
+      console.error('Failed to submit feedback:', error);
+    }
+  }, 300);
+
   const handleSubmitFeedback = useCallback(async (type: 'positive' | 'negative') => {
     const feedback: AIFeedback = {
       type,
@@ -46,38 +63,49 @@ const SuggestionChip: React.FC<SuggestionChipProps> = memo(({
       timestamp: new Date(),
     };
     
-    try {
-      // Call the feedback handler which should handle API integration
-      await onFeedback?.(feedback);
-      setSubmittedFeedback(type);
-      handleFeedbackClose();
-    } catch (error) {
-      console.error('Failed to submit feedback:', error);
-      // Could add error state handling here
-    }
-  }, [feedbackComment, onFeedback, handleFeedbackClose]);
+    debouncedFeedback(feedback);
+    setSubmittedFeedback(type);
+    handleFeedbackClose();
+  }, [feedbackComment, debouncedFeedback, handleFeedbackClose]);
 
   const open = Boolean(anchorEl);
 
-  const chipColor = useMemo(() => {
-    if (submittedFeedback === 'positive') return 'success';
-    if (submittedFeedback === 'negative') return 'error';
-    return 'primary';
-  }, [submittedFeedback]);
+  // Cache expensive calculations
+  const chipColor = useCachedAICalculation(
+    'chipColor',
+    () => {
+      if (submittedFeedback === 'positive') return 'success';
+      if (submittedFeedback === 'negative') return 'error';
+      return 'primary';
+    },
+    [submittedFeedback]
+  );
 
-  const chipLabel = useMemo(() => {
-    let baseLabel = label;
-    
-    if (confidence !== undefined) {
-      baseLabel += ` (${Math.round(confidence)}%)`;
-    }
-    
-    if (submittedFeedback) {
-      baseLabel += submittedFeedback === 'positive' ? ' ✓' : ' ✗';
-    }
-    
-    return baseLabel;
-  }, [label, confidence, submittedFeedback]);
+  const chipLabel = useCachedAICalculation(
+    'chipLabel',
+    () => {
+      let baseLabel = label;
+      
+      if (confidence !== undefined) {
+        baseLabel += ` (${Math.round(confidence)}%)`;
+      }
+      
+      if (submittedFeedback) {
+        baseLabel += submittedFeedback === 'positive' ? ' ✓' : ' ✗';
+      }
+      
+      return baseLabel;
+    },
+    [label, confidence, submittedFeedback]
+  );
+
+  // Track render performance
+  React.useEffect(() => {
+    startRender();
+    return () => {
+      endRender();
+    };
+  });
 
   return (
     <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>

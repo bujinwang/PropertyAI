@@ -309,6 +309,7 @@ const AutomatedResponseSettings: React.FC<AutomatedResponseSettingsProps> = ({
                           size="small"
                           onClick={() => handleEditRule(rule)}
                           disabled={isLoading}
+                          aria-label={`Edit escalation rule ${rule.id}`}
                         >
                           <EditIcon fontSize="small" />
                         </IconButton>
@@ -317,6 +318,7 @@ const AutomatedResponseSettings: React.FC<AutomatedResponseSettingsProps> = ({
                           onClick={() => handleDeleteRule(rule.id)}
                           disabled={isLoading}
                           color="error"
+                          aria-label={`Delete escalation rule ${rule.id}`}
                         >
                           <DeleteIcon fontSize="small" />
                         </IconButton>

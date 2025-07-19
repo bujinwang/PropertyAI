@@ -24,34 +24,54 @@ export default defineConfig(({ command, mode }) => {
       } : undefined,
       rollupOptions: {
         output: {
-          manualChunks: {
-            vendor: ['react', 'react-dom'],
-            mui: ['@mui/material', '@mui/icons-material'],
-            charts: ['chart.js', 'react-chartjs-2'],
-            router: ['react-router-dom'],
-            // AI components optimization
-            'ai-core': [
-              './src/design-system/components/ai/AIGeneratedContent',
-              './src/design-system/components/ai/ConfidenceIndicator',
-              './src/design-system/components/ai/SuggestionChip',
-              './src/design-system/components/ai/ExplanationTooltip',
-              './src/design-system/components/ai/LoadingStateIndicator',
-            ],
-            'ai-screens': [
-              './src/pages/AICommunicationTrainingScreen',
-              './src/pages/AIRiskAssessmentDashboard',
-              './src/pages/EmergencyResponseCenterScreen',
-              './src/pages/AIPersonalizationDashboard',
-              './src/pages/DocumentVerificationStatusScreen',
-              './src/pages/BuildingHealthMonitorScreen',
-              './src/pages/AIInsightsDashboard',
-              './src/pages/MarketIntelligenceScreen',
-            ],
-            'ai-utils': [
-              './src/utils/ai-performance',
-              './src/utils/analytics',
-              './src/utils/monitoring',
-            ],
+          manualChunks: (id) => {
+            // Vendor chunks
+            if (id.includes('node_modules')) {
+              if (id.includes('react') || id.includes('react-dom')) {
+                return 'vendor-react';
+              }
+              if (id.includes('@mui')) {
+                return 'vendor-mui';
+              }
+              if (id.includes('chart.js') || id.includes('react-chartjs-2')) {
+                return 'vendor-charts';
+              }
+              if (id.includes('react-router')) {
+                return 'vendor-router';
+              }
+              if (id.includes('lodash')) {
+                return 'vendor-utils';
+              }
+              return 'vendor-other';
+            }
+            
+            // AI component chunks
+            if (id.includes('/design-system/components/ai/')) {
+              return 'ai-core';
+            }
+            if (id.includes('/components/risk-assessment/') || 
+                id.includes('/components/communication-training/') ||
+                id.includes('/components/emergency-response/')) {
+              return 'ai-components';
+            }
+            if (id.includes('/pages/') && (
+                id.includes('AI') || 
+                id.includes('Risk') || 
+                id.includes('Emergency') ||
+                id.includes('Market') ||
+                id.includes('Building') ||
+                id.includes('Document')
+            )) {
+              return 'ai-screens';
+            }
+            if (id.includes('/utils/ai-performance') || 
+                id.includes('/utils/analytics') || 
+                id.includes('/utils/monitoring')) {
+              return 'ai-utils';
+            }
+            
+            // Default chunk
+            return 'main';
           },
         },
         // Tree shaking optimization

@@ -1,15 +1,31 @@
 /**
- * Performance utilities for AI components
- * Provides memoization, caching, and optimization helpers for AI-related calculations
+ * AI Performance Optimization Utilities
+ * Provides memoization, lazy loading, and performance monitoring for AI components
  */
 
-import { useMemo, useCallback, useRef, useEffect } from 'react';
+import React, { useMemo, useCallback, useRef, useEffect } from 'react';
+import { debounce, throttle } from 'lodash-es';
 
-// Memoization cache for expensive AI calculations
-const aiCalculationCache = new Map<string, any>();
+// Performance monitoring types
+export interface AIPerformanceMetrics {
+  componentName: string;
+  renderTime: number;
+  calculationTime: number;
+  memoryUsage?: number;
+  timestamp: number;
+}
 
-// Cache size limit to prevent memory leaks
-const CACHE_SIZE_LIMIT = 1000;
+export interface AICalculationCache {
+  [key: string]: {
+    result: any;
+    timestamp: number;
+    ttl: number;
+  };
+}
+
+// Global cache for expensive AI calculations
+const aiCalculationCache: AICalculationCache = {};
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 /**
  * Memoized confidence level calculation
@@ -35,183 +51,228 @@ export const useConfidenceColor = (confidence: number, colorCoded: boolean = tru
 };
 
 /**
- * Cached AI calculation hook with automatic cleanup
+ * Cached AI calculation hook with TTL
  */
 export const useCachedAICalculation = <T>(
   key: string,
-  calculation: () => T,
-  dependencies: any[]
+  calculationFn: () => T,
+  dependencies: any[],
+  ttl: number = CACHE_TTL
 ): T => {
   return useMemo(() => {
-    const cacheKey = `${key}-${JSON.stringify(dependencies)}`;
+    const cacheKey = `${key}_${JSON.stringify(dependencies)}`;
+    const cached = aiCalculationCache[cacheKey];
     
-    if (aiCalculationCache.has(cacheKey)) {
-      return aiCalculationCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < cached.ttl) {
+      return cached.result;
     }
     
-    const result = calculation();
+    const result = calculationFn();
+    aiCalculationCache[cacheKey] = {
+      result,
+      timestamp: Date.now(),
+      ttl,
+    };
     
-    // Implement LRU cache cleanup
-    if (aiCalculationCache.size >= CACHE_SIZE_LIMIT) {
-      const firstKey = aiCalculationCache.keys().next().value;
-      if (firstKey) {
-        aiCalculationCache.delete(firstKey);
-      }
-    }
-    
-    aiCalculationCache.set(cacheKey, result);
     return result;
   }, dependencies);
 };
 
 /**
- * Debounced AI feedback submission
+ * Debounced callback for AI feedback submissions
  */
 export const useDebouncedAIFeedback = (
-  onFeedback: (feedback: any) => void,
+  callback: (feedback: any) => void,
   delay: number = 300
 ) => {
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  return useCallback((feedback: any) => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
+  return useCallback(
+    debounce(callback, delay),
+    [callback, delay]
+  );
+};
+
+/**
+ * Throttled callback for AI real-time updates
+ */
+export const useThrottledAIUpdate = (
+  callback: (data: any) => void,
+  delay: number = 1000
+) => {
+  return useCallback(
+    throttle(callback, delay),
+    [callback, delay]
+  );
+};
+
+/**
+ * Performance monitoring hook for AI components
+ */
+export const useAIPerformanceMonitor = (componentName: string) => {
+  const renderStartTime = useRef<number>(0);
+  const calculationStartTime = useRef<number>(0);
+
+  const startRender = useCallback(() => {
+    renderStartTime.current = performance.now();
+  }, []);
+
+  const endRender = useCallback(() => {
+    const renderTime = performance.now() - renderStartTime.current;
+    
+    // Report performance metrics
+    const metrics: AIPerformanceMetrics = {
+      componentName,
+      renderTime,
+      calculationTime: 0,
+      timestamp: Date.now(),
+    };
+    
+    // Send to analytics if available
+    if (typeof window !== 'undefined' && (window as any).gtag) {
+      (window as any).gtag('event', 'ai_component_performance', {
+        component_name: componentName,
+        render_time: renderTime,
+      });
     }
     
-    timeoutRef.current = setTimeout(() => {
-      onFeedback(feedback);
-    }, delay);
-  }, [onFeedback, delay]);
+    return metrics;
+  }, [componentName]);
+
+  const startCalculation = useCallback(() => {
+    calculationStartTime.current = performance.now();
+  }, []);
+
+  const endCalculation = useCallback(() => {
+    return performance.now() - calculationStartTime.current;
+  }, []);
+
+  return {
+    startRender,
+    endRender,
+    startCalculation,
+    endCalculation,
+  };
 };
 
 /**
- * Performance monitoring for AI components
+ * Simple performance monitoring hook for AI components
+ * Alias for useAIPerformanceMonitor for backward compatibility
  */
 export const useAIComponentPerformance = (componentName: string) => {
-  const renderStartTime = useRef<number | undefined>(undefined);
-  const renderCount = useRef<number>(0);
-  
   useEffect(() => {
-    renderStartTime.current = performance.now();
-    renderCount.current += 1;
+    const startTime = performance.now();
     
     return () => {
-      if (renderStartTime.current) {
-        const renderTime = performance.now() - renderStartTime.current;
-        
-        // Log performance metrics in development
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`AI Component Performance - ${componentName}:`, {
-            renderTime: `${renderTime.toFixed(2)}ms`,
-            renderCount: renderCount.current,
-          });
-        }
-        
-        // Send to analytics in production (if available)
-        if (process.env.NODE_ENV === 'production' && window.gtag) {
-          window.gtag('event', 'ai_component_render', {
-            component_name: componentName,
-            render_time: Math.round(renderTime),
-            render_count: renderCount.current,
-          });
-        }
+      const endTime = performance.now();
+      const renderTime = endTime - startTime;
+      
+      // Send to analytics if available
+      if (typeof window !== 'undefined' && (window as any).gtag) {
+        (window as any).gtag('event', 'ai_component_performance', {
+          component_name: componentName,
+          render_time: renderTime,
+        });
       }
     };
-  });
+  }, [componentName]);
 };
 
 /**
- * Optimized AI explanation generator with caching
+ * Memory-efficient AI explanation generator
  */
 export const useAIExplanation = (
   confidence: number,
   customExplanation?: string
 ) => {
-  return useCachedAICalculation(
-    'ai-explanation',
-    () => {
-      if (customExplanation) return customExplanation;
-      
-      const level = confidence >= 80 ? 'high' : confidence >= 60 ? 'medium' : 'low';
-      const baseExplanation = `This AI prediction has a ${level} confidence level (${Math.round(confidence)}%).`;
-      
-      if (level === 'high') {
-        return `${baseExplanation} The model is very confident in this prediction based on strong data patterns and high-quality input data. This prediction is highly reliable.`;
-      } else if (level === 'medium') {
-        return `${baseExplanation} The model has moderate confidence in this prediction. While generally reliable, consider reviewing additional factors or seeking expert validation for critical decisions.`;
-      } else {
-        return `${baseExplanation} The model has low confidence in this prediction due to limited data or conflicting patterns. Manual review and expert validation are strongly recommended before making decisions.`;
-      }
-    },
-    [confidence, customExplanation]
-  );
-};
-
-/**
- * Batch AI operations for better performance
- */
-export const useBatchedAIOperations = <T>(
-  operations: (() => T)[],
-  batchSize: number = 5
-) => {
   return useMemo(() => {
-    const batches: (() => T)[][] = [];
+    if (customExplanation) return customExplanation;
     
-    for (let i = 0; i < operations.length; i += batchSize) {
-      batches.push(operations.slice(i, i + batchSize));
+    const level = confidence >= 80 ? 'high' : confidence >= 60 ? 'medium' : 'low';
+    const baseExplanation = `This AI prediction has a ${level} confidence level (${Math.round(confidence)}%).`;
+    
+    switch (level) {
+      case 'high':
+        return `${baseExplanation} The model is very confident in this prediction based on strong data patterns and high-quality input data. This prediction is highly reliable.`;
+      case 'medium':
+        return `${baseExplanation} The model has moderate confidence in this prediction. While generally reliable, consider reviewing additional factors or seeking expert validation for critical decisions.`;
+      case 'low':
+        return `${baseExplanation} The model has low confidence in this prediction due to limited data or conflicting patterns. Manual review and expert validation are strongly recommended before making decisions.`;
+      default:
+        return baseExplanation;
     }
-    
-    return batches.map(batch => 
-      batch.map(operation => operation())
-    );
-  }, [operations, batchSize]);
+  }, [confidence, customExplanation]);
 };
 
 /**
- * AI component visibility optimization
+ * Optimized AI component props memoization
  */
-export const useAIComponentVisibility = (threshold: number = 0.1) => {
-  const elementRef = useRef<HTMLElement>(null);
-  const isVisible = useRef<boolean>(false);
-  
-  useEffect(() => {
-    const element = elementRef.current;
-    if (!element) return;
-    
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        isVisible.current = entry.isIntersecting;
-      },
-      { threshold }
-    );
-    
-    observer.observe(element);
-    
-    return () => observer.disconnect();
-  }, [threshold]);
-  
-  return { elementRef, isVisible: isVisible.current };
+export const useOptimizedAIProps = <T extends Record<string, any>>(props: T): T => {
+  return useMemo(() => {
+    // Deep clone props to prevent reference issues
+    return JSON.parse(JSON.stringify(props));
+  }, [JSON.stringify(props)]);
 };
 
 /**
- * Clear AI calculation cache (useful for memory management)
+ * Cache cleanup utility
  */
-export const clearAICache = () => {
-  aiCalculationCache.clear();
+export const cleanupAICache = () => {
+  const now = Date.now();
+  Object.keys(aiCalculationCache).forEach(key => {
+    const cached = aiCalculationCache[key];
+    if (now - cached.timestamp > cached.ttl) {
+      delete aiCalculationCache[key];
+    }
+  });
 };
 
 /**
- * Get AI cache statistics
+ * Initialize cache cleanup interval
  */
-export const getAICacheStats = () => ({
-  size: aiCalculationCache.size,
-  limit: CACHE_SIZE_LIMIT,
-  usage: (aiCalculationCache.size / CACHE_SIZE_LIMIT) * 100,
-});
-
-// Type definitions for performance monitoring
-declare global {
-  interface Window {
-    gtag?: (...args: any[]) => void;
+export const initializeAICacheCleanup = () => {
+  if (typeof window !== 'undefined') {
+    setInterval(cleanupAICache, 60000); // Cleanup every minute
   }
-}
+};
+
+/**
+ * Lazy loading utility for AI components
+ */
+export const createLazyAIComponent = <T extends React.ComponentType<any>>(
+  importFn: () => Promise<{ default: T }>,
+  fallback?: React.ComponentType
+) => {
+  const LazyComponent = React.lazy(importFn);
+  
+  return React.forwardRef<any, React.ComponentProps<T>>((props, ref) => {
+    const fallbackElement = fallback ? React.createElement(fallback) : React.createElement('div', {}, 'Loading...');
+    
+    return React.createElement(
+      React.Suspense,
+      { fallback: fallbackElement },
+      React.createElement(LazyComponent, { ...props, ref })
+    );
+  });
+};
+
+/**
+ * Bundle size optimization - tree-shakeable exports
+ */
+export {
+  // Core hooks
+  useConfidenceLevel,
+  useConfidenceColor,
+  useCachedAICalculation,
+  useAIExplanation,
+  useOptimizedAIProps,
+  
+  // Performance hooks
+  useAIPerformanceMonitor,
+  useAIComponentPerformance,
+  useDebouncedAIFeedback,
+  useThrottledAIUpdate,
+  
+  // Utilities
+  cleanupAICache,
+  initializeAICacheCleanup,
+  createLazyAIComponent,
+};

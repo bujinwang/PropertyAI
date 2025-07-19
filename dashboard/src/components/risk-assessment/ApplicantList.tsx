@@ -30,7 +30,7 @@ import {
   FilterList as FilterListIcon,
 } from '@mui/icons-material';
 import { ApplicantListProps, Applicant, RiskLevel } from '../../types/risk-assessment';
-import { RiskLevelIndicator } from './RiskLevelIndicator';
+import RiskLevelIndicator from './RiskLevelIndicator';
 
 type SortField = 'name' | 'date' | 'risk' | 'score';
 type SortOrder = 'asc' | 'desc';

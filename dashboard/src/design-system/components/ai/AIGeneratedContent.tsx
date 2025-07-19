@@ -20,6 +20,12 @@ import {
 } from '@mui/icons-material';
 import { AIGeneratedContentProps, AIFeedback } from '../../../types/ai';
 import ExplanationTooltip from './ExplanationTooltip';
+import { 
+  useConfidenceColor, 
+  useDebouncedAIFeedback, 
+  useAIPerformanceMonitor,
+  useOptimizedAIProps
+} from '../../../utils/ai-performance';
 
 const AIGeneratedContent: React.FC<AIGeneratedContentProps> = memo(({ 
   children, 
@@ -35,28 +41,42 @@ const AIGeneratedContent: React.FC<AIGeneratedContentProps> = memo(({
   const [feedbackComment, setFeedbackComment] = useState('');
   const [submittedFeedback, setSubmittedFeedback] = useState<'positive' | 'negative' | null>(null);
 
-  // Memoize expensive calculations
-  const confidenceColor = useMemo(() => {
+  // Performance monitoring
+  const { startRender, endRender } = useAIPerformanceMonitor('AIGeneratedContent');
+  
+  // Optimize props to prevent unnecessary re-renders
+  const optimizedProps = useOptimizedAIProps({ variant, showLabel, className, ...props });
+
+  // Memoize expensive calculations using performance utilities
+  const confidenceColor = useConfidenceColor(confidence || 0, true);
+  
+  // Convert to MUI color format
+  const muiConfidenceColor = useMemo(() => {
     if (confidence === undefined) return 'primary.main';
-    if (confidence >= 80) return 'success.main';
-    if (confidence >= 60) return 'warning.main';
+    if (confidenceColor === 'success') return 'success.main';
+    if (confidenceColor === 'warning') return 'warning.main';
     return 'error.main';
-  }, [confidence]);
+  }, [confidence, confidenceColor]);
 
   const paperSx = useMemo(() => ({
     p: 2,
     position: 'relative',
-    ...(variant === 'outlined' && {
+    ...(optimizedProps.variant === 'outlined' && {
       border: '2px solid',
       borderColor: 'primary.main',
       backgroundColor: alpha('#1976d2', 0.02),
     }),
-    ...(variant === 'filled' && {
+    ...(optimizedProps.variant === 'filled' && {
       backgroundColor: alpha('#1976d2', 0.08),
       borderLeft: '4px solid',
       borderColor: 'primary.main',
     }),
-  }), [variant]);
+  }), [optimizedProps.variant]);
+
+  // Use debounced feedback to prevent rapid submissions
+  const debouncedFeedback = useDebouncedAIFeedback((feedback: AIFeedback) => {
+    onFeedback?.(feedback);
+  }, 300);
 
   const handleFeedback = useCallback((type: 'positive' | 'negative') => {
     const feedback: AIFeedback = {
@@ -65,24 +85,32 @@ const AIGeneratedContent: React.FC<AIGeneratedContentProps> = memo(({
       timestamp: new Date(),
     };
     
-    onFeedback?.(feedback);
+    debouncedFeedback(feedback);
     setSubmittedFeedback(type);
     setShowFeedback(false);
     setFeedbackComment('');
-  }, [feedbackComment, onFeedback]);
+  }, [feedbackComment, debouncedFeedback]);
 
   const handleToggleFeedback = useCallback(() => {
     setShowFeedback(prev => !prev);
   }, []);
 
+  // Track render performance
+  React.useEffect(() => {
+    startRender();
+    return () => {
+      endRender();
+    };
+  });
+
   return (
     <Paper 
-      elevation={variant === 'outlined' ? 0 : 2} 
+      elevation={optimizedProps.variant === 'outlined' ? 0 : 2} 
       sx={paperSx} 
-      className={className}
-      {...props}
+      className={optimizedProps.className}
+      {...optimizedProps}
     >
-      {showLabel && (
+      {optimizedProps.showLabel && (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <WbIncandescent color="primary" sx={{ mr: 1 }} />
@@ -97,7 +125,7 @@ const AIGeneratedContent: React.FC<AIGeneratedContentProps> = memo(({
                   ml: 1, 
                   height: 20,
                   fontSize: '0.75rem',
-                  backgroundColor: confidenceColor,
+                  backgroundColor: muiConfidenceColor,
                   color: 'white',
                 }}
               />
