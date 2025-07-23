@@ -1,4 +1,4 @@
-import React, { useMemo, memo } from 'react';
+import React, { useMemo, memo, useRef } from 'react';
 import { 
   Box, 
   LinearProgress, 
@@ -15,6 +15,10 @@ import {
   useAIPerformanceMonitor,
   useCachedAICalculation
 } from '../../../utils/ai-performance';
+import { 
+  getConfidenceDescription,
+  useReducedMotion
+} from '../../../utils/accessibility';
 
 const ConfidenceIndicator: React.FC<ConfidenceIndicatorProps> = memo(({ 
   confidence,
@@ -26,12 +30,17 @@ const ConfidenceIndicator: React.FC<ConfidenceIndicatorProps> = memo(({
   showNumericalScore = true,
   ...props 
 }) => {
+  // Accessibility refs and hooks
+  const progressRef = useRef<HTMLDivElement>(null);
+  const prefersReducedMotion = useReducedMotion();
+
   // Performance monitoring
   const { startRender, endRender, startCalculation, endCalculation } = useAIPerformanceMonitor('ConfidenceIndicator');
 
   // Use optimized hooks for calculations
   const confidenceLevel = useConfidenceLevel(confidence);
   const confidenceColor = useConfidenceColor(confidence, colorCoded);
+  const confidenceDescription = getConfidenceDescription(confidence);
 
   const sizeProps = useMemo(() => {
     switch (size) {
@@ -75,9 +84,16 @@ const ConfidenceIndicator: React.FC<ConfidenceIndicatorProps> = memo(({
     <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
       <Box sx={{ width: '100%', mr: showNumericalScore ? 1 : 0 }}>
         <LinearProgress 
+          ref={progressRef}
           variant="determinate" 
           value={confidence} 
           color={confidenceColor}
+          role="progressbar"
+          aria-valuenow={confidence}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={`AI confidence: ${confidenceDescription}`}
+          aria-describedby="confidence-text"
           sx={{ 
             height,
             borderRadius: height / 2,
@@ -85,6 +101,7 @@ const ConfidenceIndicator: React.FC<ConfidenceIndicatorProps> = memo(({
             '& .MuiLinearProgress-bar': {
               borderRadius: height / 2,
               backgroundColor: progressBarColor,
+              transition: prefersReducedMotion ? 'none' : undefined,
             }
           }}
           {...props} 
@@ -93,9 +110,11 @@ const ConfidenceIndicator: React.FC<ConfidenceIndicatorProps> = memo(({
       {showNumericalScore && (
         <Box sx={{ minWidth: 45 }}>
           <Typography 
+            id="confidence-text"
             variant={typography} 
             color={confidence >= 80 ? 'success.main' : confidence >= 60 ? 'warning.main' : 'error.main'}
             sx={{ fontWeight: 600 }}
+            aria-label={`${Math.round(confidence)} percent confidence`}
           >
             {Math.round(confidence)}%
           </Typography>
@@ -112,8 +131,14 @@ const ConfidenceIndicator: React.FC<ConfidenceIndicatorProps> = memo(({
         size={circularSize}
         color={confidenceColor}
         thickness={size === 'large' ? 6 : 4}
+        role="progressbar"
+        aria-valuenow={confidence}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`AI confidence: ${confidenceDescription}`}
         sx={{
           color: progressBarColor,
+          transition: prefersReducedMotion ? 'none' : undefined,
         }}
         {...props}
       />
@@ -138,6 +163,7 @@ const ConfidenceIndicator: React.FC<ConfidenceIndicatorProps> = memo(({
               fontSize: size === 'small' ? '0.6rem' : undefined,
               fontWeight: 600
             }}
+            aria-label={`${Math.round(confidence)} percent confidence`}
           >
             {Math.round(confidence)}%
           </Typography>
@@ -158,7 +184,6 @@ const ConfidenceIndicator: React.FC<ConfidenceIndicatorProps> = memo(({
           title="Confidence Score Explanation"
           content={tooltipContent}
           placement="top"
-          interactive={true}
         >
           <Box sx={{ cursor: 'help' }}>
             {indicator}
@@ -181,7 +206,11 @@ const ConfidenceIndicator: React.FC<ConfidenceIndicatorProps> = memo(({
   });
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+    <Box 
+      sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+      role="group"
+      aria-label="AI confidence indicator"
+    >
       {renderIndicator}
       {colorCoded && (
         <Chip
@@ -189,6 +218,7 @@ const ConfidenceIndicator: React.FC<ConfidenceIndicatorProps> = memo(({
           size={chipSize}
           color={confidenceColor}
           variant="outlined"
+          aria-label={`Confidence level: ${confidenceLevel}`}
           sx={{ 
             textTransform: 'capitalize',
             fontWeight: 500,
@@ -196,6 +226,20 @@ const ConfidenceIndicator: React.FC<ConfidenceIndicatorProps> = memo(({
           }}
         />
       )}
+      
+      {/* Hidden description for screen readers */}
+      <span 
+        className="sr-only"
+        style={{ 
+          position: 'absolute', 
+          left: '-10000px', 
+          width: '1px', 
+          height: '1px', 
+          overflow: 'hidden' 
+        }}
+      >
+        AI confidence score: {Math.round(confidence)}% - {confidenceDescription}
+      </span>
     </Box>
   );
 });

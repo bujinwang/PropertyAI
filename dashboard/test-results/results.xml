@@ -1,0 +1,382 @@
+<testsuites id="" name="" tests="90" failures="0" skipped="90" errors="0" time="0.08543199999999997">
+<testsuite name="ai-communication-training.spec.ts" timestamp="2025-07-23T20:14:18.148Z" hostname="chromium" tests="8" failures="0" skipped="8" time="0" errors="0">
+<testcase name="AI Communication Training Screen › should display automated response settings" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should display and interact with scenario review cards" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should configure tone and style settings" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should display template approval workflow for approvers" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should be accessible via keyboard navigation" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should pass accessibility audit" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should handle AI feedback interactions" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should save and persist configuration changes" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="risk-assessment-dashboard.spec.ts" timestamp="2025-07-23T20:14:18.148Z" hostname="chromium" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="AI Risk Assessment Dashboard › should display summary metrics and applicant list" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should open detailed risk factor breakdown" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should support applicant comparison" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should display fair housing compliance disclaimers" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should be fully accessible via keyboard" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should pass comprehensive accessibility audit" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should handle high contrast mode" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should handle screen reader announcements" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should filter and sort applicants" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should handle error states gracefully" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="ai-communication-training.spec.ts" timestamp="2025-07-23T20:14:18.148Z" hostname="firefox" tests="8" failures="0" skipped="8" time="0" errors="0">
+<testcase name="AI Communication Training Screen › should display automated response settings" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should display and interact with scenario review cards" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should configure tone and style settings" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should display template approval workflow for approvers" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should be accessible via keyboard navigation" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should pass accessibility audit" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should handle AI feedback interactions" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should save and persist configuration changes" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="risk-assessment-dashboard.spec.ts" timestamp="2025-07-23T20:14:18.148Z" hostname="firefox" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="AI Risk Assessment Dashboard › should display summary metrics and applicant list" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should open detailed risk factor breakdown" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should support applicant comparison" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should display fair housing compliance disclaimers" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should be fully accessible via keyboard" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should pass comprehensive accessibility audit" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should handle high contrast mode" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should handle screen reader announcements" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should filter and sort applicants" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should handle error states gracefully" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="ai-communication-training.spec.ts" timestamp="2025-07-23T20:14:18.148Z" hostname="webkit" tests="8" failures="0" skipped="8" time="0" errors="0">
+<testcase name="AI Communication Training Screen › should display automated response settings" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should display and interact with scenario review cards" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should configure tone and style settings" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should display template approval workflow for approvers" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should be accessible via keyboard navigation" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should pass accessibility audit" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should handle AI feedback interactions" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should save and persist configuration changes" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="risk-assessment-dashboard.spec.ts" timestamp="2025-07-23T20:14:18.148Z" hostname="webkit" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="AI Risk Assessment Dashboard › should display summary metrics and applicant list" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should open detailed risk factor breakdown" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should support applicant comparison" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should display fair housing compliance disclaimers" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should be fully accessible via keyboard" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should pass comprehensive accessibility audit" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should handle high contrast mode" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should handle screen reader announcements" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should filter and sort applicants" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should handle error states gracefully" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="ai-communication-training.spec.ts" timestamp="2025-07-23T20:14:18.148Z" hostname="Mobile Chrome" tests="8" failures="0" skipped="8" time="0" errors="0">
+<testcase name="AI Communication Training Screen › should display automated response settings" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should display and interact with scenario review cards" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should configure tone and style settings" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should display template approval workflow for approvers" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should be accessible via keyboard navigation" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should pass accessibility audit" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should handle AI feedback interactions" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should save and persist configuration changes" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="risk-assessment-dashboard.spec.ts" timestamp="2025-07-23T20:14:18.148Z" hostname="Mobile Chrome" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="AI Risk Assessment Dashboard › should display summary metrics and applicant list" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should open detailed risk factor breakdown" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should support applicant comparison" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should display fair housing compliance disclaimers" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should be fully accessible via keyboard" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should pass comprehensive accessibility audit" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should handle high contrast mode" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should handle screen reader announcements" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should filter and sort applicants" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should handle error states gracefully" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="ai-communication-training.spec.ts" timestamp="2025-07-23T20:14:18.148Z" hostname="Mobile Safari" tests="8" failures="0" skipped="8" time="0" errors="0">
+<testcase name="AI Communication Training Screen › should display automated response settings" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should display and interact with scenario review cards" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should configure tone and style settings" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should display template approval workflow for approvers" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should be accessible via keyboard navigation" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should pass accessibility audit" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should handle AI feedback interactions" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Communication Training Screen › should save and persist configuration changes" classname="ai-communication-training.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="risk-assessment-dashboard.spec.ts" timestamp="2025-07-23T20:14:18.148Z" hostname="Mobile Safari" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="AI Risk Assessment Dashboard › should display summary metrics and applicant list" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should open detailed risk factor breakdown" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should support applicant comparison" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should display fair housing compliance disclaimers" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should be fully accessible via keyboard" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should pass comprehensive accessibility audit" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should handle high contrast mode" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should handle screen reader announcements" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should filter and sort applicants" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="AI Risk Assessment Dashboard › should handle error states gracefully" classname="risk-assessment-dashboard.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+</testsuites>

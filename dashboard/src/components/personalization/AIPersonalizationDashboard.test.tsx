@@ -31,10 +31,13 @@ const renderComponent = (props = {}) => {
 };
 
 describe('AIPersonalizationDashboard', () => {
-  it('renders loading state initially', () => {
+  it('renders dashboard content after loading', async () => {
     renderComponent();
     
-    expect(screen.getByText('Loading your personalized recommendations...')).toBeInTheDocument();
+    // Wait for content to load (mock data loads synchronously)
+    await waitFor(() => {
+      expect(screen.getByText('Your Personalized Recommendations')).toBeInTheDocument();
+    });
   });
 
   it('renders dashboard header after loading', async () => {

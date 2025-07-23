@@ -19,7 +19,7 @@ export class ConversationController {
 
     try {
       const messages = await this.conversationService.getMessages(
-        parseInt(conversationId, 10)
+        conversationId
       );
       res.status(200).json(messages);
     } catch (error) {

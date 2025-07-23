@@ -1,0 +1,1967 @@
+{
+  "config": {
+    "configFile": "/Users/bujin/Documents/Projects/PropertyAI/dashboard/playwright.config.ts",
+    "rootDir": "/Users/bujin/Documents/Projects/PropertyAI/dashboard/e2e",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {},
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results/results.json"
+        }
+      ],
+      [
+        "junit",
+        {
+          "outputFile": "test-results/results.xml"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/Users/bujin/Documents/Projects/PropertyAI/dashboard/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/Users/bujin/Documents/Projects/PropertyAI/dashboard/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/bujin/Documents/Projects/PropertyAI/dashboard/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "/Users/bujin/Documents/Projects/PropertyAI/dashboard/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/bujin/Documents/Projects/PropertyAI/dashboard/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/Users/bujin/Documents/Projects/PropertyAI/dashboard/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/bujin/Documents/Projects/PropertyAI/dashboard/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "Mobile Chrome",
+        "name": "Mobile Chrome",
+        "testDir": "/Users/bujin/Documents/Projects/PropertyAI/dashboard/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/bujin/Documents/Projects/PropertyAI/dashboard/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "Mobile Safari",
+        "name": "Mobile Safari",
+        "testDir": "/Users/bujin/Documents/Projects/PropertyAI/dashboard/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.54.1",
+    "workers": 7,
+    "webServer": {
+      "command": "npm run dev",
+      "url": "http://localhost:5173",
+      "reuseExistingServer": true,
+      "timeout": 120000
+    }
+  },
+  "suites": [
+    {
+      "title": "ai-communication-training.spec.ts",
+      "file": "ai-communication-training.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "AI Communication Training Screen",
+          "file": "ai-communication-training.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should display automated response settings",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-3c7e2a7b42a531664cbc",
+              "file": "ai-communication-training.spec.ts",
+              "line": 10,
+              "column": 7
+            },
+            {
+              "title": "should display and interact with scenario review cards",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-801118ba2959c7f10cd6",
+              "file": "ai-communication-training.spec.ts",
+              "line": 39,
+              "column": 7
+            },
+            {
+              "title": "should configure tone and style settings",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-404caedabac3c1fbb0c7",
+              "file": "ai-communication-training.spec.ts",
+              "line": 71,
+              "column": 7
+            },
+            {
+              "title": "should display template approval workflow for approvers",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-a774ad2334e0baf3326f",
+              "file": "ai-communication-training.spec.ts",
+              "line": 110,
+              "column": 7
+            },
+            {
+              "title": "should be accessible via keyboard navigation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-7848575e42a987a5de3a",
+              "file": "ai-communication-training.spec.ts",
+              "line": 145,
+              "column": 7
+            },
+            {
+              "title": "should pass accessibility audit",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-7aba4d5e68c3639d2e3d",
+              "file": "ai-communication-training.spec.ts",
+              "line": 158,
+              "column": 7
+            },
+            {
+              "title": "should handle AI feedback interactions",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-3f4447e7541c2a16ad55",
+              "file": "ai-communication-training.spec.ts",
+              "line": 168,
+              "column": 7
+            },
+            {
+              "title": "should save and persist configuration changes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-44da3dc545c80887a46a",
+              "file": "ai-communication-training.spec.ts",
+              "line": 176,
+              "column": 7
+            },
+            {
+              "title": "should display automated response settings",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-7b60121f5b2011f5ba03",
+              "file": "ai-communication-training.spec.ts",
+              "line": 10,
+              "column": 7
+            },
+            {
+              "title": "should display and interact with scenario review cards",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-1cdbcda78cbbd0aff5be",
+              "file": "ai-communication-training.spec.ts",
+              "line": 39,
+              "column": 7
+            },
+            {
+              "title": "should configure tone and style settings",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-d5955ca511b5a02ab411",
+              "file": "ai-communication-training.spec.ts",
+              "line": 71,
+              "column": 7
+            },
+            {
+              "title": "should display template approval workflow for approvers",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-e36ea9db14e9eb654f05",
+              "file": "ai-communication-training.spec.ts",
+              "line": 110,
+              "column": 7
+            },
+            {
+              "title": "should be accessible via keyboard navigation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-86786a9d2e8e9a9968e8",
+              "file": "ai-communication-training.spec.ts",
+              "line": 145,
+              "column": 7
+            },
+            {
+              "title": "should pass accessibility audit",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-49efe9e686d974c2ea2d",
+              "file": "ai-communication-training.spec.ts",
+              "line": 158,
+              "column": 7
+            },
+            {
+              "title": "should handle AI feedback interactions",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-88242989d0b9f8ab6c89",
+              "file": "ai-communication-training.spec.ts",
+              "line": 168,
+              "column": 7
+            },
+            {
+              "title": "should save and persist configuration changes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-e95a8eac3da80c60db2b",
+              "file": "ai-communication-training.spec.ts",
+              "line": 176,
+              "column": 7
+            },
+            {
+              "title": "should display automated response settings",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-4bf17fb46d4bb126919e",
+              "file": "ai-communication-training.spec.ts",
+              "line": 10,
+              "column": 7
+            },
+            {
+              "title": "should display and interact with scenario review cards",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-12ccef136ff982efba3d",
+              "file": "ai-communication-training.spec.ts",
+              "line": 39,
+              "column": 7
+            },
+            {
+              "title": "should configure tone and style settings",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-59f4c1ce3d4b8b2e7de5",
+              "file": "ai-communication-training.spec.ts",
+              "line": 71,
+              "column": 7
+            },
+            {
+              "title": "should display template approval workflow for approvers",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-a8c1cb8a933dce5781fc",
+              "file": "ai-communication-training.spec.ts",
+              "line": 110,
+              "column": 7
+            },
+            {
+              "title": "should be accessible via keyboard navigation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-3b0724b8dd84b7d1deb7",
+              "file": "ai-communication-training.spec.ts",
+              "line": 145,
+              "column": 7
+            },
+            {
+              "title": "should pass accessibility audit",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-188850d7a60f01841259",
+              "file": "ai-communication-training.spec.ts",
+              "line": 158,
+              "column": 7
+            },
+            {
+              "title": "should handle AI feedback interactions",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-3d2010c352b9252212f1",
+              "file": "ai-communication-training.spec.ts",
+              "line": 168,
+              "column": 7
+            },
+            {
+              "title": "should save and persist configuration changes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-15c8a4f898fb0590aebc",
+              "file": "ai-communication-training.spec.ts",
+              "line": 176,
+              "column": 7
+            },
+            {
+              "title": "should display automated response settings",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-9f1f0844871bfca802bd",
+              "file": "ai-communication-training.spec.ts",
+              "line": 10,
+              "column": 7
+            },
+            {
+              "title": "should display and interact with scenario review cards",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-c12460abf40437d74e45",
+              "file": "ai-communication-training.spec.ts",
+              "line": 39,
+              "column": 7
+            },
+            {
+              "title": "should configure tone and style settings",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-aa50b510f22017aafdf9",
+              "file": "ai-communication-training.spec.ts",
+              "line": 71,
+              "column": 7
+            },
+            {
+              "title": "should display template approval workflow for approvers",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-f39831cb8c4af35b2066",
+              "file": "ai-communication-training.spec.ts",
+              "line": 110,
+              "column": 7
+            },
+            {
+              "title": "should be accessible via keyboard navigation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-f92e44502abb4b01f64c",
+              "file": "ai-communication-training.spec.ts",
+              "line": 145,
+              "column": 7
+            },
+            {
+              "title": "should pass accessibility audit",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-077b648c8331a98b77d8",
+              "file": "ai-communication-training.spec.ts",
+              "line": 158,
+              "column": 7
+            },
+            {
+              "title": "should handle AI feedback interactions",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-11b7656471f29110ec14",
+              "file": "ai-communication-training.spec.ts",
+              "line": 168,
+              "column": 7
+            },
+            {
+              "title": "should save and persist configuration changes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-dc044d0edb75de47c92b",
+              "file": "ai-communication-training.spec.ts",
+              "line": 176,
+              "column": 7
+            },
+            {
+              "title": "should display automated response settings",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-ebcc6d8005196a1b528c",
+              "file": "ai-communication-training.spec.ts",
+              "line": 10,
+              "column": 7
+            },
+            {
+              "title": "should display and interact with scenario review cards",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-e964a35992fa6e97a0c0",
+              "file": "ai-communication-training.spec.ts",
+              "line": 39,
+              "column": 7
+            },
+            {
+              "title": "should configure tone and style settings",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-d32d290177f92bb79f94",
+              "file": "ai-communication-training.spec.ts",
+              "line": 71,
+              "column": 7
+            },
+            {
+              "title": "should display template approval workflow for approvers",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-3fc24f8c4286b80f30c1",
+              "file": "ai-communication-training.spec.ts",
+              "line": 110,
+              "column": 7
+            },
+            {
+              "title": "should be accessible via keyboard navigation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-bfd1bc5d99e5c2dfb473",
+              "file": "ai-communication-training.spec.ts",
+              "line": 145,
+              "column": 7
+            },
+            {
+              "title": "should pass accessibility audit",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-da34813bd55efc8e1032",
+              "file": "ai-communication-training.spec.ts",
+              "line": 158,
+              "column": 7
+            },
+            {
+              "title": "should handle AI feedback interactions",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-176bbeb26e7f2d732135",
+              "file": "ai-communication-training.spec.ts",
+              "line": 168,
+              "column": 7
+            },
+            {
+              "title": "should save and persist configuration changes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2c7aaf60ff8aa31b46a6-d8d247e701ad1f938c27",
+              "file": "ai-communication-training.spec.ts",
+              "line": 176,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "risk-assessment-dashboard.spec.ts",
+      "file": "risk-assessment-dashboard.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "AI Risk Assessment Dashboard",
+          "file": "risk-assessment-dashboard.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should display summary metrics and applicant list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-f95b4ba1bacce7d3772b",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 10,
+              "column": 7
+            },
+            {
+              "title": "should open detailed risk factor breakdown",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-97bc5b544d6676faccfb",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 39,
+              "column": 7
+            },
+            {
+              "title": "should support applicant comparison",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-c4c190d16e4cd84e7e8c",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 69,
+              "column": 7
+            },
+            {
+              "title": "should display fair housing compliance disclaimers",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-e966ea817328bba3c9c5",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 102,
+              "column": 7
+            },
+            {
+              "title": "should be fully accessible via keyboard",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-c25a26b26ab517faabe0",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 119,
+              "column": 7
+            },
+            {
+              "title": "should pass comprehensive accessibility audit",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-5c6ce727a4c4f17b250d",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 140,
+              "column": 7
+            },
+            {
+              "title": "should handle high contrast mode",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-fda7d8b53eb8f786ea95",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 160,
+              "column": 7
+            },
+            {
+              "title": "should handle screen reader announcements",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-5b00a4ff76bbd1afc8f0",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 182,
+              "column": 7
+            },
+            {
+              "title": "should filter and sort applicants",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-70fae1875dce46ed3d05",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 208,
+              "column": 7
+            },
+            {
+              "title": "should handle error states gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-47c1d323eb5fd8a6943f",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 234,
+              "column": 7
+            },
+            {
+              "title": "should display summary metrics and applicant list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-a870e64246ef4fe9e1e8",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 10,
+              "column": 7
+            },
+            {
+              "title": "should open detailed risk factor breakdown",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-3ae2680322d3557878da",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 39,
+              "column": 7
+            },
+            {
+              "title": "should support applicant comparison",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-1c30bfd052a09a749d7b",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 69,
+              "column": 7
+            },
+            {
+              "title": "should display fair housing compliance disclaimers",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-dfc1b7cc79bba379b143",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 102,
+              "column": 7
+            },
+            {
+              "title": "should be fully accessible via keyboard",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-a393b251acab4251e244",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 119,
+              "column": 7
+            },
+            {
+              "title": "should pass comprehensive accessibility audit",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-50817efc0ac934bc03ea",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 140,
+              "column": 7
+            },
+            {
+              "title": "should handle high contrast mode",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-1c44ab6dd766cdcb7d35",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 160,
+              "column": 7
+            },
+            {
+              "title": "should handle screen reader announcements",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-f27517482ad11686ec24",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 182,
+              "column": 7
+            },
+            {
+              "title": "should filter and sort applicants",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-c498d21b964739b393b8",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 208,
+              "column": 7
+            },
+            {
+              "title": "should handle error states gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-516e17470d17abd8a423",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 234,
+              "column": 7
+            },
+            {
+              "title": "should display summary metrics and applicant list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-dbc3003537ef47c81773",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 10,
+              "column": 7
+            },
+            {
+              "title": "should open detailed risk factor breakdown",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-14a8e843fae66e4e0d04",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 39,
+              "column": 7
+            },
+            {
+              "title": "should support applicant comparison",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-e7f328d1edff1dac18c3",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 69,
+              "column": 7
+            },
+            {
+              "title": "should display fair housing compliance disclaimers",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-6fa193a022c28debb487",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 102,
+              "column": 7
+            },
+            {
+              "title": "should be fully accessible via keyboard",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-d3341166ed21d1f90aa7",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 119,
+              "column": 7
+            },
+            {
+              "title": "should pass comprehensive accessibility audit",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-cd66c866fb43561ce157",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 140,
+              "column": 7
+            },
+            {
+              "title": "should handle high contrast mode",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-063b720cc0dfa131cbb5",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 160,
+              "column": 7
+            },
+            {
+              "title": "should handle screen reader announcements",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-a559dd37c05e808bfc3a",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 182,
+              "column": 7
+            },
+            {
+              "title": "should filter and sort applicants",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-2b92fd15198743c5ace0",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 208,
+              "column": 7
+            },
+            {
+              "title": "should handle error states gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-468f1b70a2dee9dbde65",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 234,
+              "column": 7
+            },
+            {
+              "title": "should display summary metrics and applicant list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-77ba85663b336c115d87",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 10,
+              "column": 7
+            },
+            {
+              "title": "should open detailed risk factor breakdown",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-42a626d4ecc9dbdcc16f",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 39,
+              "column": 7
+            },
+            {
+              "title": "should support applicant comparison",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-c4b457a0d8420eb28961",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 69,
+              "column": 7
+            },
+            {
+              "title": "should display fair housing compliance disclaimers",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-e61524e710290d082de2",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 102,
+              "column": 7
+            },
+            {
+              "title": "should be fully accessible via keyboard",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-d137e49eba67ad6f3816",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 119,
+              "column": 7
+            },
+            {
+              "title": "should pass comprehensive accessibility audit",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-08bca1be3e5423d33b16",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 140,
+              "column": 7
+            },
+            {
+              "title": "should handle high contrast mode",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-ad7adcfbc173ecf76588",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 160,
+              "column": 7
+            },
+            {
+              "title": "should handle screen reader announcements",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-e67232280d742738200c",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 182,
+              "column": 7
+            },
+            {
+              "title": "should filter and sort applicants",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-02ae3f0fcc6646715d7d",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 208,
+              "column": 7
+            },
+            {
+              "title": "should handle error states gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-256a28d4c8027e0c7ffa",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 234,
+              "column": 7
+            },
+            {
+              "title": "should display summary metrics and applicant list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-04fba74e917c0e081dda",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 10,
+              "column": 7
+            },
+            {
+              "title": "should open detailed risk factor breakdown",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-d7969d3fdaf7279830ac",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 39,
+              "column": 7
+            },
+            {
+              "title": "should support applicant comparison",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-f6476325eb8372c68026",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 69,
+              "column": 7
+            },
+            {
+              "title": "should display fair housing compliance disclaimers",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-76009de5859e2cd64568",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 102,
+              "column": 7
+            },
+            {
+              "title": "should be fully accessible via keyboard",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-739672dc4527ca2194e0",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 119,
+              "column": 7
+            },
+            {
+              "title": "should pass comprehensive accessibility audit",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-b6cd78e0d1b5bb0d7a19",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 140,
+              "column": 7
+            },
+            {
+              "title": "should handle high contrast mode",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-d4348166d766e09f856a",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 160,
+              "column": 7
+            },
+            {
+              "title": "should handle screen reader announcements",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-4285ef9e12cc1f1c291b",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 182,
+              "column": 7
+            },
+            {
+              "title": "should filter and sort applicants",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-77d91c3fbc90ff4721a9",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 208,
+              "column": 7
+            },
+            {
+              "title": "should handle error states gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f6d6fecdf82054b2cd96-1b89e95c2049fa779b24",
+              "file": "risk-assessment-dashboard.spec.ts",
+              "line": 234,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-07-23T20:14:18.062Z",
+    "duration": 85.43199999999996,
+    "expected": 0,
+    "skipped": 90,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

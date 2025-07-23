@@ -2,8 +2,11 @@ import React, { useState, Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { ThemeProvider, CssBaseline, Box, Container, CircularProgress } from '@mui/material';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import './App.css';
+import './styles/accessibility.css';
 import Header from './components/Header';
 import { handleOAuthLogin } from './services/oauthService';
 import theme from './design-system/theme';
@@ -12,6 +15,7 @@ import { analytics, trackPageView, setUserProperties } from './utils/analytics';
 import { monitoring, setUserContext, addBreadcrumb } from './utils/monitoring';
 import { config, isProduction } from './config/environment';
 import AIPerformanceMonitor from './components/performance/AIPerformanceMonitor';
+import { queryClient } from './config/queryClient';
 
 // Lazy load pages
 const ApplicationsList = lazy(() => import('./pages/ApplicationsList'));
@@ -45,6 +49,7 @@ const AccessControlManagementScreen = lazy(() => import('./pages/AccessControlMa
 const CommunityEngagementPortal = lazy(() => import('./pages/CommunityEngagementPortal'));
 const DigitalConciergeScreen = lazy(() => import('./pages/DigitalConciergeScreen'));
 const AIComponentsDemo = lazy(() => import('./pages/AIComponentsDemo'));
+const DocumentVerificationDemo = lazy(() => import('./pages/DocumentVerificationDemo'));
 
 const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID_HERE"; // Fallback to placeholder
 
@@ -136,6 +141,7 @@ function AppContent() {
                 <Route path="/community-engagement" element={<CommunityEngagementPortal />} />
                 <Route path="/digital-concierge" element={<DigitalConciergeScreen />} />
                 <Route path="/ai-components-demo" element={<AIComponentsDemo />} />
+                <Route path="/document-verification-demo" element={<DocumentVerificationDemo />} />
                 {/* Add more routes as needed */}
                 <Route path="/" element={
                   <div>
@@ -177,14 +183,18 @@ function App() {
 
   return (
     <AIErrorBoundary>
-      <GoogleOAuthProvider clientId={clientId}>
-        <AuthProvider>
-          <ThemeProvider theme={theme}>
-            <CssBaseline />
-            <AppContent />
-          </ThemeProvider>
-        </AuthProvider>
-      </GoogleOAuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <GoogleOAuthProvider clientId={clientId}>
+          <AuthProvider>
+            <ThemeProvider theme={theme}>
+              <CssBaseline />
+              <AppContent />
+            </ThemeProvider>
+          </AuthProvider>
+        </GoogleOAuthProvider>
+        {/* React Query DevTools - Development Only */}
+        {!isProduction && <ReactQueryDevtools initialIsOpen={false} />}
+      </QueryClientProvider>
     </AIErrorBoundary>
   );
 }

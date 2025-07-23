@@ -40,7 +40,7 @@ import photoEnhancementRoutes from './photoEnhancement.routes';
 import seoRoutes from './seo.routes';
 import publishingRoutes from './publishing.routes';
 import legacyPublishingRoutes from './publishingRoutes';
-import { cacheMiddleware, clearCache } from '../utils/cache';
+import { clearCache } from '../utils/cache';
 
 const router = express.Router();
 
@@ -50,7 +50,7 @@ const API_PREFIX = '/api';
 router.use(API_PREFIX, rateLimiter);
 
 // Health check endpoint
-router.get(`${API_PREFIX}/health`, cacheMiddleware, (req, res) => {
+router.get(`${API_PREFIX}/health`, (req, res) => {
   res.status(200).json({
     status: 'success',
     message: 'API is running',

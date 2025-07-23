@@ -133,7 +133,7 @@ describe('EmergencyContactManagement', () => {
 
   describe('Search Functionality', () => {
     it('filters contacts by name', async () => {
-      const user = userEvent.setup();
+      const user = userEvent;
       renderComponent();
 
       await waitFor(() => {
@@ -149,7 +149,7 @@ describe('EmergencyContactManagement', () => {
     });
 
     it('filters contacts by role', async () => {
-      const user = userEvent.setup();
+      const user = userEvent;
       renderComponent();
 
       await waitFor(() => {
@@ -165,7 +165,7 @@ describe('EmergencyContactManagement', () => {
     });
 
     it('filters contacts by specialty', async () => {
-      const user = userEvent.setup();
+      const user = userEvent;
       renderComponent();
 
       await waitFor(() => {
@@ -181,7 +181,7 @@ describe('EmergencyContactManagement', () => {
     });
 
     it('shows no results message when search yields no matches', async () => {
-      const user = userEvent.setup();
+      const user = userEvent;
       renderComponent();
 
       await waitFor(() => {
@@ -401,7 +401,7 @@ describe('EmergencyContactManagement', () => {
     });
 
     it('supports keyboard navigation', async () => {
-      const user = userEvent.setup();
+      const user = userEvent;
       renderComponent();
 
       await waitFor(() => {

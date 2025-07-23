@@ -8,7 +8,6 @@ import {
   Box,
   Container,
   Typography,
-  Alert,
   Snackbar,
   Fab,
   Dialog,
@@ -20,6 +19,7 @@ import {
   Paper,
   Chip,
 } from '@mui/material';
+import { Alert } from '@mui/material';
 import {
   Refresh,
   Settings,
@@ -104,6 +104,127 @@ const AIPersonalizationDashboard: React.FC<PersonalizationDashboardProps> = ({
   useEffect(() => {
     loadRecommendations();
   }, [loadRecommendations]);
+
+  // Handle explanation request
+  const handleExplanationRequest = useCallback(async (itemId: string) => {
+    try {
+      // For demo purposes, use mock explanation. In production, use real API
+      const item = state.categories
+        .flatMap(cat => cat.items)
+        .find(item => item.id === itemId);
+      
+      if (!item) {
+        throw new Error('Item not found');
+      }
+
+      const mockExplanation = {
+        itemId,
+        reasons: [
+          {
+            factor: 'Location Preference',
+            description: `This recommendation is based on your location in ${state.userPreferences.location.city}, ${state.userPreferences.location.state}`,
+            weight: 0.4,
+            dataSource: 'location' as const,
+          },
+          {
+            factor: 'Interest Match',
+            description: `This matches your interests in ${state.userPreferences.interests.join(', ')}`,
+            weight: 0.3,
+            dataSource: 'preferences' as const,
+          },
+          {
+            factor: 'Community Popularity',
+            description: 'This is popular among residents with similar profiles in your area',
+            weight: 0.3,
+            dataSource: 'behavior' as const,
+          },
+        ],
+        confidence: item.confidence,
+        dataPoints: [
+          'Your location preferences',
+          'Similar user behavior patterns',
+          'Local service ratings and reviews',
+          'Your interaction history',
+        ],
+        privacyNote: 'We use anonymized data to protect your privacy while providing personalized recommendations.',
+      };
+      
+      setState(prev => ({
+        ...prev,
+        explanations: {
+          ...prev.explanations,
+          [itemId]: mockExplanation,
+        },
+      }));
+
+      setExplanationDialog({
+        open: true,
+        itemId,
+        explanation: mockExplanation.reasons.map(r => r.description).join('. '),
+      });
+    } catch (error) {
+      console.error('Error fetching explanation:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to load explanation',
+        severity: 'error',
+      });
+    }
+  }, [state.categories, state.userPreferences]);
+
+  // Handle feedback submission
+  const handleFeedback = useCallback(async (
+    itemId: string, 
+    feedback: 'positive' | 'negative', 
+    comment?: string
+  ) => {
+    try {
+      const feedbackData: RecommendationFeedback = {
+        itemId,
+        userId,
+        feedback,
+        comment,
+        timestamp: new Date(),
+        context: {
+          category: state.categories.find(cat => 
+            cat.items.some(item => item.id === itemId)
+          )?.type || 'local-services',
+          position: 0, // Could be calculated based on item position
+        },
+      };
+
+      // For demo purposes, just log the feedback. In production, use real API
+      console.log('Feedback submitted:', feedbackData);
+      
+      setSnackbar({
+        open: true,
+        message: 'Thank you for your feedback!',
+        severity: 'success',
+      });
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to submit feedback',
+        severity: 'error',
+      });
+    }
+  }, [userId, state.categories]);
+
+  // Handle CTA click
+  const handleCtaClick = useCallback((itemId: string, url: string) => {
+    // Track click analytics
+    console.log('CTA clicked:', { itemId, url });
+    
+    // Open URL in new tab
+    window.open(url, '_blank', 'noopener,noreferrer');
+    
+    setSnackbar({
+      open: true,
+      message: 'Opening recommendation...',
+      severity: 'info',
+    });
+  }, []);
 
   if (state.loading) {
     return (
@@ -217,15 +338,87 @@ const AIPersonalizationDashboard: React.FC<PersonalizationDashboardProps> = ({
             <RecommendationCategorySection
               key={category.id}
               category={category}
-              onExplanationRequest={() => {}}
-              onFeedback={() => {}}
-              onCtaClick={() => {}}
+              onExplanationRequest={handleExplanationRequest}
+              onFeedback={handleFeedback}
+              onCtaClick={handleCtaClick}
               maxItems={6}
               showViewAll={true}
             />
           ))
         )}
       </Box>
+
+      {/* Explanation Dialog */}
+      <Dialog
+        open={explanationDialog.open}
+        onClose={() => setExplanationDialog({ open: false, itemId: null, explanation: '' })}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Info sx={{ mr: 1, color: 'primary.main' }} />
+            Why am I seeing this recommendation?
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            {explanationDialog.explanation}
+          </Typography>
+          
+          {explanationDialog.itemId && state.explanations[explanationDialog.itemId] && (
+            <Box>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                Personalization Factors:
+              </Typography>
+              
+              {state.explanations[explanationDialog.itemId].reasons.map((reason, index) => (
+                <Box key={index} sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                    {reason.factor} ({Math.round(reason.weight * 100)}% influence)
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {reason.description}
+                  </Typography>
+                  <Chip
+                    label={reason.dataSource}
+                    size="small"
+                    variant="outlined"
+                    sx={{ mt: 1 }}
+                  />
+                </Box>
+              ))}
+              
+              <Box sx={{ mt: 3, p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
+                <Typography variant="body2" color="info.contrastText">
+                  <strong>Privacy Note:</strong> {state.explanations[explanationDialog.itemId].privacyNote}
+                </Typography>
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setExplanationDialog({ open: false, itemId: null, explanation: '' })}>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={() => setSnackbar({ ...snackbar, open: false })} 
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

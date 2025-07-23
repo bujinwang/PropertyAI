@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, memo } from 'react';
+import React, { useState, useMemo, useCallback, memo, useRef, useEffect } from 'react';
 import { 
   Box, 
   Paper, 
@@ -26,6 +26,14 @@ import {
   useAIPerformanceMonitor,
   useOptimizedAIProps
 } from '../../../utils/ai-performance';
+import { 
+  getAIContentAriaAttributes, 
+  getConfidenceDescription, 
+  getFeedbackAriaLabel,
+  useLiveRegion,
+  useKeyboardNavigation,
+  announceToScreenReader
+} from '../../../utils/accessibility';
 
 const AIGeneratedContent: React.FC<AIGeneratedContentProps> = memo(({ 
   children, 
@@ -40,6 +48,11 @@ const AIGeneratedContent: React.FC<AIGeneratedContentProps> = memo(({
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackComment, setFeedbackComment] = useState('');
   const [submittedFeedback, setSubmittedFeedback] = useState<'positive' | 'negative' | null>(null);
+
+  // Accessibility refs and hooks
+  const containerRef = useRef<HTMLDivElement>(null);
+  const feedbackButtonRef = useRef<HTMLButtonElement>(null);
+  const { announce } = useLiveRegion();
 
   // Performance monitoring
   const { startRender, endRender } = useAIPerformanceMonitor('AIGeneratedContent');
@@ -89,11 +102,34 @@ const AIGeneratedContent: React.FC<AIGeneratedContentProps> = memo(({
     setSubmittedFeedback(type);
     setShowFeedback(false);
     setFeedbackComment('');
-  }, [feedbackComment, debouncedFeedback]);
+    
+    // Announce feedback submission to screen readers
+    const message = `Feedback submitted: ${type === 'positive' ? 'helpful' : 'not helpful'}${feedbackComment.trim() ? ' with comment' : ''}`;
+    announce(message, 'polite');
+  }, [feedbackComment, debouncedFeedback, announce]);
 
   const handleToggleFeedback = useCallback(() => {
-    setShowFeedback(prev => !prev);
-  }, []);
+    setShowFeedback(prev => {
+      const newValue = !prev;
+      if (newValue) {
+        announce('Feedback form opened', 'polite');
+        // Focus the feedback form when opened
+        setTimeout(() => {
+          const textField = containerRef.current?.querySelector('textarea');
+          textField?.focus();
+        }, 100);
+      } else {
+        announce('Feedback form closed', 'polite');
+      }
+      return newValue;
+    });
+  }, [announce]);
+
+  // Keyboard navigation for feedback
+  const { handleKeyDown } = useKeyboardNavigation(
+    () => handleToggleFeedback(), // Enter/Space
+    () => setShowFeedback(false)  // Escape
+  );
 
   // Track render performance
   React.useEffect(() => {
@@ -103,24 +139,49 @@ const AIGeneratedContent: React.FC<AIGeneratedContentProps> = memo(({
     };
   });
 
+  // Get accessibility attributes
+  const ariaAttributes = getAIContentAriaAttributes(confidence, true);
+  const confidenceDesc = confidence ? getConfidenceDescription(confidence) : undefined;
+
+  // Announce content changes
+  useEffect(() => {
+    if (submittedFeedback) {
+      announceToScreenReader(`AI content feedback: ${submittedFeedback}`, 'polite');
+    }
+  }, [submittedFeedback]);
+
   return (
     <Paper 
+      ref={containerRef}
       elevation={optimizedProps.variant === 'outlined' ? 0 : 2} 
       sx={paperSx} 
       className={optimizedProps.className}
+      role="region"
+      aria-label="AI generated content"
+      {...ariaAttributes}
       {...optimizedProps}
     >
       {optimizedProps.showLabel && (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <WbIncandescent color="primary" sx={{ mr: 1 }} />
-            <Typography variant="body2" color="text.secondary" fontWeight={500}>
+            <WbIncandescent 
+              color="primary" 
+              sx={{ mr: 1 }} 
+              aria-hidden="true"
+            />
+            <Typography 
+              variant="body2" 
+              color="text.secondary" 
+              fontWeight={500}
+              id="ai-content-label"
+            >
               AI Generated Content
             </Typography>
             {confidence !== undefined && (
               <Chip
                 size="small"
                 label={`${Math.round(confidence)}% confidence`}
+                aria-label={`AI confidence level: ${confidenceDesc}`}
                 sx={{ 
                   ml: 1, 
                   height: 20,
@@ -136,7 +197,11 @@ const AIGeneratedContent: React.FC<AIGeneratedContentProps> = memo(({
                 content={explanation}
                 placement="top"
               >
-                <IconButton size="small" sx={{ ml: 0.5 }}>
+                <IconButton 
+                  size="small" 
+                  sx={{ ml: 0.5 }}
+                  aria-label="View AI explanation"
+                >
                   <Info fontSize="small" />
                 </IconButton>
               </ExplanationTooltip>
@@ -144,12 +209,17 @@ const AIGeneratedContent: React.FC<AIGeneratedContentProps> = memo(({
           </Box>
           
           {onFeedback && !submittedFeedback && (
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Box 
+              sx={{ display: 'flex', alignItems: 'center' }}
+              role="group"
+              aria-label="AI content feedback options"
+            >
               <IconButton
                 size="small"
                 onClick={() => handleFeedback('positive')}
                 sx={{ color: 'success.main' }}
-                aria-label="Positive feedback"
+                aria-label={getFeedbackAriaLabel('positive')}
+                title="Mark as helpful"
               >
                 <ThumbUp fontSize="small" />
               </IconButton>
@@ -157,14 +227,20 @@ const AIGeneratedContent: React.FC<AIGeneratedContentProps> = memo(({
                 size="small"
                 onClick={() => handleFeedback('negative')}
                 sx={{ color: 'error.main' }}
-                aria-label="Negative feedback"
+                aria-label={getFeedbackAriaLabel('negative')}
+                title="Mark as not helpful"
               >
                 <ThumbDown fontSize="small" />
               </IconButton>
               <IconButton
+                ref={feedbackButtonRef}
                 size="small"
                 onClick={handleToggleFeedback}
+                onKeyDown={handleKeyDown}
                 aria-label="Provide detailed feedback"
+                aria-expanded={showFeedback}
+                aria-controls="feedback-form"
+                title="Provide detailed feedback"
               >
                 {showFeedback ? <ExpandLess /> : <ExpandMore />}
               </IconButton>
@@ -183,11 +259,22 @@ const AIGeneratedContent: React.FC<AIGeneratedContentProps> = memo(({
       )}
       
       <Collapse in={showFeedback}>
-        <Box sx={{ mb: 2, p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
-          <Typography variant="body2" sx={{ mb: 1 }}>
+        <Box 
+          id="feedback-form"
+          sx={{ mb: 2, p: 2, backgroundColor: 'background.default', borderRadius: 1 }}
+          role="form"
+          aria-label="AI content feedback form"
+        >
+          <Typography 
+            variant="body2" 
+            sx={{ mb: 1 }}
+            component="label"
+            htmlFor="feedback-comment"
+          >
             Provide additional feedback (optional):
           </Typography>
           <TextField
+            id="feedback-comment"
             fullWidth
             multiline
             rows={2}
@@ -196,11 +283,25 @@ const AIGeneratedContent: React.FC<AIGeneratedContentProps> = memo(({
             value={feedbackComment}
             onChange={(e) => setFeedbackComment(e.target.value)}
             sx={{ mb: 1 }}
+            aria-describedby="feedback-help"
+            inputProps={{
+              'aria-label': 'Additional feedback comment',
+              maxLength: 500
+            }}
           />
+          <Typography 
+            id="feedback-help"
+            variant="caption" 
+            color="text.secondary"
+            sx={{ display: 'block', mb: 1 }}
+          >
+            Help us improve AI suggestions by sharing your experience
+          </Typography>
           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
             <Button
               size="small"
               onClick={() => setShowFeedback(false)}
+              aria-label="Cancel feedback"
             >
               Cancel
             </Button>
@@ -210,6 +311,7 @@ const AIGeneratedContent: React.FC<AIGeneratedContentProps> = memo(({
               onClick={() => handleFeedback('positive')}
               startIcon={<ThumbUp />}
               sx={{ mr: 1 }}
+              aria-label="Submit positive feedback"
             >
               Helpful
             </Button>
@@ -219,6 +321,7 @@ const AIGeneratedContent: React.FC<AIGeneratedContentProps> = memo(({
               color="error"
               onClick={() => handleFeedback('negative')}
               startIcon={<ThumbDown />}
+              aria-label="Submit negative feedback"
             >
               Not Helpful
             </Button>
@@ -226,7 +329,29 @@ const AIGeneratedContent: React.FC<AIGeneratedContentProps> = memo(({
         </Box>
       </Collapse>
       
-      {children}
+      <Box 
+        aria-labelledby="ai-content-label"
+        aria-describedby={confidence ? 'confidence-description' : undefined}
+      >
+        {children}
+      </Box>
+      
+      {/* Hidden description for screen readers */}
+      {confidence && (
+        <span 
+          id="confidence-description" 
+          className="sr-only"
+          style={{ 
+            position: 'absolute', 
+            left: '-10000px', 
+            width: '1px', 
+            height: '1px', 
+            overflow: 'hidden' 
+          }}
+        >
+          {confidenceDesc}
+        </span>
+      )}
     </Paper>
   );
 });

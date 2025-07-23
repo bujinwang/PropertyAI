@@ -1,15 +1,31 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Message } from '@prisma/client';
+import { sentimentService } from './sentiment.service';
 
 const prisma = new PrismaClient();
 
 export class ConversationService {
-  async getMessages(conversationId: number) {
-    // This is a placeholder implementation.
-    // In a real application, you would fetch messages from the database
-    // based on the conversationId.
-    return [
-      { id: 1, text: 'Hello!', sender: 'ai', sentiment: 'NEUTRAL' },
-      { id: 2, text: 'Hi, how are you?', sender: 'user', sentiment: 'NEUTRAL' },
-    ];
+  async createMessage(
+    conversationId: string,
+    senderId: string,
+    recipientId: string,
+    content: string
+  ): Promise<Message> {
+    const sentiment = await sentimentService.analyze(content);
+    return prisma.message.create({
+      data: {
+        conversationId,
+        senderId,
+        recipientId,
+        content,
+        sentiment,
+      },
+    });
+  }
+
+  async getMessages(conversationId: string): Promise<Message[]> {
+    return prisma.message.findMany({
+      where: { conversationId },
+      orderBy: { createdAt: 'asc' },
+    });
   }
 }

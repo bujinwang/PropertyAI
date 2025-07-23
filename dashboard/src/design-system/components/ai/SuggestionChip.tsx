@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, memo } from 'react';
+import React, { useState, useMemo, useCallback, memo, useRef } from 'react';
 import { 
   Chip, 
   Box, 
@@ -21,6 +21,13 @@ import {
   useAIPerformanceMonitor,
   useCachedAICalculation
 } from '../../../utils/ai-performance';
+import { 
+  getFeedbackAriaLabel,
+  getConfidenceDescription,
+  useLiveRegion,
+  useKeyboardNavigation,
+  useFocusManagement
+} from '../../../utils/accessibility';
 
 const SuggestionChip: React.FC<SuggestionChipProps> = memo(({ 
   label,
@@ -35,17 +42,27 @@ const SuggestionChip: React.FC<SuggestionChipProps> = memo(({
   const [feedbackComment, setFeedbackComment] = useState('');
   const [submittedFeedback, setSubmittedFeedback] = useState<'positive' | 'negative' | null>(null);
 
+  // Accessibility refs and hooks
+  const chipRef = useRef<HTMLDivElement>(null);
+  const feedbackButtonRef = useRef<HTMLButtonElement>(null);
+  const { announce } = useLiveRegion();
+  const { setFocus, restoreFocus } = useFocusManagement();
+
   // Performance monitoring
   const { startRender, endRender } = useAIPerformanceMonitor('SuggestionChip');
 
   const handleFeedbackClick = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
-  }, []);
+    setFocus(event.currentTarget);
+    announce('Feedback form opened', 'polite');
+  }, [setFocus, announce]);
 
   const handleFeedbackClose = useCallback(() => {
     setAnchorEl(null);
     setFeedbackComment('');
-  }, []);
+    restoreFocus();
+    announce('Feedback form closed', 'polite');
+  }, [restoreFocus, announce]);
 
   // Use debounced feedback to prevent rapid submissions
   const debouncedFeedback = useDebouncedAIFeedback(async (feedback: AIFeedback) => {
@@ -66,7 +83,17 @@ const SuggestionChip: React.FC<SuggestionChipProps> = memo(({
     debouncedFeedback(feedback);
     setSubmittedFeedback(type);
     handleFeedbackClose();
-  }, [feedbackComment, debouncedFeedback, handleFeedbackClose]);
+    
+    // Announce feedback submission
+    const message = `Feedback submitted: ${type === 'positive' ? 'helpful' : 'not helpful'}${feedbackComment.trim() ? ' with comment' : ''}`;
+    announce(message, 'polite');
+  }, [feedbackComment, debouncedFeedback, handleFeedbackClose, announce]);
+
+  // Keyboard navigation for popover
+  const { handleKeyDown } = useKeyboardNavigation(
+    undefined, // Enter - handled by buttons
+    () => handleFeedbackClose() // Escape
+  );
 
   const open = Boolean(anchorEl);
 
@@ -107,14 +134,22 @@ const SuggestionChip: React.FC<SuggestionChipProps> = memo(({
     };
   });
 
+  const confidenceDesc = confidence ? getConfidenceDescription(confidence) : undefined;
+
   return (
-    <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+    <Box 
+      sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
+      role="group"
+      aria-label="AI suggestion with feedback options"
+    >
       <Chip 
-        icon={<WbIncandescent />} 
+        ref={chipRef}
+        icon={<WbIncandescent aria-hidden="true" />} 
         label={chipLabel}
         variant={variant}
         color={chipColor}
         size={size}
+        aria-label={`AI suggestion: ${label}${confidence ? `, ${confidenceDesc}` : ''}${submittedFeedback ? `, feedback: ${submittedFeedback}` : ''}`}
         {...props} 
       />
       
@@ -124,7 +159,8 @@ const SuggestionChip: React.FC<SuggestionChipProps> = memo(({
             size="small"
             onClick={() => handleSubmitFeedback('positive')}
             sx={{ ml: 0.5 }}
-            aria-label="Mark as helpful"
+            aria-label={getFeedbackAriaLabel('positive')}
+            title="Mark as helpful"
             color="success"
           >
             <ThumbUp fontSize="small" />
@@ -133,16 +169,21 @@ const SuggestionChip: React.FC<SuggestionChipProps> = memo(({
             size="small"
             onClick={() => handleSubmitFeedback('negative')}
             sx={{ ml: 0.5 }}
-            aria-label="Mark as not helpful"
+            aria-label={getFeedbackAriaLabel('negative')}
+            title="Mark as not helpful"
             color="error"
           >
             <ThumbDown fontSize="small" />
           </IconButton>
           <IconButton
+            ref={feedbackButtonRef}
             size="small"
             onClick={handleFeedbackClick}
             sx={{ ml: 0.5 }}
             aria-label="Provide detailed feedback"
+            aria-expanded={open}
+            aria-haspopup="dialog"
+            title="Provide detailed feedback"
           >
             <Feedback fontSize="small" />
           </IconButton>
@@ -159,19 +200,44 @@ const SuggestionChip: React.FC<SuggestionChipProps> = memo(({
               vertical: 'top',
               horizontal: 'center',
             }}
+            slotProps={{
+              paper: {
+                role: 'dialog',
+                'aria-labelledby': 'feedback-title',
+                'aria-describedby': 'feedback-description',
+                onKeyDown: handleKeyDown,
+              }
+            }}
           >
             <Box sx={{ p: 2, minWidth: 280 }}>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              <Typography 
+                id="feedback-title"
+                variant="subtitle2" 
+                sx={{ mb: 1 }}
+              >
                 How helpful was this suggestion?
               </Typography>
+              <Typography 
+                id="feedback-description"
+                variant="caption" 
+                color="text.secondary"
+                sx={{ mb: 2, display: 'block' }}
+              >
+                Your feedback helps improve AI suggestions
+              </Typography>
               
-              <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+              <Box 
+                sx={{ display: 'flex', gap: 1, mb: 2 }}
+                role="group"
+                aria-label="Quick feedback options"
+              >
                 <Button
                   variant="outlined"
                   startIcon={<ThumbUp />}
                   onClick={() => handleSubmitFeedback('positive')}
                   color="success"
                   size="small"
+                  aria-label="Mark suggestion as helpful"
                 >
                   Helpful
                 </Button>
@@ -181,6 +247,7 @@ const SuggestionChip: React.FC<SuggestionChipProps> = memo(({
                   onClick={() => handleSubmitFeedback('negative')}
                   color="error"
                   size="small"
+                  aria-label="Mark suggestion as not helpful"
                 >
                   Not Helpful
                 </Button>
@@ -188,10 +255,17 @@ const SuggestionChip: React.FC<SuggestionChipProps> = memo(({
               
               <Divider sx={{ my: 1 }} />
               
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              <Typography 
+                variant="body2" 
+                color="text.secondary" 
+                sx={{ mb: 1 }}
+                component="label"
+                htmlFor="additional-feedback"
+              >
                 Additional feedback (optional):
               </Typography>
               <TextField
+                id="additional-feedback"
                 fullWidth
                 multiline
                 rows={2}
@@ -200,10 +274,18 @@ const SuggestionChip: React.FC<SuggestionChipProps> = memo(({
                 value={feedbackComment}
                 onChange={(e) => setFeedbackComment(e.target.value)}
                 sx={{ mb: 1 }}
+                inputProps={{
+                  'aria-label': 'Additional feedback comment',
+                  maxLength: 500
+                }}
               />
               
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                <Button size="small" onClick={handleFeedbackClose}>
+                <Button 
+                  size="small" 
+                  onClick={handleFeedbackClose}
+                  aria-label="Cancel feedback"
+                >
                   Cancel
                 </Button>
                 <Button 
@@ -211,6 +293,7 @@ const SuggestionChip: React.FC<SuggestionChipProps> = memo(({
                   variant="contained"
                   onClick={() => handleSubmitFeedback('positive')}
                   disabled={!feedbackComment.trim()}
+                  aria-label="Submit positive feedback with comment"
                 >
                   Submit
                 </Button>

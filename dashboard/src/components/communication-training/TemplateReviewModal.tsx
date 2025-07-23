@@ -100,7 +100,11 @@ const TemplateReviewModal: React.FC<TemplateReviewModalProps> = ({
           <Typography variant="h6" component="div">
             Review Template: {template.title}
           </Typography>
-          <IconButton onClick={onClose} disabled={isLoading}>
+          <IconButton 
+            onClick={onClose} 
+            disabled={isLoading}
+            aria-label="Close dialog"
+          >
             <CloseIcon />
           </IconButton>
         </Box>

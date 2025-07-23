@@ -1,0 +1,378 @@
+/**
+ * Accessibility styles for AI Dashboard Components
+ * WCAG 2.1 AA compliant styles and utilities
+ */
+
+/* Screen reader only content */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Skip links */
+.skip-link {
+  position: absolute;
+  left: -10000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: 999999;
+  padding: 8px 16px;
+  background-color: #000;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 3px;
+  font-weight: 600;
+  transition: all 0.2s ease-in-out;
+}
+
+.skip-link:focus {
+  left: 6px;
+  top: 7px;
+  width: auto;
+  height: auto;
+  overflow: visible;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .ai-generated-content {
+    border-width: 3px !important;
+    border-style: solid !important;
+  }
+  
+  .confidence-indicator {
+    border: 2px solid currentColor;
+  }
+  
+  .suggestion-chip {
+    border-width: 2px !important;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .loading-spinner {
+    animation: none !important;
+  }
+  
+  .progress-bar {
+    transition: none !important;
+  }
+}
+
+/* Focus indicators - Enhanced for better visibility */
+.ai-component:focus-visible,
+.ai-component button:focus-visible,
+.ai-component [tabindex]:focus-visible,
+.ai-component input:focus-visible,
+.ai-component select:focus-visible,
+.ai-component textarea:focus-visible {
+  outline: 3px solid #005fcc;
+  outline-offset: 2px;
+  border-radius: 4px;
+  box-shadow: 0 0 0 1px #ffffff, 0 0 0 4px #005fcc;
+}
+
+/* High contrast focus indicators */
+@media (prefers-contrast: high) {
+  .ai-component:focus-visible,
+  .ai-component button:focus-visible,
+  .ai-component [tabindex]:focus-visible,
+  .ai-component input:focus-visible,
+  .ai-component select:focus-visible,
+  .ai-component textarea:focus-visible {
+    outline: 4px solid currentColor;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px #ffffff, 0 0 0 6px currentColor;
+  }
+}
+
+/* Ensure minimum touch target size (44px x 44px) - WCAG 2.1 AA */
+.ai-feedback-button,
+.ai-action-button,
+.ai-component button,
+.ai-component [role="button"],
+.ai-component input[type="checkbox"],
+.ai-component input[type="radio"] {
+  min-width: 44px;
+  min-height: 44px;
+  position: relative;
+}
+
+/* Ensure clickable area for small elements */
+.ai-component input[type="checkbox"]::before,
+.ai-component input[type="radio"]::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 44px;
+  min-height: 44px;
+  z-index: -1;
+}
+
+/* Color contrast improvements */
+.ai-confidence-high {
+  background-color: #1b5e20; /* Dark green for better contrast */
+  color: #ffffff;
+}
+
+.ai-confidence-medium {
+  background-color: #e65100; /* Dark orange for better contrast */
+  color: #ffffff;
+}
+
+.ai-confidence-low {
+  background-color: #b71c1c; /* Dark red for better contrast */
+  color: #ffffff;
+}
+
+/* Loading states accessibility */
+.loading-container[aria-busy="true"] {
+  cursor: wait;
+}
+
+.loading-container[aria-busy="true"] * {
+  pointer-events: none;
+}
+
+/* Tooltip accessibility */
+.explanation-tooltip {
+  max-width: 400px;
+  padding: 16px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.explanation-tooltip h4 {
+  margin: 0 0 8px 0;
+  font-weight: 600;
+}
+
+.explanation-tooltip ul {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.explanation-tooltip li {
+  margin-bottom: 4px;
+}
+
+/* Form accessibility */
+.ai-feedback-form label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.ai-feedback-form input,
+.ai-feedback-form textarea {
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.ai-feedback-form input:focus,
+.ai-feedback-form textarea:focus {
+  border-color: #005fcc;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 95, 204, 0.2);
+}
+
+.ai-feedback-form .error {
+  border-color: #d32f2f;
+  color: #d32f2f;
+}
+
+.ai-feedback-form .error:focus {
+  border-color: #d32f2f;
+  box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.2);
+}
+
+/* Status indicators */
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.status-indicator.success {
+  background-color: #e8f5e8;
+  color: #1b5e20;
+  border: 1px solid #4caf50;
+}
+
+.status-indicator.warning {
+  background-color: #fff3e0;
+  color: #e65100;
+  border: 1px solid #ff9800;
+}
+
+.status-indicator.error {
+  background-color: #ffebee;
+  color: #b71c1c;
+  border: 1px solid #f44336;
+}
+
+.status-indicator.info {
+  background-color: #e3f2fd;
+  color: #0d47a1;
+  border: 1px solid #2196f3;
+}
+
+/* Live region for announcements */
+.live-region {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* Keyboard navigation helpers */
+.keyboard-navigation-hint {
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* Print styles */
+@media print {
+  .ai-feedback-buttons,
+  .loading-spinner,
+  .tooltip {
+    display: none !important;
+  }
+  
+  .ai-generated-content::before {
+    content: "AI Generated: ";
+    font-weight: bold;
+  }
+  
+  .confidence-indicator::after {
+    content: " (Confidence: " attr(aria-valuenow) "%)";
+  }
+}
+
+/* Dark mode accessibility */
+@media (prefers-color-scheme: dark) {
+  .ai-component {
+    border-color: #555;
+  }
+  
+  .ai-confidence-high {
+    background-color: #2e7d32;
+  }
+  
+  .ai-confidence-medium {
+    background-color: #f57c00;
+  }
+  
+  .ai-confidence-low {
+    background-color: #d32f2f;
+  }
+  
+  .skip-link {
+    background-color: #fff;
+    color: #000;
+  }
+}
+
+/* Animation for screen reader announcements */
+@keyframes announce {
+  0% { opacity: 0; }
+  50% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.announcement {
+  animation: announce 0.1s ease-in-out;
+}
+
+/* Ensure proper heading hierarchy */
+.ai-section h1,
+.ai-section h2,
+.ai-section h3,
+.ai-section h4,
+.ai-section h5,
+.ai-section h6 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* Table accessibility */
+.ai-data-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.ai-data-table th,
+.ai-data-table td {
+  border: 1px solid #ddd;
+  padding: 12px;
+  text-align: left;
+}
+
+.ai-data-table th {
+  background-color: #f5f5f5;
+  font-weight: 600;
+}
+
+.ai-data-table caption {
+  caption-side: top;
+  padding: 12px;
+  font-weight: 600;
+  text-align: left;
+}
+
+/* Error states */
+.ai-error-state {
+  padding: 16px;
+  border: 2px solid #d32f2f;
+  border-radius: 4px;
+  background-color: #ffebee;
+  color: #b71c1c;
+}
+
+.ai-error-state h3 {
+  margin: 0 0 8px 0;
+  color: #b71c1c;
+}
+
+/* Success states */
+.ai-success-state {
+  padding: 16px;
+  border: 2px solid #4caf50;
+  border-radius: 4px;
+  background-color: #e8f5e8;
+  color: #1b5e20;
+}
+
+.ai-success-state h3 {
+  margin: 0 0 8px 0;
+  color: #1b5e20;
+}
