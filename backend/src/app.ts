@@ -41,6 +41,7 @@ import crisisCommunicationRoutes from './routes/crisisCommunication.routes';
 import googleCalendarRoutes from './routes/googleCalendar.routes';
 import tenantRatingRoutes from './routes/tenantRating.routes';
 import vendorPaymentRoutes from './routes/vendorPayment.routes';
+import paymentRoutes from './routes/payment.routes';
 import path from 'path';
 
 // Load environment variables
@@ -137,6 +138,7 @@ app.use('/api/crisis-communication', crisisCommunicationRoutes);
 app.use('/api/calendar', googleCalendarRoutes);
 app.use('/api/tenant-ratings', tenantRatingRoutes);
 app.use('/api/vendor-payments', vendorPaymentRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Global error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

@@ -1,47 +1,39 @@
 import { Request, Response, NextFunction } from 'express';
-import { verifyToken } from '../services/tokenService';
-import { PrismaClient } from '@prisma/client';
+import jwt from 'jsonwebtoken';
+import { PrismaClient, UserRole } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export const protect = async (req: Request, res: Response, next: NextFunction) => {
-  let token;
+export const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
+  const { authorization } = req.headers;
 
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    try {
-      token = req.headers.authorization.split(' ')[1];
-
-      const decoded = verifyToken(token);
-
-      if (!decoded) {
-        return res.status(401).json({ message: 'Not authorized, token failed' });
-      }
-
-      const user = await prisma.user.findUnique({
-        where: { id: decoded.id },
-      });
-
-      if (!user) {
-        return res.status(401).json({ message: 'User not found' });
-      }
-
-      (req as any).user = user;
-      next();
-    } catch (error) {
-      console.error(error);
-      return res.status(401).json({ message: 'Not authorized, token failed' });
-    }
+  if (!authorization) {
+    return res.status(401).json({ error: 'No authorization header' });
   }
 
-  if (!token) {
-    return res.status(401).json({ message: 'Not authorized, no token' });
+  try {
+    const token = authorization.split(' ')[1];
+    const payload = jwt.verify(token, process.env.JWT_SECRET as string);
+    // @ts-ignore
+    req.user = payload;
+    next();
+  } catch (error) {
+    res.status(401).json({ error: 'Unauthorized' });
   }
 };
 
-export const admin = (req: Request, res: Response, next: NextFunction) => {
-  if ((req as any).user && (req as any).user.role === 'ADMIN') {
+export const isOwner = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // @ts-ignore
+    const { id } = req.user;
+    const user = await prisma.user.findUnique({ where: { id } });
+
+    if (!user || user.role !== UserRole.OWNER) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
     next();
-  } else {
-    res.status(403).json({ message: 'Not authorized as an admin' });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
   }
 };

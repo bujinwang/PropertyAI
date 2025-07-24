@@ -1,43 +1,50 @@
 import { Request, Response } from 'express';
-import { paymentService } from '../services/payment.service';
-import logger from '../utils/logger';
+import * as paymentService from '../services/payment.service';
 
-class PaymentController {
-  async createPaymentIntent(req: Request, res: Response) {
-    const { amount, currency, customerId } = req.body;
-
-    if (!amount || !currency || !customerId) {
-      return res.status(400).json({ error: 'Missing required fields.' });
-    }
-
-    try {
-      const paymentIntent = await paymentService.createPaymentIntent(amount, currency, customerId);
-      res.status(200).json({ clientSecret: paymentIntent.client_secret });
-    } catch (error) {
-      logger.error(`Error creating PaymentIntent: ${error}`);
-      res.status(500).json({ error: 'Failed to create PaymentIntent.' });
-    }
+export const approveTransaction = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    // @ts-ignore
+    const userId = req.user.id;
+    const transaction = await paymentService.approveTransaction(id, userId);
+    res.status(200).json(transaction);
+  } catch (error) {
+    // @ts-ignore
+    res.status(400).json({ error: error.message });
   }
+};
 
-  async processPayment(req: Request, res: Response) {
-    const { leaseId } = req.params;
-    const { paymentMethodId, amount, currency } = req.body;
-    
-    if (!leaseId) {
-      return res.status(400).json({ error: 'Lease ID is required.' });
-    }
-    if (!paymentMethodId || !amount || !currency) {
-      return res.status(400).json({ error: 'Payment method ID, amount, and currency are required.' });
-    }
-
-    try {
-      await paymentService.processPayment(paymentMethodId, amount, currency);
-      res.status(200).json({ message: 'Payment processed successfully.' });
-    } catch (error) {
-      logger.error(`Error processing payment: ${error}`);
-      res.status(500).json({ error: 'Failed to process payment.' });
-    }
+export const rejectTransaction = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const transaction = await paymentService.rejectTransaction(id);
+    res.status(200).json(transaction);
+  } catch (error) {
+    // @ts-ignore
+    res.status(400).json({ error: error.message });
   }
-}
+};
 
-export const paymentController = new PaymentController();
+export const approveVendorPayment = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    // @ts-ignore
+    const userId = req.user.id;
+    const vendorPayment = await paymentService.approveVendorPayment(id, userId);
+    res.status(200).json(vendorPayment);
+  } catch (error) {
+    // @ts-ignore
+    res.status(400).json({ error: error.message });
+  }
+};
+
+export const rejectVendorPayment = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const vendorPayment = await paymentService.rejectVendorPayment(id);
+    res.status(200).json(vendorPayment);
+  } catch (error) {
+    // @ts-ignore
+    res.status(400).json({ error: error.message });
+  }
+};

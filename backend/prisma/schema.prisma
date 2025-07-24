@@ -65,6 +65,8 @@ model User {
   tenantRatings            TenantRating[]            @relation("RatedTenant")
   ratedTenantRatings       TenantRating[]            @relation("Rater")
   WhiteLabelConfig         WhiteLabelConfig[]
+  approvedTransactions     Transaction[]     @relation("ApprovedTransactions")
+  approvedVendorPayments   VendorPayment[]   @relation("ApprovedVendorPayments")
 
   @@index([role])
   @@index([isActive])
@@ -77,6 +79,7 @@ enum UserRole {
   TENANT
   USER
   VENDOR
+  OWNER
 }
 
 // Property model
@@ -548,6 +551,10 @@ model Transaction {
   reference     String? // External reference number
   lease         Lease             @relation(fields: [leaseId], references: [id])
   leaseId       String
+  approvalStatus PaymentApprovalStatus @default(PENDING)
+  approvedAt     DateTime?
+  approvedBy     User?             @relation("ApprovedTransactions", fields: [approvedById], references: [id])
+  approvedById   String?
 
   @@index([leaseId])
 }
@@ -971,6 +978,10 @@ model VendorPayment {
   transactionId String? // To store the Stripe transaction ID
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+  approvalStatus PaymentApprovalStatus @default(PENDING)
+  approvedAt     DateTime?
+  approvedBy     User?             @relation("ApprovedVendorPayments", fields: [approvedById], references: [id])
+  approvedById   String?
 }
 
 enum PaymentStatus {
@@ -978,4 +989,10 @@ enum PaymentStatus {
   PROCESSING
   PAID
   FAILED
+}
+
+enum PaymentApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
