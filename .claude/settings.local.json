@@ -33,7 +33,9 @@
       "Bash(gh pr:*)",
       "Bash(grep:*)",
       "Bash(rg:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(find:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }

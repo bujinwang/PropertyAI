@@ -13,30 +13,10 @@ import { ResetPasswordScreen } from '@/screens/auth/ResetPasswordScreen';
 import { LoadingIndicator } from '@/components/ui/LoadingIndicator';
 import AIGuidedSetupWizardScreen from '@/screens/AIGuidedSetupWizardScreen';
 
-// Placeholder screens
-const PropertyDetailScreen = () => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-    <Text>Property Detail Screen</Text>
-  </View>
-);
-
-const UnitDetailScreen = () => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-    <Text>Unit Detail Screen</Text>
-  </View>
-);
-
-const ChatDetailScreen = () => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-    <Text>Chat Detail Screen</Text>
-  </View>
-);
-
-const SettingsScreen = () => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-    <Text>Settings Screen</Text>
-  </View>
-);
+import PropertyDetailScreen from '@/screens/PropertyDetailScreen';
+import UnitDetailScreen from '@/screens/UnitDetailScreen';
+import ChatDetailScreen from '@/screens/ChatDetailScreen';
+import SettingsScreen from '@/screens/SettingsScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 

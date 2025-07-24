@@ -1,411 +1,301 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
   StyleSheet,
+  Text,
+  View,
+  SafeAreaView,
+  ScrollView,
+  Image,
   TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  RefreshControl
 } from 'react-native';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS, SPACING } from '@/constants/theme';
-import { propertyService } from '@/services/propertyService';
-import { unitService } from '@/services/unitService';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@/navigation/types';
-import { Property, Unit } from '@/types/property';
 
-type PropertyDetailScreenRouteProp = RouteProp<RootStackParamList, 'PropertyDetail'>;
+type PropertyDetailNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-const PropertyDetailScreen = () => {
-  const navigation = useNavigation();
-  const route = useRoute<PropertyDetailScreenRouteProp>();
-  const { propertyId } = route.params;
+interface Property {
+  id: string;
+  name: string;
+  address: string;
+  image: string;
+  price: number;
+  bedrooms: number;
+  bathrooms: number;
+  sqft: number;
+  description: string;
+  amenities: string[];
+  type: 'apartment' | 'house' | 'condo';
+  yearBuilt: number;
+  parking: boolean;
+  petsAllowed: boolean;
+}
 
-  const [property, setProperty] = useState<Property | null>(null);
-  const [units, setUnits] = useState<Unit[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+const mockProperty: Property = {
+  id: '1',
+  name: 'Modern Downtown Apartment',
+  address: '123 Main Street, Downtown, NY 10001',
+  image: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800',
+  price: 2850,
+  bedrooms: 2,
+  bathrooms: 2,
+  sqft: 950,
+  description: 'Beautiful modern apartment in the heart of downtown with stunning city views. Features updated kitchen, hardwood floors, and in-unit laundry.',
+  amenities: ['Gym', 'Pool', 'Parking', 'Doorman', 'Rooftop Deck'],
+  type: 'apartment',
+  yearBuilt: 2018,
+  parking: true,
+  petsAllowed: true,
+};
 
-  useEffect(() => {
-    loadPropertyDetails();
-  }, [propertyId]);
+export const PropertyDetailScreen: React.FC = () => {
+  const navigation = useNavigation<PropertyDetailNavigationProp>();
+  const route = useRoute();
+  const { propertyId } = route.params as { propertyId: string };
 
-  const loadPropertyDetails = async () => {
-    try {
-      setLoading(true);
-      const [propertyData, unitsData] = await Promise.all([
-        propertyService.getPropertyById(propertyId),
-        unitService.getPropertyUnits(propertyId)
-      ]);
-      setProperty(propertyData);
-      setUnits(unitsData);
-    } catch (error) {
-      console.error('Failed to load property details:', error);
-      Alert.alert('Error', 'Failed to load property details');
-    } finally {
-      setLoading(false);
-    }
+  const handleContact = () => {
+    // Navigate to contact screen
+    navigation.navigate('ChatDetail' as any, { propertyId });
   };
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await loadPropertyDetails();
-    setRefreshing(false);
+  const handleSchedule = () => {
+    // Navigate to scheduling screen
+    navigation.navigate('ScheduleTour' as any, { propertyId });
   };
-
-  const handleAddUnit = () => {
-    navigation.navigate('UnitForm', { propertyId });
-  };
-
-  const handleViewAllUnits = () => {
-    navigation.navigate('UnitList', { 
-      propertyId, 
-      propertyName: property?.name || 'Property' 
-    });
-  };
-
-  const handleUnitPress = (unit: Unit) => {
-    navigation.navigate('UnitDetail', { unitId: unit.id });
-  };
-
-  const handleEditProperty = () => {
-    navigation.navigate('PropertyForm', { propertyId });
-  };
-
-  const renderUnit = ({ item }: { item: Unit }) => {
-    return (
-      <TouchableOpacity 
-        style={styles.unitItem}
-        onPress={() => handleUnitPress(item)}
-      >
-        <View style={styles.unitHeader}>
-          <Text style={styles.unitNumber}>Unit {item.unitNumber}</Text>
-          <View style={[styles.statusBadge, item.isAvailable ? styles.available : styles.unavailable]}>
-            <Text style={styles.statusText}>{item.isAvailable ? 'Available' : 'Occupied'}</Text>
-          </View>
-        </View>
-        <View style={styles.unitDetails}>
-          <Text style={styles.unitSpecs}>{item.bedrooms} bed • {item.bathrooms} bath • {item.size || 0} sq ft</Text>
-          {item.rent && <Text style={styles.unitRent}>${item.rent}/month</Text>}
-        </View>
-        <Ionicons name="chevron-forward" size={24} color={COLORS.text.secondary} />
-      </TouchableOpacity>
-    );
-  };
-
-  if (loading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </View>
-    );
-  }
-
-  if (!property) {
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.errorText}>Property not found</Text>
-      </View>
-    );
-  }
 
   return (
-    <ScrollView 
-      style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-    >
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.text.primary} />
-        </TouchableOpacity>
-        
-        <Text style={styles.title}>{property.name}</Text>
-        
-        <TouchableOpacity onPress={handleEditProperty} style={styles.editButton}>
-          <Ionicons name="pencil" size={20} color={COLORS.text.primary} />
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={styles.container}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Header Image */}
+        <View style={styles.imageContainer}>
+          <Image source={{ uri: mockProperty.image }} style={styles.propertyImage} />
+          <TouchableOpacity 
+            style={styles.backButton} 
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
 
-      <View style={styles.content}>
-        <View style={styles.infoCard}>
-          <Text style={styles.sectionTitle}>Property Details</Text>
-          <Text style={styles.address}>{property.address}</Text>
-          <Text style={styles.location}>{property.city}, {property.state} {property.zipCode}</Text>
-          
-          <View style={styles.propertyStats}>
-            <View style={styles.stat}>
-              <Text style={styles.statLabel}>Type</Text>
-              <Text style={styles.statValue}>{property.propertyType}</Text>
+        {/* Property Info */}
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <Text style={styles.price}>${mockProperty.price}/month</Text>
+            <View style={styles.typeBadge}>
+              <Text style={styles.typeText}>{mockProperty.type}</Text>
             </View>
-            <View style={styles.stat}>
-              <Text style={styles.statLabel}>Total Units</Text>
-              <Text style={styles.statValue}>{property.totalUnits}</Text>
-            </View>
-            {property.yearBuilt && (
-              <View style={styles.stat}>
-                <Text style={styles.statLabel}>Built</Text>
-                <Text style={styles.statValue}>{property.yearBuilt}</Text>
-              </View>
-            )}
           </View>
 
-          {property.description && (
-            <View style={styles.descriptionSection}>
-              <Text style={styles.sectionTitle}>Description</Text>
-              <Text style={styles.description}>{property.description}</Text>
-            </View>
-          )}
+          <Text style={styles.title}>{mockProperty.name}</Text>
+          <Text style={styles.address}>{mockProperty.address}</Text>
 
-          {property.amenities && property.amenities.length > 0 && (
-            <View style={styles.amenitiesSection}>
-              <Text style={styles.sectionTitle}>Amenities</Text>
-              <View style={styles.amenitiesList}>
-                {property.amenities.map((amenity, index) => (
-                  <View key={index} style={styles.amenityItem}>
-                    <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
+          {/* Property Stats */}
+          <View style={styles.statsRow}>
+            <View style={styles.stat}>
+              <Ionicons name="bed-outline" size={20} color="#666" />
+              <Text style={styles.statText}>{mockProperty.bedrooms} beds</Text>
+            </View>
+            <View style={styles.stat}>
+              <Ionicons name="water-outline" size={20} color="#666" />
+              <Text style={styles.statText}>{mockProperty.bathrooms} baths</Text>
+            </View>
+            <View style={styles.stat}>
+              <Ionicons name="square-outline" size={20} color="#666" />
+              <Text style={styles.statText}>{mockProperty.sqft} sqft</Text>
+            </View>
+          </View>
+
+          {/* Description */}
+          <Card style={styles.section}>
+            <Card.Title title="Description" />
+            <Card.Content>
+              <Text style={styles.description}>{mockProperty.description}</Text>
+            </Card.Content>
+          </Card>
+
+          {/* Amenities */}
+          <Card style={styles.section}>
+            <Card.Title title="Amenities" />
+            <Card.Content>
+              <View style={styles.amenitiesGrid}>
+                {mockProperty.amenities.map((amenity) => (
+                  <View key={amenity} style={styles.amenity}>
+                    <Ionicons name="checkmark-circle" size={16} color="#34C759" />
                     <Text style={styles.amenityText}>{amenity}</Text>
                   </View>
                 ))}
               </View>
-            </View>
-          )}
-        </View>
+            </Card.Content>
+          </Card>
 
-        <View style={styles.unitsSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Units ({units.length})</Text>
-            <View style={styles.headerActions}>
-              <TouchableOpacity style={styles.addButton} onPress={handleAddUnit}>
-                <Ionicons name="add-circle" size={24} color={COLORS.primary} />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {units.length > 0 ? (
-            <View>
-              <View style={styles.unitsList}>
-                {units.slice(0, 3).map((unit) => renderUnit({ item: unit }))}
+          {/* Property Details */}
+          <Card style={styles.section}>
+            <Card.Title title="Property Details" />
+            <Card.Content>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Type:</Text>
+                <Text style={styles.detailValue}>{mockProperty.type}</Text>
               </View>
-              <TouchableOpacity style={styles.viewAllButton} onPress={handleViewAllUnits}>
-                <Text style={styles.viewAllText}>
-                  View All {units.length} Units
-                </Text>
-                <Ionicons name="chevron-forward" size={16} color={COLORS.primary} />
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.emptyState}>
-              <Ionicons name="business-outline" size={48} color={COLORS.text.secondary} />
-              <Text style={styles.emptyText}>No units added yet</Text>
-              <Button
-                title="Add First Unit"
-                onPress={handleAddUnit}
-                style={styles.emptyButton}
-              />
-            </View>
-          )}
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Year Built:</Text>
+                <Text style={styles.detailValue}>{mockProperty.yearBuilt}</Text>
+              </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Parking:</Text>
+                <Text style={styles.detailValue}>{mockProperty.parking ? 'Available' : 'Not available'}</Text>
+              </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Pets:</Text>
+                <Text style={styles.detailValue}>{mockProperty.petsAllowed ? 'Allowed' : 'Not allowed'}</Text>
+              </View>
+            </Card.Content>
+          </Card>
+
+          {/* Action Buttons */}
+          <View style={styles.actionButtons}>
+            <Button
+              title="Contact Agent"
+              variant="primary"
+              onPress={handleContact}
+              style={styles.button}
+            />
+            <Button
+              title="Schedule Tour"
+              variant="outline"
+              onPress={handleSchedule}
+              style={styles.button}
+            />
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#fff',
   },
-  centered: {
-    flex: 1,
+  imageContainer: {
+    position: 'relative',
+  },
+  propertyImage: {
+    width: '100%',
+    height: 300,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  content: {
+    padding: 20,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    marginBottom: 8,
   },
-  backButton: {
-    padding: SPACING.sm,
+  price: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#007AFF',
+  },
+  typeBadge: {
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  typeText: {
+    fontSize: 14,
+    color: '#666',
+    textTransform: 'capitalize',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: COLORS.text.primary,
-  },
-  editButton: {
-    padding: SPACING.sm,
-  },
-  content: {
-    padding: SPACING.lg,
-  },
-  infoCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    padding: SPACING.lg,
-    marginBottom: SPACING.lg,
+    color: '#333',
+    marginBottom: 4,
   },
   address: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.text.primary,
-    marginBottom: SPACING.xs,
-  },
-  location: {
     fontSize: 16,
-    color: COLORS.text.secondary,
-    marginBottom: SPACING.md,
+    color: '#666',
+    marginBottom: 20,
   },
-  propertyStats: {
+  statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: SPACING.md,
+    marginBottom: 20,
+    paddingVertical: 15,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#e0e0e0',
   },
   stat: {
     alignItems: 'center',
   },
-  statLabel: {
-    fontSize: 12,
-    color: COLORS.text.secondary,
+  statText: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
   },
-  statValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.text.primary,
-  },
-  descriptionSection: {
-    marginTop: SPACING.md,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.text.primary,
-    marginBottom: SPACING.sm,
+  section: {
+    marginBottom: 16,
   },
   description: {
     fontSize: 16,
-    color: COLORS.text.secondary,
+    color: '#333',
     lineHeight: 24,
   },
-  amenitiesSection: {
-    marginTop: SPACING.md,
-  },
-  amenitiesList: {
+  amenitiesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: SPACING.sm,
   },
-  amenityItem: {
+  amenity: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.xs,
-    backgroundColor: COLORS.background,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: 16,
+    width: '50%',
+    marginBottom: 8,
   },
   amenityText: {
     fontSize: 14,
-    color: COLORS.text.secondary,
+    color: '#333',
+    marginLeft: 8,
   },
-  unitsSection: {
-    marginTop: SPACING.lg,
-  },
-  sectionHeader: {
+  detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  addButton: {
-    padding: SPACING.sm,
-  },
-  unitsList: {
-    gap: SPACING.md,
-  },
-  viewAllButton: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: SPACING.md,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    gap: SPACING.xs,
-  },
-  viewAllText: {
+  detailLabel: {
     fontSize: 16,
-    color: COLORS.primary,
-    fontWeight: '600',
+    color: '#666',
   },
-  unitItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    padding: SPACING.md,
-    borderRadius: 12,
-  },
-  unitHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-  },
-  unitNumber: {
+  detailValue: {
     fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.text.primary,
+    color: '#333',
   },
-  statusBadge: {
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs / 2,
-    borderRadius: 12,
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 20,
   },
-  available: {
-    backgroundColor: COLORS.success,
-  },
-  unavailable: {
-    backgroundColor: COLORS.error,
-  },
-  statusText: {
-    fontSize: 12,
-    color: COLORS.white,
-    fontWeight: '600',
-  },
-  unitDetails: {
+  button: {
     flex: 1,
-    marginLeft: SPACING.md,
-  },
-  unitSpecs: {
-    fontSize: 14,
-    color: COLORS.text.secondary,
-  },
-  unitRent: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.primary,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: SPACING.xl,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: COLORS.text.secondary,
-    marginTop: SPACING.md,
-  },
-  emptyButton: {
-    marginTop: SPACING.md,
   },
 });
 

@@ -46,6 +46,7 @@ import {
 } from '../types/ai-insights';
 import { aiInsightsService } from '../services/aiInsightsService';
 import { InsightCard, CategorySection, FiltersPanel } from '../components/ai-insights';
+import { InsightDetailModal } from '../components/ai-insights/InsightDetailModal';
 
 const AIInsightsDashboard: React.FC = () => {
   const [state, setState] = useState<InsightsDashboardState>({
@@ -66,6 +67,8 @@ const AIInsightsDashboard: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<number>(0);
   const [showFilters, setShowFilters] = useState(false);
+  const [insightModalOpen, setInsightModalOpen] = useState(false);
+  const [selectedInsight, setSelectedInsight] = useState<Insight | null>(null);
   const [dashboardSummary, setDashboardSummary] = useState<any>(null);
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
   
@@ -142,9 +145,19 @@ const AIInsightsDashboard: React.FC = () => {
 
   // Handle insight click
   const handleInsightClick = (insight: Insight) => {
-    setState(prev => ({ ...prev, selectedInsight: insight }));
-    // TODO: Open insight detail modal
-    console.log('Selected insight:', insight);
+    setSelectedInsight(insight);
+    setInsightModalOpen(true);
+  };
+
+  // Handle modal close
+  const handleModalClose = () => {
+    setInsightModalOpen(false);
+    setSelectedInsight(null);
+  };
+
+  // Handle insight refresh
+  const handleInsightRefresh = async (insightId: string) => {
+    await loadInsights();
   };
 
   // Handle category expansion
@@ -489,6 +502,14 @@ const AIInsightsDashboard: React.FC = () => {
       >
         <RefreshIcon />
       </Fab>
+
+      {/* Insight Detail Modal */}
+      <InsightDetailModal
+        open={insightModalOpen}
+        insight={selectedInsight}
+        onClose={handleModalClose}
+        onRefresh={handleInsightRefresh}
+      />
     </Container>
   );
 };

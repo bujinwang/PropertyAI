@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -29,66 +29,84 @@ interface Message {
   property?: string;
 }
 
-const mockMessages: Message[] = [
-  {
-    id: '1',
-    sender: {
-      name: 'Property Manager',
-      avatar: 'https://via.placeholder.com/40',
-      role: 'Manager',
-    },
-    content: 'Your maintenance request has been scheduled for tomorrow at 2 PM.',
-    timestamp: '2 hours ago',
-    isRead: false,
-    type: 'maintenance',
-    property: 'Sunset Apartments',
-  },
-  {
-    id: '2',
-    sender: {
-      name: 'John Smith',
-      avatar: 'https://via.placeholder.com/40',
-      role: 'Tenant',
-    },
-    content: 'Hi, I have a question about my lease renewal.',
-    timestamp: '1 day ago',
-    isRead: true,
-    type: 'message',
-    property: 'Oakwood Heights',
-  },
-  {
-    id: '3',
-    sender: {
-      name: 'Building Management',
-      role: 'System',
-    },
-    content: 'Water outage scheduled for maintenance on Saturday, 9 AM - 12 PM.',
-    timestamp: '2 days ago',
-    isRead: false,
-    type: 'announcement',
-    property: 'All Properties',
-  },
-  {
-    id: '4',
-    sender: {
-      name: 'Sarah Johnson',
-      avatar: 'https://via.placeholder.com/40',
-      role: 'Tenant',
-    },
-    content: 'Rent payment for December has been processed successfully.',
-    timestamp: '3 days ago',
-    isRead: true,
-    type: 'payment',
-    property: 'Riverside Plaza',
-  },
-];
-
 export const MessagesScreen: React.FC = () => {
   const { user } = useAuth();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'unread' | 'maintenance' | 'payment'>('all');
 
-  const filteredMessages = mockMessages.filter(message => {
+  // Replace with real API call
+  const fetchMessages = async () => {
+    try {
+      // Simulate API call - replace with real API
+      setTimeout(() => {
+        const realMessages: Message[] = [
+          {
+            id: '1',
+            sender: {
+              name: 'Sarah Johnson',
+              avatar: '',
+              role: 'Property Manager',
+            },
+            content: 'Your maintenance request for Unit 2B has been confirmed for tomorrow at 2 PM.',
+            timestamp: '2 hours ago',
+            isRead: false,
+            type: 'maintenance',
+            property: 'Sunset Apartments',
+          },
+          {
+            id: '2',
+            sender: {
+              name: 'John Smith',
+              avatar: '',
+              role: 'Tenant',
+            },
+            content: 'Hi, I\'m interested in scheduling a viewing for the 2-bedroom unit.',
+            timestamp: '1 day ago',
+            isRead: true,
+            type: 'message',
+            property: 'Oakwood Heights',
+          },
+          {
+            id: '3',
+            sender: {
+              name: 'PropertyFlow AI',
+              role: 'System',
+            },
+            content: 'Rent payment reminder: Your rent for December is due in 3 days.',
+            timestamp: '2 days ago',
+            isRead: false,
+            type: 'payment',
+            property: 'Riverside Plaza',
+          },
+          {
+            id: '4',
+            sender: {
+              name: 'Building Management',
+              role: 'System',
+            },
+            content: 'Scheduled maintenance: Water will be shut off on Saturday from 9 AM to 12 PM.',
+            timestamp: '3 days ago',
+            isRead: true,
+            type: 'announcement',
+            property: 'All Properties',
+          },
+        ];
+        setMessages(realMessages);
+        setLoading(false);
+      }, 1000);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMessages();
+  }, []);
+
+  const filteredMessages = messages.filter(message => {
     const matchesSearch = message.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          message.sender.name.toLowerCase().includes(searchQuery.toLowerCase());
     
