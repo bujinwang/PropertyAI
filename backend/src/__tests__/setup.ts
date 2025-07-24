@@ -90,7 +90,7 @@ const mockPrismaClient = {
     delete: jest.fn().mockResolvedValue({}),
     deleteMany: jest.fn(),
   },
-  message: {
+  tenantRating: {
     create: jest.fn(),
     findMany: jest.fn(),
     deleteMany: jest.fn(),

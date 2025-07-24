@@ -25,6 +25,7 @@ import AIGuidedSetupWizardScreen from '../screens/AIGuidedSetupWizardScreen';
 import GenerateLeaseScreen from '../screens/GenerateLeaseScreen';
 import ApplicationScreen from '../screens/ApplicationScreen';
 import PublicListingScreen from '../screens/PublicListingScreen';
+import PropertyDetailsScreen from '../screens/PropertyDetailScreen';
 
 // Create navigators
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -74,6 +75,7 @@ const AppNavigator = () => {
       <Stack.Screen name="GenerateLease" component={GenerateLeaseScreen} />
       <Stack.Screen name="Application" component={ApplicationScreen} />
       <Stack.Screen name="PublicListing" component={PublicListingScreen} />
+      <Stack.Screen name="PropertyDetails" component={PropertyDetailsScreen} />
     </Stack.Navigator>
   );
 };

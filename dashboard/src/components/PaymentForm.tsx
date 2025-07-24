@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   useStripe,
   useElements,
@@ -16,11 +16,28 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ leaseId }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [amount, setAmount] = useState<number | null>(null);
+  const [currency, setCurrency] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchLeaseDetails = async () => {
+      try {
+        const lease = await apiService.getLeaseDetails(leaseId);
+        setAmount(lease.rentAmount * 100); // Assuming rentAmount is in dollars, convert to cents
+        setCurrency('usd'); // Assuming USD as default currency
+      } catch (err) {
+        console.error('Failed to fetch lease details:', err);
+        setError('Failed to load payment information.');
+      }
+    };
+
+    fetchLeaseDetails();
+  }, [leaseId]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!stripe || !elements) {
+    if (!stripe || !elements || amount === null || currency === null) {
       return;
     }
 
@@ -35,7 +52,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ leaseId }) => {
     }
 
     try {
-      const { clientSecret } = await apiService.createPaymentIntent(leaseId);
+      const { clientSecret } = await apiService.createPaymentIntent(amount, currency);
 
       const { error: stripeError, paymentIntent } =
         await stripe.confirmCardPayment(clientSecret, {

@@ -1,6 +1,38 @@
 import { Request, Response } from 'express';
 import { prisma } from '../utils/dbManager';
 
+export const getPublicListings = async (req: Request, res: Response) => {
+  const { search } = req.query;
+  
+  try {
+    const where: any = {
+      status: 'ACTIVE',
+    };
+
+    if (search && typeof search === 'string') {
+      where.OR = [
+        { property: { address: { contains: search, mode: 'insensitive' } } },
+        { property: { city: { contains: search, mode: 'insensitive' } } },
+        { property: { state: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
+
+    const listings = await prisma.listing.findMany({
+      where,
+      include: {
+        property: {
+          include: {
+            photos: true,
+          },
+        },
+      },
+    });
+    res.status(200).json(listings);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 class ListingController {
   async getAllListings(req: Request, res: Response) {
     try {

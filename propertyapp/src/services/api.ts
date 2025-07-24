@@ -169,8 +169,8 @@ class ApiService {
       await storeRefreshToken(newRefreshToken);
       
       return accessToken;
-    } catch (error: any) {
-      if (error.response?.status === 401) {
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
         throw new AuthError(
           'Refresh token expired or invalid',
           AuthErrorType.INVALID_REFRESH
@@ -191,7 +191,7 @@ class ApiService {
       // The request was made and the server responded with a status code
       // outside of the 2xx range
       const status = error.response.status;
-      const data = error.response.data as any;
+      const data = error.response.data as { message?: string };
       
       // Handle different status codes
       switch (status) {
@@ -234,19 +234,19 @@ class ApiService {
   }
   
   // POST request
-  public async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  public async post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.instance.post<T>(url, data, config);
     return response.data;
   }
   
   // PUT request
-  public async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  public async put<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.instance.put<T>(url, data, config);
     return response.data;
   }
   
   // PATCH request
-  public async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  public async patch<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.instance.patch<T>(url, data, config);
     return response.data;
   }
@@ -260,6 +260,15 @@ class ApiService {
 
 // Create and export API service instance
 export const api = new ApiService(API_URL);
+
+// Specific API calls
+export const getPublicListings = (query?: string) => {
+  return api.get('/listings/public', { params: { search: query } });
+};
+
+export const getPropertyDetails = (propertyId: string) => {
+  return api.get(`/properties/${propertyId}`);
+};
 
 // Export default instance
 export default api;

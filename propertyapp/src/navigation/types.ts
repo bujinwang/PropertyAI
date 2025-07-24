@@ -38,7 +38,8 @@ export type RootStackParamList = {
   DataPrivacyCompliance: undefined;
   SecuritySettings: undefined;
   Application: { unitId: string };
-  PublicListing: { listingId: string };
+  PublicListing: undefined;
+  PropertyDetails: { propertyId: string };
 };
 
 // Navigation props for screens

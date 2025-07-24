@@ -162,6 +162,24 @@ class ApiService {
     }
   }
 
+  public async createPaymentIntent(amount: number, currency: string, customerId?: string): Promise<{ clientSecret: string; paymentIntentId: string }> {
+    try {
+      const response = await this.post<{ clientSecret: string; paymentIntentId: string }>('/payment-intents', { amount, currency, customerId });
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as ApiError);
+    }
+  }
+
+  public async getLeaseDetails(leaseId: string): Promise<any> {
+    try {
+      const response = await this.get<any>(`/leases/${leaseId}`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as ApiError);
+    }
+  }
+
   private handleError(error: ApiError): never {
     console.error('API Error:', error);
     throw error;

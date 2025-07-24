@@ -105,7 +105,8 @@ class PropertyController {
               mimetype: true,
               isFeatured: true,
             }
-          }
+          },
+          units: true,
         }
       });
       if (property) {

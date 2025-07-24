@@ -1,74 +1,135 @@
-import React from 'react';
-import { StyleSheet, Text, View, SafeAreaView, ScrollView, Image, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '@/navigation/types';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, TextInput } from 'react-native';
+import { getPublicListings } from '../services/api';
+import { Property } from '../types/property';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../navigation/types';
+import { debounce } from 'lodash';
 
-type PublicListingNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type PublicListingScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  'PublicListing'
+>;
 
-export const PublicListingScreen: React.FC = () => {
-  const navigation = useNavigation<PublicListingNavigationProp>();
-  const route = useRoute();
-  const { listingId } = route.params as { listingId: string };
+type Props = {
+  navigation: PublicListingScreenNavigationProp;
+};
 
-  const handleApply = () => {
-    // Navigate to login/register screen, then to application
-    navigation.navigate('Login', { screen: 'Application', params: { listingId } });
+const PublicListingScreen: React.FC<Props> = ({ navigation }) => {
+  const [listings, setListings] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const fetchListings = async (query = '') => {
+    setLoading(true);
+    try {
+      const data = await getPublicListings(query);
+      setListings(data);
+    } catch (error) {
+      console.error('Error fetching public listings:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  useEffect(() => {
+    fetchListings();
+  }, []);
+
+  const debouncedSearch = useCallback(debounce(fetchListings, 500), []);
+
+  const handleSearch = (text: string) => {
+    setSearchQuery(text);
+    debouncedSearch(text);
+  };
+
+  const renderHeader = () => (
+    <View style={styles.searchContainer}>
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Search by address, city, or state..."
+        value={searchQuery}
+        onChangeText={handleSearch}
+      />
+    </View>
+  );
+
+  const renderItem = ({ item }: { item: Property }) => (
+    <TouchableOpacity
+      style={styles.itemContainer}
+      onPress={() => navigation.navigate('PropertyDetails', { propertyId: item.id })}
+    >
+      <Image source={{ uri: item.photos[0] }} style={styles.thumbnail} />
+      <View style={styles.textContainer}>
+        <Text style={styles.title}>{item.address}</Text>
+        <Text>{`$${item.rent} / month`}</Text>
+        <Text>{`${item.bedrooms} beds / ${item.bathrooms} baths`}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Mock data for now */}
-        <View style={styles.imageContainer}>
-          <Image source={{ uri: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800' }} style={styles.propertyImage} />
-        </View>
-        <View style={styles.content}>
-          <Text style={styles.title}>Modern Downtown Apartment</Text>
-          <Text style={styles.address}>123 Main Street, Downtown, NY 10001</Text>
-          <Button
-            title="Apply Now"
-            variant="primary"
-            onPress={handleApply}
-            style={styles.button}
-          />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <FlatList
+      data={listings}
+      renderItem={renderItem}
+      keyExtractor={(item) => item.id.toString()}
+      contentContainerStyle={styles.container}
+      ListHeaderComponent={renderHeader}
+    />
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    padding: 10,
+  },
+  searchContainer: {
+    padding: 10,
+  },
+  searchInput: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+  },
+  centered: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  itemContainer: {
+    flexDirection: 'row',
+    padding: 10,
+    marginBottom: 10,
     backgroundColor: '#fff',
+    borderRadius: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+    elevation: 2,
   },
-  imageContainer: {
-    position: 'relative',
+  thumbnail: {
+    width: 100,
+    height: 100,
+    borderRadius: 5,
   },
-  propertyImage: {
-    width: '100%',
-    height: 300,
-  },
-  content: {
-    padding: 20,
+  textContainer: {
+    marginLeft: 10,
+    justifyContent: 'center',
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
-  },
-  address: {
     fontSize: 16,
-    color: '#666',
-    marginBottom: 20,
-  },
-  button: {
-    marginTop: 20,
+    fontWeight: 'bold',
   },
 });
 

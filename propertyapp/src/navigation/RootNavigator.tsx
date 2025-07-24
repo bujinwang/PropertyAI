@@ -13,6 +13,7 @@ import { RegisterScreen } from '@/screens/auth/RegisterScreen';
 import { ResetPasswordScreen } from '@/screens/auth/ResetPasswordScreen';
 import { LoadingIndicator } from '@/components/ui/LoadingIndicator';
 import AIGuidedSetupWizardScreen from '@/screens/AIGuidedSetupWizardScreen';
+import PublicListingScreen from '@/screens/PublicListingScreen';
 
 import PropertyDetailScreen from '@/screens/PropertyDetailScreen';
 import UnitDetailScreen from '@/screens/UnitDetailScreen';
@@ -35,7 +36,7 @@ export function RootNavigator() {
         screenOptions={{
           headerShown: false,
         }}
-        initialRouteName={isAuthenticated ? 'Main' : 'Login'}
+        initialRouteName={isAuthenticated ? 'Main' : 'PublicListing'}
       >
         {isAuthenticated ? (
           // Authenticated screens
@@ -69,6 +70,7 @@ export function RootNavigator() {
         ) : (
           // Auth screens
           <>
+            <Stack.Screen name="PublicListing" component={PublicListingScreen} />
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
@@ -78,4 +80,4 @@ export function RootNavigator() {
       </Stack.Navigator>
     </NavigationContainer>
   );
-} 
+}
