@@ -8,7 +8,7 @@ class MaintenanceController {
   async getAllMaintenanceRequests(req: Request, res: Response) {
     try {
       const maintenanceRequests = await maintenanceService.getAllMaintenanceRequests();
-      res.status(200).json(maintenanceRequests);
+      res.status(200).json({ data: maintenanceRequests });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -19,7 +19,7 @@ class MaintenanceController {
       const maintenanceRequest = await prisma.maintenanceRequest.create({
         data: req.body,
       });
-      res.status(201).json(maintenanceRequest);
+      res.status(201).json({ data: maintenanceRequest });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

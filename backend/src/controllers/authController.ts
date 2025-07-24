@@ -26,11 +26,13 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
     });
 
     res.status(201).json({
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
+      data: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+      }
     });
   } catch (error) {
     next(error);
@@ -149,20 +151,22 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
         data: { refreshToken }
       });
       
-      res.json({ 
-        token: accessToken,
-        refreshToken: refreshToken,
-        user: {
-          id: updatedUser.id,
-          email: updatedUser.email,
-          firstName: updatedUser.firstName,
-          lastName: updatedUser.lastName,
-          role: updatedUser.role,
-          isActive: updatedUser.isActive,
-          phone: updatedUser.phone,
-          mfaEnabled: updatedUser.mfaEnabled,
-          lastLogin: updatedUser.lastLogin,
-          name: `${updatedUser.firstName} ${updatedUser.lastName}`
+      res.json({
+        data: {
+          token: accessToken,
+          refreshToken: refreshToken,
+          user: {
+            id: updatedUser.id,
+            email: updatedUser.email,
+            firstName: updatedUser.firstName,
+            lastName: updatedUser.lastName,
+            role: updatedUser.role,
+            isActive: updatedUser.isActive,
+            phone: updatedUser.phone,
+            mfaEnabled: updatedUser.mfaEnabled,
+            lastLogin: updatedUser.lastLogin,
+            name: `${updatedUser.firstName} ${updatedUser.lastName}`
+          }
         }
       });
     } else {

@@ -9,7 +9,7 @@ class PropertyController {
     const cachedProperties = await getCache(cacheKey);
 
     if (cachedProperties) {
-      return res.status(200).json(cachedProperties);
+      return res.status(200).json({ data: cachedProperties });
     }
 
     try {
@@ -30,7 +30,7 @@ class PropertyController {
         }
       });
       await setCache(cacheKey, properties, 300);
-      res.status(200).json(properties);
+      res.status(200).json({ data: properties });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -78,7 +78,7 @@ class PropertyController {
       });
 
       await clearCache('properties-skip:undefined-take:undefined');
-      res.status(201).json(createdProperty);
+      res.status(201).json({ data: createdProperty });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -89,7 +89,7 @@ class PropertyController {
     const cachedProperty = await getCache(cacheKey);
 
     if (cachedProperty) {
-      return res.status(200).json(cachedProperty);
+      return res.status(200).json({ data: cachedProperty });
     }
 
     try {
@@ -110,7 +110,7 @@ class PropertyController {
       });
       if (property) {
         await setCache(cacheKey, property, 300);
-        res.status(200).json(property);
+        res.status(200).json({ data: property });
       } else {
         res.status(404).json({ message: 'Property not found' });
       }
@@ -173,7 +173,7 @@ class PropertyController {
 
       await clearCache(`property-${req.params.id}`);
       await clearCache('properties-skip:undefined-take:undefined');
-      res.status(200).json(updatedProperty);
+      res.status(200).json({ data: updatedProperty });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -196,7 +196,7 @@ class PropertyController {
     const cachedProperties = await getCache(cacheKey);
 
     if (cachedProperties) {
-      return res.status(200).json(cachedProperties);
+      return res.status(200).json({ data: cachedProperties });
     }
 
     try {
@@ -240,7 +240,7 @@ class PropertyController {
       });
 
       await setCache(cacheKey, properties, 300);
-      res.status(200).json(properties);
+      res.status(200).json({ data: properties });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

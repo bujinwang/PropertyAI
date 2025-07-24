@@ -39,16 +39,18 @@ router.get('/me', authMiddleware.protect, async (req, res) => {
   try {
     const user = (req as any).user;
     res.json({
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-      isActive: user.isActive,
-      phone: user.phone,
-      mfaEnabled: user.mfaEnabled,
-      lastLogin: user.lastLogin,
-      name: `${user.firstName} ${user.lastName}`
+      data: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        isActive: user.isActive,
+        phone: user.phone,
+        mfaEnabled: user.mfaEnabled,
+        lastLogin: user.lastLogin,
+        name: `${user.firstName} ${user.lastName}`
+      }
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });

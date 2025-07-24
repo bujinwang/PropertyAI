@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 jest.mock('ioredis', () => {
   const IORedis = jest.fn(() => ({
@@ -29,11 +30,12 @@ jest.mock('../utils/cache.ts', () => ({
 const mockPrismaClient = {
   user: {
     create: jest.fn().mockResolvedValue({ id: 'test-user-id', email: 'test@example.com', password: 'hashed_password' }),
-    findUnique: jest.fn().mockImplementation((query) => {
+    findUnique: jest.fn().mockImplementation(async (query) => {
       if (query.where.email === 'nonexistent@example.com') {
         return Promise.resolve(null);
       }
-      return Promise.resolve({ id: 'test-user-id', email: query.where.email, password: 'hashed_password' });
+      const hashedPassword = await bcrypt.hash('password123', 10);
+      return Promise.resolve({ id: 'test-user-id', email: query.where.email, password: hashedPassword });
     }),
     findFirst: jest.fn().mockResolvedValue({ id: 'test-user-id', email: 'test@example.com', password: 'hashed_password' }),
     update: jest.fn().mockResolvedValue({ id: 'test-user-id' }),
@@ -181,13 +183,20 @@ afterAll(async () => {
 });
 
 // Mock Redis connections for testing
-jest.mock('../utils/cache', () => ({
-  __esModule: true,
-  default: {
-    get: jest.fn(),
-    set: jest.fn(),
-    del: jest.fn(),
-    connect: jest.fn(),
+import { Request, Response, NextFunction } from 'express';
+
+jest.mock('../middleware/authMiddleware', () => ({
+  authMiddleware: {
+    protect: (req: Request, res: Response, next: NextFunction) => {
+      (req as any).user = { id: 'test-user-id', email: 'test@example.com' };
+      next();
+    },
+    checkRole: (roles: string[]) => (req: Request, res: Response, next: NextFunction) => {
+      next();
+    },
+    admin: (req: Request, res: Response, next: NextFunction) => {
+      next();
+    }
   }
 }));
 
