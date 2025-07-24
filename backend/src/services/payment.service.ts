@@ -1,6 +1,10 @@
 import Stripe from 'stripe';
 import paypal from '@paypal/checkout-server-sdk';
 import { config } from '../config/config';
+import { pushNotificationService } from './pushNotification.service';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 class PaymentService {
   private stripe: Stripe;
@@ -46,7 +50,38 @@ class PaymentService {
     const paymentIntent = await this.stripe.paymentIntents.retrieve(
       paymentIntentId
     );
-    // Notify user and admin
+    const customerId = paymentIntent.customer as string;
+
+    if (customerId) {
+      const user = await prisma.user.findFirst({
+        where: { stripeCustomerId: customerId },
+        include: { devices: true },
+      });
+
+      if (user && user.devices.length > 0) {
+        const { devices } = user;
+        const title = 'Payment Failed';
+        const body =
+          'Your recent payment failed. Please update your payment information.';
+
+        for (const device of devices) {
+          if (device.platform === 'android') {
+            await pushNotificationService.sendAndroidNotification(
+              device.token,
+              title,
+              body
+            );
+          } else if (device.platform === 'ios') {
+            await pushNotificationService.sendIOSNotification(
+              device.token,
+              title,
+              body
+            );
+          }
+        }
+      }
+    }
+
     console.log('Payment failed:', paymentIntent.last_payment_error?.message);
   }
 

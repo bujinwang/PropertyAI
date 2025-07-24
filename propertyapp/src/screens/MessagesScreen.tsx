@@ -13,7 +13,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts';
 import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/NotificationBadge';
 
 interface Message {
   id: string;
@@ -127,7 +126,6 @@ export const MessagesScreen: React.FC = () => {
               <Ionicons name="person" size={20} color="#666" />
             </View>
           )}
-          {!item.isRead && <Badge style={styles.unreadBadge} />}
         </View>
         
         <View style={styles.messageDetails}>
@@ -380,6 +378,9 @@ const styles = StyleSheet.create({
   },
   announcementIndicator: {
     backgroundColor: '#AF52DE',
+  },
+  messageIndicator: {
+    backgroundColor: '#007AFF',
   },
   emptyContainer: {
     flex: 1,

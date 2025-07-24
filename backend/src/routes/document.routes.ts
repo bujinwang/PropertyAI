@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import * as documentController from '../controllers/document.controller';
+import DocumentController from '../controllers/document.controller';
 
 const router = Router();
 
-router.get('/:documentId', documentController.getDocumentUrl);
+router.post('/generate-lease', DocumentController.generateLease);
 
 export default router;

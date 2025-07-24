@@ -41,6 +41,8 @@ import seoRoutes from './seo.routes';
 import publishingRoutes from './publishing.routes';
 import legacyPublishingRoutes from './publishingRoutes';
 import { clearCache } from '../utils/cache';
+import contractorRoutes from './contractor.routes';
+import managerRoutes from './manager.routes';
 
 const router = express.Router();
 
@@ -98,6 +100,8 @@ router.use(`${API_PREFIX}/pricing`, pricingRoutes);
 router.use(`${API_PREFIX}/photo-enhancement`, photoEnhancementRoutes);
 router.use(`${API_PREFIX}/seo`, seoRoutes);
 router.use(`${API_PREFIX}/publishing`, publishingRoutes);
+router.use(`${API_PREFIX}/contractor`, contractorRoutes);
+router.use(`${API_PREFIX}/manager`, managerRoutes);
 
 router.post(`${API_PREFIX}/cache/clear`, (req, res) => {
   const { key } = req.body;

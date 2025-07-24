@@ -1,5 +1,5 @@
 import React from 'react';
-import CrisisCommunicationHub from '../components/crisis-communication/CrisisCommunicationHub';
+import CrisisCommunicationHub from '../components/emergency-response/CrisisCommunicationHub';
 
 const EmergencyResponseCenterScreen: React.FC = () => {
   return (
@@ -45,7 +45,10 @@ const EmergencyResponseCenterScreen: React.FC = () => {
       </div>
 
       {/* Crisis Communication Hub */}
-      <CrisisCommunicationHub />
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-2">Crisis Communication Hub</h2>
+        <CrisisCommunicationHub />
+      </div>
     </div>
   );
 };

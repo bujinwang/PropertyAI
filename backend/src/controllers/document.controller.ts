@@ -1,23 +1,34 @@
 import { Request, Response } from 'express';
-import { documentService } from '../services/document.service';
-import logger from '../utils/logger';
+import { aiOrchestrationService } from '../services/aiOrchestrationService';
 
-export const getDocumentUrl = async (req: Request, res: Response) => {
-  const { documentId } = req.params;
+class DocumentController {
+  async generateLease(req: Request, res: Response) {
+    try {
+      const {
+        propertyId,
+        unitId,
+        tenantId,
+        startDate,
+        endDate,
+        rentAmount,
+        securityDeposit,
+      } = req.body;
 
-  if (!documentId) {
-    return res.status(400).json({ error: 'Document ID is required' });
-  }
+      const lease = await aiOrchestrationService.generateLeaseAgreement(
+        propertyId,
+        unitId,
+        tenantId,
+        new Date(startDate),
+        new Date(endDate),
+        rentAmount,
+        securityDeposit
+      );
 
-  try {
-    const url = await documentService.getSignedUrlForDocument(documentId);
-    if (url) {
-      res.status(200).json({ url });
-    } else {
-      res.status(404).json({ error: 'Document not found' });
+      res.status(201).json(lease);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
-  } catch (error) {
-    logger.error(`Error getting document URL: ${error}`);
-    res.status(500).json({ error: 'Internal server error' });
   }
-};
+}
+
+export default new DocumentController();

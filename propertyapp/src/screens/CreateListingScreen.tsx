@@ -8,6 +8,8 @@ import {
   Platform,
   Alert,
   Switch,
+  ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Formik, FormikProps } from 'formik';
@@ -271,7 +273,7 @@ const CreateListingScreen = () => {
                 value={values.title}
                 onChangeText={handleChange('title')}
                 onBlur={handleBlur('title')}
-                error={touched.title && errors.title}
+                error={(touched.title && errors.title) || undefined}
                 placeholder="e.g., Beautiful 2-bedroom apartment with balcony"
               />
 
@@ -280,7 +282,7 @@ const CreateListingScreen = () => {
                 value={values.description}
                 onChangeText={handleChange('description')}
                 onBlur={handleBlur('description')}
-                error={touched.description && errors.description}
+                error={(touched.description && errors.description) || undefined}
                 placeholder="Describe the unit, amenities, location, etc."
                 multiline
                 style={styles.descriptionInput}
@@ -291,7 +293,7 @@ const CreateListingScreen = () => {
                 value={values.price}
                 onChangeText={handleChange('price')}
                 onBlur={handleBlur('price')}
-                error={touched.price && errors.price}
+                error={(touched.price && errors.price) || undefined}
                 placeholder="e.g., 1200"
                 keyboardType="numeric"
               />
@@ -384,7 +386,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
   },
   unitInfo: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.card,
     borderRadius: 12,
     padding: SPACING.md,
     marginBottom: SPACING.lg,
@@ -451,7 +453,7 @@ const styles = StyleSheet.create({
     color: COLORS.text.secondary,
   },
   activeStatusText: {
-    color: COLORS.white,
+    color: '#FFFFFF',
   },
   buttonContainer: {
     marginTop: SPACING.lg,

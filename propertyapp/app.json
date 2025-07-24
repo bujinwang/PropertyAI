@@ -24,7 +24,7 @@
       "package": "com.propertyai.app"
     },
     "web": {
-      "favicon": "./src/assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       "expo-secure-store"

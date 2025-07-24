@@ -1,6 +1,7 @@
 {
   "permissions": {
     "allow": [
+      "*(*)",
       "Bash(*)",
       "Terminal(*)",
       "Edit(*)",
@@ -35,7 +36,8 @@
       "Bash(rg:*)",
       "Bash(sed:*)",
       "Bash(find:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": []
   }
