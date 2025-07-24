@@ -1,33 +1,39 @@
 import { PrismaClient } from '@prisma/client';
-import { S3 } from 'aws-sdk';
+import { S3Client } from '@aws-sdk/client-s3';
+import { Upload } from '@aws-sdk/lib-storage';
 
 const prisma = new PrismaClient();
 
 class DocumentService {
-  private s3: S3;
+  private s3: S3Client;
 
   constructor() {
-    this.s3 = new S3({
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    this.s3 = new S3Client({
       region: process.env.AWS_REGION,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+      },
     });
   }
 
   async uploadDocument(file: Express.Multer.File, userId: string) {
-    const params = {
-      Bucket: process.env.AWS_S3_BUCKET!,
-      Key: `${userId}/${file.originalname}`,
-      Body: file.buffer,
-    };
+    const upload = new Upload({
+      client: this.s3,
+      params: {
+        Bucket: process.env.AWS_S3_BUCKET!,
+        Key: `${userId}/${file.originalname}`,
+        Body: file.buffer,
+      },
+    });
 
-    const { Location } = await this.s3.upload(params).promise();
+    const { Location } = await upload.done();
 
     const document = await prisma.document.create({
       data: {
         name: file.originalname,
         type: 'OTHER', // This is a placeholder
-        url: Location,
+        url: Location!,
         uploadedById: userId,
         size: file.size,
         mimeType: file.mimetype,

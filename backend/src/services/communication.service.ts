@@ -7,7 +7,11 @@ class CommunicationService {
 
   constructor() {
     this.twilioClient = twilio(config.twilio.accountSid, config.twilio.authToken);
-    sgMail.setApiKey(config.sendgrid.apiKey);
+    if (config.sendgrid.apiKey) {
+      sgMail.setApiKey(config.sendgrid.apiKey);
+    } else {
+      throw new Error('SendGrid API key is not defined');
+    }
   }
 
   async sendSms(to: string, body: string) {
@@ -19,6 +23,9 @@ class CommunicationService {
   }
 
   async sendEmail(to: string, subject: string, html: string) {
+    if (!config.sendgrid.fromEmail) {
+      throw new Error('SendGrid from email is not defined');
+    }
     const msg = {
       to,
       from: config.sendgrid.fromEmail,

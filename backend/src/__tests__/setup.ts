@@ -20,6 +20,11 @@ jest.mock('bullmq', () => ({
   })),
 }));
 
+jest.mock('../utils/cache.ts', () => ({
+    getCache: jest.fn().mockResolvedValue(null),
+    setCache: jest.fn(),
+}));
+
 
 const mockPrismaClient = {
   user: {

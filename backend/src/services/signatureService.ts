@@ -1,10 +1,10 @@
-import { DocuSign } from 'docusign-esign';
+import * as docusign from 'docusign-esign';
 
 class SignatureService {
-  private apiClient: DocuSign.ApiClient;
+  private apiClient: any;
 
   constructor() {
-    this.apiClient = new DocuSign.ApiClient();
+    this.apiClient = new docusign.ApiClient();
     this.apiClient.setBasePath(process.env.DOCUSIGN_BASE_PATH!);
     this.apiClient.addDefaultHeader(
       'Authorization',

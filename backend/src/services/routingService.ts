@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { smsService } from './smsService';
+import { sendSms } from './smsService';
 
 const prisma = new PrismaClient();
 
@@ -18,11 +18,11 @@ class RoutingService {
       await prisma.maintenanceRequest.update({
         where: { id: requestId },
         data: {
-          assignedToId: vendor.id,
+          status: 'IN_PROGRESS',
         },
       });
       if (vendor.phone) {
-        await SmsService.sendVendorNotification(
+        await sendSms(
           vendor.phone,
           `You have a new maintenance request: ${requestId}`
         );

@@ -19,7 +19,7 @@ module.exports = {
   moduleNameMapper: {
     '^src/(.*)$': '<rootDir>/src/$1',
     'jstoxml': '<rootDir>/src/__mocks__/jstoxml.ts',
-    '^../utils/cache$': '<rootDir>/src/__mocks__/cache.ts'
+    '^../utils/cache': '<rootDir>/src/__mocks__/cache.ts'
   },
   transformIgnorePatterns: ['/node_modules/(?!jstoxml).+\\.js$'],
 };

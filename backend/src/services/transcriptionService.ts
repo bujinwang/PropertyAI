@@ -1,11 +1,11 @@
 import SttService from './sttService';
-import { AIOrchestrationService } from './aiOrchestrationService';
+import { AiOrchestrationService } from './aiOrchestrationService';
 import Transcription from '../models/mongo/Transcription';
 
 class TranscriptionService {
-  private aiOrchestrationService: AIOrchestrationService;
+  private aiOrchestrationService: AiOrchestrationService;
 
-  constructor(aiOrchestrationService: AIOrchestrationService) {
+  constructor(aiOrchestrationService: AiOrchestrationService) {
     this.aiOrchestrationService = aiOrchestrationService;
   }
 
@@ -21,6 +21,7 @@ class TranscriptionService {
         status: 'completed',
       });
       await transcription.save();
+      this.aiOrchestrationService.startTranscriptionWorkflow(filePath);
       return transcription;
     } catch (error: any) {
       console.error(`Error transcribing ${filePath}:`, error);

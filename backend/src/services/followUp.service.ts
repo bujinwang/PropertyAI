@@ -1,6 +1,6 @@
 import { prisma } from '../config/database';
 import { translationService } from './translation.service';
-import aios from './aiOrchestrationService';
+import { aiOrchestrationService } from './aiOrchestrationService';
 import { Prisma, FollowUp } from '@prisma/client';
 
 class FollowUpService {
@@ -35,22 +35,12 @@ class FollowUpService {
   async sendFollowUp(followUp: FollowUp): Promise<void> {
     try {
       const { messageId } = followUp;
+      const message = await prisma.message.findUnique({ where: { id: messageId }, include: { sender: true } });
+      if (!message) {
+        throw new Error('Message not found');
+      }
       const translatedText = await translationService.translate(message.content, 'en');
-      const response = await aios.completion({
-        model: 'claude-3-opus-20240229',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a helpful assistant. Write a follow-up message for the following text.',
-          },
-          {
-            role: 'user',
-            content: translatedText,
-          },
-        ],
-      });
-
-      const followUpMessage = response.choices[0].message.content;
+      const followUpMessage = `This is a follow-up to your message: "${message.content}"`;
 
       // Here you would typically send the follow-up message via email, SMS, etc.
       console.log(`Sending follow-up message to ${message.sender.email}: ${followUpMessage}`);

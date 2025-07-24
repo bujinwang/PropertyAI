@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
-import PaymentService from '../services/paymentService';
+import { paymentService } from '../services/payment.service';
 
 class PaymentController {
   async createCustomer(req: Request, res: Response) {
     try {
-      const customer = await PaymentService.createCustomer(
+      const customer = await paymentService.createCustomer(
         req.body.email,
         req.body.name
       );
@@ -16,9 +16,10 @@ class PaymentController {
 
   async createPaymentIntent(req: Request, res: Response) {
     try {
-      const paymentIntent = await PaymentService.createPaymentIntent(
+      const paymentIntent = await paymentService.createPaymentIntent(
         req.body.amount,
-        req.body.currency
+        req.body.currency,
+        req.body.customerId
       );
       res.status(201).json(paymentIntent);
     } catch (error: any) {
@@ -28,7 +29,7 @@ class PaymentController {
 
   async createSubscription(req: Request, res: Response) {
     try {
-      const subscription = await PaymentService.createSubscription(
+      const subscription = await paymentService.createSubscription(
         req.body.customerId,
         req.body.priceId
       );
@@ -42,7 +43,7 @@ class PaymentController {
     try {
       const event = req.body;
       if (event.type === 'payment_intent.payment_failed') {
-        await PaymentService.handleFailedPayment(event.data.object.id);
+        await paymentService.handleFailedPayment(event.data.object.id);
       }
       res.status(200).send();
     } catch (error: any) {

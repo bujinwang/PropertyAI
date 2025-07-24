@@ -32,6 +32,8 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.826.0",
     "@aws-sdk/client-textract": "^3.826.0",
+    "@aws-sdk/lib-storage": "^3.850.0",
+    "@aws-sdk/s3-request-presigner": "^3.850.0",
     "@google-cloud/speech": "^7.1.0",
     "@google/generative-ai": "^0.24.1",
     "@googlemaps/google-maps-services-js": "^3.4.1",
@@ -51,7 +53,6 @@
     "@types/nodemailer": "^6.4.17",
     "@types/passport-facebook": "^3.0.3",
     "@types/qrcode": "^1.5.5",
-    "aws-sdk": "^2.1692.0",
     "axios": "^1.10.0",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",

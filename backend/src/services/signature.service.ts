@@ -1,12 +1,5 @@
 import { prisma } from '../config/database';
-import { S3 } from 'aws-sdk';
 import { createHmac } from 'crypto';
-
-const s3 = new S3({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: process.env.AWS_REGION,
-});
 
 class SignatureService {
   public async signDocument(documentId: string, userId: string, signature: string) {

@@ -11,43 +11,18 @@ import MaintenanceStackNavigator from './MaintenanceStackNavigator';
 import PropertyStackNavigator from './PropertyStackNavigator';
 import { Ionicons } from '@expo/vector-icons';
 
-// Placeholder screens
-const MessagesScreen = () => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-    <Text>Messages Screen</Text>
-  </View>
-);
+import MessagesScreen from '@/screens/MessagesScreen';
+import ProfileScreen from '@/screens/ProfileScreen';
+import AdminDashboardScreen from '@/screens/AdminDashboardScreen';
+import PropertyManagerDashboardScreen from '@/screens/PropertyManagerDashboardScreen';
 
-const ProfileScreen = () => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-    <Text>Profile Screen</Text>
-  </View>
-);
-
-// Admin-only screens
-const AdminDashboardScreen = () => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-    <Text>Admin Dashboard</Text>
-    <Text>Only administrators can see this screen</Text>
-  </View>
-);
-
-// Wrap component with role protection
+// Wrap components with role protection
 const ProtectedAdminDashboard = () => (
   <ProtectedRoute allowedRoles={['admin']}>
     <AdminDashboardScreen />
   </ProtectedRoute>
 );
 
-// Property manager screens
-const PropertyManagerDashboardScreen = () => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-    <Text>Property Manager Dashboard</Text>
-    <Text>Property managers and admins can see this screen</Text>
-  </View>
-);
-
-// Wrap component with role protection
 const ProtectedPropertyManagerDashboard = () => (
   <ProtectedRoute allowedRoles={['propertyManager', 'admin']}>
     <PropertyManagerDashboardScreen />

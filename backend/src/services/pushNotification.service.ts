@@ -14,6 +14,9 @@ class PushNotificationService {
       }),
     });
 
+    if (!config.apn.key || !config.apn.keyId || !config.apn.teamId) {
+      throw new Error('APN configuration is missing');
+    }
     this.apnProvider = new apn.Provider({
       token: {
         key: config.apn.key,
@@ -42,6 +45,9 @@ class PushNotificationService {
       title,
       body,
     };
+    if (!config.apn.bundleId) {
+      throw new Error('APN bundle ID is not defined');
+    }
     notification.topic = config.apn.bundleId;
 
     await this.apnProvider.send(notification, token);

@@ -1,10 +1,13 @@
 import { prisma } from '../config/database';
-import { S3 } from 'aws-sdk';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
-const s3 = new S3({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+const s3Client = new S3Client({
   region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
 });
 
 class DocumentService {
@@ -17,13 +20,12 @@ class DocumentService {
       return null;
     }
 
-    const params = {
+    const command = new GetObjectCommand({
       Bucket: process.env.AWS_S3_BUCKET!,
       Key: document.url,
-      Expires: 60 * 5, // 5 minutes
-    };
+    });
 
-    return s3.getSignedUrlPromise('getObject', params);
+    return getSignedUrl(s3Client, command, { expiresIn: 60 * 5 });
   }
 }
 

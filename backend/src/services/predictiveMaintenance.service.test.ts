@@ -26,7 +26,7 @@ describe('PredictiveMaintenanceService', () => {
     ];
     (prisma.maintenanceRequest.findMany as jest.Mock).mockResolvedValue(mockHistory);
 
-    const prediction = await predictiveMaintenanceService.predictMaintenance('unit1');
+    const prediction = await predictiveMaintenanceService.predictFailure('unit1');
     expect(prediction).toBeDefined();
     expect(prediction.unitId).toBe('unit1');
     expect(prediction.confidence).toBe(0.75);
@@ -35,7 +35,7 @@ describe('PredictiveMaintenanceService', () => {
   it('should return null if no maintenance history exists', async () => {
     (prisma.maintenanceRequest.findMany as jest.Mock).mockResolvedValue([]);
 
-    const prediction = await predictiveMaintenanceService.predictMaintenance('unit1');
+    const prediction = await predictiveMaintenanceService.predictFailure('unit1');
     expect(prediction).toBeNull();
   });
 });

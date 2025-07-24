@@ -81,7 +81,11 @@ describe('Payment Service', () => {
       },
     });
 
-    await paymentService.processPayment(lease.id);
+    await paymentService.processPayment(
+      'pm_123456789',
+      lease.rentAmount,
+      'usd'
+    );
 
     const transaction = await prisma.transaction.findFirst({
       where: {

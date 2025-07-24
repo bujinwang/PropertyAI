@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
 
 jest.mock('@prisma/client', () => {
-  const mockPrisma = {
+  const mockPrisma: any = {
     user: {
       findUnique: jest.fn(),
     },

@@ -1,4 +1,4 @@
-class AiOrchestrationService {
+export class AiOrchestrationService {
   startTranscriptionWorkflow(filePath: string): void {
     console.log(`Starting transcription workflow for: ${filePath}`);
   }

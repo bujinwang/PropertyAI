@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AppError } from '../middleware/errorMiddleware';
-import * as backgroundCheckService from '../services/backgroundCheckService';
+import { backgroundCheckService } from '../services/backgroundCheck.service';
 
 const prisma = new PrismaClient();
 
@@ -14,8 +14,10 @@ export const performCheck = async (req: Request, res: Response, next: NextFuncti
       return next(new AppError('Application not found', 404));
     }
 
-    const checkResult = await backgroundCheckService.performBackgroundCheck(application);
-    res.json(checkResult);
+    const transunionResult = await backgroundCheckService.runTransunionCheck(application.id);
+    const experianResult = await backgroundCheckService.runExperianCheck(application.id);
+
+    res.json({ transunionResult, experianResult });
   } catch (error) {
     next(error);
   }
