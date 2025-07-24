@@ -37,7 +37,8 @@
       "Bash(sed:*)",
       "Bash(find:*)",
       "Bash(find:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(touch:*)"
     ],
     "deny": []
   }

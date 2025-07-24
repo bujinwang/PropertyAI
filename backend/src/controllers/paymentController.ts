@@ -50,6 +50,16 @@ class PaymentController {
       res.status(500).json({ error: error.message });
     }
   }
+
+  async collectDeposit(req: Request, res: Response) {
+    try {
+      const { leaseId, amount, currency } = req.body;
+      const paymentIntent = await paymentService.collectDeposit(leaseId, amount, currency);
+      res.status(201).json(paymentIntent);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
 }
 
 export default new PaymentController();

@@ -81,6 +81,15 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
           >
             Tenant Screening
           </Button>
+
+          <Button
+            color="inherit"
+            component={RouterLink}
+            to="/tenant-ratings"
+            sx={{ mx: 1 }}
+          >
+            Tenant Ratings
+          </Button>
           
           <IconButton
             onClick={handleClick}
@@ -146,4 +155,4 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
   );
 };
 
-export default Header; 
+export default Header;

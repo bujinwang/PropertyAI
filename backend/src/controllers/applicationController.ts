@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { pushNotificationService } from '../services/pushNotification.service';
 
 const prisma = new PrismaClient();
 
@@ -16,6 +17,20 @@ class ApplicationController {
   async createApplication(req: Request, res: Response) {
     try {
       const application = await prisma.application.create({ data: req.body });
+
+      // Send a push notification to the applicant
+      const applicant = await prisma.user.findUnique({ where: { id: application.applicantId } });
+      if (applicant?.pushToken) {
+        const { pushToken, platform } = applicant.devices[0];
+        const title = 'Application Received';
+        const body = 'Your application has been received and is under review.';
+        if (platform === 'ios') {
+          await pushNotificationService.sendIOSNotification(pushToken, title, body);
+        } else {
+          await pushNotificationService.sendAndroidNotification(pushToken, title, body);
+        }
+      }
+
       res.status(201).json(application);
     } catch (error: any) {
       res.status(500).json({ error: error.message });

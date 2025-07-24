@@ -22,6 +22,9 @@ import MessagesScreen from '../screens/MessagesScreen';
 import DataPrivacyComplianceScreen from '../screens/DataPrivacyComplianceScreen';
 import SecuritySettingsScreen from '../screens/SecuritySettingsScreen';
 import AIGuidedSetupWizardScreen from '../screens/AIGuidedSetupWizardScreen';
+import GenerateLeaseScreen from '../screens/GenerateLeaseScreen';
+import ApplicationScreen from '../screens/ApplicationScreen';
+import PublicListingScreen from '../screens/PublicListingScreen';
 
 // Create navigators
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -68,8 +71,11 @@ const AppNavigator = () => {
       <Stack.Screen name="AIGuidedSetupWizard" component={AIGuidedSetupWizardScreen} />
       <Stack.Screen name="DataPrivacyCompliance" component={DataPrivacyComplianceScreen} />
       <Stack.Screen name="SecuritySettings" component={SecuritySettingsScreen} />
+      <Stack.Screen name="GenerateLease" component={GenerateLeaseScreen} />
+      <Stack.Screen name="Application" component={ApplicationScreen} />
+      <Stack.Screen name="PublicListing" component={PublicListingScreen} />
     </Stack.Navigator>
   );
 };
 
-export default AppNavigator; 
+export default AppNavigator;

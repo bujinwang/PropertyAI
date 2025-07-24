@@ -17,6 +17,7 @@ const toApartmentsComFormat = (listing: Listing) => {
       title: listing.title,
       description: listing.description,
       price: listing.price,
+      url: `${process.env.FRONTEND_URL}/public-listing/${listing.slug}`,
       // ... other fields
     },
   });

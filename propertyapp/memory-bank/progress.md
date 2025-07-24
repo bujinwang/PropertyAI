@@ -1,25 +1,17 @@
-# Upgrade Progress: React Native 0.80.2
+# Progress: Tenant Rating Feature
 
-**Status:** In Progress
+**Completed:**
+*   **Backend API:**
+    *   Created `tenantRating.controller.ts` to handle API requests.
+    *   Created `tenantRating.service.ts` to manage business logic.
+    *   Created `tenantRating.routes.ts` to define API endpoints.
+    *   Integrated the new routes into `app.ts`.
+*   **Frontend (Manager Dashboard):**
+    *   Created `TenantRatingPage.tsx` to display and submit ratings.
+    *   Created `tenantRating.api.ts` to communicate with the backend.
+    *   Created `tenantRating.ts` to define the data type.
 
-| Task                               | Status      | Notes                                      |
-| ---------------------------------- | ----------- | ------------------------------------------ |
-| **Planning & Documentation**       |             |                                            |
-| Create `memory-bank`               | ✅ Complete |                                            |
-| Create `projectbrief.md`           | ✅ Complete |                                            |
-| Create `productContext.md`         | ✅ Complete |                                            |
-| Create `systemPatterns.md`         | ✅ Complete |                                            |
-| Create `techContext.md`            | ✅ Complete |                                            |
-| Create `activeContext.md`          | ✅ Complete |                                            |
-| Create `progress.md`               | ✅ Complete |                                            |
-| **Dependency Analysis**            |             |                                            |
-| Analyze `package.json`             | ✅ Complete |                                            |
-| **Upgrade Execution**              |             |                                            |
-| Update `package.json`              | ✅ Complete |                                            |
-| Install new dependencies           | ✅ Complete |                                            |
-| Update native project files        | ⬜️ Pending  |                                            |
-| Address breaking changes           | ⬜️ Pending  |                                            |
-| **Testing & Verification**         |             |                                            |
-| Build and run on iOS               | ⬜️ Pending  |                                            |
-| Build and run on Android           | ⬜️ Pending  |                                            |
-| Verify all functionalities         | ⬜️ Pending  |                                            |
+**Next Steps:**
+*   Integrate the `TenantRatingPage` into the main dashboard navigation.
+*   Add comprehensive tests for the new feature.
+*   Deploy the changes to a staging environment for review.

@@ -39,6 +39,7 @@ import sentimentRoutes from './routes/sentiment.routes';
 import conversationRoutes from './routes/conversation.routes';
 import crisisCommunicationRoutes from './routes/crisisCommunication.routes';
 import googleCalendarRoutes from './routes/googleCalendar.routes';
+import tenantRatingRoutes from './routes/tenantRating.routes';
 import path from 'path';
 
 // Load environment variables
@@ -133,6 +134,7 @@ app.use('/api/sentiment', sentimentRoutes);
 app.use('/api/conversations', conversationRoutes);
 app.use('/api/crisis-communication', crisisCommunicationRoutes);
 app.use('/api/calendar', googleCalendarRoutes);
+app.use('/api/tenant-ratings', tenantRatingRoutes);
 
 // Global error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

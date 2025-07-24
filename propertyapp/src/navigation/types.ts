@@ -37,6 +37,8 @@ export type RootStackParamList = {
   };
   DataPrivacyCompliance: undefined;
   SecuritySettings: undefined;
+  Application: { unitId: string };
+  PublicListing: { listingId: string };
 };
 
 // Navigation props for screens

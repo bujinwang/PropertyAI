@@ -102,6 +102,24 @@ class PaymentService {
     });
   }
 
+  async collectDeposit(leaseId: string, amount: number, currency: string) {
+    const lease = await prisma.lease.findUnique({
+      where: { id: leaseId },
+      include: { tenant: true },
+    });
+
+    if (!lease) {
+      throw new Error('Lease not found');
+    }
+
+    const { tenant } = lease;
+    if (!tenant.stripeCustomerId) {
+      throw new Error('Tenant does not have a Stripe customer ID');
+    }
+
+    return this.createPaymentIntent(amount, currency, tenant.stripeCustomerId);
+  }
+
   // async createPayPalOrder(amount: number, currency: string) {
   //   const request = new paypal.orders.OrdersCreateRequest();
   //   request.prefer("return=representation");
