@@ -1,6 +1,8 @@
-import { Listing } from '@prisma/client';
+import { Listing, PrismaClient } from '@prisma/client';
 import { AppError } from '../middleware/errorMiddleware';
 import { toXML } from 'jstoxml';
+
+const prisma = new PrismaClient();
 
 const APARTMENTS_COM_API_URL = 'https://api.apartments.com/v1';
 
@@ -9,16 +11,22 @@ const getAuthHeaders = () => ({
   'Content-Type': 'application/xml',
 });
 
-const toApartmentsComFormat = (listing: Listing) => {
-  // This is a placeholder for the actual data mapping.
-  // You would map your unified listing model to the Apartments.com XML format here.
+const toApartmentsComFormat = async (listing: Listing) => {
+  const unit = await prisma.unit.findFirst({ where: { listingId: listing.id } });
+  const property = await prisma.property.findUnique({ where: { id: listing.propertyId } });
+
   return toXML({
     listing: {
       title: listing.title,
       description: listing.description,
-      price: listing.price,
+      rent: listing.rent,
       url: `${process.env.FRONTEND_URL}/public-listing/${listing.slug}`,
-      // ... other fields
+      bedrooms: unit?.bedrooms,
+      bathrooms: unit?.bathrooms,
+      squareFootage: unit?.size,
+      propertyType: property?.propertyType,
+      isAvailable: listing.isAvailable,
+      dateAvailable: listing.dateAvailable,
     },
   });
 };
@@ -27,7 +35,7 @@ export const publishToApartmentsCom = async (listing: Listing) => {
   const response = await fetch(`${APARTMENTS_COM_API_URL}/import`, {
     method: 'POST',
     headers: getAuthHeaders(),
-    body: toApartmentsComFormat(listing),
+    body: await toApartmentsComFormat(listing),
   });
 
   if (!response.ok) {
@@ -35,6 +43,19 @@ export const publishToApartmentsCom = async (listing: Listing) => {
   }
 
   return response.text();
+};
+
+export const getApartmentsComps = async (propertyId: string) => {
+  const response = await fetch(`${APARTMENTS_COM_API_URL}/properties/${propertyId}/comps`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new AppError('Failed to get comps from Apartments.com', response.status);
+  }
+
+  return response.json();
 };
 
 export const deleteFromApartmentsCom = async (listingId: string) => {

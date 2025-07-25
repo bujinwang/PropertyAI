@@ -1,15 +1,15 @@
+import { generativeAIService } from './generativeAI.service';
+
 class CVModelService {
   async processImage(model: string, image: Buffer, params: any): Promise<Buffer> {
-    // This is a mock implementation.
-    // In a real implementation, this would call the specified CV model.
-    console.log(`Processing image with model: ${model}`);
-    console.log('Model parameters:', params);
+    const imageBase64 = image.toString('base64');
+    const mimeType = params.mimeType || 'image/jpeg'; // Assuming mimeType is passed in params
 
-    // Simulate processing time
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    const prompt = `Analyze the image using the ${model} model with the following parameters: ${JSON.stringify(params)}.`;
+    const result = await generativeAIService.analyzeImage(prompt, imageBase64, mimeType);
 
-    // Mock result
-    return Buffer.from(`processed-image-data-by-${model}`);
+    // Assuming the result from generativeAIService.analyzeImage is a string that can be converted to a Buffer
+    return Buffer.from(result);
   }
 }
 

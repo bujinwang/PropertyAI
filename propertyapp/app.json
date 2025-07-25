@@ -23,9 +23,7 @@
     "android": {
       "package": "com.propertyai.app"
     },
-    "web": {
-      "favicon": "./assets/images/favicon.png"
-    },
+    "web": {},
     "plugins": [
       "expo-secure-store"
     ]

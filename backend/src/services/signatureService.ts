@@ -17,10 +17,38 @@ class SignatureService {
     signerEmail: string,
     signerName: string
   ) {
-    // This is a placeholder for the actual implementation
-    console.log(
-      `Sending document ${documentId} to ${signerName} <${signerEmail}> for signature`
+    const envelopesApi = new docusign.EnvelopesApi(this.apiClient);
+
+    const envelopeDefinition = new docusign.EnvelopeDefinition();
+    envelopeDefinition.emailSubject = 'Please sign this document';
+    envelopeDefinition.documents = [
+      {
+        documentBase64: '<DOCUMENT_BASE64>',
+        name: 'Document',
+        fileExtension: 'pdf',
+        documentId: '1',
+      },
+    ];
+    envelopeDefinition.recipients = docusign.Recipients.constructFromObject({
+      signers: [
+        {
+          email: signerEmail,
+          name: signerName,
+          recipientId: '1',
+          routingOrder: '1',
+        },
+      ],
+    });
+    envelopeDefinition.status = 'sent';
+
+    const results = await envelopesApi.createEnvelope(
+      process.env.DOCUSIGN_ACCOUNT_ID!,
+      {
+        envelopeDefinition,
+      }
     );
+
+    return results;
   }
 }
 

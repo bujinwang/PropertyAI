@@ -26,11 +26,7 @@ class SttService {
     };
 
     const [response] = await this.client.recognize(request);
-    const transcription =
-      response.results
-        ?.map((result) => result.alternatives?.[0]?.transcript)
-        .join('\n') ?? '';
-    return transcription;
+    return response;
   }
 }
 

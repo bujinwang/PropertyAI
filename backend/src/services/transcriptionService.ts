@@ -14,10 +14,15 @@ class TranscriptionService {
       const transcriptionResult = await SttService.transcribe(filePath);
       const transcription = new Transcription({
         voicemailId,
-        transcript: transcriptionResult,
+        transcript:
+          transcriptionResult.results
+            ?.map((result) => result.alternatives?.[0]?.transcript)
+            .join('\n') ?? '',
         languageCode: 'en-US',
-        confidence: 0.9, // This is a placeholder
-        words: [], // This is a placeholder
+        confidence:
+          transcriptionResult.results?.[0]?.alternatives?.[0]?.confidence ?? 0,
+        words:
+          transcriptionResult.results?.[0]?.alternatives?.[0]?.words ?? [],
         status: 'completed',
       });
       await transcription.save();

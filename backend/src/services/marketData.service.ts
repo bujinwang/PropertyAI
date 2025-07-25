@@ -1,14 +1,14 @@
-import axios from 'axios';
+import { zillowService } from './zillow.service';
+import { getApartmentsComps } from './apartmentsComService';
 
 class MarketDataService {
-  async getMarketData(location: string): Promise<any> {
-    // This is a mock implementation.
-    // In a real implementation, this would fetch data from a real estate market data API.
-    console.log('Fetching market data for:', location);
+  async getComps(propertyId: string) {
+    const zillowComps = await zillowService.getComps(propertyId);
+    const apartmentsComps = await getApartmentsComps(propertyId);
+
     return {
-      averageRent: 2000,
-      averageSalePrice: 500000,
-      daysOnMarket: 30,
+      zillow: zillowComps,
+      apartmentsCom: apartmentsComps,
     };
   }
 }

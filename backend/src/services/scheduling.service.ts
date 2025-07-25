@@ -1,13 +1,17 @@
 import { prisma } from '../config/database';
 import { WorkOrder, ScheduledEvent } from '@prisma/client';
 import { google } from 'googleapis';
+import { config } from '../config/config';
 
 class SchedulingService {
   private calendar;
 
   constructor() {
     const auth = new google.auth.GoogleAuth({
-      // your credentials here
+      credentials: {
+        client_email: config.google.clientEmail,
+        private_key: config.google.privateKey,
+      },
       scopes: ['https://www.googleapis.com/auth/calendar'],
     });
     this.calendar = google.calendar({ version: 'v3', auth });
@@ -32,18 +36,17 @@ class SchedulingService {
         },
       };
 
-      // This is a placeholder for the actual Google Calendar API call.
-      // const createdEvent = await this.calendar.events.insert({
-      //   calendarId: 'primary',
-      //   resource: event,
-      // });
+      const createdEvent = await this.calendar.events.insert({
+        calendarId: 'primary',
+        requestBody: event,
+      });
 
       const scheduledEvent = await prisma.scheduledEvent.create({
         data: {
           workOrderId,
           startTime: new Date(event.start.dateTime),
           endTime: new Date(event.end.dateTime),
-          // googleCalendarEventId: createdEvent.data.id,
+          googleCalendarEventId: createdEvent.data.id,
         },
       });
 

@@ -1,44 +1,36 @@
-import { prisma } from '../config/database';
-import { User } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import { AppError } from '../middleware/errorMiddleware';
+
+const prisma = new PrismaClient();
 
 class ComplianceService {
-  async handleDSAR(userId: string): Promise<any> {
-    const userData = await prisma.user.findUnique({
+  async getDataAccessRequest(userId: string) {
+    const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
-        propertiesManaged: true,
-        propertiesOwned: true,
-        units: true,
-        documents: true,
-        maintenanceRequests: true,
+        applications: true,
+        leases: true,
         sentMessages: true,
         receivedMessages: true,
         notifications: true,
-        listings: true,
-        applications: true,
-        oauthConnections: true,
-        vendorPerformanceRatings: true,
-        auditEntries: true,
-        leases: true,
+        devices: true,
       },
     });
 
-    return userData;
+    if (!user) {
+      throw new AppError('User not found', 404);
+    }
+
+    return user;
   }
 
-  async deleteUserData(userId: string): Promise<void> {
-    await prisma.user.delete({
-      where: { id: userId },
-    });
+  async getDataPortabilityRequest(userId: string) {
+    const user = await this.getDataAccessRequest(userId);
+    return JSON.stringify(user, null, 2);
   }
 
-  async recordConsent(userId: string, consent: boolean): Promise<void> {
-    await prisma.consent.create({
-      data: {
-        userId,
-        consent,
-      },
-    });
+  async getDataErasureRequest(userId: string) {
+    await prisma.user.delete({ where: { id: userId } });
   }
 }
 

@@ -7,21 +7,25 @@ class AiOrchestrationService {
   }
 
   async submitWorkflow(workflow: any, data: any): Promise<any> {
-    // This is a mock implementation.
-    // In a real implementation, this would submit the workflow to a message broker.
-    console.log('Submitting workflow:', workflow.name);
-    console.log('Workflow data:', data);
+    console.log(`Simulating workflow submission for: ${workflow.name}`);
+    console.log('Workflow data:', JSON.stringify(data, null, 2));
 
-    // Simulate processing time
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // In a real implementation, this would interact with a message broker (e.g., RabbitMQ, Kafka)
+    // or a dedicated workflow engine. For this simulation, we'll just log and return a success.
+
+    // Simulate asynchronous processing
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     if (workflow.name === 'risk-assessment') {
+      // If it's a risk assessment, still call the actual service
       return await riskAssessmentModelService.getRiskAssessment(data);
     }
 
-    // Mock result
+    // Generic success response for other workflows
     return {
-      processedImage: Buffer.from('processed-image-data'),
+      status: 'success',
+      message: `Workflow '${workflow.name}' submitted successfully.`,
+      receivedData: data,
     };
   }
 }

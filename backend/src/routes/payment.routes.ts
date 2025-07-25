@@ -4,6 +4,20 @@ import { isAuthenticated, isOwner } from '../middleware/auth';
 
 const router = Router();
 
+router.get(
+  '/transactions/pending',
+  isAuthenticated,
+  isOwner,
+  paymentController.getPendingTransactions
+);
+
+router.get(
+  '/vendor-payments/pending',
+  isAuthenticated,
+  isOwner,
+  paymentController.getPendingVendorPayments
+);
+
 router.post(
   '/transactions/:id/approve',
   isAuthenticated,

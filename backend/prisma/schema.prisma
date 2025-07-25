@@ -179,6 +179,16 @@ model Unit {
   @@index([rent])
 }
 
+model Appliance {
+  id        String   @id @default(uuid())
+  name      String
+  type      String
+  unit      Unit     @relation(fields: [unitId], references: [id])
+  unitId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // UnitImage model for storing unit images
 model UnitImage {
   id               Int      @id @default(autoincrement())
@@ -229,6 +239,10 @@ model Document {
   name                 String
   type                 DocumentType
   url                  String // S3 or other storage URL
+  cdnUrl               String? // CDN URL for optimized delivery
+  key                  String? // S3 key for direct access
+  thumbnailUrl         String? // Thumbnail URL for images
+  thumbnailCdnUrl      String? // CDN thumbnail URL
   uploadedAt           DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
   description          String?
@@ -553,10 +567,8 @@ model Transaction {
   leaseId       String
   approvalStatus PaymentApprovalStatus @default(PENDING)
   approvedAt     DateTime?
-  approvedBy     User?             @relation("ApprovedTransactions", fields: [approvedById], references: [id])
-  approvedById   String?
-
-  @@index([leaseId])
+  approvedBy    User?             @relation("ApprovedTransactions", fields: [approvedById], references: [id])
+  approvedById  String?
 }
 
 enum TransactionType {
@@ -564,7 +576,6 @@ enum TransactionType {
   FEE
   DEPOSIT
   REFUND
-  OTHER
 }
 
 enum TransactionStatus {
@@ -574,49 +585,47 @@ enum TransactionStatus {
   CANCELLED
 }
 
+// Listing model
 model Listing {
-  id             String        @id @default(uuid())
-  title          String
-  description    String
-  rent           Float
-  isAvailable    Boolean       @default(true)
-  dateAvailable  DateTime
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  property       Property      @relation(fields: [propertyId], references: [id])
-  propertyId     String
-  postedBy       User          @relation(fields: [postedById], references: [id])
-  postedById     String
-  units          Unit[]
-  slug           String        @unique
-  photoGallery   Photo[]
-  virtualTourUrl String?
-  contactInfo    String?
-  amenities      String[]
-  leaseTerms     String?
-  applicationFee Float?
-  status         ListingStatus @default(ACTIVE)
-  Application    Application[]
+  id          String        @id @default(uuid())
+  title       String
+  description String
+  rent        Float
+  isAvailable Boolean       @default(true)
+  dateAvailable DateTime
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  property    Property      @relation(fields: [propertyId], references: [id])
+  propertyId  String
+  postedBy    User          @relation(fields: [postedById], references: [id])
+  postedById  String
+  unit        Unit[]
+  slug        String        @unique
+  status      ListingStatus @default(ACTIVE)
+  applications Application[]
 
   @@index([propertyId])
+  @@index([isAvailable])
 }
 
+enum ListingStatus {
+  ACTIVE
+  INACTIVE
+  DRAFT
+}
+
+// Application model
 model Application {
-  id                String            @id @default(uuid())
-  status            ApplicationStatus @default(PENDING)
-  submittedAt       DateTime          @default(now())
-  applicant         User              @relation(fields: [applicantId], references: [id])
-  applicantId       String
-  listing           Listing           @relation(fields: [listingId], references: [id])
-  listingId         String
-  notes             String?
-  backgroundCheckId String?
-  creditScore       Int?
-  income            Float?
-  employmentStatus  String?
-  BackgroundCheck   BackgroundCheck?
-  Screening         Screening?
-  RiskAssessment    RiskAssessment?
+  id            String            @id @default(uuid())
+  status        ApplicationStatus @default(PENDING)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  applicant     User              @relation(fields: [applicantId], references: [id])
+  applicantId   String
+  listing       Listing           @relation(fields: [listingId], references: [id])
+  listingId     String
+  backgroundCheck BackgroundCheck?
+  riskAssessment  RiskAssessment?
 
   @@index([applicantId])
   @@index([listingId])
@@ -624,66 +633,64 @@ model Application {
 
 enum ApplicationStatus {
   PENDING
-  REVIEW
   APPROVED
   REJECTED
 }
 
+// MarketData model
 model MarketData {
-  id                 String   @id @default(uuid())
-  location           String
-  averageRent        Float
-  vacancyRate        Float
-  dateRecorded       DateTime @default(now())
-  propertyType       String
-  bedroomCount       Int
-  demandScore        Float
-  supplyScore        Float
-  rentalYield        Float
-  pricePerSqFt       Float
-  yearOverYearGrowth Float
+  id           String   @id @default(uuid())
+  propertyId   String
+  source       String // e.g., Zillow, Apartments.com
+  data         Json
+  recordedAt   DateTime @default(now())
 
-  @@index([location])
-  @@index([propertyType])
+  @@index([propertyId])
 }
 
+// OAuthConnection model
 model OAuthConnection {
   id           String   @id @default(uuid())
-  provider     String // e.g., 'google', 'facebook'
+  provider     String
   providerId   String
   accessToken  String
   refreshToken String?
-  scopes       String[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
   user         User     @relation(fields: [userId], references: [id])
   userId       String
 
   @@unique([provider, providerId])
+  @@index([userId])
 }
 
+// AIImageAnalysis model
 model AIImageAnalysis {
-  id                   String   @id @default(uuid())
-  imageUrl             String
-  analysisResult       Json
-  analyzedAt           DateTime @default(now())
-  maintenanceRequestId String?
+  id        String   @id @default(uuid())
+  imageUrl  String
+  analysis  Json
+  createdAt DateTime @default(now())
 }
 
+// KnowledgeBaseEntry model
 model KnowledgeBaseEntry {
   id        String   @id @default(uuid())
   question  String
   answer    String
   category  String
+  tags      String[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([category])
 }
 
+// VendorPerformanceRating model
 model VendorPerformanceRating {
   id          String    @id @default(uuid())
-  score       Int
-  comments    String?
-  ratedAt     DateTime  @default(now())
+  rating      Int
+  comment     String?
+  createdAt   DateTime  @default(now())
   vendor      Vendor    @relation(fields: [vendorId], references: [id])
   vendorId    String
   workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
@@ -695,33 +702,42 @@ model VendorPerformanceRating {
   @@index([workOrderId])
 }
 
+// BackgroundCheck model
 model BackgroundCheck {
-  id                String      @id @default(uuid())
-  status            String
-  reportUrl         String?
-  checkedAt         DateTime    @default(now())
-  application       Application @relation(fields: [applicationId], references: [id])
-  applicationId     String      @unique
-  criminalHistory   String?
-  creditHistory     String?
-  evictionHistory   String?
-  employmentHistory String?
+  id            String   @id @default(uuid())
+  status        String
+  report        Json
+  createdAt     DateTime @default(now())
+  application   Application @relation(fields: [applicationId], references: [id])
+  applicationId String   @unique
 }
 
+// AuditEntry model
 model AuditEntry {
   id        String   @id @default(uuid())
   action    String
   details   Json
-  timestamp DateTime @default(now())
+  createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
   userId    String
 
   @@index([userId])
 }
 
+// MaintenanceManagement model
+model MaintenanceManagement {
+  id                  String   @id @default(uuid())
+  preventiveMaintenance Json
+  workOrderTracking     Json
+  vendorManagement      Json
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+// SocialMediaPlatformConfig model
 model SocialMediaPlatformConfig {
-  id           String   @id @default(uuid())
-  platformName String   @unique
+  id           String @id @default(uuid())
+  platformName String
   apiKey       String
   apiSecret    String
   accessToken  String
@@ -730,115 +746,114 @@ model SocialMediaPlatformConfig {
   updatedAt    DateTime @updatedAt
 }
 
+// PredictiveMaintenance model
 model PredictiveMaintenance {
-  id                String   @id @default(uuid())
-  description       String
-  urgency           String
-  confidence        Float
-  recommendedAction String
-  createdAt         DateTime @default(now())
-  unit              Unit     @relation(fields: [unitId], references: [id])
-  unitId            String
+  id          String   @id @default(uuid())
+  prediction  Json
+  createdAt   DateTime @default(now())
+  unit        Unit     @relation(fields: [unitId], references: [id])
+  unitId      String
 
   @@index([unitId])
 }
 
+// CostEstimation model
 model CostEstimation {
-  id              String    @id @default(uuid())
-  estimatedCost   Float
-  confidenceScore Float
-  estimationDate  DateTime  @default(now())
-  workOrder       WorkOrder @relation(fields: [workOrderId], references: [id])
-  workOrderId     String    @unique
-  materialsCost   Float?
-  laborCost       Float?
-  notes           String?
-}
-
-model PhotoAnalysis {
-  id                   String             @id @default(uuid())
-  imageUrl             String
-  analysisResult       Json
-  analyzedAt           DateTime           @default(now())
-  maintenanceRequest   MaintenanceRequest @relation(fields: [maintenanceRequestId], references: [id])
-  maintenanceRequestId String             @unique
-}
-
-model MaintenanceRequestCategory {
-  id                  String               @id @default(uuid())
-  name                String               @unique
-  description         String?
-  maintenanceRequests MaintenanceRequest[]
-}
-
-model EmergencyRoutingRule {
-  id        String   @id @default(uuid())
-  keyword   String
-  priority  Int
-  vendor    Vendor   @relation(fields: [vendorId], references: [id])
-  vendorId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model MaintenanceResponseTime {
-  id                   String             @id @default(uuid())
-  acknowledgedAt       DateTime?
-  resolvedAt           DateTime?
-  maintenanceRequest   MaintenanceRequest @relation(fields: [maintenanceRequestId], references: [id])
-  maintenanceRequestId String             @unique
-}
-
-model ScheduledEvent {
   id          String    @id @default(uuid())
-  title       String
-  description String?
-  startTime   DateTime
-  endTime     DateTime
+  estimation  Json
+  createdAt   DateTime  @default(now())
   workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
   workOrderId String    @unique
 }
 
-model Screening {
-  id            String      @id @default(uuid())
-  result        String
-  details       Json
-  conductedAt   DateTime    @default(now())
-  application   Application @relation(fields: [applicationId], references: [id])
-  applicationId String      @unique
+// PhotoAnalysis model
+model PhotoAnalysis {
+  id                   String             @id @default(uuid())
+  analysis             Json
+  createdAt            DateTime           @default(now())
+  maintenanceRequest   MaintenanceRequest @relation(fields: [maintenanceRequestId], references: [id])
+  maintenanceRequestId String             @unique
 }
 
+// Communication model
+model Communication {
+  id        String   @id @default(uuid())
+  channel   String
+  content   String
+  createdAt DateTime @default(now())
+}
+
+// MaintenanceRequestCategory model
+model MaintenanceRequestCategory {
+  id                  String               @id @default(uuid())
+  name                String
+  description         String?
+  maintenanceRequests MaintenanceRequest[]
+}
+
+// EmergencyRoutingRule model
+model EmergencyRoutingRule {
+  id        String @id @default(uuid())
+  rule      Json
+  vendor    Vendor @relation(fields: [vendorId], references: [id])
+  vendorId  String
+
+  @@index([vendorId])
+}
+
+// MaintenanceResponseTime model
+model MaintenanceResponseTime {
+  id                   String             @id @default(uuid())
+  responseTime         Int
+  createdAt            DateTime           @default(now())
+  maintenanceRequest   MaintenanceRequest @relation(fields: [maintenanceRequestId], references: [id])
+  maintenanceRequestId String             @unique
+}
+
+// ScheduledEvent model
+model ScheduledEvent {
+  id          String    @id @default(cuid())
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+  workOrderId String    @unique
+  startTime   DateTime
+  endTime     DateTime
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// Screening model
+model Screening {
+  id        String   @id @default(uuid())
+  result    Json
+  createdAt DateTime @default(now())
+}
+
+// RiskAssessment model
 model RiskAssessment {
   id            String      @id @default(uuid())
   score         Float
-  level         String
   details       Json
-  assessedAt    DateTime    @default(now())
+  createdAt     DateTime    @default(now())
   application   Application @relation(fields: [applicationId], references: [id])
   applicationId String      @unique
 }
 
+// TenantIssuePrediction model
 model TenantIssuePrediction {
   id          String   @id @default(uuid())
-  prediction  String
-  confidence  Float
-  details     Json
-  predictedAt DateTime @default(now())
+  prediction  Json
+  createdAt   DateTime @default(now())
   tenant      User     @relation(fields: [tenantId], references: [id])
   tenantId    String
 
   @@index([tenantId])
 }
 
+// DbOptimizationLog model
 model DbOptimizationLog {
-  id         String   @id @default(cuid())
-  timestamp  DateTime @default(now())
-  level      String // e.g., INFO, WARN, ERROR
-  message    String
-  details    Json?
-  durationMs Int? // Duration of the optimization task in milliseconds
-  operation  String // e.g., 'index_creation', 'query_rewrite', 'vacuum'
-  status     String // e.g., 'SUCCESS', 'FAILURE'
+  id        String   @id @default(cuid())
+  log       String
+  createdAt DateTime @default(now())
 }
 
 model EscalationPolicy {
@@ -853,55 +868,25 @@ model EscalationPolicy {
 }
 
 model EscalationPolicyRule {
-  id        String           @id @default(cuid())
-  policy    EscalationPolicy @relation(fields: [policyId], references: [id])
-  policyId  String
-  user      User             @relation(fields: [userId], references: [id])
-  userId    String
-  order     Int
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
-}
-
-model ApiKey {
-  id          String    @id @default(cuid())
-  key         String    @unique
-  user        User      @relation(fields: [userId], references: [id])
-  userId      String
-  permissions String[]
-  expiresAt   DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@index([userId])
-}
-
-model Photo {
-  id        String  @id @default(cuid())
-  url       String
-  caption   String?
-  listing   Listing @relation(fields: [listingId], references: [id])
-  listingId String
-
-  @@index([listingId])
-}
-
-enum ListingStatus {
-  ACTIVE
-  INACTIVE
-  RENTED
-  DRAFT
+  id         String           @id @default(cuid())
+  policy     EscalationPolicy @relation(fields: [policyId], references: [id])
+  policyId   String
+  user       User             @relation(fields: [userId], references: [id])
+  userId     String
+  order      Int
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
 }
 
 model BusinessHours {
   id         String   @id @default(cuid())
-  dayOfWeek  String // e.g., "Monday", "Tuesday"
-  openTime   String // e.g., "09:00"
-  closeTime  String // e.g., "17:00"
+  dayOfWeek  Int // 0 for Sunday, 6 for Saturday
+  openTime   String
+  closeTime  String
   property   Property @relation(fields: [propertyId], references: [id])
   propertyId String
-
-  @@index([propertyId])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model EmergencyProtocol {
@@ -910,89 +895,67 @@ model EmergencyProtocol {
   description String
   property    Property @relation(fields: [propertyId], references: [id])
   propertyId  String
-
-  @@index([propertyId])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
-model Appliance {
-  id                 String    @id @default(cuid())
-  name               String
-  brand              String?
-  model              String?
-  purchaseDate       DateTime?
-  warrantyExpiryDate DateTime?
-  unit               Unit      @relation(fields: [unitId], references: [id])
-  unitId             String
-
-  @@index([unitId])
+model ApiKey {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Consent {
   id        String   @id @default(cuid())
-  userId    String
   user      User     @relation(fields: [userId], references: [id])
-  consent   Boolean
+  userId    String
+  type      String
+  granted   Boolean
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-}
-
-model ModelPerformance {
-  id          String   @id @default(cuid())
-  modelName   String
-  accuracy    Float?
-  precision   Float?
-  recall      Float?
-  f1Score     Float?
-  recordedAt  DateTime @default(now())
-  version     String?
-  datasetInfo String?
-  parameters  Json?
-  notes       String?  @db.Text
-
-  @@index([modelName])
-  @@index([recordedAt])
 }
 
 model Device {
   id        String   @id @default(cuid())
-  token     String   @unique
-  platform  String // 'ios' or 'android'
   user      User     @relation(fields: [userId], references: [id])
   userId    String
+  pushToken String
+  platform  String // 'ios' or 'android'
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([userId])
 }
 
 model VendorPayment {
-  id            String        @id @default(cuid())
-  amount        Float
-  status        PaymentStatus @default(PENDING)
-  processedAt   DateTime?
-  notes         String?
-  workOrder     WorkOrder     @relation(fields: [workOrderId], references: [id])
-  workOrderId   String        @unique
-  vendor        Vendor        @relation(fields: [vendorId], references: [id])
-  vendorId      String
-  transactionId String? // To store the Stripe transaction ID
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id             String                @id @default(cuid())
+  workOrder      WorkOrder             @relation(fields: [workOrderId], references: [id])
+  workOrderId    String
+  vendor         Vendor                @relation(fields: [vendorId], references: [id])
+  vendorId       String
+  amount         Float
+  status         String
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
   approvalStatus PaymentApprovalStatus @default(PENDING)
   approvedAt     DateTime?
-  approvedBy     User?             @relation("ApprovedVendorPayments", fields: [approvedById], references: [id])
+  approvedBy     User?                 @relation("ApprovedVendorPayments", fields: [approvedById], references: [id])
   approvedById   String?
-}
-
-enum PaymentStatus {
-  PENDING
-  PROCESSING
-  PAID
-  FAILED
 }
 
 enum PaymentApprovalStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+model Feedback {
+  id              String    @id @default(uuid())
+  requestId       String
+  isCorrect       Boolean
+  correctedUrgency String?
+  correctedType   String?
+  createdAt       DateTime  @default(now())
 }

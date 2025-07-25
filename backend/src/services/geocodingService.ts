@@ -246,12 +246,25 @@ export async function getNearbyPlaces(
   type: string = 'restaurant'
 ) {
   try {
-    // This requires the Places API which is a separate service
-    // Implementation would depend on your specific needs
-    // For now, we'll return a placeholder
+    const response = await client.placesNearby({
+      params: {
+        location: { lat: latitude, lng: longitude },
+        radius,
+        type,
+        key: process.env.GOOGLE_MAPS_API_KEY || '',
+      },
+    });
+
+    if (response.data.status !== 'OK') {
+      return {
+        success: false,
+        message: `Nearby places search failed with status: ${response.data.status}`,
+      };
+    }
+
     return {
-      success: false,
-      message: 'Nearby places functionality requires Google Places API implementation',
+      success: true,
+      places: response.data.results,
     };
   } catch (error) {
     console.error('Error in getNearbyPlaces:', error);

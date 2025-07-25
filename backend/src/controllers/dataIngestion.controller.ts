@@ -13,8 +13,11 @@ class DataIngestionController {
     try {
       switch (source) {
         case 'plaid':
-          await dataIngestionService.ingestFromPlaid(data);
-          break;
+          if (!req.user) {
+            return res.status(401).json({ error: 'Unauthorized' });
+          }
+          const linkToken = await dataIngestionService.ingestFromPlaid(req.user.id);
+          return res.status(200).json(linkToken);
         case 'stripe':
           await dataIngestionService.ingestFromStripe(data);
           break;

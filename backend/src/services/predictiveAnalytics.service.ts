@@ -1,6 +1,7 @@
 import { spawn } from 'child_process';
 import path from 'path';
 import axios from 'axios';
+import { aiOrchestrationService } from './aiOrchestration.service';
 
 class PredictiveAnalyticsService {
   async getPriceRecommendation(propertyData: any): Promise<any> {
@@ -29,27 +30,15 @@ class PredictiveAnalyticsService {
 
   async getTenantScreeningAlerts(): Promise<any> {
     try {
-      // Mock implementation for now - replace with actual API call when available
-      return {
-        alerts: [
-          {
-            id: 1,
-            type: 'credit_score',
-            severity: 'high',
-            message: 'Credit score below threshold',
-            tenantId: 'tenant_123',
-            createdAt: new Date().toISOString()
-          },
-          {
-            id: 2,
-            type: 'income_verification',
-            severity: 'medium',
-            message: 'Income verification pending',
-            tenantId: 'tenant_456',
-            createdAt: new Date().toISOString()
-          }
-        ]
-      };
+      const prompt = `Generate a list of tenant screening alerts based on the following data: ${JSON.stringify(
+        {} // In a real scenario, you'd pass actual tenant data here
+      )}.
+      
+      Each alert should have a type, severity (low, medium, high), message, and a tenantId.`;
+
+      const result = await aiOrchestrationService.generateText(prompt);
+      // Assuming the AI returns a JSON string that can be parsed into an array of alerts
+      return JSON.parse(result);
     } catch (error) {
       throw new Error(`Failed to fetch tenant screening alerts: ${error}`);
     }

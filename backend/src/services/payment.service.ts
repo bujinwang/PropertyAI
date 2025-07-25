@@ -34,9 +34,10 @@ export const approveTransaction = async (transactionId: string, userId: string):
  * Rejects a transaction.
  *
  * @param transactionId - The ID of the transaction to reject.
+ * @param userId - The ID of the user rejecting the transaction.
  * @returns The updated transaction.
  */
-export const rejectTransaction = async (transactionId: string): Promise<Transaction> => {
+export const rejectTransaction = async (transactionId: string, userId: string): Promise<Transaction> => {
   const transaction = await prisma.transaction.findUnique({ where: { id: transactionId } });
 
   if (!transaction) {
@@ -51,6 +52,8 @@ export const rejectTransaction = async (transactionId: string): Promise<Transact
     where: { id: transactionId },
     data: {
       approvalStatus: PaymentApprovalStatus.REJECTED,
+      approvedAt: new Date(),
+      approvedById: userId,
     },
   });
 };
@@ -87,9 +90,10 @@ export const approveVendorPayment = async (vendorPaymentId: string, userId: stri
  * Rejects a vendor payment.
  *
  * @param vendorPaymentId - The ID of the vendor payment to reject.
+ * @param userId - The ID of the user rejecting the payment.
  * @returns The updated vendor payment.
  */
-export const rejectVendorPayment = async (vendorPaymentId: string): Promise<VendorPayment> => {
+export const rejectVendorPayment = async (vendorPaymentId: string, userId: string): Promise<VendorPayment> => {
   const vendorPayment = await prisma.vendorPayment.findUnique({ where: { id: vendorPaymentId } });
 
   if (!vendorPayment) {
@@ -104,6 +108,102 @@ export const rejectVendorPayment = async (vendorPaymentId: string): Promise<Vend
     where: { id: vendorPaymentId },
     data: {
       approvalStatus: PaymentApprovalStatus.REJECTED,
+      approvedAt: new Date(),
+      approvedById: userId,
     },
+  });
+};
+
+/**
+ * Gets pending transactions for a user.
+ *
+ * @param userId - The ID of the user to get pending transactions for.
+ * @returns Array of pending transactions.
+ */
+export const getPendingTransactions = async (userId: string): Promise<Transaction[]> => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { propertiesOwned: true }
+  });
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  const propertyIds = user.propertiesOwned.map(property => property.id);
+
+  return prisma.transaction.findMany({
+    where: {
+      approvalStatus: PaymentApprovalStatus.PENDING,
+      lease: {
+        unit: {
+          propertyId: {
+            in: propertyIds
+          }
+        }
+      }
+    },
+    include: {
+      lease: {
+        include: {
+          unit: {
+            include: {
+              property: true
+            }
+          },
+          tenant: true
+        }
+      }
+    },
+    orderBy: {
+      createdAt: 'desc'
+    }
+  });
+};
+
+/**
+ * Gets pending vendor payments for a user.
+ *
+ * @param userId - The ID of the user to get pending vendor payments for.
+ * @returns Array of pending vendor payments.
+ */
+export const getPendingVendorPayments = async (userId: string): Promise<VendorPayment[]> => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { propertiesOwned: true }
+  });
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  const propertyIds = user.propertiesOwned.map(property => property.id);
+
+  return prisma.vendorPayment.findMany({
+    where: {
+      approvalStatus: PaymentApprovalStatus.PENDING,
+      workOrder: {
+        maintenanceRequest: {
+          propertyId: {
+            in: propertyIds
+          }
+        }
+      }
+    },
+    include: {
+      workOrder: {
+        include: {
+          maintenanceRequest: {
+            include: {
+              property: true
+            }
+          }
+        }
+      },
+      vendor: true
+    },
+    orderBy: {
+      createdAt: 'desc'
+    }
   });
 };

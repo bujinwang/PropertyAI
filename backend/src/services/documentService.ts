@@ -32,7 +32,7 @@ class DocumentService {
     const document = await prisma.document.create({
       data: {
         name: file.originalname,
-        type: 'OTHER', // This is a placeholder
+        type: (file as any).type || 'OTHER',
         url: Location!,
         uploadedById: userId,
         size: file.size,

@@ -38,7 +38,8 @@
       "Bash(find:*)",
       "Bash(find:*)",
       "Bash(mkdir:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(npm test:*)"
     ],
     "deny": []
   }

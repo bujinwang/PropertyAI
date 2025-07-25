@@ -10,11 +10,13 @@
   "dependencies": {
     "@types/node-schedule": "^2.1.7",
     "@types/pdfkit": "^0.13.9",
-    "axios": "^1.10.0",
+    "axios": "^1.11.0",
     "dotenv-cli": "^9.0.0",
+    "firebase-admin": "^13.4.0",
     "googleapis": "^150.0.1",
     "node-schedule": "^2.1.1",
     "pdfkit": "^0.17.1",
+    "plaid": "^37.0.0",
     "react-native-tab-view": "^4.1.1"
   }
 }

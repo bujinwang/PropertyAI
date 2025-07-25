@@ -21,12 +21,6 @@ export const config = {
     url: process.env.REDIS_URL,
     password: process.env.REDIS_PASSWORD,
   },
-  apn: {
-    key: process.env.APN_KEY,
-    keyId: process.env.APN_KEY_ID,
-    teamId: process.env.APN_TEAM_ID,
-    bundleId: process.env.APN_BUNDLE_ID,
-  },
   stripe: {
     secretKey: process.env.STRIPE_SECRET_KEY,
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
@@ -34,6 +28,11 @@ export const config = {
   paypal: {
     clientId: process.env.PAYPAL_CLIENT_ID,
     clientSecret: process.env.PAYPAL_CLIENT_SECRET,
+  },
+  plaid: {
+    clientId: process.env.PLAID_CLIENT_ID,
+    secret: process.env.PLAID_SECRET,
+    env: process.env.PLAID_ENV || 'sandbox',
   },
   transunion: {
     apiKey: process.env.TRANSUNION_API_KEY,

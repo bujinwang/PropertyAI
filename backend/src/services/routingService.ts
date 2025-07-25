@@ -5,25 +5,33 @@ const prisma = new PrismaClient();
 
 class RoutingService {
   async routeRequest(requestId: string, category: { urgency: string; type: string }) {
-    // This is a placeholder for the actual implementation
-    const vendors = await prisma.user.findMany({
+    const vendors = await prisma.vendor.findMany({
       where: {
-        role: 'PROPERTY_MANAGER', // This is a placeholder
+        specialty: category.type,
+        availability: 'AVAILABLE',
       },
     });
 
     if (vendors.length > 0) {
-      // This is a placeholder for the actual implementation
       const vendor = vendors[0];
-      await prisma.maintenanceRequest.update({
-        where: { id: requestId },
+      await prisma.workOrder.create({
         data: {
-          status: 'IN_PROGRESS',
+          maintenanceRequestId: requestId,
+          assignments: {
+            create: {
+              vendorId: vendor.id,
+            },
+          },
+          title: 'New Maintenance Request',
+          description: `A new maintenance request of type ${category.type} has been assigned to you.`,
+          priority: category.urgency.toUpperCase() as any,
         },
       });
-      if (vendor.phone) {
+
+      const contactPerson = await prisma.user.findUnique({ where: { id: vendor.contactPersonId! } });
+      if (contactPerson?.phone) {
         await sendSms(
-          vendor.phone,
+          contactPerson.phone,
           `You have a new maintenance request: ${requestId}`
         );
       }

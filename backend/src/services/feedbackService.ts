@@ -9,17 +9,14 @@ class FeedbackService {
     correctedUrgency?: string,
     correctedType?: string
   ) {
-    // This is a placeholder for the actual implementation
-    console.log(
-      `Feedback received for request ${requestId}: ${
-        isCorrect ? 'correct' : 'incorrect'
-      }`
-    );
-    if (!isCorrect) {
-      console.log(
-        `Corrected urgency: ${correctedUrgency}, corrected type: ${correctedType}`
-      );
-    }
+    await prisma.feedback.create({
+      data: {
+        requestId,
+        isCorrect,
+        correctedUrgency,
+        correctedType,
+      },
+    });
   }
 }
 

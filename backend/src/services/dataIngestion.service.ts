@@ -1,13 +1,13 @@
 import { PrismaClient } from '@prisma/client';
 import logger from '../utils/logger';
+import { plaidService } from './plaid.service';
 
 const prisma = new PrismaClient();
 
 class DataIngestionService {
-  async ingestFromPlaid(data: any) {
-    // Placeholder for Plaid integration
-    logger.info('Ingesting data from Plaid...');
-    // Add your Plaid data processing logic here
+  async ingestFromPlaid(userId: string) {
+    logger.info(`Creating Plaid link token for user ${userId}`);
+    return plaidService.createLinkToken(userId);
   }
 
   async ingestFromStripe(data: any) {

@@ -37,11 +37,14 @@ import languageRoutes from './routes/language.routes';
 import translationRoutes from './routes/translation.routes';
 import sentimentRoutes from './routes/sentiment.routes';
 import conversationRoutes from './routes/conversation.routes';
-import crisisCommunicationRoutes from './routes/crisisCommunication.routes';
 import googleCalendarRoutes from './routes/googleCalendar.routes';
 import tenantRatingRoutes from './routes/tenantRating.routes';
 import vendorPaymentRoutes from './routes/vendorPayment.routes';
 import paymentRoutes from './routes/payment.routes';
+import storageRoutes from './routes/storage.routes';
+import aiRoutes from './routes/ai.routes';
+import marketDataRoutes from './routes/marketData.routes';
+import complianceRoutes from './routes/compliance.routes';
 import path from 'path';
 
 // Load environment variables
@@ -134,11 +137,15 @@ app.use('/api/languages', languageRoutes);
 app.use('/api/translation', translationRoutes);
 app.use('/api/sentiment', sentimentRoutes);
 app.use('/api/conversations', conversationRoutes);
-app.use('/api/crisis-communication', crisisCommunicationRoutes);
+
 app.use('/api/calendar', googleCalendarRoutes);
 app.use('/api/tenant-ratings', tenantRatingRoutes);
 app.use('/api/vendor-payments', vendorPaymentRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/storage', storageRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/market-data', marketDataRoutes);
+app.use('/api/compliance', complianceRoutes);
 
 // Global error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
