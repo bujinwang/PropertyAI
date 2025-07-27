@@ -4,10 +4,10 @@ const prisma = new PrismaClient();
 
 class KnowledgeBaseService {
   async createEntry(data: {
-    intent: string;
-    response: string;
+    question: string;
+    answer: string;
     category: string;
-    keywords: string[];
+    tags: string[];
   }) {
     return prisma.knowledgeBaseEntry.create({ data });
   }
@@ -23,10 +23,10 @@ class KnowledgeBaseService {
   async updateEntry(
     id: string,
     data: {
-      intent?: string;
-      response?: string;
+      question?: string;
+      answer?: string;
       category?: string;
-      keywords?: string[];
+      tags?: string[];
     }
   ) {
     return prisma.knowledgeBaseEntry.update({ where: { id }, data });

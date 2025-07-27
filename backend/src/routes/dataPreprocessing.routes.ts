@@ -48,7 +48,7 @@ const upload = multer({
  * @desc    Upload and register a new dataset
  * @access  Private
  */
-router.post('/datasets', protect, upload.single('file'), async (req, res) => {
+router.post('/datasets', protect, upload.single('file') as any, async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({

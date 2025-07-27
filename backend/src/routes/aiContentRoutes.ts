@@ -1,8 +1,10 @@
 import express, { Request, Response } from 'express';
 import { AiContent as AIGeneratedContent } from '../models/mongoModels';
 import { v4 as uuidv4 } from 'uuid';
-import { protect as authMiddleware, admin as adminMiddleware } from '../middleware/auth';
+import { authMiddleware as authMiddlewareModule } from '../middleware/authMiddleware';
 import { generativeAIService } from '../services/generativeAI.service';
+
+const { protect: authMiddleware, admin: adminMiddleware } = authMiddlewareModule;
 
 const router = express.Router();
 

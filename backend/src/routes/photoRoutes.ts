@@ -5,6 +5,6 @@ import multer from 'multer';
 const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
-router.post('/optimize', upload.single('photo'), photoController.optimize);
+router.post('/optimize', upload.single('photo') as any, photoController.optimize);
 
 export default router;

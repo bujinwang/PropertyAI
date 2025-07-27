@@ -5,6 +5,6 @@ import multer from 'multer';
 const upload = multer({ storage: multer.memoryStorage() });
 const router = Router();
 
-router.post('/enhance-photo', upload.single('image'), photoEnhancementController.enhancePhoto);
+router.post('/enhance-photo', upload.single('image') as any, photoEnhancementController.enhancePhoto);
 
 export default router;

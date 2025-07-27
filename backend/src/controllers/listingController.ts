@@ -22,7 +22,7 @@ export const getPublicListings = async (req: Request, res: Response) => {
       include: {
         property: {
           include: {
-            photos: true,
+            images: true,
           },
         },
       },

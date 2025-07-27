@@ -2,7 +2,19 @@ import AWS from 'aws-sdk';
 import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
 import { PrismaClient } from '@prisma/client';
-import logger from '../utils/logger';
+
+// Basic logger implementation
+const logger = {
+  error: (message: string, error?: any) => {
+    console.error(message, error);
+  },
+  warn: (message: string, error?: any) => {
+    console.warn(message, error);
+  },
+  info: (message: string) => {
+    console.log(message);
+  }
+};
 
 const prisma = new PrismaClient();
 
@@ -116,12 +128,12 @@ class PhotoAnalysisService {
       };
 
       // Store analysis results in database
-      await this.storeAnalysisResult(imageAnalysis);
+      await this.storeAnalysisResult(request.propertyId, imageAnalysis);
       
       return imageAnalysis;
     } catch (error) {
       logger.error('Photo analysis error:', error);
-      throw new Error(`Failed to analyze property photo: ${error.message}`);
+      throw new Error(`Failed to analyze property photo: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -180,18 +192,35 @@ class PhotoAnalysisService {
       labels: labelDetection.Labels?.map(label => ({
         name: label.Name!,
         confidence: label.Confidence!,
-        boundingBox: label.Instances?.[0]?.BoundingBox
+        boundingBox: label.Instances?.[0]?.BoundingBox ? {
+          width: label.Instances[0].BoundingBox.Width!,
+          height: label.Instances[0].BoundingBox.Height!,
+          left: label.Instances[0].BoundingBox.Left!,
+          top: label.Instances[0].BoundingBox.Top!
+        } : undefined
       })) || [],
       text: textDetection.TextDetections?.filter(t => t.Type === 'LINE').map(text => ({
         text: text.DetectedText!,
         confidence: text.Confidence!,
-        boundingBox: text.Geometry?.BoundingBox
+        boundingBox: text.Geometry?.BoundingBox ? {
+          width: text.Geometry.BoundingBox.Width!,
+          height: text.Geometry.BoundingBox.Height!,
+          left: text.Geometry.BoundingBox.Left!,
+          top: text.Geometry.BoundingBox.Top!
+        } : undefined
       })) || [],
       faces: faceDetection.FaceDetails?.map(face => ({
-        ageRange: face.AgeRange!,
-        gender: face.Gender!,
-        emotions: face.Emotions || [],
-        landmarks: face.Landmarks || []
+        ageRange: { low: face.AgeRange?.Low || 0, high: face.AgeRange?.High || 0 },
+        gender: { value: face.Gender?.Value || 'Unknown', confidence: face.Gender?.Confidence || 0 },
+        emotions: (face.Emotions || []).map(emotion => ({ 
+          type: emotion.Type || 'UNKNOWN', 
+          confidence: emotion.Confidence || 0 
+        })),
+        landmarks: (face.Landmarks || []).map(landmark => ({ 
+          type: landmark.Type || 'UNKNOWN', 
+          x: landmark.X || 0, 
+          y: landmark.Y || 0 
+        }))
       })) || [],
       quality,
       moderation: {
@@ -226,7 +255,7 @@ class PhotoAnalysisService {
       
       // Calculate brightness from histogram
       const brightness = stats.channels[0].mean / 255;
-      const sharpness = stats.channels[0].standardDeviation / 128;
+      const sharpness = (stats.channels[0] as any).standardDeviation / 128;
 
       return {
         brightness: Math.min(1, Math.max(0, brightness)),
@@ -254,30 +283,30 @@ class PhotoAnalysisService {
 
     // Check for maintenance issues
     const maintenanceLabels = ['Rust', 'Crack', 'Dirt', 'Stain', 'Damage', 'Broken'];
-    const foundIssues = analysis.labels.filter(label => 
+    const foundIssues = analysis.labels.filter((label: {name: string}) => 
       maintenanceLabels.some(issue => label.name.toLowerCase().includes(issue.toLowerCase()))
     );
 
-    foundIssues.forEach(issue => {
+    foundIssues.forEach((issue: {name: string, confidence: number}) => {
       recommendations.push({
         type: 'maintenance',
         description: `Address ${issue.name.toLowerCase()} detected in image`,
-        priority: issue.confidence > 90 ? 'high' : 'medium',
+        priority: issue.confidence > 90 ? 'high' as const : 'medium' as const,
         estimatedCost: this.estimateMaintenanceCost(issue.name)
       });
     });
 
     // Check for amenities
     const amenityLabels = ['Pool', 'Gym', 'Parking', 'Garden', 'Balcony', 'Fireplace'];
-    const amenities = analysis.labels.filter(label => 
+    const amenities = analysis.labels.filter((label: {name: string}) => 
       amenityLabels.some(amenity => label.name.toLowerCase().includes(amenity.toLowerCase()))
     );
 
-    amenities.forEach(amenity => {
+    amenities.forEach((amenity: {name: string}) => {
       recommendations.push({
         type: 'highlight',
         description: `Feature ${amenity.name.toLowerCase()} in listing description`,
-        priority: 'low'
+        priority: 'low' as const
       });
     });
 
@@ -286,7 +315,7 @@ class PhotoAnalysisService {
       recommendations.push({
         type: 'quality',
         description: 'Image appears too dark - consider retaking with better lighting',
-        priority: 'medium'
+        priority: 'medium' as const
       });
     }
 
@@ -294,7 +323,7 @@ class PhotoAnalysisService {
       recommendations.push({
         type: 'quality',
         description: 'Image appears blurry - consider retaking with better focus',
-        priority: 'medium'
+        priority: 'medium' as const
       });
     }
 
@@ -312,42 +341,42 @@ class PhotoAnalysisService {
     switch (roomType.toLowerCase()) {
       case 'kitchen':
         const kitchenLabels = ['Stove', 'Refrigerator', 'Cabinet', 'Counter'];
-        const hasEssential = analysis.labels.some(label => 
+        const hasEssential = analysis.labels.some((label: {name: string}) => 
           kitchenLabels.some(item => label.name.toLowerCase().includes(item.toLowerCase()))
         );
         if (!hasEssential) {
           recommendations.push({
             type: 'feature',
             description: 'Consider highlighting kitchen appliances and storage',
-            priority: 'low'
+            priority: 'low' as const
           });
         }
         break;
 
       case 'bathroom':
         const bathroomLabels = ['Toilet', 'Sink', 'Shower', 'Bathtub'];
-        const hasBathroomEssential = analysis.labels.some(label => 
+        const hasBathroomEssential = analysis.labels.some((label: {name: string}) => 
           bathroomLabels.some(item => label.name.toLowerCase().includes(item.toLowerCase()))
         );
         if (!hasBathroomEssential) {
           recommendations.push({
             type: 'feature',
             description: 'Ensure all bathroom fixtures are visible and clean',
-            priority: 'medium'
+            priority: 'medium' as const
           });
         }
         break;
 
       case 'bedroom':
         const bedroomLabels = ['Bed', 'Closet', 'Window', 'Lamp'];
-        const hasBedroomEssential = analysis.labels.some(label => 
+        const hasBedroomEssential = analysis.labels.some((label: {name: string}) => 
           bedroomLabels.some(item => label.name.toLowerCase().includes(item.toLowerCase()))
         );
         if (!hasBedroomEssential) {
           recommendations.push({
             type: 'feature',
             description: 'Consider staging bedroom with essential furniture',
-            priority: 'low'
+            priority: 'low' as const
           });
         }
         break;
@@ -376,16 +405,12 @@ class PhotoAnalysisService {
     return 100; // Default cost
   }
 
-  private async storeAnalysisResult(imageAnalysis: ImageAnalysis): Promise<void> {
+  async storeAnalysisResult(maintenanceRequestId: string, analysisData: any): Promise<void> {
     try {
       await prisma.photoAnalysis.create({
         data: {
-          propertyId: imageAnalysis.propertyId,
-          imageUrl: imageAnalysis.imageUrl,
-          analysis: imageAnalysis.analysis,
-          recommendations: imageAnalysis.recommendations,
-          createdAt: imageAnalysis.createdAt,
-          updatedAt: imageAnalysis.updatedAt
+          maintenanceRequestId: maintenanceRequestId,
+          analysis: analysisData,
         }
       });
     } catch (error) {
@@ -421,7 +446,7 @@ class PhotoAnalysisService {
   }
 
   private assessOverallCondition(analysis: any): 'excellent' | 'good' | 'fair' | 'poor' {
-    const issueCount = analysis.labels.filter(label => 
+    const issueCount = analysis.labels.filter((label: {name: string}) => 
       ['Rust', 'Crack', 'Dirt', 'Stain', 'Damage'].some(issue => 
         label.name.toLowerCase().includes(issue.toLowerCase())
       )
@@ -436,12 +461,12 @@ class PhotoAnalysisService {
   private identifyIssues(analysis: any) {
     const issueTypes = ['Rust', 'Crack', 'Dirt', 'Stain', 'Damage', 'Broken', 'Mold'];
     return analysis.labels
-      .filter(label => issueTypes.some(issue => 
+      .filter((label: {name: string, confidence: number}) => issueTypes.some(issue => 
         label.name.toLowerCase().includes(issue.toLowerCase())
       ))
-      .map(label => ({
+      .map((label: {name: string, confidence: number}) => ({
         type: label.name,
-        severity: label.confidence > 90 ? 'major' : label.confidence > 70 ? 'moderate' : 'minor',
+        severity: label.confidence > 90 ? 'major' as const : label.confidence > 70 ? 'moderate' as const : 'minor' as const,
         description: `${label.name} detected in image`,
         location: { x: 0.5, y: 0.5 } // Default center position
       }));
@@ -450,11 +475,15 @@ class PhotoAnalysisService {
   private identifyAmenities(analysis: any) {
     const amenityTypes = ['Pool', 'Gym', 'Parking', 'Garden', 'Balcony', 'Fireplace', 'Stove', 'Refrigerator'];
     return analysis.labels
-      .filter(label => amenityTypes.some(amenity => 
+      .filter((label: {name: string}) => amenityTypes.some(amenity => 
         label.name.toLowerCase().includes(amenity.toLowerCase())
       ))
-      .map(label => label.name);
+      .map((label: {name: string}) => label.name);
   }
 }
 
 export const photoAnalysisService = new PhotoAnalysisService();
+
+// Export individual functions for compatibility
+export const analyzeImage = (request: PhotoUploadRequest) => photoAnalysisService.analyzePropertyPhoto(request);
+export const storeAnalysisResult = (maintenanceRequestId: string, analysisData: any) => photoAnalysisService['storeAnalysisResult'](maintenanceRequestId, analysisData);

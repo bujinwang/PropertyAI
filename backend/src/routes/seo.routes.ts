@@ -5,6 +5,6 @@ import multer from 'multer';
 const upload = multer({ storage: multer.memoryStorage() });
 const router = Router();
 
-router.post('/optimize-listing', upload.single('image'), seoController.optimizeListing);
+router.post('/optimize-listing', upload.single('image') as any, seoController.optimizeListing);
 
 export default router;

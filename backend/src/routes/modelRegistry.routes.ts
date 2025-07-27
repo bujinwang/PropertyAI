@@ -37,7 +37,7 @@ const upload = multer({
  * @desc    Register a new model
  * @access  Private
  */
-router.post('/models', protect, upload.single('modelFile'), async (req, res) => {
+router.post('/models', protect, upload.single('modelFile') as any, async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({

@@ -73,15 +73,8 @@ app.use(cors({
 
 // Body parser configuration - MUST be before routes
 // Enhanced configuration to handle large payloads
-app.use(express.json({ 
-  limit: '100mb',
-  type: ['application/json', 'text/plain']
-})); // Parse JSON bodies with increased limit
-app.use(express.urlencoded({ 
-  extended: true, 
-  limit: '100mb',
-  parameterLimit: 50000
-})); // Parse URL-encoded bodies with increased limit
+app.use(express.json({ limit: '100mb' })); // Parse JSON bodies with increased limit
+app.use(express.urlencoded({ extended: true, limit: '100mb' })); // Parse URL-encoded bodies with increased limit
 
 // Configure express-session
 app.use(session({
@@ -90,12 +83,12 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours,
   }
-}));
+}) as any);
 
 // Initialize Passport and configure strategies
-app.use(passport.initialize());
+app.use(passport.initialize() as any);
 app.use(passport.session());
 configurePassport();
 

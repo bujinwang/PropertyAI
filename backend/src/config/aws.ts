@@ -1,4 +1,4 @@
-import { S3Client, CloudFrontClient } from '@aws-sdk/client-s3';
+import { S3Client } from '@aws-sdk/client-s3';
 import { CloudFrontClient as AWSCloudFrontClient } from '@aws-sdk/client-cloudfront';
 
 export interface AWSConfig {

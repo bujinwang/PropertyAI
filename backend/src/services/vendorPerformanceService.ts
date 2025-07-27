@@ -7,7 +7,7 @@ class VendorPerformanceService {
     vendorId: string;
     workOrderId: string;
     metricId: string;
-    score: number;
+    rating: number;
     comments?: string;
     ratedById: string;
   }) {
@@ -33,7 +33,7 @@ class VendorPerformanceService {
     if (ratings.length === 0) {
       return 0;
     }
-    const totalScore = ratings.reduce((acc, rating) => acc + rating.score, 0);
+    const totalScore = ratings.reduce((acc, rating) => acc + rating.rating, 0);
     return totalScore / ratings.length;
   }
 }

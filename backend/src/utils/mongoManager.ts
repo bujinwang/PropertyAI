@@ -99,7 +99,7 @@ class MongoManager {
   private applyMongooseSettings = () => {
     mongoose.set('toJSON', {
       virtuals: true,
-      transform: (_, ret) => {
+      transform: (_, ret: Record<string, any>) => {
         delete ret._id;
         delete ret.__v;
         return ret;
@@ -493,4 +493,4 @@ class MongoManager {
 
 // Export as singleton
 const mongoManager = new MongoManager();
-export default mongoManager; 
+export default mongoManager;

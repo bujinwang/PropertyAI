@@ -4,7 +4,9 @@ module.exports = {
   roots: ['<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.test.ts', '**/__tests__/**/*.spec.ts'],
   transform: {
-    '^.+\\.ts$': 'ts-jest',
+    '^.+\\.ts$': ['ts-jest', {
+      tsconfig: 'tsconfig.test.json'
+    }],
   },
   collectCoverageFrom: [
     'src/**/*.ts',
@@ -22,4 +24,7 @@ module.exports = {
     '^../utils/cache': '<rootDir>/src/__mocks__/cache.ts'
   },
   transformIgnorePatterns: ['/node_modules/(?!jstoxml).+\\.js$'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  // Remove the globals section as it's deprecated in newer versions
+  // Jest globals should be available automatically with ts-jest preset
 };

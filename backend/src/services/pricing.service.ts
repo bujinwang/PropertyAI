@@ -10,7 +10,9 @@ class PricingService {
       // Try to get market data
       let marketData = {};
       try {
-        marketData = await marketDataService.getMarketData(location);
+        // Temporarily using getComps as getMarketData is not available.
+        // This might need further refinement based on actual data requirements.
+        marketData = await marketDataService.getComps(propertyData.id);
       } catch (error) {
         console.warn('Market data service unavailable, using fallback data');
         marketData = this.getFallbackMarketData(propertyData);

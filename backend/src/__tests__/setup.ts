@@ -1,6 +1,8 @@
+/// <reference types="jest" />
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
+// Mock ioredis
 jest.mock('ioredis', () => {
   const IORedis = jest.fn(() => ({
     connect: jest.fn(),
@@ -10,6 +12,7 @@ jest.mock('ioredis', () => {
   return IORedis;
 });
 
+// Mock bullmq
 jest.mock('bullmq', () => ({
   Queue: jest.fn(() => ({
     add: jest.fn(),
@@ -21,16 +24,17 @@ jest.mock('bullmq', () => ({
   })),
 }));
 
+// Mock cache utilities
 jest.mock('../utils/cache.ts', () => ({
     getCache: jest.fn().mockResolvedValue(null),
     setCache: jest.fn(),
 }));
 
-
+// Create mock Prisma client
 const mockPrismaClient = {
   user: {
-    create: jest.fn().mockImplementation((data) => Promise.resolve({ id: 'mock-user-id', ...data.data })),
-    findUnique: jest.fn().mockImplementation(async (query) => {
+    create: jest.fn().mockImplementation((data: any) => Promise.resolve({ id: 'mock-user-id', ...data.data })),
+    findUnique: jest.fn().mockImplementation(async (query: any) => {
       if (query.where.email === 'nonexistent@example.com') {
         return Promise.resolve(null);
       }
@@ -43,9 +47,9 @@ const mockPrismaClient = {
     deleteMany: jest.fn(),
   },
   property: {
-    create: jest.fn().mockImplementation((data) => Promise.resolve({ id: 'mock-property-id', ...data.data })),
+    create: jest.fn().mockImplementation((data: any) => Promise.resolve({ id: 'mock-property-id', ...data.data })),
     findMany: jest.fn().mockResolvedValue([{ id: 'mock-property-id', name: 'Test Property' }]),
-    findUnique: jest.fn().mockImplementation((query) => {
+    findUnique: jest.fn().mockImplementation((query: any) => {
         if (query.where.id === 'non-existent-id') {
             return Promise.resolve(null);
         }
@@ -56,9 +60,9 @@ const mockPrismaClient = {
     deleteMany: jest.fn(),
   },
   unit: {
-    create: jest.fn().mockImplementation((data) => Promise.resolve({ id: 'mock-unit-id', ...data.data })),
+    create: jest.fn().mockImplementation((data: any) => Promise.resolve({ id: 'mock-unit-id', ...data.data })),
     findMany: jest.fn().mockResolvedValue([{ id: 'mock-unit-id', unitNumber: 'A101' }]),
-    findUnique: jest.fn().mockImplementation((query) => {
+    findUnique: jest.fn().mockImplementation((query: any) => {
         if (query.where.id === 'non-existent-id') {
             return Promise.resolve(null);
         }
@@ -70,22 +74,22 @@ const mockPrismaClient = {
     count: jest.fn().mockResolvedValue(1),
   },
   lease: {
-    create: jest.fn().mockImplementation((data) => Promise.resolve({ id: 'mock-lease-id', ...data.data })),
-    findMany: jest.fn(),
-    findUnique: jest.fn().mockImplementation((query) => {
+    create: jest.fn().mockImplementation((data: any) => Promise.resolve({ id: 'mock-lease-id', ...data.data })),
+    findMany: jest.fn().mockResolvedValue([]),
+    findUnique: jest.fn().mockImplementation((query: any) => {
         if (query.where.id === 'non-existent-id') {
             return Promise.resolve(null);
         }
         return Promise.resolve({ id: query.where.id, rentAmount: 1000, currency: 'usd' })
     }),
-    update: jest.fn(),
-    delete: jest.fn(),
+    update: jest.fn().mockResolvedValue({}),
+    delete: jest.fn().mockResolvedValue({}),
     deleteMany: jest.fn(),
   },
   maintenanceRequest: {
-    create: jest.fn().mockImplementation((data) => Promise.resolve({ id: 'mock-maintenance-id', ...data.data })),
+    create: jest.fn().mockImplementation((data: any) => Promise.resolve({ id: 'mock-maintenance-id', ...data.data })),
     findMany: jest.fn().mockResolvedValue([{ id: 'mock-maintenance-id', title: 'Leaky faucet' }]),
-    findUnique: jest.fn().mockImplementation((query) => {
+    findUnique: jest.fn().mockImplementation((query: any) => {
         if (query.where.id === 'non-existent-id') {
             return Promise.resolve(null);
         }
@@ -96,12 +100,12 @@ const mockPrismaClient = {
     deleteMany: jest.fn(),
   },
   tenantRating: {
-    create: jest.fn(),
-    findMany: jest.fn(),
+    create: jest.fn().mockResolvedValue({}),
+    findMany: jest.fn().mockResolvedValue([]),
     deleteMany: jest.fn(),
   },
   auditEntry: {
-      create: jest.fn(),
+      create: jest.fn().mockResolvedValue({}),
       deleteMany: jest.fn(),
   },
   photoAnalysis: {
@@ -143,21 +147,20 @@ const mockPrismaClient = {
   document: {
       deleteMany: jest.fn(),
   },
-  $connect: jest.fn(),
-  $disconnect: jest.fn(),
+  $connect: jest.fn().mockResolvedValue(undefined),
+  $disconnect: jest.fn().mockResolvedValue(undefined),
   $queryRaw: jest.fn().mockResolvedValue([]),
   $queryRawUnsafe: jest.fn().mockResolvedValue([]),
 };
 
+// Mock Prisma Client
 jest.mock('@prisma/client', () => ({
   PrismaClient: jest.fn(() => mockPrismaClient),
 }));
 
 export default mockPrismaClient;
 
-
-
-// Mock Redis connections for testing
+// Mock authentication middleware
 import { Request, Response, NextFunction } from 'express';
 
 jest.mock('../middleware/authMiddleware', () => ({
@@ -179,9 +182,9 @@ jest.mock('../middleware/authMiddleware', () => ({
 jest.mock('../services/pubSub.service', () => ({
   __esModule: true,
   default: jest.fn().mockImplementation(() => ({
-    publish: jest.fn(),
-    subscribe: jest.fn(),
-    unsubscribe: jest.fn(),
+    publish: jest.fn().mockResolvedValue(undefined),
+    subscribe: jest.fn().mockResolvedValue(undefined),
+    unsubscribe: jest.fn().mockResolvedValue(undefined),
   }))
 }));
 

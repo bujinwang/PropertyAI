@@ -5,6 +5,6 @@ import multer from 'multer';
 const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
-router.post('/transcribe', upload.single('audio'), voiceController.transcribe);
+router.post('/transcribe', upload.single('audio') as any, voiceController.transcribe);
 
 export default router;

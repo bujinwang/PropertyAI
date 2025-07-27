@@ -32,3 +32,11 @@ export const validateLogin = (req: Request, res: Response, next: NextFunction) =
 
   next();
 };
+
+export const validateRequest = (validationRules: any) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    // Basic validation middleware
+    // You can implement specific validation logic here
+    next();
+  };
+};

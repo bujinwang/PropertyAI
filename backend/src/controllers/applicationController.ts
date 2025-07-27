@@ -19,8 +19,13 @@ class ApplicationController {
       const application = await prisma.application.create({ data: req.body });
 
       // Send a push notification to the applicant
-      const applicant = await prisma.user.findUnique({ where: { id: application.applicantId } });
-      if (applicant?.pushToken) {
+      const applicant = await prisma.user.findUnique({ 
+        where: { id: application.applicantId },
+        include: {
+          devices: true
+        }
+      });
+      if (applicant?.pushToken && applicant.devices.length > 0) {
         const { pushToken, platform } = applicant.devices[0];
         const title = 'Application Received';
         const body = 'Your application has been received and is under review.';

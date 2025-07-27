@@ -33,6 +33,7 @@ import predictiveMaintenanceRoutes from './predictiveMaintenance.routes';
 import modelPerformanceRoutes from './modelPerformance.routes';
 import photoAnalysisRoutes from './photoAnalysis.routes';
 import { rateLimiter } from '../middleware/rateLimitMiddleware';
+import { RequestHandler } from 'express';
 import databaseOptimizationRoutes from './databaseOptimization.routes';
 import propertyDescriptionRoutes from './propertyDescription.routes';
 import pricingRoutes from './pricing.routes';
@@ -50,7 +51,7 @@ const router = express.Router();
 // API version prefix
 const API_PREFIX = '/api';
 
-router.use(API_PREFIX, rateLimiter);
+router.use(rateLimiter as unknown as RequestHandler);
 
 // Health check endpoint
 router.get(`${API_PREFIX}/health`, (req, res) => {

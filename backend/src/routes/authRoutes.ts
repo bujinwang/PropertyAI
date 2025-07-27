@@ -1,6 +1,7 @@
 import express from 'express';
 import passport from 'passport';
 import { loginRateLimiter } from '../middleware/rateLimiter';
+import { RequestHandler } from 'express';
 import * as authController from '../controllers/authController';
 import { authMiddleware } from '../middleware/authMiddleware';
 import { validateRegistration, validateLogin } from '../middleware/validation';
@@ -8,7 +9,7 @@ import { validateRegistration, validateLogin } from '../middleware/validation';
 const router = express.Router();
 
 router.post('/register', validateRegistration, authController.register);
-router.post('/login', loginRateLimiter, validateLogin, authController.login);
+router.post('/login', loginRateLimiter as unknown as RequestHandler, validateLogin, authController.login);
 router.post('/refresh-token', authController.refreshToken);
 router.post('/forgot-password', authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);

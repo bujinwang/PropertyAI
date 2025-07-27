@@ -66,8 +66,62 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction): vo
   }
 };
 
-// Export middleware functions
-export default {
+/**
+ * Middleware to restrict access to specific roles
+ * @param roles Array of allowed roles
+ */
+export const restrictTo = (...roles: string[]) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    try {
+      if (!req.user) {
+        res.status(401).json({ message: 'Authentication required' });
+        return;
+      }
+
+      if (!roles.includes(req.user.role)) {
+        res.status(403).json({ message: 'Access denied for your role' });
+        return;
+      }
+
+      next();
+    } catch (error: any) {
+      console.error('Auth middleware error:', error?.message || error);
+      res.status(500).json({ message: 'Internal server error in auth middleware' });
+    }
+  };
+};
+
+/**
+ * Middleware to check authentication
+ * @param req Express request
+ * @param res Express response
+ * @param next Express next function
+ */
+export const protect = requireAuth;
+
+/**
+ * Middleware to check admin role
+ * @param req Express request
+ * @param res Express response
+ * @param next Express next function
+ */
+export const admin = requireAdmin;
+
+/**
+ * Check if user has specific roles
+ * @param roles Array of roles to check
+ */
+export const checkRole = (roles: string[]) => restrictTo(...roles);
+
+// Default export with authMiddleware object
+const authMiddleware = {
   requireAdmin,
-  requireAuth
-}; 
+  requireAuth,
+  restrictTo,
+  protect,
+  admin,
+  checkRole
+};
+
+export { authMiddleware };
+export default authMiddleware;

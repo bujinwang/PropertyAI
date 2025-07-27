@@ -1,3 +1,5 @@
+/// <reference types="long" />
+require('dotenv').config(); // Load environment variables
 import app from './app';
 import http from 'http';
 import { prisma, connectMongoDB, setupPostgreSQL, setupMongoDB, closeDatabaseConnections } from './config/database';

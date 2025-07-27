@@ -959,3 +959,13 @@ model Feedback {
   correctedType   String?
   createdAt       DateTime  @default(now())
 }
+
+model ModelPerformance {
+    id          String @id @default(cuid())
+    modelName   String
+    accuracy    Float
+    precision   Float
+    recall      Float
+    f1Score     Float
+    recordedAt  DateTime @default(now())
+}
