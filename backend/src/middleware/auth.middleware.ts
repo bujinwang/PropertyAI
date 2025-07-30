@@ -1,20 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-
-// Define User interface for type safety
-interface User {
-  id: string;
-  email: string;
-  role: string;
-}
-
-// Extend Express Request to include user property
-declare global {
-  namespace Express {
-    interface Request {
-      user?: User;
-    }
-  }
-}
+import { User, UserRole } from '@prisma/client';
 
 /**
  * Middleware to check if user has admin privileges
@@ -31,7 +16,7 @@ export const requireAdmin = (req: Request, res: Response, next: NextFunction): v
     }
 
     // Check if user has admin role
-    if (req.user.role !== 'ADMIN') {
+    if (req.user.role !== UserRole.ADMIN) {
       res.status(403).json({ message: 'Admin privileges required' });
       return;
     }
@@ -70,7 +55,7 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction): vo
  * Middleware to restrict access to specific roles
  * @param roles Array of allowed roles
  */
-export const restrictTo = (...roles: string[]) => {
+export const restrictTo = (...roles: UserRole[]) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     try {
       if (!req.user) {
@@ -111,7 +96,7 @@ export const admin = requireAdmin;
  * Check if user has specific roles
  * @param roles Array of roles to check
  */
-export const checkRole = (roles: string[]) => restrictTo(...roles);
+export const checkRole = (roles: UserRole[]) => restrictTo(...roles);
 
 // Default export with authMiddleware object
 const authMiddleware = {

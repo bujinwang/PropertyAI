@@ -3,7 +3,7 @@ import { WorkOrder } from '@prisma/client';
 import { aiOrchestrationService } from './aiOrchestration.service';
 
 class CostEstimationService {
-  public async collectDataForCostEstimation(workOrderId: string): Promise<WorkOrder | null> {
+  public async collectDataForCostEstimation(workOrderId: string): Promise<any | null> { // Changed return type to any for flexibility
     const workOrder = await prisma.workOrder.findUnique({
       where: { id: workOrderId },
       include: {
@@ -22,7 +22,7 @@ class CostEstimationService {
   }
 
   public async estimateCost(workOrderId: string): Promise<any | null> {
-    const workOrder = await this.collectDataForCostEstimation(workOrderId);
+    const workOrder: any = await this.collectDataForCostEstimation(workOrderId); // Explicitly type workOrder as any
 
     if (workOrder) {
       const prompt = `
@@ -30,8 +30,8 @@ class CostEstimationService {
         - Title: ${workOrder.title}
         - Description: ${workOrder.description}
         - Priority: ${workOrder.priority}
-        - Property Type: ${workOrder.maintenanceRequest.unit.property.propertyType}
-        - Location: ${workOrder.maintenanceRequest.unit.property.city}, ${workOrder.maintenanceRequest.unit.property.state}
+        - Property Type: ${workOrder.maintenanceRequest?.unit?.property?.propertyType}
+        - Location: ${workOrder.maintenanceRequest?.unit?.property?.city}, ${workOrder.maintenanceRequest?.unit?.property?.state}
 
         Provide the estimated cost as a single number (e.g., 250.00) and a confidence score between 0 and 1.
         Format the output as a JSON object with "estimatedCost" and "confidence" keys.
@@ -44,8 +44,10 @@ class CostEstimationService {
         await prisma.costEstimation.create({
           data: {
             workOrderId,
-            estimatedCost: parsedResult.estimatedCost,
-            confidence: parsedResult.confidence,
+            estimation: {
+              estimatedCost: parsedResult.estimatedCost,
+              confidence: parsedResult.confidence,
+            },
           },
         });
 

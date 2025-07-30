@@ -1,5 +1,5 @@
 import { SpeechClient } from '@google-cloud/speech';
-import fs from 'fs';
+import * as fs from 'fs';
 
 class SttService {
   private client: SpeechClient;

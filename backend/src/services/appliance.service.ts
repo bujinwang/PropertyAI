@@ -7,6 +7,7 @@ export const getAppliancesByUnitId = async (unitId: string) => {
 };
 
 export const createAppliance = async (data: {
+  name: string; // Added name as it's required by schema
   unitId: string;
   type: string;
   brand?: string;
@@ -16,7 +17,10 @@ export const createAppliance = async (data: {
   warrantyExpiry?: Date;
 }) => {
   return prisma.appliance.create({
-    data,
+    data: {
+      ...data,
+      name: data.name, // Ensure name is explicitly passed
+    },
   });
 };
 

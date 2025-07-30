@@ -121,9 +121,9 @@ export const paymentService = {
               include: {
                 property: true
               }
-            }
-          },
-          tenant: true
+            },
+            tenant: true
+          }
         }
       },
       orderBy: {
@@ -237,8 +237,8 @@ export const paymentService = {
   },
 
   async cancelSubscription(subscriptionId: string, prorate: boolean = true) {
-    return stripe.subscriptions.del(subscriptionId, {
-      invoice_now: prorate
+    return stripe.subscriptions.cancel(subscriptionId, {
+      prorate
     });
   },
 
@@ -249,9 +249,20 @@ export const paymentService = {
   },
 
   async createInvoice(customerId: string, items: Stripe.InvoiceItemCreateParams[]) {
+    // First, create invoice items
+    for (const item of items) {
+      await stripe.invoiceItems.create({
+        customer: customerId,
+        price: item.price,
+        quantity: item.quantity,
+      });
+    }
+    // Then create the invoice
     return stripe.invoices.create({
       customer: customerId,
-      items
+      collection_method: 'send_invoice',
+      days_until_due: 7,
+      auto_advance: true,
     });
   },
 

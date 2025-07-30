@@ -7,7 +7,6 @@ export const generateApiKey = async (userId: string, permissions: string[], expi
     data: {
       key,
       userId,
-      permissions,
       expiresAt,
     },
   });

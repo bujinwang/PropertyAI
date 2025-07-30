@@ -7,14 +7,14 @@ const router = Router();
 router.post(
   '/payout',
   authMiddleware.protect,
-  authMiddleware.restrictTo('PROPERTY_MANAGER', 'ADMIN'),
+  authMiddleware.checkRole(['PROPERTY_MANAGER', 'ADMIN']),
   vendorPaymentController.initiatePayment
 );
 
 router.get(
   '/history/:vendorId',
   authMiddleware.protect,
-  authMiddleware.restrictTo('VENDOR', 'PROPERTY_MANAGER', 'ADMIN'),
+  authMiddleware.checkRole(['VENDOR', 'PROPERTY_MANAGER', 'ADMIN']),
   vendorPaymentController.getPaymentHistory
 );
 

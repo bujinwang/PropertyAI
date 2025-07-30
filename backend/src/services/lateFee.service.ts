@@ -40,7 +40,7 @@ class LateFeeService {
           await prisma.transaction.create({
             data: {
               amount: lateFee,
-              type: 'FEES',
+              type: 'FEE',
               status: 'PENDING',
               description: 'Late rent payment fee',
               leaseId: lease.id,

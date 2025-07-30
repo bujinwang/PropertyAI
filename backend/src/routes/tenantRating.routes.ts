@@ -7,13 +7,13 @@ const tenantRatingController = new TenantRatingController();
 
 router.post(
   '/',
-  authMiddleware(['PROPERTY_MANAGER']),
+  authMiddleware.checkRole(['PROPERTY_MANAGER']),
   tenantRatingController.createTenantRating
 );
 
 router.get(
   '/:tenantId',
-  authMiddleware(['PROPERTY_MANAGER']),
+  authMiddleware.checkRole(['PROPERTY_MANAGER']),
   tenantRatingController.getTenantRatings
 );
 

@@ -1,6 +1,6 @@
 import { prisma } from '../config/database';
 import PDFDocument from 'pdfkit';
-import fs from 'fs';
+import * as fs from 'fs';
 
 class TaxDocumentService {
   public async generateTaxDocument(propertyId: string, year: number): Promise<string | null> {

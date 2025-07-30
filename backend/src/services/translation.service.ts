@@ -76,9 +76,12 @@ class TranslationService {
         detectedSourceLanguage: translation.detectedSourceLanguage,
         confidence: 0.95 // Google Translate doesn't provide confidence, so we use a high default
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Translation error:', error);
-      throw new Error(`Failed to translate text: ${error.message}`);
+      if (error instanceof Error) {
+        throw new Error(`Failed to translate text: ${error.message}`);
+      }
+      throw new Error('Failed to translate text: An unknown error occurred');
     }
   }
 
@@ -109,9 +112,12 @@ class TranslationService {
         translatedText: response.data.data.translations[index]?.translatedText || originalText,
         detectedSourceLanguage: response.data.data.translations[index]?.detectedSourceLanguage
       }));
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Bulk translation error:', error);
-      throw new Error(`Failed to translate multiple texts: ${error.message}`);
+      if (error instanceof Error) {
+        throw new Error(`Failed to translate multiple texts: ${error.message}`);
+      }
+      throw new Error('Failed to translate multiple texts: An unknown error occurred');
     }
   }
 
@@ -135,9 +141,12 @@ class TranslationService {
         confidence: detection.confidence,
         isReliable: detection.isReliable
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Language detection error:', error);
-      throw new Error(`Failed to detect language: ${error.message}`);
+      if (error instanceof Error) {
+        throw new Error(`Failed to detect language: ${error.message}`);
+      }
+      throw new Error('Failed to detect language: An unknown error occurred');
     }
   }
 

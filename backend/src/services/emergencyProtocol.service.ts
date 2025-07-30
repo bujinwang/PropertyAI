@@ -7,6 +7,8 @@ export const getEmergencyProtocolsByPropertyId = async (propertyId: string) => {
 };
 
 export const createEmergencyProtocol = async (data: {
+  name: string; // Added name as it's required by schema
+  description: string; // Added description as it's required by schema
   propertyId: string;
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'EMERGENCY';
   contactName: string;
@@ -14,7 +16,11 @@ export const createEmergencyProtocol = async (data: {
   instructions: string;
 }) => {
   return prisma.emergencyProtocol.create({
-    data,
+    data: {
+      ...data,
+      name: data.name,
+      description: data.description,
+    },
   });
 };
 

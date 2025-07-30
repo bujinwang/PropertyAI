@@ -1,5 +1,6 @@
 import pino from 'pino';
 import { prisma } from '../config/database';
+import { Prisma } from '@prisma/client';
 
 const logger = pino({
   transport: {
@@ -27,7 +28,7 @@ class AuditService {
       data: {
         userId,
         action,
-        details: details ? JSON.stringify(details) : undefined,
+        details: details ? JSON.stringify(details) : Prisma.JsonNull,
       },
     });
   }

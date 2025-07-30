@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import { exec } from 'child_process';
-import fs from 'fs';
+import * as fs from 'fs';
 import path from 'path';
 import * as cron from 'node-cron';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';

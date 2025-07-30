@@ -32,12 +32,18 @@ export const deleteEscalationPolicy = async (id: string) => {
 
 export const createEscalationPolicyRule = async (data: {
   policyId: string;
+  userId: string; // Added userId as it's required by schema
+  order: number; // Added order as it's required by schema
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'EMERGENCY';
   escalateToId: string;
   delayMinutes: number;
 }) => {
   return prisma.escalationPolicyRule.create({
-    data,
+    data: {
+      ...data,
+      userId: data.userId,
+      order: data.order,
+    },
   });
 };
 

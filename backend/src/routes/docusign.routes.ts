@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { docuSignService } from '../services/docusign.service';
 import { authenticateToken } from '../middleware/auth';
 import { body, param, query } from 'express-validator';
@@ -8,37 +8,24 @@ import { prisma } from '../config/database';
 const router = Router();
 
 // Get DocuSign authorization URL
-router.get('/auth', authenticateToken, async (req, res) => {
+router.get('/auth', authenticateToken, async (req: Request, res: Response) => {
   try {
     const authUrl = docuSignService.getAuthUrl();
-    
-    res.json({
-      success: true,
-      authUrl
-    });
+    res.json({ success: true, authUrl });
   } catch (error) {
     console.error('Error generating DocuSign auth URL:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to generate authorization URL'
-    });
+    res.status(500).json({ success: false, error: 'Failed to generate authorization URL' });
   }
 });
 
 // Handle DocuSign OAuth callback
-router.get('/callback', authenticateToken, async (req, res) => {
+router.get('/callback', async (req: Request, res: Response) => {
   try {
     const { code } = req.query;
-    
     if (!code) {
-      return res.status(400).json({
-        success: false,
-        error: 'Missing authorization code'
-      });
+      return res.status(400).json({ success: false, error: 'Missing authorization code' });
     }
-
     await docuSignService.handleCallback(code as string);
-    
     res.redirect(`${process.env.FRONTEND_URL}/settings/integrations?success=true`);
   } catch (error) {
     console.error('Error handling DocuSign callback:', error);
@@ -46,87 +33,14 @@ router.get('/callback', authenticateToken, async (req, res) => {
   }
 });
 
-// Create lease envelope
-router.post('/lease/:leaseId', authenticateToken, [
-  param('leaseId').isString().notEmpty(),
-  body('landlordName').isString().notEmpty(),
-  body('landlordEmail').isEmail(),
-  body('tenantName').isString().notEmpty(),
-  body('tenantEmail').isEmail(),
-  body('propertyAddress').isString().notEmpty(),
-  body('leaseStartDate').isISO8601().toDate(),
-  body('leaseEndDate').isISO8601().toDate(),
-  body('monthlyRent').isFloat({ min: 0 }),
-  body('securityDeposit').isFloat({ min: 0 }),
-  body('leaseTerms').isString(),
-  validateRequest
-], async (req, res) => {
-  try {
-    const { leaseId } = req.params;
-    const leaseData = req.body;
-
-    // Verify lease exists and user has permission
-    const lease = await prisma.lease.findUnique({
-      where: { id: leaseId },
-      include: {
-        unit: {
-          include: {
-            property: true
-          }
-        }
-      }
-    });
-
-    if (!lease) {
-      return res.status(404).json({
-        success: false,
-        error: 'Lease not found'
-      });
-    }
-
-    // Create DocuSign envelope
-    const envelopeId = await docuSignService.createLeaseTemplate({
-      ...leaseData,
-      leaseStartDate: leaseData.leaseStartDate.toISOString().split('T')[0],
-      leaseEndDate: leaseData.leaseEndDate.toISOString().split('T')[0]
-    });
-
-    // Store envelope reference
-    await prisma.document.create({
-      data: {
-        name: 'Lease Agreement',
-        type: 'LEASE',
-        url: `docusign://${envelopeId}`,
-        leaseId: leaseId,
-        uploadedById: req.user!.id,
-        description: 'DocuSign lease agreement'
-      }
-    });
-
-    res.json({
-      success: true,
-      envelopeId,
-      message: 'Lease agreement created and sent for signature'
-    });
-  } catch (error: any) {
-    console.error('Error creating lease envelope:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to create lease agreement'
-    });
-  }
-});
-
 // Get envelope status
 router.get('/envelope/:envelopeId', authenticateToken, [
   param('envelopeId').isString().notEmpty(),
   validateRequest
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const { envelopeId } = req.params;
-    
     const envelope = await docuSignService.getEnvelope(envelopeId);
-    
     res.json({
       success: true,
       envelope: {
@@ -140,10 +54,54 @@ router.get('/envelope/:envelopeId', authenticateToken, [
     });
   } catch (error: any) {
     console.error('Error getting envelope:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to get envelope'
+    res.status(500).json({ success: false, error: error.message || 'Failed to get envelope' });
+  }
+});
+
+// Update lease envelope route
+router.post('/lease/:leaseId', authenticateToken, [
+  param('leaseId').isString().notEmpty(),
+  body('landlordName').isString().notEmpty(),
+  body('landlordEmail').isEmail(),
+  body('tenantName').isString().notEmpty(),
+  body('tenantEmail').isEmail(),
+  body('propertyAddress').isString().notEmpty(),
+  body('leaseStartDate').isISO8601().toDate(),
+  body('leaseEndDate').isISO8601().toDate(),
+  body('monthlyRent').isFloat({ min: 0 }),
+  body('securityDeposit').isFloat({ min: 0 }),
+  body('leaseTerms').isString(),
+  validateRequest
+], async (req: Request, res: Response) => {
+  try {
+    const { leaseId } = req.params;
+    const leaseData = req.body;
+    const lease = await prisma.lease.findUnique({
+      where: { id: leaseId },
+      include: { unit: { include: { property: true } } }
     });
+    if (!lease) {
+      return res.status(404).json({ success: false, error: 'Lease not found' });
+    }
+    const envelopeId = await docuSignService.createLeaseTemplate({
+      ...leaseData,
+      leaseStartDate: leaseData.leaseStartDate.toISOString().split('T')[0],
+      leaseEndDate: leaseData.leaseEndDate.toISOString().split('T')[0]
+    });
+    await prisma.document.create({
+      data: {
+        name: 'Lease Agreement',
+        type: 'LEASE',
+        url: `docusign://${envelopeId}`,
+        leaseId: leaseId,
+        uploadedById: req.user!.id,
+        description: 'DocuSign lease agreement'
+      }
+    });
+    res.json({ success: true, envelopeId, message: 'Lease agreement created and sent for signature' });
+  } catch (error: any) {
+    console.error('Error creating lease envelope:', error);
+    res.status(500).json({ success: false, error: error.message || 'Failed to create lease agreement' });
   }
 });
 
@@ -151,22 +109,14 @@ router.get('/envelope/:envelopeId', authenticateToken, [
 router.get('/envelope/:envelopeId/documents', authenticateToken, [
   param('envelopeId').isString().notEmpty(),
   validateRequest
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const { envelopeId } = req.params;
-    
     const documents = await docuSignService.getEnvelopeDocuments(envelopeId);
-    
-    res.json({
-      success: true,
-      documents: documents.envelopeDocuments || []
-    });
+    res.json({ success: true, documents: documents.envelopeDocuments || [] });
   } catch (error: any) {
     console.error('Error getting envelope documents:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to get documents'
-    });
+    res.status(500).json({ success: false, error: error.message || 'Failed to get documents' });
   }
 });
 
@@ -174,12 +124,10 @@ router.get('/envelope/:envelopeId/documents', authenticateToken, [
 router.get('/envelope/:envelopeId/recipients', authenticateToken, [
   param('envelopeId').isString().notEmpty(),
   validateRequest
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const { envelopeId } = req.params;
-    
     const recipients = await docuSignService.getEnvelopeRecipients(envelopeId);
-    
     res.json({
       success: true,
       recipients: {
@@ -189,10 +137,7 @@ router.get('/envelope/:envelopeId/recipients', authenticateToken, [
     });
   } catch (error: any) {
     console.error('Error getting envelope recipients:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to get recipients'
-    });
+    res.status(500).json({ success: false, error: error.message || 'Failed to get recipients' });
   }
 });
 
@@ -204,11 +149,10 @@ router.post('/envelope/:envelopeId/embedded-signing', authenticateToken, [
   body('clientUserId').isString().notEmpty(),
   body('returnUrl').isURL(),
   validateRequest
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const { envelopeId } = req.params;
     const { signerEmail, signerName, clientUserId, returnUrl } = req.body;
-    
     const signingUrl = await docuSignService.createEmbeddedSigningUrl(
       envelopeId,
       signerEmail,
@@ -216,18 +160,10 @@ router.post('/envelope/:envelopeId/embedded-signing', authenticateToken, [
       clientUserId,
       returnUrl
     );
-
-    res.json({
-      success: true,
-      signingUrl,
-      message: 'Embedded signing URL created'
-    });
+    res.json({ success: true, signingUrl, message: 'Embedded signing URL created' });
   } catch (error: any) {
     console.error('Error creating embedded signing URL:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to create signing URL'
-    });
+    res.status(500).json({ success: false, error: error.message || 'Failed to create signing URL' });
   }
 });
 
@@ -235,22 +171,14 @@ router.post('/envelope/:envelopeId/embedded-signing', authenticateToken, [
 router.post('/envelope/:envelopeId/send', authenticateToken, [
   param('envelopeId').isString().notEmpty(),
   validateRequest
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const { envelopeId } = req.params;
-    
     await docuSignService.sendEnvelope(envelopeId);
-    
-    res.json({
-      success: true,
-      message: 'Envelope sent successfully'
-    });
+    res.json({ success: true, message: 'Envelope sent successfully' });
   } catch (error: any) {
     console.error('Error sending envelope:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to send envelope'
-    });
+    res.status(500).json({ success: false, error: error.message || 'Failed to send envelope' });
   }
 });
 
@@ -259,23 +187,15 @@ router.post('/envelope/:envelopeId/void', authenticateToken, [
   param('envelopeId').isString().notEmpty(),
   body('reason').isString().notEmpty(),
   validateRequest
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const { envelopeId } = req.params;
     const { reason } = req.body;
-    
     await docuSignService.voidEnvelope(envelopeId, reason);
-    
-    res.json({
-      success: true,
-      message: 'Envelope voided successfully'
-    });
+    res.json({ success: true, message: 'Envelope voided successfully' });
   } catch (error: any) {
     console.error('Error voiding envelope:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to void envelope'
-    });
+    res.status(500).json({ success: false, error: error.message || 'Failed to void envelope' });
   }
 });
 
@@ -284,21 +204,16 @@ router.get('/envelope/:envelopeId/document/:documentId/download', authenticateTo
   param('envelopeId').isString().notEmpty(),
   param('documentId').isString().notEmpty(),
   validateRequest
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const { envelopeId, documentId } = req.params;
-    
     const documentBuffer = await docuSignService.downloadDocument(envelopeId, documentId);
-    
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="signed-document-${documentId}.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename=\"signed-document-${documentId}.pdf\"`);
     res.send(documentBuffer);
   } catch (error: any) {
     console.error('Error downloading document:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to download document'
-    });
+    res.status(500).json({ success: false, error: error.message || 'Failed to download document' });
   }
 });
 
@@ -316,23 +231,14 @@ router.post('/envelope', authenticateToken, [
   body('emailBody').optional().isString(),
   body('status').isIn(['sent', 'created']),
   validateRequest
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const envelopeData = req.body;
-    
     const envelopeId = await docuSignService.createEnvelope(envelopeData);
-    
-    res.json({
-      success: true,
-      envelopeId,
-      message: 'Envelope created successfully'
-    });
+    res.json({ success: true, envelopeId, message: 'Envelope created successfully' });
   } catch (error: any) {
     console.error('Error creating envelope:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to create envelope'
-    });
+    res.status(500).json({ success: false, error: error.message || 'Failed to create envelope' });
   }
 });
 

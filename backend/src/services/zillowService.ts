@@ -14,7 +14,7 @@ const toZillowFormat = (listing: Listing) => {
   return {
     title: listing.title,
     description: listing.description,
-    price: listing.price,
+    price: listing.rent, // Changed price to rent
     url: `${process.env.FRONTEND_URL}/public-listing/${listing.slug}`,
     // ... other fields
   };

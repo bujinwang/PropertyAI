@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { HfInference } from '@huggingface/inference';
 import { prisma } from '../config/database';
-import { logger } from '../utils/logger';
+import logger from '../utils/logger';
 
 interface AIServiceConfig {
   googleApiKey: string;
@@ -34,7 +34,7 @@ interface SentimentAnalysis {
 interface EntityExtraction {
   entities: Array<{
     text: string;
-    label: string;
+    label: string | undefined;
     confidence: number;
     start: number;
     end: number;
@@ -96,7 +96,7 @@ class AIService {
         },
       };
     } catch (error) {
-      logger.error('Error generating text with Gemini:', error);
+      logger.error(`Error generating text with Gemini: ${error}`);
       throw new Error('Failed to generate text');
     }
   }
@@ -119,7 +119,7 @@ class AIService {
         score: prediction.score,
       };
     } catch (error) {
-      logger.error('Error analyzing sentiment:', error);
+      logger.error(`Error analyzing sentiment: ${error}`);
       
       // Fallback to basic sentiment analysis
       return this.basicSentimentAnalysis(text);
@@ -136,7 +136,7 @@ class AIService {
         inputs: text,
       });
 
-      const entities = result.map(entity => ({
+      const entities: Array<{ text: string; label: string | undefined; confidence: number; start: number; end: number; }> = result.map(entity => ({
         text: entity.word,
         label: entity.entity_group,
         confidence: entity.score,
@@ -146,7 +146,7 @@ class AIService {
 
       return { entities };
     } catch (error) {
-      logger.error('Error extracting entities:', error);
+      logger.error(`Error extracting entities: ${error}`);
       
       // Fallback to basic entity extraction
       return this.basicEntityExtraction(text);
@@ -175,7 +175,7 @@ class AIService {
         },
       };
     } catch (error) {
-      logger.error('Error generating summary:', error);
+      logger.error(`Error generating summary: ${error}`);
       throw new Error('Failed to generate summary');
     }
   }
@@ -208,7 +208,7 @@ class AIService {
         },
       };
     } catch (error) {
-      logger.error('Error classifying text:', error);
+      logger.error(`Error classifying text: ${error}`);
       throw new Error('Failed to classify text');
     }
   }
@@ -235,7 +235,28 @@ class AIService {
 
       // Save conversation to database
       const conversationId = request.conversationId || uuidv4();
-      await this.saveConversation(conversationId, request.message, message, request.context);
+      // Save user message
+      await prisma.message.create({
+        data: {
+          conversationId,
+          senderId: 'system', // Assuming 'system' as sender for AI messages, adjust as needed
+          recipientId: 'user', // Assuming 'user' as recipient, adjust as needed
+          content: request.message,
+          isRead: true,
+          sentiment: 'NEUTRAL', // Default sentiment, can be analyzed later
+        },
+      });
+      // Save AI message
+      await prisma.message.create({
+        data: {
+          conversationId,
+          senderId: 'user', // Assuming 'user' as sender for user messages, adjust as needed
+          recipientId: 'system', // Assuming 'system' as recipient, adjust as needed
+          content: message,
+          isRead: true,
+          sentiment: 'NEUTRAL', // Default sentiment, can be analyzed later
+        },
+      });
 
       return {
         message,
@@ -246,7 +267,7 @@ class AIService {
         },
       };
     } catch (error) {
-      logger.error('Error in chat:', error);
+      logger.error(`Error in chat: ${error}`);
       throw new Error('Failed to process chat request');
     }
   }
@@ -285,7 +306,7 @@ class AIService {
         },
       };
     } catch (error) {
-      logger.error('Error generating property description:', error);
+      logger.error(`Error generating property description: ${error}`);
       throw new Error('Failed to generate property description');
     }
   }
@@ -326,7 +347,7 @@ class AIService {
 
       return jsonResponse;
     } catch (error) {
-      logger.error('Error analyzing maintenance request:', error);
+      logger.error(`Error analyzing maintenance request: ${error}`);
       
       // Fallback analysis
       return this.basicMaintenanceAnalysis(request);
@@ -355,7 +376,7 @@ class AIService {
         },
       };
     } catch (error) {
-      logger.error('Error generating lease summary:', error);
+      logger.error(`Error generating lease summary: ${error}`);
       throw new Error('Failed to generate lease summary');
     }
   }
@@ -383,7 +404,7 @@ class AIService {
         },
       };
     } catch (error) {
-      logger.error('Error translating text:', error);
+      logger.error(`Error translating text: ${error}`);
       throw new Error('Failed to translate text');
     }
   }
@@ -403,7 +424,7 @@ class AIService {
       
       return keywordsText.split(',').map(k => k.trim()).filter(k => k.length > 0);
     } catch (error) {
-      logger.error('Error extracting keywords:', error);
+      logger.error(`Error extracting keywords: ${error}`);
       
       // Fallback to basic keyword extraction
       return this.basicKeywordExtraction(text, maxKeywords);
@@ -445,7 +466,7 @@ class AIService {
   }
 
   private basicEntityExtraction(text: string): EntityExtraction {
-    const entities = [];
+    const entities: Array<{ text: string; label: string; confidence: number; start: number; end: number; }> = [];
     const patterns = {
       PERSON: /\b[A-Z][a-z]+ [A-Z][a-z]+\b/g,
       ORG: /\b[A-Z][a-z]+ (Inc|Corp|LLC|Company)\b/g,
@@ -523,23 +544,12 @@ class AIService {
     aiMessage: string,
     context?: Record<string, any>
   ): Promise<void> {
-    try {
-      await prisma.conversation.create({
-        data: {
-          id: conversationId,
-          userMessage,
-          aiMessage,
-          context: context ? JSON.stringify(context) : null,
-          timestamp: new Date(),
-        },
-      });
-    } catch (error) {
-      logger.error('Error saving conversation:', error);
-    }
+    // This function is no longer needed as conversation saving is handled directly in the chat method.
+    // Keeping it as a placeholder or for future reference if needed.
   }
 }
 
-const uuid = () => Math.random().toString(36).substring(2, 15);
+import { v4 as uuidv4 } from 'uuid';
 
 // Initialize AI service
 const aiService = new AIService({

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { User, UserRole } from '@prisma/client';
 import { prisma } from '../config/database';
 
 export const authMiddleware = {
@@ -24,7 +25,7 @@ export const authMiddleware = {
           return res.status(401).json({ message: 'User not found' });
         }
 
-        (req as any).user = user;
+        req.user = user;
         next();
       } catch (error) {
         console.error(error);
@@ -38,20 +39,20 @@ export const authMiddleware = {
   },
 
   admin: (req: Request, res: Response, next: NextFunction) => {
-    if ((req as any).user && (req as any).user.role === 'ADMIN') {
+    if (req.user && (req.user as User).role === UserRole.ADMIN) {
       next();
     } else {
       res.status(403).json({ message: 'Not authorized as an admin' });
     }
   },
 
-  checkRole: (roles: Array<string>) => {
+  checkRole: (roles: Array<UserRole>) => {
     return (req: Request, res: Response, next: NextFunction) => {
-      if (!(req as any).user) {
+      if (!req.user) {
         return res.status(401).json({ message: 'Not authorized, no user' });
       }
 
-      const userRole = (req as any).user.role;
+      const userRole = (req.user as User).role;
       if (roles.includes(userRole)) {
         next();
       } else {

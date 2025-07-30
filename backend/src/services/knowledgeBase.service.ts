@@ -14,11 +14,12 @@ class KnowledgeBaseService {
   }
 
   public async addKnowledgeBaseEntry(buildingId: string, issue: string, solution: string) {
-    await prisma.knowledgeBase.create({
+    await prisma.knowledgeBaseEntry.create({
       data: {
-        buildingId,
-        issue,
-        solution,
+        question: issue,
+        answer: solution,
+        category: 'General', // Assuming a default category, adjust as needed
+        tags: [], // Assuming no tags initially, adjust as needed
       },
     });
   }

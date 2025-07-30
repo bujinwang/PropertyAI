@@ -5,7 +5,7 @@
 
 import 'dotenv/config';
 import cron from 'node-cron';
-import fs from 'fs';
+import * as fs from 'fs';
 import path from 'path';
 import logger from '../utils/logger';
 import { identifySlowQueries, analyzeQuery } from '../services/databaseOptimization.service';

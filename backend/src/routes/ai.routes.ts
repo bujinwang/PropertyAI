@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { aiService } from '../services/ai.service';
 import { authenticateToken } from '../middleware/auth';
 import { body, query } from 'express-validator';
@@ -14,7 +14,7 @@ router.post('/generate', authenticateToken, [
   body('language').optional().isString(),
   body('maxLength').optional().isInt({ min: 1, max: 4000 }),
   validateRequest,
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const { text, context, language, maxLength } = req.body;
     
@@ -26,13 +26,13 @@ router.post('/generate', authenticateToken, [
     });
 
     // Log the request
-    await prisma.aIUsageLog.create({
+    await (prisma as any).aIUsageLog.create({
       data: {
         userId: req.user!.id,
-        type: 'text_generation',
-        input: text,
-        output: result.text,
-        metadata: result.metadata,
+        feature: 'text_generation',
+        prompt: text,
+        response: result.text,
+        // metadata: result.metadata, // Removed as it's not in schema
       },
     });
 
@@ -53,19 +53,19 @@ router.post('/generate', authenticateToken, [
 router.post('/sentiment', authenticateToken, [
   body('text').isString().notEmpty(),
   validateRequest,
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const { text } = req.body;
     
     const result = await aiService.analyzeSentiment(text);
 
     // Log the request
-    await prisma.aIUsageLog.create({
+    await (prisma as any).aIUsageLog.create({
       data: {
         userId: req.user!.id,
-        type: 'sentiment_analysis',
-        input: text,
-        output: JSON.stringify(result),
+        feature: 'sentiment_analysis',
+        prompt: text,
+        response: JSON.stringify(result),
       },
     });
 
@@ -86,19 +86,19 @@ router.post('/sentiment', authenticateToken, [
 router.post('/entities', authenticateToken, [
   body('text').isString().notEmpty(),
   validateRequest,
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const { text } = req.body;
     
     const result = await aiService.extractEntities(text);
 
     // Log the request
-    await prisma.aIUsageLog.create({
+    await (prisma as any).aIUsageLog.create({
       data: {
         userId: req.user!.id,
-        type: 'entity_extraction',
-        input: text,
-        output: JSON.stringify(result),
+        feature: 'entity_extraction',
+        prompt: text,
+        response: JSON.stringify(result),
       },
     });
 
@@ -121,7 +121,7 @@ router.post('/summary', authenticateToken, [
   body('maxLength').optional().isInt({ min: 50, max: 1000 }),
   body('minLength').optional().isInt({ min: 10, max: 500 }),
   validateRequest,
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const { text, maxLength, minLength } = req.body;
     
@@ -132,13 +132,13 @@ router.post('/summary', authenticateToken, [
     });
 
     // Log the request
-    await prisma.aIUsageLog.create({
+    await (prisma as any).aIUsageLog.create({
       data: {
         userId: req.user!.id,
-        type: 'summary_generation',
-        input: text,
-        output: result.text,
-        metadata: result.metadata,
+        feature: 'summary_generation',
+        prompt: text,
+        response: result.text,
+        // metadata: result.metadata, // Removed as it's not in schema
       },
     });
 
@@ -161,7 +161,7 @@ router.post('/classify', authenticateToken, [
   body('labels').isArray().notEmpty(),
   body('labels.*').isString(),
   validateRequest,
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const { text, labels } = req.body;
     
@@ -171,13 +171,13 @@ router.post('/classify', authenticateToken, [
     });
 
     // Log the request
-    await prisma.aIUsageLog.create({
+    await (prisma as any).aIUsageLog.create({
       data: {
         userId: req.user!.id,
-        type: 'text_classification',
-        input: text,
-        output: result.text,
-        metadata: result.metadata,
+        feature: 'text_classification',
+        prompt: text,
+        response: result.text,
+        // metadata: result.metadata, // Removed as it's not in schema
       },
     });
 
@@ -200,7 +200,7 @@ router.post('/chat', authenticateToken, [
   body('conversationId').optional().isString(),
   body('context').optional().isObject(),
   validateRequest,
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const { message, conversationId, context } = req.body;
     
@@ -208,6 +208,16 @@ router.post('/chat', authenticateToken, [
       message,
       conversationId,
       context,
+    });
+    // Log the request
+    await (prisma as any).aIUsageLog.create({
+      data: {
+        userId: req.user!.id,
+        feature: 'chat',
+        prompt: message,
+        response: JSON.stringify(result),
+        // metadata: context, // Removed as it's not in schema
+      },
     });
 
     res.json({
@@ -233,20 +243,20 @@ router.post('/property-description', authenticateToken, [
   body('amenities.*').isString(),
   body('price').isFloat({ min: 0 }),
   validateRequest,
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const propertyData = req.body;
     
     const result = await aiService.generatePropertyDescription(propertyData);
 
     // Log the request
-    await prisma.aIUsageLog.create({
+    await (prisma as any).aIUsageLog.create({
       data: {
         userId: req.user!.id,
-        type: 'property_description',
-        input: JSON.stringify(propertyData),
-        output: result.text,
-        metadata: result.metadata,
+        feature: 'property_description',
+        prompt: JSON.stringify(propertyData),
+        response: result.text,
+        // metadata: result.metadata, // Removed as it's not in schema
       },
     });
 
@@ -269,19 +279,19 @@ router.post('/maintenance-analysis', authenticateToken, [
   body('description').isString().notEmpty(),
   body('category').optional().isString(),
   validateRequest,
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const maintenanceData = req.body;
     
     const result = await aiService.analyzeMaintenanceRequest(maintenanceData);
 
     // Log the request
-    await prisma.aIUsageLog.create({
+    await (prisma as any).aIUsageLog.create({
       data: {
         userId: req.user!.id,
-        type: 'maintenance_analysis',
-        input: JSON.stringify(maintenanceData),
-        output: JSON.stringify(result),
+        feature: 'maintenance_analysis',
+        prompt: JSON.stringify(maintenanceData),
+        response: JSON.stringify(result),
       },
     });
 
@@ -302,20 +312,20 @@ router.post('/maintenance-analysis', authenticateToken, [
 router.post('/lease-summary', authenticateToken, [
   body('leaseText').isString().notEmpty(),
   validateRequest,
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const { leaseText } = req.body;
     
     const result = await aiService.generateLeaseSummary(leaseText);
 
     // Log the request
-    await prisma.aIUsageLog.create({
+    await (prisma as any).aIUsageLog.create({
       data: {
         userId: req.user!.id,
-        type: 'lease_summary',
-        input: leaseText.substring(0, 1000), // Truncate for storage
-        output: result.text,
-        metadata: result.metadata,
+        feature: 'lease_summary',
+        prompt: leaseText.substring(0, 1000), // Truncate for storage
+        response: result.text,
+        // metadata: result.metadata, // Removed as it's not in schema
       },
     });
 
@@ -337,20 +347,20 @@ router.post('/translate', authenticateToken, [
   body('text').isString().notEmpty(),
   body('targetLanguage').isString().notEmpty(),
   validateRequest,
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const { text, targetLanguage } = req.body;
     
     const result = await aiService.translateText(text, targetLanguage);
 
     // Log the request
-    await prisma.aIUsageLog.create({
+    await (prisma as any).aIUsageLog.create({
       data: {
         userId: req.user!.id,
-        type: 'translation',
-        input: text,
-        output: result.text,
-        metadata: result.metadata,
+        feature: 'translation',
+        prompt: text,
+        response: result.text,
+        // metadata: result.metadata, // Removed as it's not in schema
       },
     });
 
@@ -372,19 +382,19 @@ router.post('/keywords', authenticateToken, [
   body('text').isString().notEmpty(),
   body('maxKeywords').optional().isInt({ min: 1, max: 50 }),
   validateRequest,
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const { text, maxKeywords } = req.body;
     
     const keywords = await aiService.extractKeywords(text, maxKeywords);
 
     // Log the request
-    await prisma.aIUsageLog.create({
+    await (prisma as any).aIUsageLog.create({
       data: {
         userId: req.user!.id,
-        type: 'keyword_extraction',
-        input: text,
-        output: JSON.stringify(keywords),
+        feature: 'keyword_extraction',
+        prompt: text,
+        response: JSON.stringify(keywords),
       },
     });
 
@@ -407,14 +417,14 @@ router.get('/usage-stats', authenticateToken, [
   query('endDate').optional().isISO8601().toDate(),
   query('type').optional().isString(),
   validateRequest,
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const { startDate, endDate, type } = req.query;
     const userId = req.user!.id;
 
-    const where = {
+    const where: any = {
       userId,
-      ...(type && { type: type as string }),
+      ...(type && { feature: type as string }),
       ...(startDate && endDate && {
         createdAt: {
           gte: new Date(startDate as string),
@@ -424,12 +434,12 @@ router.get('/usage-stats', authenticateToken, [
     };
 
     const [usage, total] = await Promise.all([
-      prisma.aIUsageLog.findMany({
+      (prisma as any).aIUsageLog.findMany({
         where,
         orderBy: { createdAt: 'desc' },
         take: 100,
       }),
-      prisma.aIUsageLog.count({ where }),
+      (prisma as any).aIUsageLog.count({ where }),
     ]);
 
     res.json({

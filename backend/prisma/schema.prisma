@@ -67,6 +67,7 @@ model User {
   WhiteLabelConfig         WhiteLabelConfig[]
   approvedTransactions     Transaction[]     @relation("ApprovedTransactions")
   approvedVendorPayments   VendorPayment[]   @relation("ApprovedVendorPayments")
+  aiUsageLogs              AIUsageLog[]
 
   @@index([role])
   @@index([isActive])
@@ -372,14 +373,18 @@ model Language {
 }
 
 model WhiteLabelConfig {
-  id        String     @id @default(cuid())
-  token     String     @unique
-  platform  String // 'ios' or 'android'
-  user      User       @relation(fields: [userId], references: [id])
-  userId    String
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  Property  Property[]
+  id           String     @id @default(cuid())
+  token        String     @unique
+  platform     String // 'ios' or 'android'
+  appName      String?
+  logoUrl      String?
+  primaryColor String?
+  secondaryColor String?
+  user         User       @relation(fields: [userId], references: [id])
+  userId       String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  Property     Property[]
 
   @@index([userId])
 }
@@ -550,6 +555,7 @@ enum NotificationType {
   MAINTENANCE
   PAYMENT
   ANNOUNCEMENT
+  OTHER
 }
 
 // Transaction model
@@ -655,6 +661,7 @@ model OAuthConnection {
   providerId   String
   accessToken  String
   refreshToken String?
+  scopes       String[] // Array of scopes granted
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   user         User     @relation(fields: [userId], references: [id])
@@ -670,6 +677,17 @@ model AIImageAnalysis {
   imageUrl  String
   analysis  Json
   createdAt DateTime @default(now())
+}
+
+// AIUsageLog model
+model AIUsageLog {
+  id        String   @id @default(uuid())
+  feature   String
+  prompt    String   @db.Text
+  response  String   @db.Text
+  createdAt DateTime @default(now())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
 }
 
 // KnowledgeBaseEntry model
@@ -690,6 +708,7 @@ model VendorPerformanceRating {
   id          String    @id @default(uuid())
   rating      Int
   comment     String?
+  metricId    String? // Optional: ID of a specific metric being rated
   createdAt   DateTime  @default(now())
   vendor      Vendor    @relation(fields: [vendorId], references: [id])
   vendorId    String
@@ -742,6 +761,7 @@ model SocialMediaPlatformConfig {
   apiSecret    String
   accessToken  String
   refreshToken String
+  isEnabled    Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -786,7 +806,7 @@ model Communication {
 // MaintenanceRequestCategory model
 model MaintenanceRequestCategory {
   id                  String               @id @default(uuid())
-  name                String
+  name                String               @unique
   description         String?
   maintenanceRequests MaintenanceRequest[]
 }
@@ -819,6 +839,7 @@ model ScheduledEvent {
   endTime     DateTime
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  googleCalendarEventId String?
 }
 
 // Screening model
@@ -937,6 +958,8 @@ model VendorPayment {
   vendorId       String
   amount         Float
   status         String
+  transactionId  String? // ID of the Stripe transfer transaction
+  processedAt    DateTime? // When the payment was processed by Stripe
   createdAt      DateTime              @default(now())
   updatedAt      DateTime              @updatedAt
   approvalStatus PaymentApprovalStatus @default(PENDING)
@@ -963,9 +986,9 @@ model Feedback {
 model ModelPerformance {
     id          String @id @default(cuid())
     modelName   String
-    accuracy    Float
-    precision   Float
-    recall      Float
-    f1Score     Float
+    accuracy    Float?
+    precision   Float?
+    recall      Float?
+    f1Score     Float?
     recordedAt  DateTime @default(now())
 }

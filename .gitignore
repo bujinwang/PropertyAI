@@ -73,3 +73,7 @@ propertyapp/ios/
 .kiro/specs/ai-dashboard-components/tasks.md
 .kiro/specs/ai-dashboard-components/tasks.md
 .claude/settings.local.json
+.claude/settings.local.json
+.claude/agents/fieldglass-message-checker.md
+.trae/.ignore
+.claude/settings.local.json

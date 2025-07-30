@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import { storageService } from '../services/storage.service';
 import { authenticateToken } from '../middleware/auth';
@@ -184,7 +184,9 @@ router.get('/files', authenticateToken, [
 ], async (req, res) => {
   try {
     const userId = req.user!.id;
-    const { folder, limit = 20, offset = 0 } = req.query;
+    const folder = req.query.folder as string | undefined;
+    const limit = Number(req.query.limit) || 20;
+    const offset = Number(req.query.offset) || 0;
 
     const where = {
       uploadedById: userId,
@@ -209,7 +211,7 @@ router.get('/files', authenticateToken, [
           total,
           limit: Number(limit),
           offset: Number(offset),
-          hasMore: offset + limit < total,
+          hasMore: Number(offset) + Number(limit) < total,
         },
       },
     });
@@ -303,15 +305,15 @@ router.post('/properties/:propertyId/images', authenticateToken, upload.array('i
       }
     );
 
-    // Create property image records
+    // In the /properties/:propertyId/images route
     const propertyImages = await Promise.all(
       results.map((result, index) =>
         prisma.propertyImage.create({
           data: {
             propertyId,
             url: result.url,
-            thumbnailUrl: result.thumbnailUrl,
-            caption: req.body.captions?.[index] || '',
+            ...(result.thumbnailUrl && { thumbnailUrl: result.thumbnailUrl }),
+            ...(req.body.captions?.[index] && { caption: req.body.captions[index] }),
             isPrimary: index === 0,
             order: index,
           },

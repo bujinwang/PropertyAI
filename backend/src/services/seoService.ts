@@ -6,7 +6,7 @@ interface ListingSeoData {
   description: string;
   address: string;
   propertyType: string;
-  price: number;
+  rent: number; // Changed price to rent
   bedrooms?: number | null;
   bathrooms?: number | null;
   squareFootage?: number | null;
@@ -23,7 +23,7 @@ export const prepareListingSeoData = (listing: Listing & { property: Property; u
     description: listing.description,
     address: `${listing.property.address}, ${listing.property.city}, ${listing.property.state} ${listing.property.zipCode}`,
     propertyType: listing.property.propertyType,
-    price: listing.price,
+    rent: listing.rent, // Changed price to rent
     bedrooms: listing.unit.bedrooms,
     bathrooms: listing.unit.bathrooms,
     squareFootage: listing.unit.size,
@@ -55,7 +55,7 @@ export const generateMetaTags = (seoData: ListingSeoData) => {
 };
 
 export const generateJsonLd = (seoData: ListingSeoData) => {
-  const { title, description, address, propertyType, price, bedrooms, bathrooms, squareFootage } = seoData;
+  const { title, description, address, propertyType, rent, bedrooms, bathrooms, squareFootage } = seoData;
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -66,7 +66,7 @@ export const generateJsonLd = (seoData: ListingSeoData) => {
     propertyType,
     offers: {
       '@type': 'Offer',
-      price,
+      price: rent,
       priceCurrency: 'USD',
     },
     numberOfBedrooms: bedrooms,

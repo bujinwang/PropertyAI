@@ -39,7 +39,11 @@
       "Bash(find:*)",
       "Bash(mkdir:*)",
       "Bash(touch:*)",
-      "Bash(npm test:*)"
+      "Bash(npm test:*)",
+      "WebFetch(domain:www.us.fieldglass.cloud.sap)",
+      "Bash(rm:*)",
+      "Bash(.prisma/client/index.d.ts)",
+      "Bash(.prisma/client)"
     ],
     "deny": []
   }

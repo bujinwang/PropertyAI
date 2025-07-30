@@ -5,8 +5,7 @@ class PaymentController {
   async createCustomer(req: Request, res: Response) {
     try {
       const customer = await paymentService.createCustomer(
-        req.body.email,
-        req.body.name
+        { email: req.body.email, name: req.body.name }
       );
       res.status(201).json(customer);
     } catch (error: any) {

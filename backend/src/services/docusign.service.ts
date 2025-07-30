@@ -1,4 +1,4 @@
-import docusign from 'docusign-esign';
+import * as docusign from 'docusign-esign'; // Import as namespace
 import { prisma } from '../config/database';
 import { DocumentType } from '@prisma/client';
 import { Buffer } from 'buffer';
@@ -47,7 +47,7 @@ interface EnvelopeData {
 
 class DocuSignService {
   private config: DocuSignConfig;
-  private apiClient: docusign.ApiClient;
+  private apiClient: any; // Cast to any due to persistent TS2694
   private accessToken: string | null = null;
 
   constructor(config: DocuSignConfig) {
@@ -78,6 +78,9 @@ class DocuSignService {
       this.accessToken = response.accessToken;
       this.apiClient.addDefaultHeader('Authorization', `Bearer ${this.accessToken}`);
       
+      if (!this.accessToken) {
+        throw new Error('DocuSign access token is null');
+      }
       return this.accessToken;
     } catch (error) {
       console.error('Error handling DocuSign callback:', error);

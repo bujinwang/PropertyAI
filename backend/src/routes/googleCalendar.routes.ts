@@ -1,15 +1,16 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { googleCalendarService } from '../services/googleCalendar.service';
 import { authenticateToken } from '../middleware/auth';
 import { body, param, query } from 'express-validator';
 import { validateRequest } from '../middleware/validation';
+import { prisma } from '../config/database';
 
 const router = Router();
 
 // Get Google Calendar authorization URL
-router.get('/auth', authenticateToken, async (req, res) => {
+router.get('/auth', authenticateToken, async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req as any).user!.id;
     const authUrl = googleCalendarService.getAuthUrl(userId);
     
     res.json({
@@ -26,7 +27,7 @@ router.get('/auth', authenticateToken, async (req, res) => {
 });
 
 // Handle Google Calendar OAuth callback
-router.get('/callback', authenticateToken, async (req, res) => {
+router.get('/callback', authenticateToken, async (req: Request, res: Response) => {
   try {
     const { code, state } = req.query;
     
@@ -39,7 +40,7 @@ router.get('/callback', authenticateToken, async (req, res) => {
 
     const userId = state as string;
     
-    if (userId !== req.user!.id) {
+    if (userId !== (req as any).user!.id) {
       return res.status(403).json({
         success: false,
         error: 'Unauthorized user'
@@ -56,9 +57,9 @@ router.get('/callback', authenticateToken, async (req, res) => {
 });
 
 // Check if Google Calendar is connected for user
-router.get('/status', authenticateToken, async (req, res) => {
+router.get('/status', authenticateToken, async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req as any).user!.id;
     const isConnected = await googleCalendarService.isConnected(userId);
     
     res.json({
@@ -75,9 +76,9 @@ router.get('/status', authenticateToken, async (req, res) => {
 });
 
 // Disconnect Google Calendar
-router.post('/disconnect', authenticateToken, async (req, res) => {
+router.post('/disconnect', authenticateToken, async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req as any).user!.id;
     await googleCalendarService.disconnectUser(userId);
     
     res.json({
@@ -98,15 +99,15 @@ router.get('/events', authenticateToken, [
   query('startDate').optional().isISO8601().toDate(),
   query('endDate').optional().isISO8601().toDate(),
   validateRequest
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req as any).user!.id;
     const { startDate, endDate } = req.query;
     
     const events = await googleCalendarService.getEvents(
       userId,
-      startDate as Date,
-      endDate as Date
+      startDate ? new Date(startDate as string) : undefined,
+      endDate ? new Date(endDate as string) : undefined
     );
     
     res.json({
@@ -131,9 +132,9 @@ router.post('/events', authenticateToken, [
   body('attendees').optional().isArray(),
   body('attendees.*.email').optional().isEmail(),
   validateRequest
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req as any).user!.id;
     const { summary, description, start, end, attendees } = req.body;
     
     const event: any = {
@@ -173,9 +174,9 @@ router.put('/events/:eventId', authenticateToken, [
   body('start').optional().isISO8601().toDate(),
   body('end').optional().isISO8601().toDate(),
   validateRequest
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req as any).user!.id;
     const { eventId } = req.params;
     const updateData = req.body;
     
@@ -198,9 +199,9 @@ router.put('/events/:eventId', authenticateToken, [
 router.delete('/events/:eventId', authenticateToken, [
   param('eventId').isString().notEmpty(),
   validateRequest
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req as any).user!.id;
     const { eventId } = req.params;
     
     await googleCalendarService.deleteEvent(userId, eventId);
@@ -225,9 +226,9 @@ router.post('/maintenance-events/:maintenanceRequestId', authenticateToken, [
   body('duration').isInt({ min: 15 }),
   body('attendees').optional().isArray(),
   validateRequest
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req as any).user!.id;
     const { maintenanceRequestId } = req.params;
     const { scheduledDate, duration, attendees } = req.body;
     
