@@ -38,13 +38,4 @@ class PushNotificationService {
   }
 }
 
-// export const pushNotificationService = new PushNotificationService();
-// Temporarily export a mock object to bypass Firebase initialization issues.
-export const pushNotificationService = {
-  sendAndroidNotification: async (token: string, title: string, body: string) => {
-    console.log('Mock: Sending Android notification', { token, title, body });
-  },
-  sendIOSNotification: async (token: string, title: string, body: string) => {
-    console.log('Mock: Sending iOS notification', { token, title, body });
-  },
-};
+export const pushNotificationService = new PushNotificationService();

@@ -38,7 +38,7 @@ export const getMaintenanceRequests = async () => {
 
 /**
  * Predicts tenant issues based on historical data.
- * This function uses a mock prediction model.
+ * This function will integrate with a real prediction model.
  * @param tenantId The ID of the tenant to predict issues for.
  * @returns A promise that resolves to a prediction object.
  */

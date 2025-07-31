@@ -24,7 +24,6 @@ router.post('/tenant-screening/predict-issues', async (req, res) => {
 /**
  * GET /tenant-screening/alerts
  * Returns a list of current issue alerts for tenant screening.
- * For now, returns mock data.
  */
 router.get('/tenant-screening/alerts', async (req, res) => {
   try {

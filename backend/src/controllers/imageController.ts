@@ -14,16 +14,19 @@ export const uploadListingImage = async (req: Request, res: Response, next: Next
 
     const optimizedImage = await imageService.enhanceAndOptimize(file);
 
-    // TODO: Re-implement listing images - ListingImage model was removed
-    // For now, return a placeholder response to fix compilation
-    const image = {
-      id: 'temp-id',
-      listingId,
-      url: optimizedImage.url,
-      isFeatured: req.body.isFeatured || false,
-    };
+    const image = await prisma.listingImage.create({
+      data: {
+        listingId,
+        url: optimizedImage.url,
+        isFeatured: req.query.featured === 'true', // Assuming 'featured' is a query param
+      },
+    });
 
-    res.status(201).json(image);
+    return res.status(201).json({
+      status: 'success',
+      message: 'Image uploaded successfully',
+      data: image,
+    });
   } catch (error) {
     next(error);
   }

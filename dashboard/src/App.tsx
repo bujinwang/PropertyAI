@@ -51,6 +51,7 @@ const DigitalConciergeScreen = lazy(() => import('./pages/DigitalConciergeScreen
 const AIComponentsDemo = lazy(() => import('./pages/AIComponentsDemo'));
 const DocumentVerificationDemo = lazy(() => import('./pages/DocumentVerificationDemo'));
 const TenantRatingPage = lazy(() => import('./pages/TenantRatingPage'));
+const UXReviewDashboard = lazy(() => import('./pages/UXReviewDashboard'));
 
 const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID_HERE"; // Fallback to placeholder
 
@@ -144,6 +145,7 @@ function AppContent() {
                 <Route path="/ai-components-demo" element={<AIComponentsDemo />} />
                 <Route path="/document-verification-demo" element={<DocumentVerificationDemo />} />
                 <Route path="/tenant-ratings" element={<TenantRatingPage />} />
+                <Route path="/ux-review" element={<UXReviewDashboard />} />
                 {/* Add more routes as needed */}
                 <Route path="/" element={
                   <div>

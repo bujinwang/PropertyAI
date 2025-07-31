@@ -45,6 +45,7 @@ import { clearCache } from '../utils/cache';
 import contractorRoutes from './contractor.routes';
 import managerRoutes from './manager.routes';
 import publicListingRoutes from './publicListing.routes';
+import uxReviewRoutes from './uxReview.routes';
 
 const router = express.Router();
 
@@ -105,6 +106,7 @@ router.use(`${API_PREFIX}/publishing`, publishingRoutes);
 router.use(`${API_PREFIX}/contractor`, contractorRoutes);
 router.use(`${API_PREFIX}/manager`, managerRoutes);
 router.use(`${API_PREFIX}/listings`, publicListingRoutes);
+router.use(`${API_PREFIX}/ux-review`, uxReviewRoutes);
 
 router.post(`${API_PREFIX}/cache/clear`, (req, res) => {
   const { key } = req.body;

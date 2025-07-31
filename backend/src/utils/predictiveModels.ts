@@ -6,8 +6,8 @@ interface TenantData {
 }
 
 export const predictTenantIssue = async (tenant: User & TenantData): Promise<any> => {
-  // This is a mock implementation.
-  // In a real-world scenario, this would involve a more complex predictive model.
+  // TODO: Integrate with a real predictive model (e.g., a machine learning model deployed via an API).
+  // For now, this remains a simplified, rule-based prediction.
   const { maintenanceRequests, payments } = tenant;
 
   const latePayments = payments.filter(p => p.status === 'FAILED').length;

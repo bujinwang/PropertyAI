@@ -397,7 +397,6 @@ export class UnitController {
         });
       }
       
-      // TODO: Check if tenant exists
       const tenant = await tenantService.getTenantById(tenantId);
       if (!tenant) {
           return res.status(404).json({ status: 'error', message: 'Tenant not found' });
