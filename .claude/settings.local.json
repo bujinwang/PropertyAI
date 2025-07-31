@@ -43,8 +43,25 @@
       "WebFetch(domain:www.us.fieldglass.cloud.sap)",
       "Bash(rm:*)",
       "Bash(.prisma/client/index.d.ts)",
-      "Bash(.prisma/client)"
+      "Bash(.prisma/client)",
+      "Bash(say hi)",
+      "Bash(afplay:*)",
+      "Bash(tput bel)",
+      "Bash(echo -e '\\a')"
     ],
     "deny": []
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "hi|hello",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "tput bel"
+          }
+        ]
+      }
+    ]
   }
 }
