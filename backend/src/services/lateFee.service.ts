@@ -15,7 +15,7 @@ class LateFeeService {
         status: 'ACTIVE',
         transactions: {
           some: {
-            type: 'RENT',
+            type: 'RENT_PAYMENT',
             status: 'PENDING',
             createdAt: {
               lt: today,
@@ -30,7 +30,7 @@ class LateFeeService {
     });
 
     for (const lease of leases) {
-      const rentTransaction = lease.transactions.find(t => t.type === 'RENT' && t.status === 'PENDING');
+      const rentTransaction = lease.transactions.find(t => t.type === 'RENT_PAYMENT' && t.status === 'PENDING');
       if (rentTransaction) {
         const dueDate = new Date(rentTransaction.createdAt);
         const diffDays = Math.ceil((today.getTime() - dueDate.getTime()) / (1000 * 3600 * 24));
@@ -40,7 +40,7 @@ class LateFeeService {
           await prisma.transaction.create({
             data: {
               amount: lateFee,
-              type: 'FEE',
+              type: 'MAINTENANCE_FEE',
               status: 'PENDING',
               description: 'Late rent payment fee',
               leaseId: lease.id,

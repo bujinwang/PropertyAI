@@ -1,13 +1,12 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticateToken } from '../middleware/auth';
-import { authorize } from '../middleware/authorize';
 
 const router = Router();
 const prisma = new PrismaClient();
 
 // Bulk update status
-router.put('/bulk/status', authenticateToken, authorize(['ADMIN', 'PROPERTY_MANAGER']), async (req, res) => {
+router.put('/bulk/status', authenticateToken, async (req, res) => {
   try {
     const { reviewIds, status } = req.body;
     

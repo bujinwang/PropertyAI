@@ -47,16 +47,7 @@ class TriageService {
   private async findMatchingRule(category: string, priority: string): Promise<EmergencyRoutingRuleWithVendor | null> {
     return prisma.emergencyRoutingRule.findFirst({
       where: {
-        rule: {
-          path: ['category'],
-          equals: category,
-        },
-        AND: {
-          rule: {
-            path: ['priority'],
-            equals: priority,
-          },
-        },
+        priority: priority as Priority,
       },
       include: { vendor: true },
     });

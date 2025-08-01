@@ -17,13 +17,13 @@ export const getSeoData = async (req: Request, res: Response, next: NextFunction
       return next(new AppError('Listing not found', 404));
     }
 
-    if (!listing.unit || listing.unit.length === 0) {
-      return next(new AppError('No units found for this listing', 404));
+    if (!listing.unit) {
+      return next(new AppError('No unit found for this listing', 404));
     }
 
     const listingWithSingleUnit = {
       ...listing,
-      unit: listing.unit[0],
+      unit: listing.unit,
     };
 
     const seoData = seoService.prepareListingSeoData(listingWithSingleUnit);

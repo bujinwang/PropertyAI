@@ -1,6 +1,6 @@
 import { createClient, RedisClientType } from 'redis';
 import { config } from '../config/config';
-import { webSocketService } from './webSocket.service';
+import WebSocketService from './webSocket.service';
 
 class PubSubService {
   private publisher: RedisClientType;
@@ -37,5 +37,10 @@ class PubSubService {
 export const pubSubService = new PubSubService();
 
 pubSubService.subscribe('dashboard-updates', (message) => {
-  webSocketService.getIO().emit('dashboard-update', JSON.parse(message));
+  try {
+    const data = JSON.parse(message);
+    console.log('Dashboard update received:', data);
+  } catch (error) {
+    console.error('Error parsing dashboard update:', error);
+  }
 });

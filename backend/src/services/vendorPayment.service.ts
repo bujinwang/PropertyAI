@@ -35,7 +35,7 @@ class VendorPaymentService {
       throw new Error('Vendor does not have a Stripe account connected');
     }
 
-    const amount = (workOrder.costEstimation?.estimation as any)?.estimatedCost; // Access nested property and cast
+    const amount = workOrder.costEstimation?.estimatedCost || 0;
     if (!amount) {
       throw new Error('Work order does not have an estimated cost');
     }

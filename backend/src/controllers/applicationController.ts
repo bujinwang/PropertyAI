@@ -25,8 +25,10 @@ class ApplicationController {
           devices: true
         }
       });
-      if (applicant?.pushToken && applicant.devices.length > 0) {
-        const { pushToken, platform } = applicant.devices[0];
+      if (applicant?.devices && applicant.devices.length > 0) {
+        const device = applicant.devices[0];
+        const pushToken = device.pushToken || '';
+        const platform = device.deviceType || 'android';
         const title = 'Application Received';
         const body = 'Your application has been received and is under review.';
         if (platform === 'ios') {

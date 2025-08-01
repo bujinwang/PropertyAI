@@ -22,7 +22,7 @@ class DataSyncService {
           create: {
             id: payment.id,
             amount: payment.amount,
-            type: 'RENT',
+            type: 'RENT_PAYMENT',
             status: payment.status,
             description: 'Rent payment',
             leaseId: payment.leaseId,

@@ -410,7 +410,7 @@ class PhotoAnalysisService {
       await prisma.photoAnalysis.create({
         data: {
           maintenanceRequestId: maintenanceRequestId,
-          analysis: analysisData,
+          analysisResult: analysisData,
         }
       });
     } catch (error) {

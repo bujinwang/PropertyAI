@@ -44,9 +44,10 @@ class SchedulingService {
       const scheduledEvent = await prisma.scheduledEvent.create({
         data: {
           workOrderId,
+          title: workOrder.title,
+          description: workOrder.description,
           startTime: new Date(event.start.dateTime),
           endTime: new Date(event.end.dateTime),
-          googleCalendarEventId: createdEvent.data.id,
         },
       });
 

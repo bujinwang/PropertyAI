@@ -1,4 +1,4 @@
-import { PrismaClient, Transaction, VendorPayment, PaymentApprovalStatus } from '@prisma/client';
+import { PrismaClient, Transaction, VendorPayment, TransactionStatus, PaymentStatus } from '@prisma/client';
 import Stripe from 'stripe';
 
 const prisma = new PrismaClient();
@@ -14,15 +14,14 @@ export const paymentService = {
       throw new Error('Transaction not found');
     }
 
-    if (transaction.approvalStatus !== PaymentApprovalStatus.PENDING) {
+    if (transaction.status !== TransactionStatus.PENDING) {
       throw new Error('Transaction is not pending approval');
     }
 
     return prisma.transaction.update({
       where: { id: transactionId },
       data: {
-        approvalStatus: PaymentApprovalStatus.APPROVED,
-        approvedAt: new Date(),
+        status: TransactionStatus.COMPLETED,
         approvedById: userId,
       },
     });
@@ -35,15 +34,14 @@ export const paymentService = {
       throw new Error('Transaction not found');
     }
 
-    if (transaction.approvalStatus !== PaymentApprovalStatus.PENDING) {
+    if (transaction.status !== TransactionStatus.PENDING) {
       throw new Error('Transaction is not pending approval');
     }
 
     return prisma.transaction.update({
       where: { id: transactionId },
       data: {
-        approvalStatus: PaymentApprovalStatus.REJECTED,
-        approvedAt: new Date(),
+        status: TransactionStatus.FAILED,
         approvedById: userId,
       },
     });
@@ -56,15 +54,14 @@ export const paymentService = {
       throw new Error('Vendor payment not found');
     }
 
-    if (vendorPayment.approvalStatus !== PaymentApprovalStatus.PENDING) {
+    if (vendorPayment.status !== PaymentStatus.PENDING) {
       throw new Error('Vendor payment is not pending approval');
     }
 
     return prisma.vendorPayment.update({
       where: { id: vendorPaymentId },
       data: {
-        approvalStatus: PaymentApprovalStatus.APPROVED,
-        approvedAt: new Date(),
+        status: PaymentStatus.PAID,
         approvedById: userId,
       },
     });
@@ -77,15 +74,14 @@ export const paymentService = {
       throw new Error('Vendor payment not found');
     }
 
-    if (vendorPayment.approvalStatus !== PaymentApprovalStatus.PENDING) {
+    if (vendorPayment.status !== PaymentStatus.PENDING) {
       throw new Error('Vendor payment is not pending approval');
     }
 
     return prisma.vendorPayment.update({
       where: { id: vendorPaymentId },
       data: {
-        approvalStatus: PaymentApprovalStatus.REJECTED,
-        approvedAt: new Date(),
+        status: PaymentStatus.FAILED,
         approvedById: userId,
       },
     });
@@ -105,7 +101,7 @@ export const paymentService = {
 
     return prisma.transaction.findMany({
       where: {
-        approvalStatus: PaymentApprovalStatus.PENDING,
+        status: TransactionStatus.PENDING,
         lease: {
           unit: {
             propertyId: {
@@ -146,7 +142,7 @@ export const paymentService = {
 
     return prisma.vendorPayment.findMany({
       where: {
-        approvalStatus: PaymentApprovalStatus.PENDING,
+        status: PaymentStatus.PENDING,
         workOrder: {
           maintenanceRequest: {
             propertyId: {
@@ -253,8 +249,10 @@ export const paymentService = {
     for (const item of items) {
       await stripe.invoiceItems.create({
         customer: customerId,
-        price: item.price,
+        amount: item.amount,
         quantity: item.quantity,
+        currency: item.currency || 'usd',
+        description: item.description || 'Invoice item',
       });
     }
     // Then create the invoice

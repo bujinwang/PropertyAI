@@ -20,6 +20,8 @@ class SignatureService {
         action: 'SIGN_DOCUMENT',
         details: `Document ${documentId} signed by user ${userId} with signature ${signatureHash}`,
         userId,
+        entityType: 'DOCUMENT',
+        entityId: documentId,
       },
     });
 

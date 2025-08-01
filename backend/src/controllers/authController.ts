@@ -77,6 +77,8 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
         userId: user.id,
         action: 'PASSWORD_RESET',
         details: `Password reset for user ${user.email}`,
+        entityType: 'USER',
+        entityId: user.id,
       },
     });
 
@@ -111,6 +113,8 @@ export const forgotPassword = async (req: Request, res: Response, next: NextFunc
           userId: user.id,
           action: 'PASSWORD_RESET_REQUESTED',
           details: `Password reset requested for user ${user.email}`,
+          entityType: 'USER',
+          entityId: user.id,
         },
       });
     }

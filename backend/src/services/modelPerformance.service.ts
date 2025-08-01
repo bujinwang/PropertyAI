@@ -1,5 +1,4 @@
 import { prisma } from '../config/database';
-import { ModelPerformance } from '@prisma/client';
 
 class ModelPerformanceService {
   public async recordPerformance(data: {
@@ -12,9 +11,25 @@ class ModelPerformanceService {
     datasetInfo?: string;
     parameters?: any;
     notes?: string;
-  }): Promise<ModelPerformance> {
-    return prisma.modelPerformance.create({
-      data,
+  }): Promise<any> {
+    // Since ModelPerformance doesn't exist in schema, create an audit entry instead
+    return prisma.auditEntry.create({
+      data: {
+        action: 'RECORD_MODEL_PERFORMANCE',
+        entityType: 'MODEL_PERFORMANCE',
+        entityId: data.modelName,
+        details: {
+          modelName: data.modelName,
+          accuracy: data.accuracy,
+          precision: data.precision,
+          recall: data.recall,
+          f1Score: data.f1Score,
+          version: data.version,
+          datasetInfo: data.datasetInfo,
+          parameters: data.parameters,
+          notes: data.notes,
+        },
+      },
     });
   }
 }

@@ -3,7 +3,7 @@ require('dotenv').config(); // Load environment variables
 import app from './app';
 import http from 'http';
 import { prisma, connectMongoDB, setupPostgreSQL, setupMongoDB, closeDatabaseConnections } from './config/database';
-import { initializeWebSocket } from './services/webSocket.service';
+import WebSocketService from './services/webSocket.service';
 import VoicemailService from './services/voicemailService';
 import { rentCollectionService } from './services/rentCollection.service';
 import { documentExpirationService } from './services/documentExpiration.service';
@@ -57,7 +57,7 @@ const startServer = async () => {
       const serverInstance = http.createServer(app);
       
       // Re-initialize WebSocket service with the new server instance
-      initializeWebSocket(serverInstance);
+      new WebSocketService(serverInstance);
       
       const onError = (err: NodeJS.ErrnoException) => {
         // Remove listeners to prevent memory leaks

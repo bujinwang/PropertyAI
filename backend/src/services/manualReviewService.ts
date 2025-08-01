@@ -27,13 +27,18 @@ class ManualReviewService {
     });
 
     if (applicant && applicant.devices.length > 0) {
-      const { pushToken, platform } = applicant.devices[0];
+      const device = applicant.devices[0];
+      const pushToken = device.pushToken;
+      const platform = device.os; // Use 'os' instead of 'platform'
       const title = 'Application Approved!';
       const body = 'Congratulations! Your rental application has been approved.';
-      if (platform === 'ios') {
-        await pushNotificationService.sendIOSNotification(pushToken, title, body);
-      } else {
-        await pushNotificationService.sendAndroidNotification(pushToken, title, body);
+      
+      if (pushToken && platform) {
+        if (platform.toLowerCase() === 'ios') {
+          await pushNotificationService.sendIOSNotification(pushToken, title, body);
+        } else {
+          await pushNotificationService.sendAndroidNotification(pushToken, title, body);
+        }
       }
     }
 
@@ -53,13 +58,18 @@ class ManualReviewService {
     });
 
     if (applicant && applicant.devices.length > 0) {
-      const { pushToken, platform } = applicant.devices[0];
+      const device = applicant.devices[0];
+      const pushToken = device.pushToken;
+      const platform = device.os;
       const title = 'Application Update';
       const body = 'We regret to inform you that your application has been rejected.';
-      if (platform === 'ios') {
-        await pushNotificationService.sendIOSNotification(pushToken, title, body);
-      } else {
-        await pushNotificationService.sendAndroidNotification(pushToken, title, body);
+      
+      if (pushToken && platform) {
+        if (platform.toLowerCase() === 'ios') {
+          await pushNotificationService.sendIOSNotification(pushToken, title, body);
+        } else {
+          await pushNotificationService.sendAndroidNotification(pushToken, title, body);
+        }
       }
     }
 
