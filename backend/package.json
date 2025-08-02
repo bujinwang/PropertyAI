@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-cloudfront": "^3.850.0",
+    "@aws-sdk/client-rekognition": "^3.859.0",
     "@aws-sdk/client-s3": "^3.826.0",
     "@aws-sdk/client-textract": "^3.826.0",
     "@aws-sdk/lib-storage": "^3.850.0",

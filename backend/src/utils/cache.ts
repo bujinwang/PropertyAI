@@ -1,18 +1,42 @@
 import { createClient } from 'redis';
 import { Request, Response, NextFunction } from 'express';
 
-const redisClient = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379'
-});
+let redisClient: any = null;
+let redisAvailable = false;
 
-redisClient.on('error', (err) => console.log('Redis Client Error', err));
-
+// Initialize Redis with error handling
 (async () => {
-  await redisClient.connect();
+  try {
+    redisClient = createClient({
+      url: process.env.REDIS_URL || 'redis://localhost:6379',
+      socket: {
+        connectTimeout: 5000 // 5 second timeout
+      }
+    });
+
+    redisClient.on('error', (err: any) => {
+      console.log('Redis Client Error:', err.message);
+      redisAvailable = false;
+    });
+
+    redisClient.on('connect', () => {
+      console.log('Redis connected successfully');
+      redisAvailable = true;
+    });
+
+    await redisClient.connect();
+  } catch (error) {
+    console.log('Redis connection failed, running without cache:', (error as Error).message);
+    redisAvailable = false;
+  }
 })();
 
-// Add the missing cache functions
+// Cache functions with Redis fallback
 export const getCache = async (key: string): Promise<any> => {
+  if (!redisAvailable || !redisClient) {
+    return null;
+  }
+  
   try {
     const data = await redisClient.get(key);
     return data ? JSON.parse(data) : null;
@@ -23,6 +47,10 @@ export const getCache = async (key: string): Promise<any> => {
 };
 
 export const setCache = async (key: string, value: any, ttl: number = 3600): Promise<void> => {
+  if (!redisAvailable || !redisClient) {
+    return;
+  }
+  
   try {
     await redisClient.setEx(key, ttl, JSON.stringify(value));
   } catch (err) {
@@ -31,6 +59,10 @@ export const setCache = async (key: string, value: any, ttl: number = 3600): Pro
 };
 
 export const cacheMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+  if (!redisAvailable || !redisClient) {
+    return next();
+  }
+  
   const key = req.originalUrl;
   try {
     const data = await redisClient.get(key);
@@ -40,7 +72,11 @@ export const cacheMiddleware = async (req: Request, res: Response, next: NextFun
 
     const originalSend = res.send.bind(res);
     (res as any).send = (body: any) => {
-      redisClient.setEx(key, 3600, JSON.stringify(body));
+      if (redisAvailable && redisClient) {
+        redisClient.setEx(key, 3600, JSON.stringify(body)).catch((err: any) => {
+          console.error('Redis cache set error:', err);
+        });
+      }
       originalSend(body);
     };
     next();
@@ -51,6 +87,10 @@ export const cacheMiddleware = async (req: Request, res: Response, next: NextFun
 };
 
 export const clearCache = async (key: string): Promise<void> => {
+  if (!redisAvailable || !redisClient) {
+    return;
+  }
+  
   try {
     await redisClient.del(key);
   } catch (err) {
