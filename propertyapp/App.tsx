@@ -8,7 +8,6 @@ import { enableScreens } from 'react-native-screens';
 import { RootNavigator } from '@/navigation/RootNavigator';
 import { navigationRef } from '@/navigation/navigationUtils';
 import { AppProviders } from '@/contexts';
-
 enableScreens();
 
 export default function App() {

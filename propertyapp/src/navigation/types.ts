@@ -38,7 +38,7 @@ export type RootStackParamList = {
   DataPrivacyCompliance: undefined;
   SecuritySettings: undefined;
   Application: { unitId: string };
-  PublicListing: undefined;
+  PublicListing: { listingId?: string };
   PropertyDetails: { propertyId: string };
 };
 

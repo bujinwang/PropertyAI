@@ -5,7 +5,12 @@ const linking: LinkingOptions<RootStackParamList> = {
   prefixes: ['propertyapp://', 'https://app.propertyai.com'],
   config: {
     screens: {
-      PublicListing: 'public-listing/:listingId',
+      PublicListing: {
+        path: 'public-listing/:listingId?',
+        parse: {
+          listingId: (listingId: string) => listingId === 'undefined' ? undefined : listingId,
+        },
+      },
     },
   },
 };

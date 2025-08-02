@@ -3,15 +3,17 @@ export interface Listing {
   slug: string;
   title: string;
   description: string;
-  price: number;
+  rent: number;
+  availableDate: string;
+  leaseTerms?: string;
+  isActive: boolean;
   status: ListingStatus;
-  publishedAt?: string;
-  expiresAt?: string;
+  viewCount: number;
   createdAt: string;
   updatedAt: string;
   propertyId: string;
   unitId?: string;
-  authorId: string;
+  createdById: string;
   // Related data that might be included in API responses
   property?: {
     id: string;
@@ -28,20 +30,20 @@ export interface Listing {
     bathrooms: number;
     squareFeet?: number;
   };
-  author?: {
+  createdBy?: {
     id: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     email: string;
   };
   images?: ListingImage[];
 }
 
 export enum ListingStatus {
-  DRAFT = 'DRAFT',
   ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE',
-  EXPIRED = 'EXPIRED',
-  RENTED = 'RENTED'
+  PENDING = 'PENDING',
+  DRAFT = 'DRAFT',
+  ARCHIVED = 'ARCHIVED'
 }
 
 export interface ListingImage {
@@ -55,7 +57,9 @@ export interface ListingImage {
 export interface CreateListingRequest {
   title: string;
   description: string;
-  price: number;
+  rent: number;
+  availableDate: string;
+  leaseTerms?: string;
   propertyId: string;
   unitId?: string;
   status?: ListingStatus;
@@ -64,6 +68,8 @@ export interface CreateListingRequest {
 export interface UpdateListingRequest {
   title?: string;
   description?: string;
-  price?: number;
+  rent?: number;
+  availableDate?: string;
+  leaseTerms?: string;
   status?: ListingStatus;
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Property } from '../types/property'; // Import the Property type
+import { Listing } from '../types/listing'; // Import the Listing type
 import { listingService } from '../services/listingService'; // Import listing service
 import { propertyService } from '../services/propertyService'; // Import property service
 import { RootStackParamList } from '../navigation/types'; // Import RootStackParamList
@@ -13,7 +14,7 @@ import { AuthError, AuthErrorType } from '../services/api'; // Import AuthError 
 type ManageListingsScreenProps = StackScreenProps<PropertyStackParamList, 'PropertyList'>; // Use PropertyStackParamList
 
 const ManageListingsScreen = ({ navigation }: ManageListingsScreenProps) => { // Use typed props
-  const [listings, setListings] = useState<Property[]>([]);
+  const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const rootNavigation = useNavigation(); // Get root navigation for login redirect
@@ -27,7 +28,7 @@ const ManageListingsScreen = ({ navigation }: ManageListingsScreenProps) => { //
     setLoading(true);
     setError(null);
     try {
-      const fetchedListings = await propertyService.getProperties();
+      const fetchedListings = await listingService.getListings();
       setListings(fetchedListings);
       console.log('Fetched listings:', fetchedListings);
     } catch (err) {
@@ -57,17 +58,18 @@ const ManageListingsScreen = ({ navigation }: ManageListingsScreenProps) => { //
     navigation.navigate('PropertyForm', {});
   };
 
-  const renderListingItem = ({ item }: { item: Property }) => (
+  const renderListingItem = ({ item }: { item: Listing }) => (
     <View style={styles.propertyItem}>
       <View style={styles.listingHeader}>
-        <Text style={styles.propertyTitle}>{item.name}</Text>
-        <View style={[styles.statusBadge, styles.statusACTIVE]}>
-          <Text style={styles.statusText}>ACTIVE</Text>
+        <Text style={styles.propertyTitle}>{item.title}</Text>
+        <View style={[styles.statusBadge, item.status === 'ACTIVE' ? styles.statusACTIVE : styles.statusINACTIVE]}>
+          <Text style={styles.statusText}>{item.status || 'ACTIVE'}</Text>
         </View>
       </View>
-      <Text style={styles.propertyDescription}>{item.aiGeneratedDescription || item.description || `${item.propertyType} in ${item.city}`}</Text>
-      <Text style={styles.propertyPrice}>${item.totalUnits ? `${item.totalUnits} units` : 'Price on request'}</Text>
-      <Text style={styles.propertyAddress}>{item.address}, {item.city}, {item.state} {item.zipCode}</Text>
+      <Text style={styles.propertyDescription}>{item.description}</Text>
+      <Text style={styles.propertyPrice}>${item.rent}/month</Text>
+      <Text style={styles.propertyAddress}>Available: {new Date(item.availableDate).toLocaleDateString()}</Text>
+      <Text style={styles.unitInfo}>Views: {item.viewCount || 0}</Text>
       <TouchableOpacity 
         style={styles.editButton} 
         onPress={() => handleEditProperty(item.id)}

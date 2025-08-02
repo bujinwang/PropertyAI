@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { shadows } from '../../utils/shadows';
 
 export type CommunicationPreference = 'efficient' | 'balanced' | 'frequent';
 
@@ -104,11 +105,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderWidth: 2,
     borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    ...shadows.small,
   },
   selectedCard: {
     borderColor: '#3182ce',

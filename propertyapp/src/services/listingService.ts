@@ -1,5 +1,45 @@
 import { api } from './api';
-import { Listing, CreateListingRequest, UpdateListingRequest } from '../types/listing';
+
+export interface Listing {
+  id: string;
+  title: string;
+  description: string;
+  rent: number;
+  availableDate: string;
+  leaseTerms?: string;
+  isActive: boolean;
+  status: string;
+  propertyId: string;
+  unitId?: string;
+  createdById: string;
+  viewCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface CreateListingRequest {
+  title: string;
+  description: string;
+  rent: number;
+  availableDate: string;
+  leaseTerms?: string;
+  isActive?: boolean;
+  status?: string;
+  propertyId: string;
+  unitId?: string;
+}
+
+interface UpdateListingRequest {
+  title?: string;
+  description?: string;
+  rent?: number;
+  availableDate?: string;
+  leaseTerms?: string;
+  isActive?: boolean;
+  status?: string;
+  propertyId?: string;
+  unitId?: string;
+}
 
 const getListings = async (): Promise<Listing[]> => {
   const response = await api.get<Listing[]>('/listings');
@@ -8,11 +48,6 @@ const getListings = async (): Promise<Listing[]> => {
 
 const getListingById = async (id: string): Promise<Listing> => {
   const response = await api.get<Listing>(`/listings/${id}`);
-  return response;
-};
-
-const getUnitListings = async (unitId: string): Promise<Listing[]> => {
-  const response = await api.get<Listing[]>(`/units/${unitId}/listings`);
   return response;
 };
 
@@ -30,23 +65,29 @@ const deleteListing = async (id: string): Promise<void> => {
   await api.delete(`/listings/${id}`);
 };
 
-const publishListing = async (id: string): Promise<Listing> => {
-  const response = await api.put<Listing>(`/listings/${id}/publish`);
-  return response;
-};
-
-const unpublishListing = async (id: string): Promise<Listing> => {
-  const response = await api.put<Listing>(`/listings/${id}/unpublish`);
+const getPublicListings = async (filters: {
+  search?: string;
+  skip?: number;
+  take?: number;
+} = {}) => {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined) {
+      params.append(key, value.toString());
+    }
+  });
+  
+  const queryString = params.toString();
+  const endpoint = `/listings/public${queryString ? `?${queryString}` : ''}`;
+  const response = await api.get<Listing[]>(endpoint);
   return response;
 };
 
 export const listingService = {
   getListings,
   getListingById,
-  getUnitListings,
   createListing,
   updateListing,
   deleteListing,
-  publishListing,
-  unpublishListing,
+  getPublicListings,
 };

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Switch, TouchableOpacity } from 'react-native';
 import { AIRecommendation } from '../../services/setupWizardService';
+import { shadows } from '../../utils/shadows';
 
 interface RecommendationCardProps {
   recommendation: AIRecommendation;
@@ -79,11 +80,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 16,
     marginVertical: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    ...shadows.medium,
     borderLeftWidth: 4,
   },
   header: {

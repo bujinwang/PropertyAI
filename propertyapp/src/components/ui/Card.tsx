@@ -1,6 +1,7 @@
 import React, { ReactNode } from 'react';
 import { View, Text, StyleSheet, StyleProp, ViewStyle, TextStyle } from 'react-native';
 import { COLORS, SPACING, FONTS } from '@/constants/theme';
+import { shadows } from '@/utils/shadows';
 
 interface CardProps {
   children: ReactNode;
@@ -64,11 +65,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.background,
     borderRadius: 12,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    ...shadows.card,
     padding: SPACING.lg,
     marginVertical: SPACING.md,
   },

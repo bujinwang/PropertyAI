@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts';
 import { Card } from '@/components/ui/Card';
+import { shadows } from '@/utils/shadows';
 
 interface Message {
   id: string;
@@ -298,11 +299,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginVertical: 4,
     borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    ...shadows.small,
   },
   messageContent: {
     flexDirection: 'row',

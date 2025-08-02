@@ -263,7 +263,7 @@ export const api = new ApiService(API_URL);
 
 // Specific API calls
 export const getPublicListings = (query?: string) => {
-  return api.get('/listings/public', { params: { search: query } });
+  return api.get('/properties/public/listings', { params: { search: query } });
 };
 
 export const getPropertyDetails = (propertyId: string) => {

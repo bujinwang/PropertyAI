@@ -30,6 +30,9 @@ export function RootNavigator() {
     return <LoadingIndicator fullScreen message="Loading..." />;
   }
 
+  // Debug logging
+  console.log('RootNavigator - isAuthenticated:', isAuthenticated, 'isLoading:', isLoading);
+
   return (
     <NavigationContainer ref={navigationRef} linking={linking}>
       <Stack.Navigator

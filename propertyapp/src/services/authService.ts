@@ -41,16 +41,19 @@ export const login = async (email: string, password: string): Promise<LoginRespo
       password
     });
     
+    // Backend returns data in a 'data' wrapper
+    const loginData = response.data.data || response.data;
+    
     // Store both access and refresh tokens
-    if (response.data.token) {
-      apiService.setToken(response.data.token);
+    if (loginData.token) {
+      apiService.setToken(loginData.token);
     }
     
-    if (response.data.refreshToken) {
-      await storeRefreshToken(response.data.refreshToken);
+    if (loginData.refreshToken) {
+      await storeRefreshToken(loginData.refreshToken);
     }
     
-    return response.data;
+    return loginData;
   } catch (error: unknown) {
     const err = error as AxiosError<{ message: string }> | ErrorWithResponse;
     if (axios.isAxiosError(err) && err.response?.data?.message) {
@@ -74,16 +77,19 @@ export const register = async (userData: {
   try {
     const response = await axios.post(`${API_URL}/auth/register`, userData);
     
+    // Backend returns data in a 'data' wrapper
+    const registerData = response.data.data || response.data;
+    
     // If registration is successful and we get a token, set it in the apiService
-    if (response.data.token) {
-      apiService.setToken(response.data.token);
+    if (registerData.token) {
+      apiService.setToken(registerData.token);
     }
     
-    if (response.data.refreshToken) {
-      await storeRefreshToken(response.data.refreshToken);
+    if (registerData.refreshToken) {
+      await storeRefreshToken(registerData.refreshToken);
     }
     
-    return response.data;
+    return registerData;
   } catch (error: unknown) {
     const err = error as AxiosError<{ message: string }> | ErrorWithResponse;
     if (axios.isAxiosError(err) && err.response?.data?.message) {

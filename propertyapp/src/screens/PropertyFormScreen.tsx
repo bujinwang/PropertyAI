@@ -119,11 +119,12 @@ export function PropertyFormScreen() {
   const isEditing = !!propertyId;
 
   const [currentStep, setCurrentStep] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(isEditing);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [isPricingLoading, setIsPricingLoading] = useState(false);
   const [property, setProperty] = useState<PropertyFormValues>(initialValues);
+  const [isDataLoaded, setIsDataLoaded] = useState(!isEditing);
 
   const steps = [
     'Basic Info',
@@ -170,11 +171,12 @@ export function PropertyFormScreen() {
         })) || [],
       };
       setProperty(newPropertyState);
+      setIsDataLoaded(true);
       console.log('Set property state to:', newPropertyState);
-      setIsLoading(false);
     } catch (error) {
       console.error('Error fetching property details:', error);
       Alert.alert('Error', 'Failed to load property details');
+    } finally {
       setIsLoading(false);
     }
   };

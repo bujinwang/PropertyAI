@@ -1,21 +1,28 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, TextInput } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, TextInput, SafeAreaView } from 'react-native';
 import { getPublicListings } from '../services/api';
 import { Property } from '../types/property';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/types';
 import { debounce } from 'lodash';
+import { shadows } from '../utils/shadows';
+import { Ionicons } from '@expo/vector-icons';
 
 type PublicListingScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
   'PublicListing'
 >;
 
+type PublicListingScreenRouteProp = RouteProp<RootStackParamList, 'PublicListing'>;
+
 type Props = {
   navigation: PublicListingScreenNavigationProp;
+  route: PublicListingScreenRouteProp;
 };
 
-const PublicListingScreen: React.FC<Props> = ({ navigation }) => {
+const PublicListingScreen: React.FC<Props> = ({ navigation, route }) => {
+  const { listingId } = route.params || {};
   const [listings, setListings] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -44,13 +51,35 @@ const PublicListingScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const renderHeader = () => (
-    <View style={styles.searchContainer}>
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search by address, city, or state..."
-        value={searchQuery}
-        onChangeText={handleSearch}
-      />
+    <View>
+      {/* Auth Header */}
+      <View style={styles.authHeader}>
+        <Text style={styles.appTitle}>PropertyAI</Text>
+        <View style={styles.authButtons}>
+          <TouchableOpacity 
+            style={styles.loginButton}
+            onPress={() => navigation.navigate('Login')}
+          >
+            <Text style={styles.loginButtonText}>Login</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.registerButton}
+            onPress={() => navigation.navigate('Register')}
+          >
+            <Text style={styles.registerButtonText}>Sign Up</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+      
+      {/* Search Container */}
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search by address, city, or state..."
+          value={searchQuery}
+          onChangeText={handleSearch}
+        />
+      </View>
     </View>
   );
 
@@ -77,29 +106,79 @@ const PublicListingScreen: React.FC<Props> = ({ navigation }) => {
   }
 
   return (
-    <FlatList
-      data={listings}
-      renderItem={renderItem}
-      keyExtractor={(item) => item.id.toString()}
-      contentContainerStyle={styles.container}
-      ListHeaderComponent={renderHeader}
-    />
+    <SafeAreaView style={styles.safeArea}>
+      <FlatList
+        data={listings}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id.toString()}
+        contentContainerStyle={styles.container}
+        ListHeaderComponent={renderHeader}
+      />
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+  },
   container: {
     padding: 10,
   },
+  authHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e9ecef',
+  },
+  appTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#007AFF',
+  },
+  authButtons: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  loginButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#007AFF',
+  },
+  loginButtonText: {
+    color: '#007AFF',
+    fontWeight: '600',
+  },
+  registerButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+    backgroundColor: '#007AFF',
+  },
+  registerButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
   searchContainer: {
-    padding: 10,
+    padding: 15,
+    backgroundColor: '#fff',
+    marginBottom: 10,
   },
   searchInput: {
-    height: 40,
-    borderColor: 'gray',
+    height: 44,
+    borderColor: '#ddd',
     borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: 10,
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    fontSize: 16,
+    backgroundColor: '#f8f9fa',
   },
   centered: {
     flex: 1,
@@ -108,28 +187,27 @@ const styles = StyleSheet.create({
   },
   itemContainer: {
     flexDirection: 'row',
-    padding: 10,
+    padding: 15,
     marginBottom: 10,
+    marginHorizontal: 10,
     backgroundColor: '#fff',
-    borderRadius: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
-    elevation: 2,
+    borderRadius: 8,
+    ...shadows.medium,
   },
   thumbnail: {
     width: 100,
     height: 100,
-    borderRadius: 5,
+    borderRadius: 8,
   },
   textContainer: {
-    marginLeft: 10,
+    marginLeft: 15,
     justifyContent: 'center',
+    flex: 1,
   },
   title: {
     fontSize: 16,
     fontWeight: 'bold',
+    marginBottom: 4,
   },
 });
 

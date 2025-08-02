@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { COLORS, FONTS, SPACING } from '@/constants/theme';
+import { shadows } from '@/utils/shadows';
 
 interface Property {
   id: string;
@@ -42,11 +43,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: SPACING.md,
     overflow: 'hidden',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
+    ...shadows.medium,
   },
   image: {
     width: '100%',

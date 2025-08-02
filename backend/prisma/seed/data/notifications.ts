@@ -1,15 +1,11 @@
-import { NotificationType } from '@prisma/client';
-
 interface NotificationSeed {
   id?: string;
-  title: string;
   message: string;
-  type: NotificationType;
+  type: string;
   createdAt?: Date | string;
-  readAt?: Date | string | null;
+  isRead?: boolean;
   userId: string;
-  relatedEntityId?: string;
-  isActionRequired?: boolean;
+  link?: string;
 }
 
 // Entity IDs
@@ -30,113 +26,95 @@ const MAINTENANCE_REQ_6_ID = '6'; // Gas Smell in Kitchen (Emergency)
 export const notifications: NotificationSeed[] = [
   // Tenant notifications
   {
-    title: 'Maintenance Request Created',
     message: 'Your maintenance request for "Leaking Bathroom Sink" has been received and is being processed.',
-    type: NotificationType.MAINTENANCE,
+    type: 'maintenance_update',
     createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-    readAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 10 * 60 * 1000), // 10 minutes after creation
+    isRead: true,
     userId: JOHN_ID,
-    relatedEntityId: MAINTENANCE_REQ_1_ID,
-    isActionRequired: false,
+    link: '/maintenance-requests/1',
   },
   {
-    title: 'Maintenance Request Update',
     message: 'Your maintenance request for "Broken Air Conditioning" has been updated to status: In Progress.',
-    type: NotificationType.MAINTENANCE,
+    type: 'maintenance_update',
     createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000), // 2 days ago + 1 hour
-    readAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000), // 1 hour after creation
+    isRead: true,
     userId: DAVID_ID,
-    relatedEntityId: MAINTENANCE_REQ_2_ID,
-    isActionRequired: false,
+    link: '/maintenance-requests/2',
   },
   {
-    title: 'Rent Due Reminder',
     message: 'Your rent payment of $2,500 is due in 5 days on June 1st, 2024.',
-    type: NotificationType.PAYMENT,
+    type: 'payment_reminder',
     createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
-    readAt: null, // Unread
+    isRead: false, // Unread
     userId: JOHN_ID,
-    isActionRequired: true,
+    link: '/payments',
   },
   {
-    title: 'Lease Renewal',
     message: 'Your lease for Unit A1 at Parkview Townhomes is set to expire in 60 days. Please contact the property manager to discuss renewal options.',
-    type: NotificationType.LEASE,
+    type: 'lease_renewal',
     createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
-    readAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000), // Read 1 day after creation
+    isRead: true,
     userId: DAVID_ID,
-    isActionRequired: true,
+    link: '/lease',
   },
   {
-    title: 'Emergency Maintenance Action',
     message: 'An emergency maintenance crew has been dispatched to address your report of a gas smell. Please ensure they have access to your unit.',
-    type: NotificationType.MAINTENANCE,
+    type: 'emergency_maintenance',
     createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000 + 5 * 60 * 1000), // 6 hours ago + 5 minutes
-    readAt: new Date(Date.now() - 6 * 60 * 60 * 1000 + 6 * 60 * 1000), // 1 minute after creation
+    isRead: true,
     userId: JOHN_ID,
-    relatedEntityId: MAINTENANCE_REQ_6_ID,
-    isActionRequired: true,
+    link: '/maintenance-requests/6',
   },
   
   // Property manager notifications
   {
-    title: 'New Maintenance Request',
     message: 'A new maintenance request has been submitted: "Leaking Bathroom Sink" at Sunrise Apartments, Unit 101.',
-    type: NotificationType.MAINTENANCE,
+    type: 'new_maintenance_request',
     createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 1 * 60 * 1000), // 3 days ago + 1 minute
-    readAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 15 * 60 * 1000), // 15 minutes after creation
+    isRead: true,
     userId: MANAGER1_ID,
-    relatedEntityId: MAINTENANCE_REQ_1_ID,
-    isActionRequired: true,
+    link: '/maintenance-requests/1',
   },
   {
-    title: 'High Priority Maintenance Request',
     message: 'A high priority maintenance request has been submitted: "Broken Air Conditioning" at Parkview Townhomes, Unit A1.',
-    type: NotificationType.MAINTENANCE,
+    type: 'new_maintenance_request',
     createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 1 * 60 * 1000), // 2 days ago + 1 minute
-    readAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 5 * 60 * 1000), // 5 minutes after creation
+    isRead: true,
     userId: MANAGER1_ID,
-    relatedEntityId: MAINTENANCE_REQ_2_ID,
-    isActionRequired: true,
+    link: '/maintenance-requests/2',
   },
   {
-    title: 'Emergency Maintenance Request',
     message: 'EMERGENCY: Gas smell reported at Sunrise Apartments, Unit 101. Immediate response required.',
-    type: NotificationType.MAINTENANCE,
+    type: 'emergency_maintenance',
     createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000 + 1 * 60 * 1000), // 6 hours ago + 1 minute
-    readAt: new Date(Date.now() - 6 * 60 * 60 * 1000 + 2 * 60 * 1000), // 1 minute after creation
+    isRead: true,
     userId: MANAGER1_ID,
-    relatedEntityId: MAINTENANCE_REQ_6_ID,
-    isActionRequired: true,
+    link: '/maintenance-requests/6',
   },
   {
-    title: 'Lease Expiring Soon',
     message: '3 leases are set to expire in the next 60 days. Review needed.',
-    type: NotificationType.LEASE,
+    type: 'lease_expiring',
     createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
-    readAt: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000), // Read 1 day after creation
+    isRead: true,
     userId: MANAGER1_ID,
-    isActionRequired: true,
+    link: '/leases',
   },
   
   // Admin notifications
   {
-    title: 'Monthly Financial Report',
     message: 'The monthly financial report for May 2024 is now available for review.',
-    type: NotificationType.OTHER,
+    type: 'financial_report',
     createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
-    readAt: null, // Unread
+    isRead: false, // Unread
     userId: ADMIN_ID,
-    isActionRequired: true,
+    link: '/reports/financial',
   },
   {
-    title: 'Emergency Maintenance Incident',
     message: 'An emergency maintenance incident (gas leak) was reported and addressed at Sunrise Apartments, Unit 101.',
-    type: NotificationType.MAINTENANCE,
+    type: 'incident_report',
     createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
-    readAt: new Date(Date.now() - 4.5 * 60 * 60 * 1000), // Read 30 minutes after creation
+    isRead: true,
     userId: ADMIN_ID,
-    relatedEntityId: MAINTENANCE_REQ_6_ID,
-    isActionRequired: false,
+    link: '/maintenance-requests/6',
   },
 ]; 

@@ -23,7 +23,9 @@
     "android": {
       "package": "com.propertyai.app"
     },
-    "web": {},
+    "web": {
+      "bundler": "metro"
+    },
     "plugins": [
       "expo-secure-store"
     ]
