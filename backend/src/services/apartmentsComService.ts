@@ -25,8 +25,8 @@ const toApartmentsComFormat = async (listing: Listing) => {
       bathrooms: unit?.bathrooms,
       squareFootage: unit?.size,
       propertyType: property?.propertyType,
-      isAvailable: listing.isAvailable,
-      dateAvailable: listing.dateAvailable,
+      isAvailable: listing.isActive,
+      dateAvailable: listing.availableDate,
     },
   });
 };

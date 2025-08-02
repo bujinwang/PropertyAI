@@ -10,7 +10,7 @@ class CashFlowForecastingService {
         status: 'COMPLETED',
       },
       orderBy: {
-        processedAt: 'asc',
+        transactionDate: 'asc',
       },
     });
 

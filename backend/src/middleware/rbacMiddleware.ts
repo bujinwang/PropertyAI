@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserRole } from '@prisma/client';
+import { UserRole, User } from '@prisma/client';
 
 export const rbacMiddleware = (roles: UserRole[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
@@ -7,7 +7,8 @@ export const rbacMiddleware = (roles: UserRole[]) => {
       return res.status(401).json({ message: 'Authentication required' });
     }
     
-    if (roles.includes(req.user.role)) {
+    const user = req.user as User;
+    if (roles.includes(user.role)) {
       next();
     } else {
       res.status(403).json({ message: 'Forbidden' });

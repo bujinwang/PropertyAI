@@ -240,10 +240,8 @@ class AIService {
         data: {
           conversationId,
           senderId: 'system', // Assuming 'system' as sender for AI messages, adjust as needed
-          recipientId: 'user', // Assuming 'user' as recipient, adjust as needed
+          receiverId: 'user', // Assuming 'user' as recipient, adjust as needed
           content: request.message,
-          isRead: true,
-          sentiment: 'NEUTRAL', // Default sentiment, can be analyzed later
         },
       });
       // Save AI message
@@ -251,10 +249,8 @@ class AIService {
         data: {
           conversationId,
           senderId: 'user', // Assuming 'user' as sender for user messages, adjust as needed
-          recipientId: 'system', // Assuming 'system' as recipient, adjust as needed
+          receiverId: 'system', // Assuming 'system' as recipient, adjust as needed
           content: message,
-          isRead: true,
-          sentiment: 'NEUTRAL', // Default sentiment, can be analyzed later
         },
       });
 

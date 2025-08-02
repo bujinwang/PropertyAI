@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { PrismaClient, UserRole } from '@prisma/client';
+import { PrismaClient, UserRole, User } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -47,7 +47,8 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
 };
 
 export const admin = (req: Request, res: Response, next: NextFunction) => {
-  if (!req.user || req.user.role !== UserRole.ADMIN) {
+  const user = req.user as User;
+  if (!user || user.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Admin access required' });
   }
   next();
@@ -55,7 +56,8 @@ export const admin = (req: Request, res: Response, next: NextFunction) => {
 
 export const checkRole = (roles: UserRole[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user || !roles.includes(req.user.role)) {
+    const user = req.user as User;
+    if (!user || !roles.includes(user.role)) {
       return res.status(403).json({ error: 'Insufficient permissions' });
     }
     next();
@@ -64,7 +66,7 @@ export const checkRole = (roles: UserRole[]) => {
 
 export const isOwner = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.user!;
+    const { id } = req.user as User;
     const user = await prisma.user.findUnique({ where: { id } });
 
     if (!user || user.role !== UserRole.OWNER) {

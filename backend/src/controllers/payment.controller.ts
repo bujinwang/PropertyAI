@@ -1,10 +1,11 @@
 import { Request, Response } from 'express';
+import { User } from '@prisma/client';
 import { paymentService } from '../services/payment.service';
 
 export const approveTransaction = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const userId = req.user?.id;
+    const userId = (req.user as User)?.id;
     
     if (!userId) {
       return res.status(401).json({ error: 'User not authenticated' });
@@ -20,7 +21,7 @@ export const approveTransaction = async (req: Request, res: Response) => {
 export const rejectTransaction = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const userId = req.user?.id;
+    const userId = (req.user as User)?.id;
     
     if (!userId) {
       return res.status(401).json({ error: 'User not authenticated' });
@@ -36,7 +37,7 @@ export const rejectTransaction = async (req: Request, res: Response) => {
 export const approveVendorPayment = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const userId = req.user?.id;
+    const userId = (req.user as User)?.id;
     
     if (!userId) {
       return res.status(401).json({ error: 'User not authenticated' });
@@ -52,7 +53,7 @@ export const approveVendorPayment = async (req: Request, res: Response) => {
 export const rejectVendorPayment = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const userId = req.user?.id;
+    const userId = (req.user as User)?.id;
     
     if (!userId) {
       return res.status(401).json({ error: 'User not authenticated' });
@@ -67,7 +68,7 @@ export const rejectVendorPayment = async (req: Request, res: Response) => {
 
 export const getPendingTransactions = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.id;
+    const userId = (req.user as User)?.id;
     
     if (!userId) {
       return res.status(401).json({ error: 'User not authenticated' });
@@ -82,7 +83,7 @@ export const getPendingTransactions = async (req: Request, res: Response) => {
 
 export const getPendingVendorPayments = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.id;
+    const userId = (req.user as User)?.id;
     
     if (!userId) {
       return res.status(401).json({ error: 'User not authenticated' });

@@ -19,19 +19,10 @@ class EmergencyRoutingService {
       where: { id: maintenanceRequestId },
     });
 
-    if (maintenanceRequest && maintenanceRequest.priority === 'EMERGENCY' && maintenanceRequest.categoryId) {
+    if (maintenanceRequest && maintenanceRequest.priority === 'EMERGENCY') {
       const rule = await prisma.emergencyRoutingRule.findFirst({
         where: {
-          rule: {
-            path: ['priority'],
-            equals: 'EMERGENCY',
-          },
-          AND: {
-            rule: {
-              path: ['category'],
-              equals: maintenanceRequest.categoryId,
-            },
-          },
+          priority: 'EMERGENCY',
         },
       });
 

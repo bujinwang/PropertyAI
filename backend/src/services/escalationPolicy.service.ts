@@ -40,9 +40,11 @@ export const createEscalationPolicyRule = async (data: {
 }) => {
   return prisma.escalationPolicyRule.create({
     data: {
-      ...data,
-      userId: data.userId,
+      policyId: data.policyId,
       order: data.order,
+      threshold: `${data.delayMinutes}m`, // Convert delay to threshold format
+      action: 'escalate', // Default action
+      assignedToUserId: data.userId,
     },
   });
 };

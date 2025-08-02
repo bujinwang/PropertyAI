@@ -47,7 +47,9 @@
       "Bash(say hi)",
       "Bash(afplay:*)",
       "Bash(tput bel)",
-      "Bash(echo -e '\\a')"
+      "Bash(echo -e '\\a')",
+      "Bash(pgrep:*)",
+      "Bash(timeout:*)"
     ],
     "deny": []
   },

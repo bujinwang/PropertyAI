@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { User } from '@prisma/client';
 import { aiService } from '../services/ai.service';
 import { authenticateToken } from '../middleware/auth';
 import { body, query } from 'express-validator';
@@ -28,7 +29,7 @@ router.post('/generate', authenticateToken, [
     // Log the request
     await (prisma as any).aIUsageLog.create({
       data: {
-        userId: req.user!.id,
+        userId: (req.user as User)!.id,
         feature: 'text_generation',
         prompt: text,
         response: result.text,
@@ -62,7 +63,7 @@ router.post('/sentiment', authenticateToken, [
     // Log the request
     await (prisma as any).aIUsageLog.create({
       data: {
-        userId: req.user!.id,
+        userId: (req.user as User)!.id,
         feature: 'sentiment_analysis',
         prompt: text,
         response: JSON.stringify(result),
@@ -95,7 +96,7 @@ router.post('/entities', authenticateToken, [
     // Log the request
     await (prisma as any).aIUsageLog.create({
       data: {
-        userId: req.user!.id,
+        userId: (req.user as User)!.id,
         feature: 'entity_extraction',
         prompt: text,
         response: JSON.stringify(result),
@@ -134,7 +135,7 @@ router.post('/summary', authenticateToken, [
     // Log the request
     await (prisma as any).aIUsageLog.create({
       data: {
-        userId: req.user!.id,
+        userId: (req.user as User)!.id,
         feature: 'summary_generation',
         prompt: text,
         response: result.text,
@@ -173,7 +174,7 @@ router.post('/classify', authenticateToken, [
     // Log the request
     await (prisma as any).aIUsageLog.create({
       data: {
-        userId: req.user!.id,
+        userId: (req.user as User)!.id,
         feature: 'text_classification',
         prompt: text,
         response: result.text,
@@ -212,7 +213,7 @@ router.post('/chat', authenticateToken, [
     // Log the request
     await (prisma as any).aIUsageLog.create({
       data: {
-        userId: req.user!.id,
+        userId: (req.user as User)!.id,
         feature: 'chat',
         prompt: message,
         response: JSON.stringify(result),
@@ -252,7 +253,7 @@ router.post('/property-description', authenticateToken, [
     // Log the request
     await (prisma as any).aIUsageLog.create({
       data: {
-        userId: req.user!.id,
+        userId: (req.user as User)!.id,
         feature: 'property_description',
         prompt: JSON.stringify(propertyData),
         response: result.text,
@@ -288,7 +289,7 @@ router.post('/maintenance-analysis', authenticateToken, [
     // Log the request
     await (prisma as any).aIUsageLog.create({
       data: {
-        userId: req.user!.id,
+        userId: (req.user as User)!.id,
         feature: 'maintenance_analysis',
         prompt: JSON.stringify(maintenanceData),
         response: JSON.stringify(result),
@@ -321,7 +322,7 @@ router.post('/lease-summary', authenticateToken, [
     // Log the request
     await (prisma as any).aIUsageLog.create({
       data: {
-        userId: req.user!.id,
+        userId: (req.user as User)!.id,
         feature: 'lease_summary',
         prompt: leaseText.substring(0, 1000), // Truncate for storage
         response: result.text,
@@ -356,7 +357,7 @@ router.post('/translate', authenticateToken, [
     // Log the request
     await (prisma as any).aIUsageLog.create({
       data: {
-        userId: req.user!.id,
+        userId: (req.user as User)!.id,
         feature: 'translation',
         prompt: text,
         response: result.text,
@@ -391,7 +392,7 @@ router.post('/keywords', authenticateToken, [
     // Log the request
     await (prisma as any).aIUsageLog.create({
       data: {
-        userId: req.user!.id,
+        userId: (req.user as User)!.id,
         feature: 'keyword_extraction',
         prompt: text,
         response: JSON.stringify(keywords),
@@ -420,7 +421,7 @@ router.get('/usage-stats', authenticateToken, [
 ], async (req: Request, res: Response) => {
   try {
     const { startDate, endDate, type } = req.query;
-    const userId = req.user!.id;
+    const userId = (req.user as User)!.id;
 
     const where: any = {
       userId,

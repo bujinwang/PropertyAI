@@ -16,7 +16,8 @@ export const requireAdmin = (req: Request, res: Response, next: NextFunction): v
     }
 
     // Check if user has admin role
-    if (req.user.role !== UserRole.ADMIN) {
+    const user = req.user as User;
+    if (user.role !== UserRole.ADMIN) {
       res.status(403).json({ message: 'Admin privileges required' });
       return;
     }
@@ -63,7 +64,8 @@ export const restrictTo = (...roles: UserRole[]) => {
         return;
       }
 
-      if (!roles.includes(req.user.role)) {
+      const user = req.user as User;
+      if (!roles.includes(user.role)) {
         res.status(403).json({ message: 'Access denied for your role' });
         return;
       }

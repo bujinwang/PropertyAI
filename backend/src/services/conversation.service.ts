@@ -15,9 +15,8 @@ export class ConversationService {
       data: {
         conversationId,
         senderId,
-        recipientId,
+        receiverId: recipientId,
         content,
-        sentiment,
       },
     });
   }
@@ -25,7 +24,7 @@ export class ConversationService {
   async getMessages(conversationId: string): Promise<Message[]> {
     return prisma.message.findMany({
       where: { conversationId },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { sentAt: 'asc' },
     });
   }
 }

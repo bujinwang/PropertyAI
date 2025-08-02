@@ -101,7 +101,7 @@ class ContractorService {
     }
     return prisma.message.findMany({
       where: { maintenanceRequestId: workOrder.maintenanceRequestId },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { sentAt: 'asc' },
     });
   }
 
@@ -120,7 +120,7 @@ class ContractorService {
       data: {
         content,
         senderId,
-        recipientId: recipient.id,
+        receiverId: recipient.id,
         maintenanceRequestId: workOrder.maintenanceRequestId,
         conversationId: `${workOrderId}-${senderId}-${recipient.id}`, // Simple conversation ID
       },

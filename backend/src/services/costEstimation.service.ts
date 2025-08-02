@@ -44,10 +44,8 @@ class CostEstimationService {
         await prisma.costEstimation.create({
           data: {
             workOrderId,
-            estimation: {
-              estimatedCost: parsedResult.estimatedCost,
-              confidence: parsedResult.confidence,
-            },
+            estimatedCost: parsedResult.estimatedCost,
+            details: `Confidence: ${parsedResult.confidence}`,
           },
         });
 

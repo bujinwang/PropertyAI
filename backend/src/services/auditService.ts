@@ -16,6 +16,8 @@ class AuditService {
       data: {
         userId,
         action,
+        entityType: 'USER_ACTION',
+        entityId: userId,
         details: auditDetails,
       },
     });
@@ -24,7 +26,7 @@ class AuditService {
   async getAuditEntries() {
     return await prisma.auditEntry.findMany({
       orderBy: {
-        createdAt: 'desc',
+        timestamp: 'desc',
       },
     });
   }

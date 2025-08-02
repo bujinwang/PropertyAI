@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
+import { User } from '@prisma/client';
 import { storageService } from '../services/storage.service';
 import { authenticateToken } from '../middleware/auth';
 import { body, param, query } from 'express-validator';
@@ -43,7 +44,7 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
       });
     }
 
-    const userId = req.user!.id;
+    const userId = (req.user as User)!.id;
     const options = req.body.options ? JSON.parse(req.body.options) : {};
 
     const result = await storageService.uploadFile(req.file, userId, options);
@@ -71,7 +72,7 @@ router.post('/upload-multiple', authenticateToken, upload.array('files', 10), as
       });
     }
 
-    const userId = req.user!.id;
+    const userId = (req.user as User)!.id;
     const options = req.body.options ? JSON.parse(req.body.options) : {};
 
     const results = await storageService.uploadMultipleFiles(req.files, userId, options);
@@ -143,7 +144,7 @@ router.delete('/files/:key', authenticateToken, [
 ], async (req, res) => {
   try {
     const { key } = req.params;
-    const userId = req.user!.id;
+    const userId = (req.user as User)!.id;
 
     // Check if user owns this file
     const document = await prisma.document.findFirst({
@@ -183,7 +184,7 @@ router.get('/files', authenticateToken, [
   validateRequest,
 ], async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as User)!.id;
     const folder = req.query.folder as string | undefined;
     const limit = Number(req.query.limit) || 20;
     const offset = Number(req.query.offset) || 0;
@@ -196,7 +197,7 @@ router.get('/files', authenticateToken, [
     const [files, total] = await Promise.all([
       prisma.document.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { uploadedAt: 'desc' },
         skip: Number(offset),
         take: Number(limit),
       }),
@@ -231,7 +232,7 @@ router.delete('/files', authenticateToken, [
   validateRequest,
 ], async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as User)!.id;
     const { keys } = req.body;
 
     // Check if user owns all files
@@ -270,7 +271,7 @@ router.post('/properties/:propertyId/images', authenticateToken, upload.array('i
   validateRequest,
 ], async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as User)!.id;
     const { propertyId } = req.params;
 
     if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
@@ -342,7 +343,7 @@ router.post('/leases/:leaseId/documents', authenticateToken, upload.single('docu
   validateRequest,
 ], async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as User)!.id;
     const { leaseId } = req.params;
     const { documentType, name } = req.body;
 
