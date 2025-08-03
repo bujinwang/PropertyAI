@@ -2,7 +2,7 @@ import { api } from './api';
 import { Rental, CreateRentalDto, UpdateRentalDto, RentalFilterParams } from '../types/rental';
 
 export class RentalService {
-  private baseUrl = '/api/rentals';
+  private baseUrl = '/rentals';
 
   async getRentals(filters?: RentalFilterParams): Promise<Rental[]> {
     try {
@@ -108,22 +108,6 @@ export class RentalService {
       console.error('Error searching rentals:', error);
       throw error;
     }
-  }
-
-  // Legacy compatibility methods
-  async getListings(filters?: any): Promise<Rental[]> {
-    console.warn('getListings is deprecated. Use getRentals instead.');
-    return this.getRentals({ ...filters, type: 'LISTING' });
-  }
-
-  async getProperties(filters?: any): Promise<Rental[]> {
-    console.warn('getProperties is deprecated. Use getRentals instead.');
-    return this.getRentals({ ...filters, type: 'PROPERTY' });
-  }
-
-  async getUnits(filters?: any): Promise<Rental[]> {
-    console.warn('getUnits is deprecated. Use getRentals instead.');
-    return this.getRentals({ ...filters, type: 'UNIT' });
   }
 }
 
