@@ -45,13 +45,13 @@ const ManageListingsScreen = ({ navigation }: ManageListingsScreenProps) => {
   };
 
   const handleEditRental = (rentalId: string) => {
-    // Navigate to RentalFormScreen for editing
-    navigation.navigate('RentalForm', { rentalId });
+    // Navigate to PropertyForm for editing (using propertyId parameter)
+    navigation.navigate('PropertyForm', { propertyId: rentalId });
   };
 
   const handleAddRental = () => {
-    // Navigate to RentalFormScreen for adding new rental
-    navigation.navigate('RentalForm', {});
+    // Navigate to PropertyForm for adding new rental
+    navigation.navigate('PropertyForm', {});
   };
 
   const renderRentalItem = ({ item }: { item: Rental }) => (

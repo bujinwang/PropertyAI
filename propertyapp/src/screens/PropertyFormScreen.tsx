@@ -351,18 +351,7 @@ export function PropertyFormScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={100}
     >
-      {/* Deprecation Notice */}
-      <View style={styles.deprecationNotice}>
-        <Ionicons name="warning" size={16} color="#FF9500" />
-        <Text style={styles.deprecationText}>
-          This form is deprecated. Use the new Rental Form instead.
-        </Text>
-        <TouchableOpacity 
-          onPress={() => navigation.navigate('RentalForm', { rentalId: propertyId })}
-        >
-          <Text style={styles.deprecationLink}>Switch to new form</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Remove the deprecation notice since this form already works with the unified rental model */}
 
       <Formik
         initialValues={property}
