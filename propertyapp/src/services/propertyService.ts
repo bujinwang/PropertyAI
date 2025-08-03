@@ -1,111 +1,37 @@
 import { api } from './api';
 import { Property } from '../types/property';
-import { PropertyType } from '../types/property'; // Import PropertyType as it's used in the interfaces below
+import { PropertyType } from '../types/property';
 
-interface CreatePropertyRequest {
-  name: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
-  description?: string;
-  propertyType: PropertyType;
-  yearBuilt?: number;
-  totalUnits: number;
-  amenities?: string[];
-  latitude?: number;
-  longitude?: number;
-  images?: Array<{
-    url: string;
-    filename: string;
-    originalFilename: string;
-    type: string;
-    size: number;
-    isFeatured: boolean;
-  }>;
-}
+/**
+ * @deprecated This service has been removed. Use rentalService instead.
+ * All property functionality is now handled through the unified Rental model.
+ * 
+ * Migration guide:
+ * - propertyService.getProperties() → rentalService.getRentals({ type: 'PROPERTY' })
+ * - propertyService.getPropertyById(id) → rentalService.getRentalById(id)
+ * - propertyService.createProperty(data) → rentalService.createRental({ ...data, type: 'PROPERTY' })
+ * - propertyService.updateProperty(id, data) → rentalService.updateRental(id, data)
+ * - propertyService.deleteProperty(id) → rentalService.deleteRental(id)
+ */
 
-interface UpdatePropertyRequest {
-  name?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zipCode?: string;
-  country?: string;
-  description?: string;
-  propertyType?: PropertyType;
-  yearBuilt?: number;
-  totalUnits?: number;
-  amenities?: string[];
-  latitude?: number;
-  longitude?: number;
-  images?: Array<{
-    url: string;
-    filename: string;
-    originalFilename: string;
-    type: string;
-    size: number;
-    isFeatured: boolean;
-  }>;
-}
+import { rentalService } from './rentalService';
 
-const getProperties = async (publicAccess = false): Promise<Property[]> => {
-  const endpoint = publicAccess ? '/properties?public=true' : '/properties';
-  const response = await api.get<Property[]>(endpoint);
-  return response;
-};
-
-const getPropertyById = async (id: string): Promise<Property> => {
-  const response = await api.get<Property>(`/properties/${id}`);
-  return response;
-};
-
-const createProperty = async (propertyData: CreatePropertyRequest): Promise<Property> => {
-  const response = await api.post<Property>('/properties', propertyData);
-  return response;
-};
-
-const updateProperty = async (id: string, propertyData: UpdatePropertyRequest): Promise<Property> => {
-  const response = await api.put<Property>(`/properties/${id}`, propertyData);
-  return response;
-};
-
-const deleteProperty = async (id: string): Promise<void> => {
-  await api.delete(`/properties/${id}`);
-};
-
-const getPropertyUnits = async (propertyId: string) => {
-  const response = await api.get(`/properties/${propertyId}/units`);
-  return response;
-};
-
-const getPublicProperties = async (filters: {
-  city?: string;
-  state?: string;
-  propertyType?: string;
-  skip?: number;
-  take?: number;
-} = {}) => {
-  const params = new URLSearchParams();
-  Object.entries(filters).forEach(([key, value]) => {
-    if (value !== undefined) {
-      params.append(key, value.toString());
-    }
-  });
-  
-  const queryString = params.toString();
-  const endpoint = `/properties/public/listings${queryString ? `?${queryString}` : ''}`;
-  const response = await api.get<Property[]>(endpoint);
-  return response;
-};
+console.error('propertyService has been removed. Please use rentalService instead.');
 
 export const propertyService = {
-  getProperties,
-  getPropertyById,
-  createProperty,
-  updateProperty,
-  deleteProperty,
-  getPropertyUnits,
-  getPublicProperties,
+  getProperties: () => {
+    throw new Error('propertyService.getProperties() has been removed. Use rentalService.getRentals({ type: "PROPERTY" }) instead.');
+  },
+  getPropertyById: () => {
+    throw new Error('propertyService.getPropertyById() has been removed. Use rentalService.getRentalById() instead.');
+  },
+  createProperty: () => {
+    throw new Error('propertyService.createProperty() has been removed. Use rentalService.createRental() instead.');
+  },
+  updateProperty: () => {
+    throw new Error('propertyService.updateProperty() has been removed. Use rentalService.updateRental() instead.');
+  },
+  deleteProperty: () => {
+    throw new Error('propertyService.deleteProperty() has been removed. Use rentalService.deleteRental() instead.');
+  },
 };

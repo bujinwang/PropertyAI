@@ -1,4 +1,4 @@
-import { Listing, PrismaClient } from '@prisma/client';
+import { Rental, PrismaClient } from '@prisma/client';
 import { AppError } from '../middleware/errorMiddleware';
 import { toXML } from 'jstoxml';
 
@@ -11,7 +11,33 @@ const getAuthHeaders = () => ({
   'Content-Type': 'application/xml',
 });
 
-const toApartmentsComFormat = async (listing: Listing) => {
+const toApartmentsComFormat = (rental: Rental) => {
+  return toXML({
+    listing: {
+      title: rental.title,
+      description: rental.description || '',
+      rent: rental.rent,
+      url: `${process.env.FRONTEND_URL}/public-listing/${rental.slug}`,
+      bedrooms: rental.bedrooms,
+      bathrooms: rental.bathrooms,
+      squareFootage: rental.size,
+      propertyType: rental.propertyType,
+      isAvailable: rental.isAvailable,
+      dateAvailable: rental.availableDate,
+      address: rental.address,
+      city: rental.city,
+      state: rental.state,
+      zipCode: rental.zipCode,
+      yearBuilt: rental.yearBuilt,
+      amenities: rental.amenities,
+      leaseTerms: rental.leaseTerms,
+      deposit: rental.deposit
+    }
+  });
+};
+
+// Legacy function for backward compatibility
+const toApartmentsComFormatLegacy = async (listing: any) => {
   const unit = await prisma.unit.findFirst({ where: { listingId: listing.id } });
   const property = await prisma.property.findUnique({ where: { id: listing.propertyId } });
 
@@ -27,47 +53,73 @@ const toApartmentsComFormat = async (listing: Listing) => {
       propertyType: property?.propertyType,
       isAvailable: listing.isActive,
       dateAvailable: listing.availableDate,
-    },
+      address: property?.address,
+      city: property?.city,
+      state: property?.state,
+      zipCode: property?.zipCode
+    }
   });
 };
 
-export const publishToApartmentsCom = async (listing: Listing) => {
-  const response = await fetch(`${APARTMENTS_COM_API_URL}/import`, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    body: await toApartmentsComFormat(listing),
-  });
+export const publishToApartmentsCom = async (rental: Rental): Promise<any> => {
+  try {
+    const apartmentsComData = toApartmentsComFormat(rental);
+    
+    const response = await fetch(`${APARTMENTS_COM_API_URL}/listings`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: apartmentsComData,
+    });
 
-  if (!response.ok) {
-    throw new AppError('Failed to publish to Apartments.com', response.status);
+    if (!response.ok) {
+      throw new AppError(`Apartments.com API error: ${response.statusText}`, response.status);
+    }
+
+    return await response.text(); // Apartments.com typically returns XML
+  } catch (error: any) {
+    console.error('Error publishing to Apartments.com:', error);
+    throw new AppError(error.message || 'Failed to publish to Apartments.com', error.status || 500);
   }
-
-  return response.text();
 };
 
-export const getApartmentsComps = async (propertyId: string) => {
-  const response = await fetch(`${APARTMENTS_COM_API_URL}/properties/${propertyId}/comps`, {
-    method: 'GET',
-    headers: getAuthHeaders(),
-  });
+export const updateApartmentsComListing = async (rental: Rental, apartmentsComListingId: string): Promise<any> => {
+  try {
+    const apartmentsComData = toApartmentsComFormat(rental);
+    
+    const response = await fetch(`${APARTMENTS_COM_API_URL}/listings/${apartmentsComListingId}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: apartmentsComData,
+    });
 
-  if (!response.ok) {
-    throw new AppError('Failed to get comps from Apartments.com', response.status);
+    if (!response.ok) {
+      throw new AppError(`Apartments.com API error: ${response.statusText}`, response.status);
+    }
+
+    return await response.text();
+  } catch (error: any) {
+    console.error('Error updating Apartments.com listing:', error);
+    throw new AppError(error.message || 'Failed to update Apartments.com listing', error.status || 500);
   }
-
-  return response.json();
 };
 
-export const deleteFromApartmentsCom = async (listingId: string) => {
-  const response = await fetch(`${APARTMENTS_COM_API_URL}/delete`, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    body: toXML({ listingId }),
-  });
+export const removeFromApartmentsCom = async (apartmentsComListingId: string): Promise<boolean> => {
+  try {
+    const response = await fetch(`${APARTMENTS_COM_API_URL}/listings/${apartmentsComListingId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
 
-  if (!response.ok) {
-    throw new AppError('Failed to delete from Apartments.com', response.status);
+    if (!response.ok) {
+      throw new AppError(`Apartments.com API error: ${response.statusText}`, response.status);
+    }
+
+    return true;
+  } catch (error: any) {
+    console.error('Error removing from Apartments.com:', error);
+    throw new AppError(error.message || 'Failed to remove from Apartments.com', error.status || 500);
   }
-
-  return response.text();
 };
+
+// Legacy exports for backward compatibility
+export { toApartmentsComFormatLegacy as toApartmentsComFormat };

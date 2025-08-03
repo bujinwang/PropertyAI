@@ -1,0 +1,1102 @@
+// This is the updated schema file that should replace the current schema.prisma
+// after the migration is complete
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AIImageAnalysis {
+  id             String   @id
+  analysisResult Json?
+  createdAt      DateTime @default(now())
+  imageId        String   @unique
+  updatedAt      DateTime
+}
+
+model AIUsageLog {
+  id        String   @id
+  userId    String?
+  toolName  String
+  input     Json?
+  output    Json?
+  cost      Float?
+  timestamp DateTime @default(now())
+  User      User?    @relation(fields: [userId], references: [id])
+
+  @@index([toolName])
+  @@index([userId])
+}
+
+model ApiKey {
+  id        String    @id
+  key       String    @unique
+  userId    String
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  isActive  Boolean   @default(true)
+  name      String?
+  User      User      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model Appliance {
+  id        String   @id
+  rentalId  String
+  name      String
+  createdAt DateTime @default(now())
+  type      String
+  updatedAt DateTime
+  Rental    Rental   @relation(fields: [rentalId], references: [id])
+
+  @@index([rentalId])
+}
+
+model Application {
+  id          String            @id
+  rentalId    String
+  applicantId String
+  status      ApplicationStatus @default(PENDING)
+  notes       String?
+  appliedDate DateTime          @default(now())
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime
+  User        User              @relation(fields: [applicantId], references: [id])
+  Rental      Rental            @relation(fields: [rentalId], references: [id])
+  BackgroundCheck BackgroundCheck?
+  RiskAssessment  RiskAssessment?
+  Screening       Screening?
+
+  @@unique([rentalId, applicantId])
+  @@index([status])
+}
+
+model AuditEntry {
+  id         String   @id
+  userId     String?
+  action     String
+  timestamp  DateTime @default(now())
+  details    Json?
+  entityId   String
+  entityType String
+  User       User?    @relation(fields: [userId], references: [id])
+
+  @@index([entityId])
+  @@index([entityType])
+  @@index([userId])
+}
+
+model BackgroundCheck {
+  id          String      @id
+  status      String
+  reportUrl   String?
+  applicantId String      @unique
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime
+  Application Application @relation(fields: [applicantId], references: [id])
+
+  @@index([applicantId])
+}
+
+model BusinessHours {
+  id       String   @id
+  rentalId String
+  openTime String
+  closeTime String
+  createdAt DateTime @default(now())
+  isClosed  Boolean  @default(false)
+  updatedAt DateTime
+  dayOfWeek Int
+  Rental    Rental   @relation(fields: [rentalId], references: [id])
+
+  @@unique([rentalId, dayOfWeek])
+}
+
+model Consent {
+  id        String   @id
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  agreedAt  DateTime @default(now())
+  type      String
+  User      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, type])
+  @@index([userId])
+}
+
+model CostEstimation {
+  id            String    @id
+  workOrderId   String    @unique
+  estimatedCost Float
+  createdAt     DateTime  @default(now())
+  details       String?
+  updatedAt     DateTime
+  WorkOrder     WorkOrder @relation(fields: [workOrderId], references: [id])
+}
+
+model Device {
+  id         String   @id
+  userId     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+  deviceType String
+  lastLogin  DateTime @default(now())
+  model      String?
+  os         String?
+  pushToken  String?
+  User       User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model Document {
+  id                   String              @id
+  name                 String
+  type                 DocumentType
+  url                  String
+  uploadedAt           DateTime            @default(now())
+  updatedAt            DateTime
+  description          String?
+  rentalId             String?
+  leaseId              String?
+  uploadedById         String
+  maintenanceRequestId String?
+  size                 Int?
+  mimeType             String?
+  isArchived           Boolean             @default(false)
+  cdnUrl               String?
+  key                  String?
+  thumbnailCdnUrl      String?
+  thumbnailUrl         String?
+  Lease                Lease?              @relation(fields: [leaseId], references: [id])
+  MaintenanceRequest   MaintenanceRequest? @relation(fields: [maintenanceRequestId], references: [id])
+  Rental               Rental?             @relation(fields: [rentalId], references: [id])
+  User                 User                @relation(fields: [uploadedById], references: [id])
+}
+
+model EmergencyProtocol {
+  id          String   @id
+  rentalId    String
+  description String
+  name        String
+  createdAt   DateTime @default(now())
+  instructions Json?
+  updatedAt   DateTime
+  Rental      Rental   @relation(fields: [rentalId], references: [id])
+}
+
+model EmergencyRoutingRule {
+  id        String   @id
+  vendorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  priority  Priority @unique
+  Vendor    Vendor   @relation(fields: [vendorId], references: [id])
+
+  @@index([vendorId])
+}
+
+model EscalationPolicy {
+  id                   String                 @id
+  name                 String
+  description          String?
+  rentalId             String
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime
+  Rental               Rental                 @relation(fields: [rentalId], references: [id])
+  EscalationPolicyRule EscalationPolicyRule[]
+}
+
+model EscalationPolicyRule {
+  id               String           @id
+  policyId         String
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime
+  order            Int
+  action           String
+  assignedToUserId String?
+  threshold        String
+  User             User?            @relation(fields: [assignedToUserId], references: [id])
+  EscalationPolicy EscalationPolicy @relation(fields: [policyId], references: [id])
+
+  @@unique([policyId, order])
+}
+
+model FollowUp {
+  id         String   @id
+  messageId  String   @unique
+  status     String
+  followUpAt DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+  Message    Message  @relation(fields: [messageId], references: [id])
+}
+
+model KnowledgeBaseEntry {
+  id        String   @id
+  category  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  answer    String
+  question  String
+  keywords  String[]
+
+  @@index([category])
+}
+
+model Language {
+  id        String   @id
+  code      String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+}
+
+model Lease {
+  id              String         @id
+  startDate       DateTime
+  endDate         DateTime
+  rentAmount      Float
+  securityDeposit Float
+  leaseTerms      String?
+  status          LeaseStatus    @default(ACTIVE)
+  signedDate      DateTime       @default(now())
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime
+  rentalId        String         @unique
+  renewalDate     DateTime?
+  tenantId        String
+  Document        Document[]
+  Rental          Rental         @relation(fields: [rentalId], references: [id])
+  User            User           @relation(fields: [tenantId], references: [id])
+  TenantRating    TenantRating[]
+  Transaction     Transaction[]
+}
+
+model MaintenanceRequest {
+  id                         String                      @id
+  title                      String
+  description                String
+  status                     MaintenanceStatus           @default(OPEN)
+  priority                   Priority                    @default(MEDIUM)
+  createdAt                  DateTime                    @default(now())
+  updatedAt                  DateTime
+  scheduledDate              DateTime?
+  completedDate              DateTime?
+  notes                      String?
+  rentalId                   String
+  requestedById              String
+  estimatedCost              Float?
+  actualCost                 Float?
+  categoryId                 String?
+  Document                   Document[]
+  MaintenanceRequestCategory MaintenanceRequestCategory? @relation(fields: [categoryId], references: [id])
+  Rental                     Rental                      @relation(fields: [rentalId], references: [id])
+  User                       User                        @relation(fields: [requestedById], references: [id])
+  MaintenanceResponseTime    MaintenanceResponseTime?
+  Message                    Message[]
+  PhotoAnalysis              PhotoAnalysis?
+  WorkOrder                  WorkOrder?
+
+  @@index([priority])
+  @@index([rentalId])
+  @@index([status])
+}
+
+model MaintenanceRequestCategory {
+  id                 String               @id
+  name               String               @unique
+  description        String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  MaintenanceRequest MaintenanceRequest[]
+}
+
+model MaintenanceResponseTime {
+  id                   String             @id
+  maintenanceRequestId String             @unique
+  createdAt            DateTime           @default(now())
+  responseTime         Int
+  updatedAt            DateTime
+  MaintenanceRequest   MaintenanceRequest @relation(fields: [maintenanceRequestId], references: [id])
+}
+
+model MarketData {
+  id           String        @id
+  averageRent  Float
+  location     String
+  vacancyRate  Float
+  bedrooms     Int?
+  dataDate     DateTime      @default(now())
+  propertyType PropertyType?
+  
+  @@unique([location, dataDate, propertyType, bedrooms])
+  @@index([dataDate])
+  @@index([location])
+}
+
+model Message {
+  id                            String              @id
+  content                       String
+  senderId                      String
+  maintenanceRequestId          String?
+  conversationId                String?
+  readAt                        DateTime?
+  receiverId                    String
+  sentAt                        DateTime            @default(now())
+  FollowUp                      FollowUp?
+  MaintenanceRequest            MaintenanceRequest? @relation(fields: [maintenanceRequestId], references: [id])
+  User_Message_receiverIdToUser User                @relation("Message_receiverIdToUser", fields: [receiverId], references: [id])
+  User_Message_senderIdToUser   User                @relation("Message_senderIdToUser", fields: [senderId], references: [id])
+
+  @@index([conversationId])
+  @@index([receiverId])
+  @@index([senderId])
+}
+
+model Notification {
+  id        String   @id
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  userId    String
+  link      String?
+  type      String
+  User      User     @relation(fields: [userId], references: [id])
+
+  @@index([isRead])
+  @@index([userId])
+}
+
+model OAuthAccessToken {
+  id          String   @id
+  accessToken String   @unique
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  userId      String
+  User        User     @relation(fields: [userId], references: [id])
+}
+
+model OAuthConnection {
+  id           String    @id
+  accessToken  String
+  refreshToken String?
+  userId       String
+  providerId   String
+  provider     String
+  createdAt    DateTime  @default(now())
+  expiresAt    DateTime?
+  updatedAt    DateTime
+  User         User      @relation(fields: [userId], references: [id])
+
+  @@unique([provider, providerId])
+  @@index([userId])
+}
+
+model OnCallRotation {
+  id             String         @id
+  scheduleId     String
+  userId         String
+  startDate      DateTime
+  endDate        DateTime
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime
+  OnCallSchedule OnCallSchedule @relation(fields: [scheduleId], references: [id])
+  User           User           @relation(fields: [userId], references: [id])
+}
+
+model OnCallSchedule {
+  id             String           @id
+  name           String
+  description    String?
+  rentalId       String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime
+  OnCallRotation OnCallRotation[]
+  Rental         Rental           @relation(fields: [rentalId], references: [id])
+}
+
+model PasswordResetToken {
+  id        String   @id
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id])
+}
+
+model Permission {
+  id          String   @id
+  name        String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt  DateTime
+  description String?
+  Role        Role[]
+}
+
+model PhotoAnalysis {
+  id                   String             @id
+  maintenanceRequestId String             @unique
+  analysisResult       Json?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime
+  MaintenanceRequest   MaintenanceRequest @relation(fields: [maintenanceRequestId], references: [id])
+}
+
+model PredictiveMaintenance {
+  id         String   @id
+  rentalId   String
+  createdAt  DateTime @default(now())
+  prediction Json?
+  updatedAt  DateTime
+  Rental     Rental   @relation(fields: [rentalId], references: [id])
+
+  @@index([rentalId])
+}
+
+model Rental {
+  id                   String                  @id
+  title                String
+  description          String?
+  address              String
+  city                 String
+  state                String
+  zipCode              String
+  country              String                  @default("USA")
+  latitude             Float?
+  longitude            Float?
+  propertyType         PropertyType
+  yearBuilt            Int?
+  totalUnits           Int                     @default(1)
+  amenities            Json?
+  unitNumber           String?
+  floorNumber          Int?
+  size                 Float?
+  bedrooms             Int?
+  bathrooms            Float?
+  rent                 Float
+  deposit              Float?
+  availableDate        DateTime?
+  isAvailable          Boolean                 @default(true)
+  leaseTerms           String?
+  slug                 String                  @unique
+  viewCount            Int                     @default(0)
+  isActive             Boolean                 @default(true)
+  status               ListingStatus           @default(ACTIVE)
+  managerId            String
+  ownerId              String
+  createdById          String
+  whiteLabelConfigId   String?
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+
+  // Relations
+  Appliances           Appliance[]
+  Applications         Application[]
+  BusinessHours        BusinessHours[]
+  Documents            Document[]
+  EmergencyProtocols   EmergencyProtocol[]
+  EscalationPolicies   EscalationPolicy[]
+  Leases               Lease[]
+  MaintenanceRequests  MaintenanceRequest[]
+  OnCallSchedules      OnCallSchedule[]
+  PredictiveMaintenances PredictiveMaintenance[]
+  RentalImages         RentalImage[]
+  WhiteLabelConfigs    WhiteLabelConfig[]
+
+  // Relations to User
+  Manager              User                    @relation("RentalManager", fields: [managerId], references: [id])
+  Owner                User                    @relation("RentalOwner", fields: [ownerId], references: [id])
+  CreatedBy            User                    @relation("RentalCreatedBy", fields: [createdById], references: [id])
+  WhiteLabelConfig     WhiteLabelConfig?       @relation(fields: [whiteLabelConfigId], references: [id])
+
+  @@index([city])
+  @@index([state])
+  @@index([zipCode])
+  @@index([propertyType])
+  @@index([rent])
+  @@index([isAvailable])
+  @@index([status])
+  @@index([managerId])
+  @@index([ownerId])
+}
+
+model RentalImage {
+  id               Int      @id @default(autoincrement())
+  rentalId         String
+  filename         String
+  originalFilename String
+  mimetype         String
+  size             Int
+  url              String
+  cdnUrl           String?
+  isFeatured       Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime
+
+  Rental Rental @relation(fields: [rentalId], references: [id])
+
+  @@index([rentalId])
+  @@index([isFeatured])
+}
+
+model RiskAssessment {
+  id          String      @id
+  applicationId String    @unique
+  score       Float
+  details     Json?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime
+  Application Application @relation(fields: [applicationId], references: [id])
+
+  @@index([applicationId])
+}
+
+model Role {
+  id         String       @id
+  name       String       @unique
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime
+  Permission Permission[]
+  User       User[]
+}
+
+model ScheduledEvent {
+  id          String    @id
+  workOrderId String    @unique
+  startTime   DateTime
+  endTime     DateTime
+  description String?
+  title       String
+  createdAt   DateTime  @default(now())
+  location    String?
+  updatedAt   DateTime
+  WorkOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+}
+
+model Screening {
+  id            String      @id
+  applicationId String      @unique
+  createdAt     DateTime    @default(now())
+  reportUrl     String?
+  status        String
+  updatedAt     DateTime
+  Application   Application @relation(fields: [applicationId], references: [id])
+
+  @@index([applicationId])
+}
+
+model TenantIssuePrediction {
+  id          String    @id
+  tenantId    String
+  predictedAt DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  issueType   String
+  likelihood  Float
+  resolvedAt  DateTime?
+  updatedAt   DateTime
+  User        User      @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+}
+
+model TenantRating {
+  id                               String   @id
+  leaseId                          String
+  tenantId                         String
+  raterId                          String
+  rating                           Int
+  comment                          String?
+  createdAt                        DateTime @default(now())
+  updatedAt                        DateTime
+  Lease                            Lease    @relation(fields: [leaseId], references: [id])
+  User_TenantRating_raterIdToUser  User     @relation("TenantRating_raterIdToUser", fields: [raterId], references: [id])
+  User_TenantRating_tenantIdToUser User     @relation("TenantRating_tenantIdToUser", fields: [tenantId], references: [id])
+
+  @@index([leaseId])
+  @@index([raterId])
+  @@index([tenantId])
+}
+
+model Transaction {
+  id              String            @id
+  amount          Float
+  type            TransactionType
+  status          TransactionStatus @default(PENDING)
+  description     String?
+  createdAt       DateTime          @default(now())
+  leaseId         String
+  approvedById    String?
+  transactionDate DateTime          @default(now())
+  updatedAt       DateTime
+  User            User?             @relation(fields: [approvedById], references: [id])
+  Lease           Lease             @relation(fields: [leaseId], references: [id])
+
+  @@index([leaseId])
+  @@index([status])
+  @@index([type])
+}
+
+model UXReview {
+  id                 String               @id
+  title              String
+  description        String?
+  status             UXReviewStatus       @default(PENDING)
+  priority           UXReviewPriority     @default(MEDIUM)
+  componentType      UXComponentType
+  reviewerId         String
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  User               User                 @relation(fields: [reviewerId], references: [id])
+  UXReviewAssignment UXReviewAssignment[]
+  UXReviewComment    UXReviewComment[]
+
+  @@index([componentType])
+  @@index([priority])
+  @@index([reviewerId])
+  @@index([status])
+}
+
+model UXReviewAssignment {
+  id         String                   @id
+  reviewId   String
+  assigneeId String
+  status     UXReviewAssignmentStatus @default(PENDING)
+  createdAt  DateTime                 @default(now())
+  updatedAt  DateTime
+  User       User                     @relation(fields: [assigneeId], references: [id])
+  UXReview   UXReview                 @relation(fields: [reviewId], references: [id])
+
+  @@index([assigneeId])
+  @@index([reviewId])
+  @@index([status])
+}
+
+model UXReviewComment {
+  id        String   @id
+  reviewId  String
+  content   String
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  User      User     @relation(fields: [authorId], references: [id])
+  UXReview  UXReview @relation(fields: [reviewId], references: [id])
+
+  @@index([authorId])
+  @@index([reviewId])
+}
+
+model UXSurvey {
+  id               String             @id
+  title            String
+  description      String?
+  status           SurveyStatus       @default(DRAFT)
+  createdById      String
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime
+  User             User               @relation(fields: [createdById], references: [id])
+  UXSurveyQuestion UXSurveyQuestion[]
+  UXSurveyResponse UXSurveyResponse[]
+
+  @@index([createdById])
+  @@index([status])
+}
+
+model UXSurveyAnswer {
+  id               String           @id
+  responseId       String
+  questionId       String
+  value            String
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime
+  UXSurveyQuestion UXSurveyQuestion @relation(fields: [questionId], references: [id])
+  UXSurveyResponse UXSurveyResponse @relation(fields: [responseId], references: [id])
+
+  @@unique([responseId, questionId])
+}
+
+model UXSurveyQuestion {
+  id             String           @id
+  surveyId       String
+  question       String
+  type           QuestionType
+  options        Json?
+  order          Int
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime
+  UXSurveyAnswer UXSurveyAnswer[]
+  UXSurvey       UXSurvey         @relation(fields: [surveyId], references: [id])
+
+  @@index([surveyId])
+}
+
+model UXSurveyResponse {
+  id             String           @id
+  surveyId       String
+  respondentId   String
+  submittedAt    DateTime         @default(now())
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime
+  UXSurveyAnswer UXSurveyAnswer[]
+  User           User             @relation(fields: [respondentId], references: [id])
+  UXSurvey       UXSurvey         @relation(fields: [surveyId], references: [id])
+
+  @@index([respondentId])
+  @@index([surveyId])
+}
+
+model User {
+  id                                       String                    @id
+  email                                    String                    @unique
+  password                                 String
+  firstName                                String
+  lastName                                 String
+  phone                                    String?
+  role                                     UserRole                  @default(TENANT)
+  createdAt                                DateTime                  @default(now())
+  updatedAt                                DateTime
+  isActive                                 Boolean                   @default(true)
+  mfaEnabled                               Boolean                   @default(false)
+  mfaSecret                                String?
+  passwordResetExpires                     DateTime?
+  passwordResetToken                       String?
+  failedLoginAttempts                      Int                       @default(0)
+  isLocked                                 Boolean                   @default(false)
+  lockedUntil                              DateTime?
+  lastLockedAt                             DateTime?
+  settings                                 Json?
+  lastLogin                                DateTime?
+  refreshToken                             String?
+  stripeCustomerId                         String?                   @unique
+  pushToken                                String?
+  rentalsManaged                           String[]                  @default([])
+  rentalsOwned                             String[]                  @default([])
+  rentals                                  String[]                  @default([])
+  AIUsageLog                               AIUsageLog[]
+  ApiKey                                   ApiKey[]
+  Application                              Application[]
+  AuditEntry                               AuditEntry[]
+  Consent                                  Consent[]
+  Device                                   Device[]
+  Document                                 Document[]
+  EscalationPolicyRule                     EscalationPolicyRule[]
+  Lease                                    Lease[]
+  Message_Message_receiverIdToUser         Message[]                 @relation("Message_receiverIdToUser")
+  Message_Message_senderIdToUser           Message[]                 @relation("Message_senderIdToUser")
+  Notification                             Notification[]
+  OAuthAccessToken                         OAuthAccessToken[]
+  OAuthConnection                          OAuthConnection[]
+  OnCallRotation                           OnCallRotation[]
+  PasswordResetToken                       PasswordResetToken[]
+  TenantIssuePrediction                    TenantIssuePrediction[]
+  TenantRating_TenantRating_raterIdToUser  TenantRating[]            @relation("TenantRating_raterIdToUser")
+  TenantRating_TenantRating_tenantIdToUser TenantRating[]            @relation("TenantRating_tenantIdToUser")
+  Transaction                              Transaction[]
+  UXReview                                 UXReview[]
+  UXReviewAssignment                       UXReviewAssignment[]
+  UXReviewComment                          UXReviewComment[]
+  UXSurvey                                 UXSurvey[]
+  UXSurveyResponse                         UXSurveyResponse[]
+  Vendor                                   Vendor?
+  VendorPayment                            VendorPayment[]
+  VendorPerformanceRating                  VendorPerformanceRating[]
+  WhiteLabelConfig                         WhiteLabelConfig[]
+  Role                                     Role[]
+
+  @@index([email])
+  @@index([isActive])
+  @@index([role])
+}
+
+model Vendor {
+  id                      String                    @id
+  name                    String
+  contactPersonId         String?                   @unique
+  phone                   String
+  email                   String                    @unique
+  address                 String
+  specialty               String
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime
+  certifications          String[]
+  hourlyRate              Float?
+  serviceAreas            String[]
+  workload                Int                       @default(0)
+  latitude                Float?
+  longitude               Float?
+  standardRate            Float?
+  availability            String
+  stripeAccountId         String?                   @unique
+  EmergencyRoutingRule    EmergencyRoutingRule[]
+  User                    User?                     @relation(fields: [contactPersonId], references: [id])
+  VendorPayment           VendorPayment[]
+  VendorPerformanceRating VendorPerformanceRating[]
+  WorkOrderAssignment     WorkOrderAssignment[]
+  WorkOrderQuote          WorkOrderQuote[]
+}
+
+model VendorPayment {
+  id            String        @id
+  amount        Float
+  status        PaymentStatus @default(PENDING)
+  workOrderId   String
+  vendorId      String
+  transactionId String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime
+  approvedById  String?
+  paymentDate   DateTime      @default(now())
+  User          User?         @relation(fields: [approvedById], references: [id])
+  Vendor        Vendor        @relation(fields: [vendorId], references: [id])
+  WorkOrder     WorkOrder     @relation(fields: [workOrderId], references: [id])
+
+  @@index([status])
+  @@index([vendorId])
+  @@index([workOrderId])
+}
+
+model VendorPerformanceRating {
+  id          String    @id
+  vendorId    String
+  workOrderId String
+  ratedById   String
+  comment     String?
+  createdAt   DateTime  @default(now())
+  rating      Int
+  updatedAt   DateTime
+  User        User      @relation(fields: [ratedById], references: [id])
+  Vendor      Vendor    @relation(fields: [vendorId], references: [id])
+  WorkOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+
+  @@unique([vendorId, workOrderId])
+  @@index([ratedById])
+  @@index([vendorId])
+}
+
+model WhiteLabelConfig {
+  id             String   @id
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime
+  platform       String
+  token          String   @unique
+  userId         String
+  appName        String?
+  logoUrl        String?
+  primaryColor   String?
+  secondaryColor String?
+  rentals        Rental[]
+  User           User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model WorkOrder {
+  id                      String                    @id
+  title                   String
+  description             String
+  status                  WorkOrderStatus           @default(OPEN)
+  priority                Priority
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime
+  completedAt             DateTime?
+  maintenanceRequestId    String                    @unique
+  CostEstimation          CostEstimation?
+  ScheduledEvent          ScheduledEvent?
+  VendorPayment           VendorPayment[]
+  VendorPerformanceRating VendorPerformanceRating[]
+  MaintenanceRequest      MaintenanceRequest        @relation(fields: [maintenanceRequestId], references: [id])
+  WorkOrderAssignment     WorkOrderAssignment[]
+  WorkOrderQuote          WorkOrderQuote[]
+}
+
+model WorkOrderAssignment {
+  id          String    @id
+  workOrderId String
+  vendorId    String
+  assignedAt  DateTime  @default(now())
+  notes       String?
+  Vendor      Vendor    @relation(fields: [vendorId], references: [id])
+  WorkOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+}
+
+model WorkOrderQuote {
+  id          String      @id
+  workOrderId String
+  vendorId    String
+  amount      Float
+  details     String?
+  status      QuoteStatus @default(PENDING)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime
+  Vendor      Vendor      @relation(fields: [vendorId], references: [id])
+  WorkOrder   WorkOrder   @relation(fields: [workOrderId], references: [id])
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+enum DocumentType {
+  LEASE
+  INVOICE
+  RECEIPT
+  MAINTENANCE_REPORT
+  PROPERTY_PHOTO
+  CONTRACT
+  OTHER
+}
+
+enum LeaseStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  TERMINATED
+}
+
+enum ListingStatus {
+  ACTIVE
+  PENDING
+  DRAFT
+  ARCHIVED
+}
+
+enum MaintenanceStatus {
+  OPEN
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  EMERGENCY
+}
+
+enum PropertyType {
+  APARTMENT
+  HOUSE
+  CONDO
+  TOWNHOUSE
+  COMMERCIAL
+  INDUSTRIAL
+  OTHER
+}
+
+enum QuestionType {
+  TEXT
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  RATING
+}
+
+enum QuoteStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum Sentiment {
+  POSITIVE
+  NEGATIVE
+  NEUTRAL
+}
+
+enum SurveyStatus {
+  DRAFT
+  ACTIVE
+  CLOSED
+  ARCHIVED
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum TransactionType {
+  RENT_PAYMENT
+  SECURITY_DEPOSIT
+  MAINTENANCE_FEE
+  REFUND
+  OTHER
+}
+
+enum UXComponentType {
+  DASHBOARD
+  PROPERTY_PAGE
+  UNIT_PAGE
+  MAINTENANCE_FLOW
+  LEASING_FLOW
+  ONBOARDING
+  SETTINGS
+  OTHER
+}
+
+enum UXReviewAssignmentStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  BLOCKED
+}
+
+enum UXReviewPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum UXReviewStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  NEEDS_REVISION
+  APPROVED
+  REJECTED
+}
+
+enum UserRole {
+  ADMIN
+  PROPERTY_MANAGER
+  TENANT
+  USER
+  VENDOR
+  OWNER
+}
+
+enum VendorAvailability {
+  AVAILABLE
+  UNAVAILABLE
+  ON_VACATION
+}
+
+enum WorkOrderStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}

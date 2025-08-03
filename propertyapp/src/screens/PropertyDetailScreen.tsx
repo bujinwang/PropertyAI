@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -7,6 +7,8 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@/components/ui/Card';
@@ -14,64 +16,98 @@ import { Button } from '@/components/ui/Button';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@/navigation/types';
+import { rentalService } from '@/services/rentalService';
+import { Rental } from '@/types/rental';
 
 type PropertyDetailNavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
-interface Property {
-  id: string;
-  name: string;
-  address: string;
-  image: string;
-  price: number;
-  bedrooms: number;
-  bathrooms: number;
-  sqft: number;
-  description: string;
-  amenities: string[];
-  type: 'apartment' | 'house' | 'condo';
-  yearBuilt: number;
-  parking: boolean;
-  petsAllowed: boolean;
-}
-
-const mockProperty: Property = {
-  id: '1',
-  name: 'Modern Downtown Apartment',
-  address: '123 Main Street, Downtown, NY 10001',
-  image: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800',
-  price: 2850,
-  bedrooms: 2,
-  bathrooms: 2,
-  sqft: 950,
-  description: 'Beautiful modern apartment in the heart of downtown with stunning city views. Features updated kitchen, hardwood floors, and in-unit laundry.',
-  amenities: ['Gym', 'Pool', 'Parking', 'Doorman', 'Rooftop Deck'],
-  type: 'apartment',
-  yearBuilt: 2018,
-  parking: true,
-  petsAllowed: true,
-};
 
 export const PropertyDetailScreen: React.FC = () => {
   const navigation = useNavigation<PropertyDetailNavigationProp>();
   const route = useRoute();
   const { propertyId } = route.params as { propertyId: string };
 
+  const [rental, setRental] = useState<Rental | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadRental();
+  }, [propertyId]);
+
+  const loadRental = async () => {
+    try {
+      setLoading(true);
+      const rentalData = await rentalService.getRentalById(propertyId);
+      setRental(rentalData);
+    } catch (error) {
+      console.error('Failed to load rental:', error);
+      Alert.alert('Error', 'Failed to load property details');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleContact = () => {
     // Navigate to contact screen
-    navigation.navigate('ChatDetail' as any, { propertyId });
+    navigation.navigate('ChatDetail' as any, { rentalId: propertyId });
   };
 
   const handleSchedule = () => {
     // Navigate to scheduling screen
-    navigation.navigate('ScheduleTour' as any, { propertyId });
+    navigation.navigate('ScheduleTour' as any, { rentalId: propertyId });
   };
+
+  const handleViewUnits = () => {
+    navigation.navigate('UnitList', { 
+      propertyId: rental?.id, 
+      propertyName: rental?.title 
+    });
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
+    );
+  }
+
+  if (!rental) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Property not found</Text>
+        <Button title="Go Back" onPress={() => navigation.goBack()} />
+      </View>
+    );
+  }
+
+  const amenitiesList = rental.amenities ? 
+    (Array.isArray(rental.amenities) ? rental.amenities : Object.keys(rental.amenities)) : 
+    [];
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Deprecation Notice */}
+      <View style={styles.deprecationNotice}>
+        <Ionicons name="warning" size={16} color="#FF9500" />
+        <Text style={styles.deprecationText}>
+          This view is deprecated. Use the new Rental Detail view instead.
+        </Text>
+        <TouchableOpacity 
+          onPress={() => navigation.navigate('RentalDetail', { rentalId: rental.id })}
+        >
+          <Text style={styles.deprecationLink}>Switch to new view</Text>
+        </TouchableOpacity>
+      </View>
+
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header Image */}
         <View style={styles.imageContainer}>
-          <Image source={{ uri: mockProperty.image }} style={styles.propertyImage} />
+          <Image 
+            source={{ 
+              uri: rental.images?.[0]?.url || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800' 
+            }} 
+            style={styles.propertyImage} 
+          />
           <TouchableOpacity 
             style={styles.backButton} 
             onPress={() => navigation.goBack()}
@@ -83,53 +119,59 @@ export const PropertyDetailScreen: React.FC = () => {
         {/* Property Info */}
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text style={styles.price}>${mockProperty.price}/month</Text>
+            <Text style={styles.price}>${rental.rent}/month</Text>
             <View style={styles.typeBadge}>
-              <Text style={styles.typeText}>{mockProperty.type}</Text>
+              <Text style={styles.typeText}>{rental.propertyType.toLowerCase()}</Text>
             </View>
           </View>
 
-          <Text style={styles.title}>{mockProperty.name}</Text>
-          <Text style={styles.address}>{mockProperty.address}</Text>
+          <Text style={styles.title}>{rental.title}</Text>
+          <Text style={styles.address}>
+            {rental.address}, {rental.city}, {rental.state} {rental.zipCode}
+          </Text>
 
           {/* Property Stats */}
           <View style={styles.statsRow}>
             <View style={styles.stat}>
               <Ionicons name="bed-outline" size={20} color="#666" />
-              <Text style={styles.statText}>{mockProperty.bedrooms} beds</Text>
+              <Text style={styles.statText}>{rental.bedrooms || 0} beds</Text>
             </View>
             <View style={styles.stat}>
               <Ionicons name="water-outline" size={20} color="#666" />
-              <Text style={styles.statText}>{mockProperty.bathrooms} baths</Text>
+              <Text style={styles.statText}>{rental.bathrooms || 0} baths</Text>
             </View>
             <View style={styles.stat}>
               <Ionicons name="square-outline" size={20} color="#666" />
-              <Text style={styles.statText}>{mockProperty.sqft} sqft</Text>
+              <Text style={styles.statText}>{rental.size || 0} sqft</Text>
             </View>
           </View>
 
           {/* Description */}
-          <Card style={styles.section}>
-            <Card.Title title="Description" />
-            <Card.Content>
-              <Text style={styles.description}>{mockProperty.description}</Text>
-            </Card.Content>
-          </Card>
+          {rental.description && (
+            <Card style={styles.section}>
+              <Card.Title title="Description" />
+              <Card.Content>
+                <Text style={styles.description}>{rental.description}</Text>
+              </Card.Content>
+            </Card>
+          )}
 
           {/* Amenities */}
-          <Card style={styles.section}>
-            <Card.Title title="Amenities" />
-            <Card.Content>
-              <View style={styles.amenitiesGrid}>
-                {mockProperty.amenities.map((amenity) => (
-                  <View key={amenity} style={styles.amenity}>
-                    <Ionicons name="checkmark-circle" size={16} color="#34C759" />
-                    <Text style={styles.amenityText}>{amenity}</Text>
-                  </View>
-                ))}
-              </View>
-            </Card.Content>
-          </Card>
+          {amenitiesList.length > 0 && (
+            <Card style={styles.section}>
+              <Card.Title title="Amenities" />
+              <Card.Content>
+                <View style={styles.amenitiesGrid}>
+                  {amenitiesList.map((amenity, index) => (
+                    <View key={index} style={styles.amenity}>
+                      <Ionicons name="checkmark-circle" size={16} color="#34C759" />
+                      <Text style={styles.amenityText}>{amenity}</Text>
+                    </View>
+                  ))}
+                </View>
+              </Card.Content>
+            </Card>
+          )}
 
           {/* Property Details */}
           <Card style={styles.section}>
@@ -137,19 +179,25 @@ export const PropertyDetailScreen: React.FC = () => {
             <Card.Content>
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Type:</Text>
-                <Text style={styles.detailValue}>{mockProperty.type}</Text>
+                <Text style={styles.detailValue}>{rental.propertyType}</Text>
               </View>
+              {rental.yearBuilt && (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Year Built:</Text>
+                  <Text style={styles.detailValue}>{rental.yearBuilt}</Text>
+                </View>
+              )}
+              {rental.totalUnits && rental.totalUnits > 1 && (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Total Units:</Text>
+                  <Text style={styles.detailValue}>{rental.totalUnits}</Text>
+                </View>
+              )}
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Year Built:</Text>
-                <Text style={styles.detailValue}>{mockProperty.yearBuilt}</Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Parking:</Text>
-                <Text style={styles.detailValue}>{mockProperty.parking ? 'Available' : 'Not available'}</Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Pets:</Text>
-                <Text style={styles.detailValue}>{mockProperty.petsAllowed ? 'Allowed' : 'Not allowed'}</Text>
+                <Text style={styles.detailLabel}>Status:</Text>
+                <Text style={styles.detailValue}>
+                  {rental.isAvailable ? 'Available' : 'Not Available'}
+                </Text>
               </View>
             </Card.Content>
           </Card>
@@ -169,6 +217,16 @@ export const PropertyDetailScreen: React.FC = () => {
               style={styles.button}
             />
           </View>
+
+          {/* View Units Button for Properties */}
+          {rental.totalUnits && rental.totalUnits > 1 && (
+            <Button
+              title="View Units"
+              variant="outline"
+              onPress={handleViewUnits}
+              style={styles.unitsButton}
+            />
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -179,6 +237,39 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 18,
+    color: '#666',
+    marginBottom: 20,
+  },
+  deprecationNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF3CD',
+    padding: 12,
+    gap: 8,
+  },
+  deprecationText: {
+    fontSize: 12,
+    color: '#856404',
+    flex: 1,
+  },
+  deprecationLink: {
+    fontSize: 12,
+    color: '#007AFF',
+    fontWeight: '600',
   },
   imageContainer: {
     position: 'relative',
@@ -296,6 +387,9 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
+  },
+  unitsButton: {
+    marginTop: 12,
   },
 });
 

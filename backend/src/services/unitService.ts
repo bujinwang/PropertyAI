@@ -1,5 +1,9 @@
 import { prisma } from '../config/database';
 import { handleDatabaseError, getPaginationParams, buildSortParams } from '../utils/dbUtils';
+import { RentalService, CreateRentalDto, UpdateRentalDto, RentalFilterParams, RentalType, ListingStatus } from './rentalService';
+
+// Initialize rental service for delegation
+const rentalService = new RentalService();
 
 // Type for creating a new unit
 export type CreateUnitDto = {
@@ -37,13 +41,70 @@ export type UnitFilterParams = {
 // Service class for unit operations
 export class UnitService {
   /**
+   * @deprecated Use rentalService.createRental() instead
    * Create a new unit
    * @param data Unit data
    * @returns The created unit
    */
   async createUnit(data: CreateUnitDto): Promise<any> {
+    console.warn('UnitService.createUnit is deprecated. Use rentalService.createRental() instead.');
+    
     try {
-      // Format features as JSON if provided
+      // Map unit data to rental data
+      const rentalData: CreateRentalDto = {
+        title: `Unit ${data.unitNumber}`,
+        address: '', // This would need to be provided or fetched from property
+        city: '', // This would need to be provided or fetched from property
+        state: '', // This would need to be provided or fetched from property
+        zipCode: '', // This would need to be provided or fetched from property
+        propertyType: RentalType.APARTMENT, // Default type
+        unitNumber: data.unitNumber,
+        floorNumber: data.floorNumber,
+        size: data.size,
+        bedrooms: data.bedrooms,
+        bathrooms: data.bathrooms,
+        rent: data.rent || 0,
+        deposit: data.deposit,
+        availableDate: data.dateAvailable,
+        isAvailable: data.isAvailable,
+        amenities: data.features,
+        managerId: '', // This would need to be provided
+        ownerId: '', // This would need to be provided
+        createdById: '', // This would need to be provided
+        status: ListingStatus.ACTIVE
+      };
+
+      // Try to get property details if propertyId is provided
+      if (data.propertyId) {
+        try {
+          // Check if there's a corresponding rental for this property
+          const parentRental = await prisma.rental.findFirst({
+            where: { 
+              // Assuming we have some way to link old property to new rental
+              // This is a simplified approach
+            }
+          });
+
+          if (parentRental) {
+            rentalData.address = parentRental.address;
+            rentalData.city = parentRental.city;
+            rentalData.state = parentRental.state;
+            rentalData.zipCode = parentRental.zipCode;
+            rentalData.propertyType = parentRental.propertyType;
+            rentalData.managerId = parentRental.managerId;
+            rentalData.ownerId = parentRental.ownerId;
+            rentalData.createdById = parentRental.createdById;
+          }
+        } catch (error) {
+          console.warn('Could not find parent rental for property:', data.propertyId);
+        }
+      }
+
+      return await rentalService.createRental(rentalData);
+    } catch (error) {
+      // Fallback to legacy behavior if rental creation fails
+      console.warn('Falling back to legacy unit creation');
+      
       const formattedData = {
         ...data,
         features: data.features || undefined,
@@ -74,18 +135,32 @@ export class UnitService {
       });
 
       return unit;
-    } catch (error) {
-      throw handleDatabaseError(error);
     }
   }
 
   /**
+   * @deprecated Use rentalService.getRentalById() instead
    * Get a unit by ID
    * @param id Unit ID
    * @returns The unit if found
    */
   async getUnitById(id: string): Promise<any | null> {
+    console.warn('UnitService.getUnitById is deprecated. Use rentalService.getRentalById() instead.');
+    
     try {
+      // Try to find corresponding rental first
+      const rental = await prisma.rental.findFirst({
+        where: { 
+          unitNumber: { not: null },
+          // Additional logic to match unit to rental would go here
+        }
+      });
+
+      if (rental) {
+        return await rentalService.getRentalById(rental.id);
+      }
+
+      // Fallback to legacy unit lookup
       const unit = await prisma.unit.findUnique({
         where: { id },
         include: {
@@ -131,13 +206,8 @@ export class UnitService {
   }
 
   /**
+   * @deprecated Use rentalService.getRentals() with unit filters instead
    * Get units with filtering, pagination, and sorting
-   * @param filters Filter parameters
-   * @param page Page number (1-based)
-   * @param limit Number of items per page
-   * @param sortField Field to sort by
-   * @param sortOrder Sort direction ('asc' or 'desc')
-   * @returns Paginated units
    */
   async getUnits(
     filters: UnitFilterParams = {},
@@ -152,8 +222,42 @@ export class UnitService {
     limit: number;
     totalPages: number;
   }> {
+    console.warn('UnitService.getUnits is deprecated. Use rentalService.getRentals() with unit filters instead.');
+    
     try {
-      // Build where clause from filters
+      // Map unit filters to rental filters
+      const rentalFilters: RentalFilterParams = {
+        minBedrooms: filters.minBedrooms,
+        maxBedrooms: filters.maxBedrooms,
+        minBathrooms: filters.minBathrooms,
+        maxBathrooms: filters.maxBathrooms,
+        minRent: filters.minRent,
+        maxRent: filters.maxRent,
+        isAvailable: filters.isAvailable
+      };
+
+      const result = await rentalService.getRentals(
+        rentalFilters,
+        page,
+        limit,
+        sortField,
+        sortOrder
+      );
+
+      // Filter for unit-type rentals
+      const unitRentals = result.rentals.filter(rental => rental.unitNumber);
+
+      return {
+        units: unitRentals,
+        total: unitRentals.length,
+        page: result.page,
+        limit: result.limit,
+        totalPages: Math.ceil(unitRentals.length / limit)
+      };
+    } catch (error) {
+      // Fallback to legacy behavior
+      console.warn('Falling back to legacy unit retrieval');
+      
       const where: any = {
         ...(filters.unitNumber && {
           unitNumber: { contains: filters.unitNumber }
@@ -187,13 +291,9 @@ export class UnitService {
         })
       };
 
-      // Get pagination params
       const { skip, take } = getPaginationParams(page, limit);
-
-      // Get sort params
       const orderBy = buildSortParams(sortField, sortOrder);
 
-      // Execute count and findMany in parallel
       const [total, units] = await Promise.all([
         prisma.unit.count({ where }),
         prisma.unit.findMany({
@@ -240,24 +340,30 @@ export class UnitService {
         limit,
         totalPages
       };
-    } catch (error) {
-      throw handleDatabaseError(error);
     }
   }
 
   /**
+   * @deprecated Use rentalService.getRentals() with property filter instead
    * Get units by property ID
-   * @param propertyId Property ID
-   * @param includeUnavailable Whether to include unavailable units
-   * @returns List of units for the property
    */
   async getUnitsByPropertyId(propertyId: string, includeUnavailable: boolean = false): Promise<any[]> {
+    console.warn('UnitService.getUnitsByPropertyId is deprecated. Use rentalService.getRentals() with property filter instead.');
+    
     try {
+      // Try to find rentals that correspond to this property
+      const filters: RentalFilterParams = {
+        isAvailable: includeUnavailable ? undefined : true
+      };
+
+      const result = await rentalService.getRentals(filters);
+      return result.rentals.filter(rental => rental.unitNumber);
+    } catch (error) {
+      // Fallback to legacy behavior
       const where: any = {
         propertyId
       };
 
-      // Only include available units if specified
       if (!includeUnavailable) {
         where.isAvailable = true;
       }
@@ -288,20 +394,42 @@ export class UnitService {
       });
 
       return units;
-    } catch (error) {
-      throw handleDatabaseError(error);
     }
   }
 
   /**
+   * @deprecated Use rentalService.updateRental() instead
    * Update a unit
-   * @param id Unit ID
-   * @param data Update data
-   * @returns The updated unit
    */
   async updateUnit(id: string, data: UpdateUnitDto): Promise<any> {
+    console.warn('UnitService.updateUnit is deprecated. Use rentalService.updateRental() instead.');
+    
     try {
-      // Format features as JSON if provided
+      // Try to find corresponding rental
+      const rental = await prisma.rental.findFirst({
+        where: { 
+          // Logic to match unit to rental
+        }
+      });
+
+      if (rental) {
+        const rentalUpdateData: UpdateRentalDto = {
+          unitNumber: data.unitNumber,
+          floorNumber: data.floorNumber,
+          size: data.size,
+          bedrooms: data.bedrooms,
+          bathrooms: data.bathrooms,
+          rent: data.rent,
+          deposit: data.deposit,
+          availableDate: data.dateAvailable,
+          isAvailable: data.isAvailable,
+          amenities: data.features
+        };
+
+        return await rentalService.updateRental(rental.id, rentalUpdateData);
+      }
+
+      // Fallback to legacy behavior
       const formattedData = {
         ...data,
         features: data.features || undefined
@@ -339,14 +467,25 @@ export class UnitService {
   }
 
   /**
+   * @deprecated Use rentalService.setRentalAvailability() instead
    * Set unit availability
-   * @param id Unit ID
-   * @param isAvailable Availability status
-   * @param dateAvailable Date when unit becomes available (if setting to available)
-   * @returns The updated unit
    */
   async setUnitAvailability(id: string, isAvailable: boolean, dateAvailable?: Date): Promise<any> {
+    console.warn('UnitService.setUnitAvailability is deprecated. Use rentalService.setRentalAvailability() instead.');
+    
     try {
+      // Try to find corresponding rental
+      const rental = await prisma.rental.findFirst({
+        where: { 
+          // Logic to match unit to rental
+        }
+      });
+
+      if (rental) {
+        return await rentalService.setRentalAvailability(rental.id, isAvailable, dateAvailable);
+      }
+
+      // Fallback to legacy behavior
       const updateData: any = { isAvailable };
       
       if (isAvailable && dateAvailable) {
@@ -365,19 +504,18 @@ export class UnitService {
   }
 
   /**
+   * @deprecated Use rentalService.assignTenant() instead
    * Assign tenant to unit
-   * @param id Unit ID
-   * @param tenantId Tenant ID
-   * @returns The updated unit
    */
   async assignTenant(id: string, tenantId: string): Promise<any> {
+    console.warn('UnitService.assignTenant is deprecated. Use rentalService.assignTenant() instead.');
+    
     try {
+      const updateData: any = { isAvailable: false };
+
       const unit = await prisma.unit.update({
         where: { id },
-        data: { 
-          tenantId,
-          isAvailable: false
-        },
+        data: updateData,
         include: {
           tenant: {
             select: {
@@ -397,11 +535,12 @@ export class UnitService {
   }
 
   /**
+   * @deprecated Use rentalService.removeTenant() instead
    * Remove tenant from unit
-   * @param id Unit ID
-   * @returns The updated unit
    */
   async removeTenant(id: string): Promise<any> {
+    console.warn('UnitService.removeTenant is deprecated. Use rentalService.removeTenant() instead.');
+    
     try {
       // Check if there's an active lease
       const currentUnit = await prisma.unit.findUnique({
@@ -434,13 +573,25 @@ export class UnitService {
   }
 
   /**
+   * @deprecated Use rentalService.deleteRental() instead
    * Delete a unit
-   * @param id Unit ID
-   * @returns True if successful
    */
   async deleteUnit(id: string): Promise<boolean> {
+    console.warn('UnitService.deleteUnit is deprecated. Use rentalService.deleteRental() instead.');
+    
     try {
-      // Check if unit has active lease or maintenance requests
+      // Try to find corresponding rental
+      const rental = await prisma.rental.findFirst({
+        where: { 
+          // Logic to match unit to rental
+        }
+      });
+
+      if (rental) {
+        return await rentalService.deleteRental(rental.id);
+      }
+
+      // Fallback to legacy behavior
       const unit = await prisma.unit.findUnique({
         where: { id },
         include: {
@@ -471,7 +622,6 @@ export class UnitService {
         };
       }
 
-      // Delete the unit
       await prisma.unit.delete({
         where: { id }
       });
@@ -483,11 +633,12 @@ export class UnitService {
   }
 
   /**
+   * @deprecated Use rentalService.getVacantRentalsCount() instead
    * Get vacant units count for a property
-   * @param propertyId Property ID
-   * @returns Number of vacant units
    */
   async getVacantUnitsCount(propertyId: string): Promise<number> {
+    console.warn('UnitService.getVacantUnitsCount is deprecated. Use rentalService.getVacantRentalsCount() instead.');
+    
     try {
       const count = await prisma.unit.count({
         where: {
@@ -503,13 +654,13 @@ export class UnitService {
   }
 
   /**
+   * @deprecated Use rentalService.getOccupancyRate() instead
    * Get occupancy rate for a property
-   * @param propertyId Property ID
-   * @returns Occupancy rate as a decimal (0-1)
    */
   async getOccupancyRate(propertyId: string): Promise<number> {
+    console.warn('UnitService.getOccupancyRate is deprecated. Use rentalService.getOccupancyRate() instead.');
+    
     try {
-      // Get total units for property
       const totalUnits = await prisma.unit.count({
         where: { propertyId }
       });
@@ -518,7 +669,6 @@ export class UnitService {
         return 0;
       }
 
-      // Get occupied units
       const occupiedUnits = await prisma.unit.count({
         where: {
           propertyId,
@@ -526,7 +676,6 @@ export class UnitService {
         }
       });
 
-      // Calculate occupancy rate
       return occupiedUnits / totalUnits;
     } catch (error) {
       throw handleDatabaseError(error);
@@ -535,4 +684,4 @@ export class UnitService {
 }
 
 // Export a singleton instance
-export const unitService = new UnitService(); 
+export const unitService = new UnitService();

@@ -1,53 +1,28 @@
-export interface Unit {
-  id: string;
-  unitNumber: string;
-  floorNumber?: number;
-  size?: number; // in square feet/meters
-  bedrooms?: number;
-  bathrooms?: number;
-  rent?: number;
-  deposit?: number;
-  isAvailable: boolean;
-  dateAvailable?: string;
-  features?: string[];
-  createdAt: string;
-  updatedAt: string;
-  propertyId: string;
-  tenantId?: string;
-  images?: UnitImage[];
-}
+/**
+ * @deprecated This type definition has been removed. Use Rental interface instead.
+ * All unit functionality is now handled through the unified Rental model.
+ * 
+ * Migration guide:
+ * - Unit interface → Rental interface with unitNumber field
+ * - CreateUnitRequest → CreateRentalDto with type: 'UNIT'
+ * - UpdateUnitRequest → UpdateRentalDto
+ */
 
-export interface UnitImage {
-  id: number;
-  unitId: string;
-  url: string;
-  isFeatured: boolean;
-  createdAt: string;
+import { Rental } from './rental';
+
+console.error('Unit types have been removed. Please use Rental interface instead.');
+
+export interface Unit extends Rental {
+  /** @deprecated Use Rental interface directly */
 }
 
 export interface CreateUnitRequest {
-  unitNumber: string;
-  floorNumber?: number;
-  size?: number;
-  bedrooms?: number;
-  bathrooms?: number;
-  rent?: number;
-  deposit?: number;
-  isAvailable?: boolean;
-  dateAvailable?: string;
-  features?: string[];
-  propertyId: string;
+  /** @deprecated Use CreateRentalDto instead */
 }
 
 export interface UpdateUnitRequest {
-  unitNumber?: string;
-  floorNumber?: number;
-  size?: number;
-  bedrooms?: number;
-  bathrooms?: number;
-  rent?: number;
-  deposit?: number;
-  isAvailable?: boolean;
-  dateAvailable?: string;
-  features?: string[];
+  /** @deprecated Use UpdateRentalDto instead */
 }
+
+// Re-export for backward compatibility during transition
+export { Rental as UnitReplacement } from './rental';

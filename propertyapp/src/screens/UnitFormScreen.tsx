@@ -15,8 +15,8 @@ import { COLORS, FONTS, SPACING } from '@/constants/theme';
 import { TextInput } from '@/components/ui/TextInput';
 import { Button } from '@/components/ui/Button';
 import { RootStackParamList } from '@/navigation/types';
-import { unitService } from '@/services/unitService';
-import { CreateUnitRequest } from '@/types/unit';
+import { rentalService } from '@/services/rentalService';
+import { CreateRentalDto } from '@/types/rental';
 
 type UnitFormScreenRouteProp = RouteProp<RootStackParamList, 'UnitForm'>;
 
@@ -31,6 +31,10 @@ interface UnitFormValues {
   isAvailable: boolean;
   dateAvailable?: string;
   features: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
 }
 
 const initialValues: UnitFormValues = {
@@ -44,6 +48,10 @@ const initialValues: UnitFormValues = {
   isAvailable: true,
   dateAvailable: '',
   features: '',
+  address: '',
+  city: '',
+  state: '',
+  zipCode: '',
 };
 
 const validationSchema = Yup.object().shape({
@@ -54,6 +62,10 @@ const validationSchema = Yup.object().shape({
   bathrooms: Yup.number().required('Bathrooms is required').min(0.5, 'Bathrooms must be at least 0.5'),
   rent: Yup.number().required('Rent is required').positive('Rent must be positive'),
   deposit: Yup.number().nullable().positive('Deposit must be positive'),
+  address: Yup.string().required('Address is required'),
+  city: Yup.string().required('City is required'),
+  state: Yup.string().required('State is required'),
+  zipCode: Yup.string().required('Zip code is required'),
 });
 
 const UnitFormScreen = () => {
@@ -65,7 +77,8 @@ const UnitFormScreen = () => {
   const handleSubmit = async (values: UnitFormValues) => {
     setLoading(true);
     try {
-      const unitData: CreateUnitRequest = {
+      const rentalData: CreateRentalDto = {
+        title: `Unit ${values.unitNumber}`,
         unitNumber: values.unitNumber,
         floorNumber: values.floorNumber ? parseInt(values.floorNumber) : undefined,
         size: values.size ? parseFloat(values.size) : undefined,
@@ -74,18 +87,31 @@ const UnitFormScreen = () => {
         rent: parseFloat(values.rent),
         deposit: values.deposit ? parseFloat(values.deposit) : undefined,
         isAvailable: values.isAvailable,
-        dateAvailable: values.dateAvailable || undefined,
-        features: values.features ? values.features.split(',').map(f => f.trim()) : [],
-        propertyId: propertyId,
+        availableDate: values.dateAvailable ? new Date(values.dateAvailable) : undefined,
+        amenities: values.features ? 
+          values.features.split(',').reduce((acc, feature) => {
+            acc[feature.trim()] = true;
+            return acc;
+          }, {} as Record<string, boolean>) : undefined,
+        address: values.address,
+        city: values.city,
+        state: values.state,
+        zipCode: values.zipCode,
+        propertyType: 'APARTMENT',
+        type: 'UNIT',
+        parentRentalId: propertyId,
+        managerId: '', // Would need to get from context
+        ownerId: '', // Would need to get from context
+        createdById: '', // Would need to get from context
       };
 
       if (unitId) {
-        // Update existing unit
-        await unitService.updateUnit(unitId, unitData);
+        // Update existing rental (unit)
+        await rentalService.updateRental(unitId, rentalData);
         Alert.alert('Success', 'Unit updated successfully');
       } else {
-        // Create new unit
-        await unitService.createUnit(unitData);
+        // Create new rental (unit)
+        await rentalService.createRental(rentalData);
         Alert.alert('Success', 'Unit created successfully');
       }
 
@@ -119,6 +145,42 @@ const UnitFormScreen = () => {
                 onBlur={handleBlur('unitNumber')}
                 error={touched.unitNumber && errors.unitNumber}
                 placeholder="e.g., 101A"
+              />
+
+              <TextInput
+                label="Address"
+                value={values.address}
+                onChangeText={handleChange('address')}
+                onBlur={handleBlur('address')}
+                error={touched.address && errors.address}
+                placeholder="e.g., 123 Main St"
+              />
+
+              <TextInput
+                label="City"
+                value={values.city}
+                onChangeText={handleChange('city')}
+                onBlur={handleBlur('city')}
+                error={touched.city && errors.city}
+                placeholder="e.g., New York"
+              />
+
+              <TextInput
+                label="State"
+                value={values.state}
+                onChangeText={handleChange('state')}
+                onBlur={handleBlur('state')}
+                error={touched.state && errors.state}
+                placeholder="e.g., NY"
+              />
+
+              <TextInput
+                label="Zip Code"
+                value={values.zipCode}
+                onChangeText={handleChange('zipCode')}
+                onBlur={handleBlur('zipCode')}
+                error={touched.zipCode && errors.zipCode}
+                placeholder="e.g., 10001"
               />
 
               <TextInput

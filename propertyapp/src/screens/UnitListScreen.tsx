@@ -12,9 +12,9 @@ import {
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SPACING } from '@/constants/theme';
-import { unitService } from '@/services/unitService';
+import { rentalService } from '@/services/rentalService';
 import { RootStackParamList } from '@/navigation/types';
-import { Unit } from '@/types/unit';
+import { Rental } from '@/types/rental';
 
 interface UnitListScreenRouteProp extends RouteProp<RootStackParamList, 'UnitList'> {}
 
@@ -23,7 +23,7 @@ const UnitListScreen = () => {
   const route = useRoute<UnitListScreenRouteProp>();
   const { propertyId, propertyName } = route.params;
 
-  const [units, setUnits] = useState<Unit[]>([]);
+  const [units, setUnits] = useState<Rental[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -34,8 +34,12 @@ const UnitListScreen = () => {
   const loadUnits = async () => {
     try {
       setLoading(true);
-      const unitsData = await unitService.getPropertyUnits(propertyId);
-      setUnits(unitsData);
+      // Get rentals that are units for this property
+      const response = await rentalService.getRentals({ 
+        type: 'UNIT',
+        parentRentalId: propertyId 
+      });
+      setUnits(response.data);
     } catch (error) {
       console.error('Failed to load units:', error);
       Alert.alert('Error', 'Failed to load units');
@@ -50,21 +54,34 @@ const UnitListScreen = () => {
     setRefreshing(false);
   };
 
-  const handleUnitPress = (unit: Unit) => {
-    navigation.navigate('UnitDetail', { unitId: unit.id });
+  const handleUnitPress = (unit: Rental) => {
+    navigation.navigate('RentalDetail', { rentalId: unit.id });
   };
 
   const handleAddUnit = () => {
-    navigation.navigate('UnitForm', { propertyId });
+    navigation.navigate('RentalForm', { 
+      type: 'UNIT',
+      parentRentalId: propertyId 
+    });
   };
 
-  const renderUnit = ({ item }: { item: Unit }) => (
+  const renderUnit = ({ item }: { item: Rental }) => (
     <TouchableOpacity 
       style={styles.unitItem}
       onPress={() => handleUnitPress(item)}
     >
+      {/* Deprecation Notice */}
+      <View style={styles.deprecationNotice}>
+        <Ionicons name="warning" size={16} color={COLORS.warning} />
+        <Text style={styles.deprecationText}>
+          This view is deprecated. Use the new Rental management instead.
+        </Text>
+      </View>
+
       <View style={styles.unitHeader}>
-        <Text style={styles.unitNumber}>Unit {item.unitNumber}</Text>
+        <Text style={styles.unitNumber}>
+          {item.unitNumber ? `Unit ${item.unitNumber}` : item.title}
+        </Text>
         <View style={[styles.statusBadge, item.isAvailable ? styles.available : styles.unavailable]}>
           <Text style={styles.statusText}>{item.isAvailable ? 'Available' : 'Occupied'}</Text>
         </View>
@@ -82,7 +99,10 @@ const UnitListScreen = () => {
       <View style={styles.unitActions}>
         <TouchableOpacity 
           style={styles.listingButton}
-          onPress={() => navigation.navigate('CreateListing', { unitId: item.id, propertyId })}
+          onPress={() => navigation.navigate('RentalForm', { 
+            type: 'LISTING',
+            parentRentalId: item.id 
+          })}
         >
           <Ionicons name="pricetag" size={16} color={COLORS.primary} />
           <Text style={styles.listingButtonText}>Create Listing</Text>
@@ -163,6 +183,20 @@ const styles = StyleSheet.create({
   },
   addButton: {
     padding: SPACING.sm,
+  },
+  deprecationNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.warning + '20',
+    padding: SPACING.sm,
+    marginBottom: SPACING.sm,
+    borderRadius: 8,
+    gap: SPACING.xs,
+  },
+  deprecationText: {
+    fontSize: 12,
+    color: COLORS.warning,
+    flex: 1,
   },
   listContent: {
     padding: SPACING.lg,

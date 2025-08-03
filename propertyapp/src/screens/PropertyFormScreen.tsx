@@ -13,6 +13,7 @@ import {
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Formik, FormikProps } from 'formik';
 import * as Yup from 'yup';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SPACING } from '@/constants/theme';
 import { TextInput } from '@/components/ui/TextInput';
 import { Button } from '@/components/ui/Button';
@@ -21,24 +22,27 @@ import { ImagePickerMultiple } from '@/components/ui/ImagePickerMultiple';
 import { SelectInput } from '@/components/ui/SelectInput';
 import { CheckboxGroup } from '@/components/ui/CheckboxGroup';
 import { useAuth } from '@/contexts/AuthContext';
-import { propertyService } from '@/services/propertyService';
+import { rentalService } from '@/services/rentalService';
 import { aiService } from '@/services/aiService';
 import { RootStackParamList } from '@/navigation/types';
-import { Property, PropertyType, PropertyImage } from '@/types/property';
+import { Rental, PropertyType, RentalType, CreateRentalDto } from '@/types/rental';
 
 type PropertyFormScreenRouteProp = RouteProp<RootStackParamList, 'PropertyForm'>;
 
 interface PropertyFormValues {
-  name: string;
+  title: string;
   description: string;
-  address: {
-    street: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  };
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
   propertyType: string;
+  rentalType: string;
+  bedrooms: string;
+  bathrooms: string;
+  size: string;
+  rent: string;
   amenities: string[];
   yearBuilt: string;
   totalUnits: string;
@@ -46,16 +50,19 @@ interface PropertyFormValues {
 }
 
 const initialValues: PropertyFormValues = {
-  name: '',
+  title: '',
   description: '',
-  address: {
-    street: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    country: 'US',
-  },
+  address: '',
+  city: '',
+  state: '',
+  zipCode: '',
+  country: 'US',
   propertyType: '',
+  rentalType: 'LONG_TERM',
+  bedrooms: '1',
+  bathrooms: '1',
+  size: '',
+  rent: '',
   amenities: [],
   yearBuilt: '',
   totalUnits: '1',
@@ -63,13 +70,18 @@ const initialValues: PropertyFormValues = {
 };
 
 const propertyTypes = [
-  { label: 'Apartment', value: 'apartment' },
-  { label: 'House', value: 'house' },
-  { label: 'Condo', value: 'condo' },
-  { label: 'Townhouse', value: 'townhouse' },
-  { label: 'Commercial', value: 'commercial' },
-  { label: 'Industrial', value: 'industrial' },
-  { label: 'Other', value: 'other' },
+  { label: 'Apartment', value: 'APARTMENT' },
+  { label: 'House', value: 'HOUSE' },
+  { label: 'Condo', value: 'CONDO' },
+  { label: 'Townhouse', value: 'TOWNHOUSE' },
+  { label: 'Commercial', value: 'COMMERCIAL' },
+  { label: 'Other', value: 'OTHER' },
+];
+
+const rentalTypes = [
+  { label: 'Long Term', value: 'LONG_TERM' },
+  { label: 'Short Term', value: 'SHORT_TERM' },
+  { label: 'Vacation Rental', value: 'VACATION' },
 ];
 
 const amenityOptions = [
@@ -86,16 +98,19 @@ const amenityOptions = [
 ];
 
 const validationSchema = Yup.object().shape({
-  name: Yup.string().required('Property name is required'),
+  title: Yup.string().required('Property title is required'),
   description: Yup.string().required('Description is required'),
-  address: Yup.object().shape({
-    street: Yup.string().required('Street address is required'),
-    city: Yup.string().required('City is required'),
-    state: Yup.string().required('State is required'),
-    zipCode: Yup.string().required('ZIP code is required'),
-    country: Yup.string().required('Country is required'),
-  }),
+  address: Yup.string().required('Street address is required'),
+  city: Yup.string().required('City is required'),
+  state: Yup.string().required('State is required'),
+  zipCode: Yup.string().required('ZIP code is required'),
+  country: Yup.string().required('Country is required'),
   propertyType: Yup.string().required('Property type is required'),
+  rentalType: Yup.string().required('Rental type is required'),
+  bedrooms: Yup.string().required('Number of bedrooms is required'),
+  bathrooms: Yup.string().required('Number of bathrooms is required'),
+  size: Yup.string().required('Size is required'),
+  rent: Yup.string().required('Rent amount is required'),
   yearBuilt: Yup.string()
     .required('Year built is required')
     .matches(/^[0-9]{4}$/, 'Year must be 4 digits')
@@ -129,7 +144,7 @@ export function PropertyFormScreen() {
   const steps = [
     'Basic Info',
     'Address',
-    'Features',
+    'Details',
     'Images & AI',
     'Review',
   ];
@@ -137,44 +152,47 @@ export function PropertyFormScreen() {
   useEffect(() => {
     console.log('PropertyFormScreen mounted. Property ID:', propertyId);
     if (isEditing) {
-      fetchPropertyDetails();
+      fetchRentalDetails();
     }
   }, [propertyId]);
 
-  const fetchPropertyDetails = async () => {
+  const fetchRentalDetails = async () => {
     if (!propertyId) return;
     
     try {
       setIsLoading(true);
-      const propertyData = await propertyService.getPropertyById(propertyId);
-      console.log('Fetched property data:', propertyData);
+      const rentalData = await rentalService.getRentalById(propertyId);
+      console.log('Fetched rental data:', rentalData);
       
       // Map API response to form values
-      const newPropertyState = {
-        name: propertyData.name || '',
-        description: propertyData.description || '',
-        address: {
-          street: propertyData.address || '',
-          city: propertyData.city || '',
-          state: propertyData.state || '',
-          zipCode: propertyData.zipCode || '',
-          country: propertyData.country || 'US',
-        },
-        propertyType: propertyData.propertyType?.toLowerCase() || '',
-        amenities: propertyData.amenities || [],
-        yearBuilt: propertyData.yearBuilt?.toString() || '',
-        totalUnits: propertyData.totalUnits?.toString() || '1',
-        images: propertyData.images?.map((img: PropertyImage) => ({
-          uri: img.url || img.uri || '',
-          name: img.originalFilename || img.filename || 'property-image.jpg',
-          type: img.mimetype || 'image/jpeg'
+      const newPropertyState: PropertyFormValues = {
+        title: rentalData.title || '',
+        description: rentalData.description || '',
+        address: rentalData.address || '',
+        city: rentalData.city || '',
+        state: rentalData.state || '',
+        zipCode: rentalData.zipCode || '',
+        country: rentalData.country || 'US',
+        propertyType: rentalData.propertyType || '',
+        rentalType: rentalData.rentalType || 'LONG_TERM',
+        bedrooms: rentalData.bedrooms?.toString() || '1',
+        bathrooms: rentalData.bathrooms?.toString() || '1',
+        size: rentalData.size?.toString() || '',
+        rent: rentalData.rent?.toString() || '',
+        amenities: Array.isArray(rentalData.amenities) ? rentalData.amenities : [],
+        yearBuilt: rentalData.yearBuilt?.toString() || '',
+        totalUnits: rentalData.totalUnits?.toString() || '1',
+        images: rentalData.images?.map((img) => ({
+          uri: img.url || '',
+          name: img.filename || 'rental-image.jpg',
+          type: 'image/jpeg'
         })) || [],
       };
       setProperty(newPropertyState);
       setIsDataLoaded(true);
       console.log('Set property state to:', newPropertyState);
     } catch (error) {
-      console.error('Error fetching property details:', error);
+      console.error('Error fetching rental details:', error);
       Alert.alert('Error', 'Failed to load property details');
     } finally {
       setIsLoading(false);
@@ -184,33 +202,35 @@ export function PropertyFormScreen() {
   const handleSubmit = async (values: PropertyFormValues) => {
     setIsSubmitting(true);
     try {
-      const submissionData = {
-        name: values.name,
+      const submissionData: CreateRentalDto = {
+        title: values.title,
         description: values.description,
-        address: values.address.street, // Flatten address
-        city: values.address.city,
-        state: values.address.state,
-        zipCode: values.address.zipCode,
-        country: values.address.country,
-        propertyType: values.propertyType.toUpperCase() as PropertyType,
+        address: values.address,
+        city: values.city,
+        state: values.state,
+        zipCode: values.zipCode,
+        country: values.country,
+        propertyType: values.propertyType as PropertyType,
+        rentalType: values.rentalType as RentalType,
+        bedrooms: parseInt(values.bedrooms, 10),
+        bathrooms: parseFloat(values.bathrooms),
+        size: parseInt(values.size, 10),
+        rent: parseFloat(values.rent),
         amenities: values.amenities,
         yearBuilt: parseInt(values.yearBuilt, 10),
         totalUnits: parseInt(values.totalUnits, 10),
         images: values.images.map((image, index) => ({
           url: image.uri,
           filename: image.name,
-          originalFilename: image.name,
-          type: image.type,
-          size: 0, // Default size since we don't have actual file size
           isFeatured: index === 0,
         })),
       };
 
-      let response: Property; // Use Property type for response
+      let response: Rental;
       if (isEditing) {
-        response = await propertyService.updateProperty(propertyId, submissionData);
+        response = await rentalService.updateRental(propertyId, submissionData);
       } else {
-        response = await propertyService.createProperty(submissionData);
+        response = await rentalService.createRental(submissionData);
       }
       console.log('API response:', response);
       Alert.alert(
@@ -221,11 +241,9 @@ export function PropertyFormScreen() {
             text: 'OK',
             onPress: () => {
               if (isEditing) {
-                // Simply go back to the previous screen (PropertyList)
                 navigation.goBack();
               } else {
-                // Navigate to property detail for new property
-                navigation.navigate('PropertyDetail', { propertyId: response.id });
+                navigation.navigate('RentalDetail', { rentalId: response.id });
               }
             }
           }
@@ -240,10 +258,6 @@ export function PropertyFormScreen() {
   };
 
   const generateAIDescription = async (values: PropertyFormValues, setFieldValue: FormikProps<PropertyFormValues>['setFieldValue']) => {
-    if (!propertyId) {
-      Alert.alert('Error', 'Property must be saved before generating AI description.');
-      return;
-    }
     if (values.images.length === 0) {
       Alert.alert('Error', 'Please upload at least one image to generate description');
       return;
@@ -252,16 +266,15 @@ export function PropertyFormScreen() {
     try {
       setIsAiGenerating(true);
       
-      // Use property data for AI generation
       const propertyDetails = {
         propertyType: values.propertyType,
-        bedrooms: '2', // Default value for AI generation
-        bathrooms: '2', // Default value for AI generation
+        bedrooms: values.bedrooms,
+        bathrooms: values.bathrooms,
         amenities: values.amenities,
         images: values.images
       };
 
-      const response = await aiService.generatePropertyDescription(propertyId, propertyDetails);
+      const response = await aiService.generatePropertyDescription(propertyId || 'new', propertyDetails);
       setFieldValue('description', response.description);
       setIsAiGenerating(false);
       Alert.alert(
@@ -281,18 +294,17 @@ export function PropertyFormScreen() {
     try {
       setIsPricingLoading(true);
       
-      // Use property data for pricing analysis
       const propertyDetails = {
         address: {
-          street: values.address.street,
-          city: values.address.city,
-          state: values.address.state,
-          zipCode: values.address.zipCode,
+          street: values.address,
+          city: values.city,
+          state: values.state,
+          zipCode: values.zipCode,
         },
         propertyType: values.propertyType,
-        bedrooms: '2', // Default value for pricing
-        bathrooms: '2', // Default value for pricing
-        squareFeet: '1000', // Default value for pricing
+        bedrooms: values.bedrooms,
+        bathrooms: values.bathrooms,
+        squareFeet: values.size,
         amenities: values.amenities,
         yearBuilt: values.yearBuilt
       };
@@ -339,6 +351,19 @@ export function PropertyFormScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={100}
     >
+      {/* Deprecation Notice */}
+      <View style={styles.deprecationNotice}>
+        <Ionicons name="warning" size={16} color="#FF9500" />
+        <Text style={styles.deprecationText}>
+          This form is deprecated. Use the new Rental Form instead.
+        </Text>
+        <TouchableOpacity 
+          onPress={() => navigation.navigate('RentalForm', { rentalId: propertyId })}
+        >
+          <Text style={styles.deprecationLink}>Switch to new form</Text>
+        </TouchableOpacity>
+      </View>
+
       <Formik
         initialValues={property}
         validationSchema={validationSchema}
@@ -346,7 +371,7 @@ export function PropertyFormScreen() {
         enableReinitialize
       >
         {({ handleChange, handleBlur, handleSubmit, values, errors, touched, setFieldValue }: FormikProps<PropertyFormValues>) => {
-          const stateLabel = values.address.country === 'Canada' ? 'Province' : 'State';
+          const stateLabel = values.country === 'Canada' ? 'Province' : 'State';
           return (
             <>
               <View style={styles.header}>
@@ -366,12 +391,12 @@ export function PropertyFormScreen() {
                     <Text style={styles.stepTitle}>Basic Information</Text>
                     
                     <TextInput
-                      label="Property Name"
-                      value={values.name}
-                      onChangeText={handleChange('name')}
-                      onBlur={handleBlur('name')}
-                      error={touched.name ? errors.name : undefined}
-                      placeholder="Enter a name for your property"
+                      label="Property Title"
+                      value={values.title}
+                      onChangeText={handleChange('title')}
+                      onBlur={handleBlur('title')}
+                      error={touched.title ? errors.title : undefined}
+                      placeholder="Enter a title for your property"
                     />
 
                     <TextInput
@@ -393,6 +418,14 @@ export function PropertyFormScreen() {
                       error={touched.propertyType ? errors.propertyType : undefined}
                     />
 
+                    <SelectInput
+                      label="Rental Type"
+                      value={values.rentalType}
+                      onChange={(value: string | number) => setFieldValue('rentalType', value)}
+                      options={rentalTypes}
+                      error={touched.rentalType ? errors.rentalType : undefined}
+                    />
+
                     <TextInput
                       label="Total Units"
                       value={values.totalUnits}
@@ -411,19 +444,19 @@ export function PropertyFormScreen() {
                     
                     <TextInput
                       label="Street Address"
-                      value={values.address.street}
-                      onChangeText={handleChange('address.street')}
-                      onBlur={handleBlur('address.street')}
-                      error={touched.address?.street ? errors.address?.street : undefined}
+                      value={values.address}
+                      onChangeText={handleChange('address')}
+                      onBlur={handleBlur('address')}
+                      error={touched.address ? errors.address : undefined}
                       placeholder="Enter street address"
                     />
 
                     <TextInput
                       label="City"
-                      value={values.address.city}
-                      onChangeText={handleChange('address.city')}
-                      onBlur={handleBlur('address.city')}
-                      error={touched.address?.city ? errors.address?.city : undefined}
+                      value={values.city}
+                      onChangeText={handleChange('city')}
+                      onBlur={handleBlur('city')}
+                      error={touched.city ? errors.city : undefined}
                       placeholder="Enter city"
                     />
 
@@ -431,10 +464,10 @@ export function PropertyFormScreen() {
                       <View style={styles.halfColumn}>
                         <TextInput
                           label={stateLabel}
-                          value={values.address.state}
-                          onChangeText={handleChange('address.state')}
-                          onBlur={handleBlur('address.state')}
-                          error={touched.address?.state ? errors.address?.state : undefined}
+                          value={values.state}
+                          onChangeText={handleChange('state')}
+                          onBlur={handleBlur('state')}
+                          error={touched.state ? errors.state : undefined}
                           placeholder={stateLabel}
                         />
                       </View>
@@ -442,10 +475,10 @@ export function PropertyFormScreen() {
                       <View style={styles.halfColumn}>
                         <TextInput
                           label="ZIP Code"
-                          value={values.address.zipCode}
-                          onChangeText={handleChange('address.zipCode')}
-                          onBlur={handleBlur('address.zipCode')}
-                          error={touched.address?.zipCode ? errors.address?.zipCode : undefined}
+                          value={values.zipCode}
+                          onChangeText={handleChange('zipCode')}
+                          onBlur={handleBlur('zipCode')}
+                          error={touched.zipCode ? errors.zipCode : undefined}
                           placeholder="ZIP Code"
                           keyboardType="numeric"
                         />
@@ -454,15 +487,15 @@ export function PropertyFormScreen() {
 
                     <SelectInput
                       label="Country"
-                      value={values.address.country}
+                      value={values.country}
                       onChange={(value) => {
-                        setFieldValue('address.country', value);
+                        setFieldValue('country', value);
                       }}
                       options={[
                         { label: 'United States', value: 'USA' },
                         { label: 'Canada', value: 'CA' },
                       ]}
-                      error={touched.address?.country ? errors.address?.country : undefined}
+                      error={touched.country ? errors.country : undefined}
                     />
                   </View>
                 )}
@@ -471,6 +504,58 @@ export function PropertyFormScreen() {
                   <View style={styles.stepContent}>
                     <Text style={styles.stepTitle}>Property Details</Text>
                     
+                    <View style={styles.row}>
+                      <View style={styles.halfColumn}>
+                        <TextInput
+                          label="Bedrooms"
+                          value={values.bedrooms}
+                          onChangeText={handleChange('bedrooms')}
+                          onBlur={handleBlur('bedrooms')}
+                          error={touched.bedrooms ? errors.bedrooms : undefined}
+                          placeholder="Number of bedrooms"
+                          keyboardType="numeric"
+                        />
+                      </View>
+                      
+                      <View style={styles.halfColumn}>
+                        <TextInput
+                          label="Bathrooms"
+                          value={values.bathrooms}
+                          onChangeText={handleChange('bathrooms')}
+                          onBlur={handleBlur('bathrooms')}
+                          error={touched.bathrooms ? errors.bathrooms : undefined}
+                          placeholder="Number of bathrooms"
+                          keyboardType="numeric"
+                        />
+                      </View>
+                    </View>
+
+                    <View style={styles.row}>
+                      <View style={styles.halfColumn}>
+                        <TextInput
+                          label="Size (sq ft)"
+                          value={values.size}
+                          onChangeText={handleChange('size')}
+                          onBlur={handleBlur('size')}
+                          error={touched.size ? errors.size : undefined}
+                          placeholder="Square footage"
+                          keyboardType="numeric"
+                        />
+                      </View>
+                      
+                      <View style={styles.halfColumn}>
+                        <TextInput
+                          label="Monthly Rent ($)"
+                          value={values.rent}
+                          onChangeText={handleChange('rent')}
+                          onBlur={handleBlur('rent')}
+                          error={touched.rent ? errors.rent : undefined}
+                          placeholder="Monthly rent amount"
+                          keyboardType="numeric"
+                        />
+                      </View>
+                    </View>
+
                     <TextInput
                       label="Year Built"
                       value={values.yearBuilt}
@@ -545,19 +630,34 @@ export function PropertyFormScreen() {
                       Please review the details of your property listing before submitting.
                     </Text>
 
-                  <View style={styles.reviewSection}>
-                    <Text style={styles.reviewTitle}>{values.name}</Text>
-                    <Text style={styles.reviewLabel}>Description</Text>
-                    <Text style={styles.reviewDescription}>{values.description}</Text>
-                    <Text style={styles.reviewLabel}>Property Type</Text>
+                    <View style={styles.reviewSection}>
+                      <Text style={styles.reviewTitle}>{values.title}</Text>
+                      <Text style={styles.reviewLabel}>Description</Text>
+                      <Text style={styles.reviewDescription}>{values.description}</Text>
+                      
+                      <Text style={styles.reviewLabel}>Property Type</Text>
                       <Text style={styles.reviewValue}>
                         {propertyTypes.find(type => type.value === values.propertyType)?.label}
                       </Text>
 
+                      <Text style={styles.reviewLabel}>Rental Type</Text>
+                      <Text style={styles.reviewValue}>
+                        {rentalTypes.find(type => type.value === values.rentalType)?.label}
+                      </Text>
+
                       <Text style={styles.reviewLabel}>Address</Text>
                       <Text style={styles.reviewValue}>
-                        {values.address.street}, {values.address.city}, {values.address.state} {values.address.zipCode}, {values.address.country}
+                        {values.address}, {values.city}, {values.state} {values.zipCode}, {values.country}
                       </Text>
+
+                      <Text style={styles.reviewLabel}>Bedrooms / Bathrooms</Text>
+                      <Text style={styles.reviewValue}>{values.bedrooms} bed / {values.bathrooms} bath</Text>
+
+                      <Text style={styles.reviewLabel}>Size</Text>
+                      <Text style={styles.reviewValue}>{values.size} sq ft</Text>
+
+                      <Text style={styles.reviewLabel}>Monthly Rent</Text>
+                      <Text style={styles.reviewValue}>${values.rent}</Text>
 
                       <Text style={styles.reviewLabel}>Year Built</Text>
                       <Text style={styles.reviewValue}>{values.yearBuilt}</Text>
@@ -621,6 +721,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
+  deprecationNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF3CD',
+    padding: 12,
+    gap: 8,
+  },
+  deprecationText: {
+    fontSize: 12,
+    color: '#856404',
+    flex: 1,
+  },
+  deprecationLink: {
+    fontSize: 12,
+    color: '#007AFF',
+    fontWeight: '600',
+  },
   header: {
     padding: SPACING.md,
     backgroundColor: COLORS.card,
@@ -667,30 +784,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: SPACING.xs / 2,
   },
-  unitContainer: {
-    backgroundColor: COLORS.background,
-    padding: SPACING.sm,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    marginBottom: SPACING.md,
-  },
-  unitHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.sm,
-  },
-  unitTitle: {
-    fontSize: FONTS.sizes.md,
-    fontWeight: FONTS.weights.medium as '500',
-    color: COLORS.text.primary,
-  },
-  removeButton: {
-    color: COLORS.error,
-    fontSize: FONTS.sizes.sm,
-    fontWeight: FONTS.weights.medium as '500',
-  },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -712,9 +805,6 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
     fontSize: FONTS.sizes.md,
     color: COLORS.text.secondary,
-  },
-  aiButtonContainer: {
-    marginBottom: SPACING.md,
   },
   aiSection: {
     marginTop: SPACING.lg,

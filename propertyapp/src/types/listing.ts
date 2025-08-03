@@ -1,75 +1,28 @@
-export interface Listing {
-  id: string;
-  slug: string;
-  title: string;
-  description: string;
-  rent: number;
-  availableDate: string;
-  leaseTerms?: string;
-  isActive: boolean;
-  status: ListingStatus;
-  viewCount: number;
-  createdAt: string;
-  updatedAt: string;
-  propertyId: string;
-  unitId?: string;
-  createdById: string;
-  // Related data that might be included in API responses
-  property?: {
-    id: string;
-    name: string;
-    address: string;
-    city: string;
-    state: string;
-    propertyType: string;
-  };
-  unit?: {
-    id: string;
-    unitNumber: string;
-    bedrooms: number;
-    bathrooms: number;
-    squareFeet?: number;
-  };
-  createdBy?: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  images?: ListingImage[];
-}
+/**
+ * @deprecated This type definition has been removed. Use Rental interface instead.
+ * All listing functionality is now handled through the unified Rental model.
+ * 
+ * Migration guide:
+ * - Listing interface → Rental interface with isActive: true
+ * - CreateListingRequest → CreateRentalDto
+ * - UpdateListingRequest → UpdateRentalDto
+ */
 
-export enum ListingStatus {
-  ACTIVE = 'ACTIVE',
-  PENDING = 'PENDING',
-  DRAFT = 'DRAFT',
-  ARCHIVED = 'ARCHIVED'
-}
+import { Rental } from './rental';
 
-export interface ListingImage {
-  id: number;
-  listingId: string;
-  url: string;
-  isFeatured: boolean;
-  createdAt: string;
+console.error('Listing types have been removed. Please use Rental interface instead.');
+
+export interface Listing extends Rental {
+  /** @deprecated Use Rental interface directly */
 }
 
 export interface CreateListingRequest {
-  title: string;
-  description: string;
-  rent: number;
-  availableDate: string;
-  leaseTerms?: string;
-  propertyId: string;
-  unitId?: string;
-  status?: ListingStatus;
+  /** @deprecated Use CreateRentalDto instead */
 }
 
 export interface UpdateListingRequest {
-  title?: string;
-  description?: string;
-  rent?: number;
-  availableDate?: string;
-  leaseTerms?: string;
-  status?: ListingStatus;
+  /** @deprecated Use UpdateRentalDto instead */
 }
+
+// Re-export for backward compatibility during transition
+export { Rental as ListingReplacement } from './rental';

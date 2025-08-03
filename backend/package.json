@@ -15,7 +15,14 @@
     "lint": "eslint . --ext .ts",
     "test": "jest",
     "db:seed": "ts-node prisma/seed.ts",
-    "db:reset": "prisma migrate reset --force && npm run db:seed"
+    "db:reset": "prisma migrate reset --force && npm run db:seed",
+    "migrate:rental": "npx prisma generate && npx ts-node scripts/migrate-to-rental.ts",
+    "migrate:permissions": "npx ts-node scripts/update-rental-permissions.ts",
+    "check:migration": "npx ts-node check-migration-status.ts",
+    "cleanup:legacy": "ts-node scripts/cleanup-legacy-migration.ts",
+    "cleanup:legacy:dry-run": "ts-node scripts/cleanup-legacy-migration.ts --dry-run",
+    "test:migration": "jest tests/migration-helpers.test.ts",
+    "test:no-legacy": "jest --testPathIgnorePatterns=/legacy-tests/"
   },
   "keywords": [
     "property",

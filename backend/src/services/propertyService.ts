@@ -1,6 +1,7 @@
 import { prisma } from '../config/database';
 import { Prisma } from '@prisma/client';
 import { handleDatabaseError, getPaginationParams, buildSortParams } from '../utils/dbUtils';
+import { rentalService } from './rentalService';
 
 // Enum for property types matching Prisma schema
 export enum PropertyType {
@@ -71,86 +72,87 @@ export type PropertyFilterParams = {
 // Service class for property operations
 export class PropertyService {
   /**
+   * @deprecated Use rentalService.createRental() instead
    * Create a new property
    * @param data Property data
    * @returns The created property
    */
   async createProperty(data: CreatePropertyDto): Promise<any> {
+    console.warn('PropertyService.createProperty is deprecated. Use rentalService.createRental() instead.');
+    
     try {
-      // Format amenities as JSON if provided
-      const formattedData = {
-        ...data,
-        amenities: data.amenities ? data.amenities : undefined,
+      // Map property data to rental data
+      const rentalData = {
+        title: data.name,
+        description: data.description || '',
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zipCode,
         country: data.country || 'USA',
-        isActive: true
+        propertyType: data.propertyType,
+        rentalType: 'LONG_TERM' as const,
+        bedrooms: 1, // Default value
+        bathrooms: 1, // Default value
+        size: 1000, // Default value
+        rent: 1000, // Default value
+        amenities: Array.isArray(data.amenities) ? data.amenities : [],
+        yearBuilt: data.yearBuilt,
+        totalUnits: data.totalUnits,
+        managerId: data.managerId,
+        ownerId: data.ownerId,
       };
 
-      const property = await prisma.property.create({
-        data: formattedData,
-        include: {
-          manager: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true
-            }
-          },
-          owner: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true
-            }
-          }
-        }
-      });
-
-      return property;
+      return await rentalService.createRental(rentalData);
     } catch (error) {
       throw handleDatabaseError(error);
     }
   }
 
   /**
+   * @deprecated Use rentalService.getRentalById() instead
    * Get a property by ID
    * @param id Property ID
    * @returns The property if found
    */
   async getPropertyById(id: string): Promise<any | null> {
+    console.warn('PropertyService.getPropertyById is deprecated. Use rentalService.getRentalById() instead.');
+    
     try {
-      const property = await prisma.property.findUnique({
-        where: { id },
-        include: {
-          manager: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true
-            }
-          },
-          owner: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true
-            }
-          },
-          units: true,
-          documents: true
-        }
-      });
+      const rental = await rentalService.getRentalById(id);
+      if (!rental) return null;
 
-      return property;
+      // Map rental data to property format for backward compatibility
+      return {
+        id: rental.id,
+        name: rental.title,
+        address: rental.address,
+        city: rental.city,
+        state: rental.state,
+        zipCode: rental.zipCode,
+        country: rental.country,
+        description: rental.description,
+        propertyType: rental.propertyType,
+        yearBuilt: rental.yearBuilt,
+        totalUnits: rental.totalUnits,
+        amenities: rental.amenities,
+        createdAt: rental.createdAt,
+        updatedAt: rental.updatedAt,
+        isActive: rental.isAvailable,
+        managerId: rental.managerId,
+        ownerId: rental.ownerId,
+        manager: rental.manager,
+        owner: rental.owner,
+        units: [], // Legacy field
+        documents: [], // Legacy field
+      };
     } catch (error) {
       throw handleDatabaseError(error);
     }
   }
 
   /**
+   * @deprecated Use rentalService.getRentals() instead
    * Get properties with filtering, pagination, and sorting
    * @param filters Filter parameters
    * @param page Page number (1-based)
@@ -172,91 +174,59 @@ export class PropertyService {
     limit: number;
     totalPages: number;
   }> {
+    console.warn('PropertyService.getProperties is deprecated. Use rentalService.getRentals() instead.');
+    
     try {
-      // Build where clause from filters
-      const where: any = {
-        ...(filters.name && {
-          name: { contains: filters.name, mode: 'insensitive' }
-        }),
-        ...(filters.city && {
-          city: { contains: filters.city, mode: 'insensitive' }
-        }),
-        ...(filters.state && {
-          state: { contains: filters.state, mode: 'insensitive' }
-        }),
-        ...(filters.zipCode && {
-          zipCode: { contains: filters.zipCode }
-        }),
-        ...(filters.propertyType && {
-          propertyType: filters.propertyType
-        }),
-        ...(filters.minUnits && {
-          totalUnits: { gte: filters.minUnits }
-        }),
-        ...(filters.maxUnits && {
-          totalUnits: { lte: filters.maxUnits }
-        }),
-        ...(filters.managerId && {
-          managerId: filters.managerId
-        }),
-        ...(filters.ownerId && {
-          ownerId: filters.ownerId
-        }),
-        ...(filters.isActive !== undefined && {
-          isActive: filters.isActive
-        })
+      // Map property filters to rental filters
+      const rentalFilters = {
+        title: filters.name,
+        city: filters.city,
+        state: filters.state,
+        zipCode: filters.zipCode,
+        propertyType: filters.propertyType,
+        managerId: filters.managerId,
+        ownerId: filters.ownerId,
+        isAvailable: filters.isActive,
       };
 
-      // Get pagination params
-      const { skip, take } = getPaginationParams(page, limit);
+      const result = await rentalService.getRentals(
+        rentalFilters,
+        page,
+        limit,
+        sortField === 'name' ? 'title' : sortField,
+        sortOrder
+      );
 
-      // Get sort params
-      const orderBy = buildSortParams(sortField, sortOrder);
-
-      // Execute count and findMany in parallel
-      const [total, properties] = await Promise.all([
-        prisma.property.count({ where }),
-        prisma.property.findMany({
-          where,
-          skip,
-          take,
-          orderBy,
-          include: {
-            manager: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true
-              }
-            },
-            owner: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true
-              }
-            },
-            units: {
-              select: {
-                id: true,
-                unitNumber: true,
-                isAvailable: true
-              }
-            }
-          }
-        })
-      ]);
-
-      const totalPages = Math.ceil(total / limit);
+      // Map rental data to property format for backward compatibility
+      const properties = result.rentals.map((rental: any) => ({
+        id: rental.id,
+        name: rental.title,
+        address: rental.address,
+        city: rental.city,
+        state: rental.state,
+        zipCode: rental.zipCode,
+        country: rental.country,
+        description: rental.description,
+        propertyType: rental.propertyType,
+        yearBuilt: rental.yearBuilt,
+        totalUnits: rental.totalUnits,
+        amenities: rental.amenities,
+        createdAt: rental.createdAt,
+        updatedAt: rental.updatedAt,
+        isActive: rental.isAvailable,
+        managerId: rental.managerId,
+        ownerId: rental.ownerId,
+        manager: rental.manager,
+        owner: rental.owner,
+        units: [], // Legacy field
+      }));
 
       return {
         properties,
-        total,
-        page,
-        limit,
-        totalPages
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
       };
     } catch (error) {
       throw handleDatabaseError(error);
@@ -264,99 +234,120 @@ export class PropertyService {
   }
 
   /**
+   * @deprecated Use rentalService.updateRental() instead
    * Update a property
    * @param id Property ID
    * @param data Update data
    * @returns The updated property
    */
   async updateProperty(id: string, data: UpdatePropertyDto): Promise<any> {
+    console.warn('PropertyService.updateProperty is deprecated. Use rentalService.updateRental() instead.');
+    
     try {
-      // Format amenities as JSON if provided
-      const formattedData = {
-        ...data,
-        amenities: data.amenities ? data.amenities : undefined,
+      // Map property data to rental data
+      const rentalData: any = {};
+      if (data.name) rentalData.title = data.name;
+      if (data.description !== undefined) rentalData.description = data.description;
+      if (data.address) rentalData.address = data.address;
+      if (data.city) rentalData.city = data.city;
+      if (data.state) rentalData.state = data.state;
+      if (data.zipCode) rentalData.zipCode = data.zipCode;
+      if (data.country) rentalData.country = data.country;
+      if (data.propertyType) rentalData.propertyType = data.propertyType;
+      if (data.yearBuilt) rentalData.yearBuilt = data.yearBuilt;
+      if (data.totalUnits) rentalData.totalUnits = data.totalUnits;
+      if (data.amenities) rentalData.amenities = Array.isArray(data.amenities) ? data.amenities : [];
+
+      const rental = await rentalService.updateRental(id, rentalData);
+
+      // Map rental data to property format for backward compatibility
+      return {
+        id: rental.id,
+        name: rental.title,
+        address: rental.address,
+        city: rental.city,
+        state: rental.state,
+        zipCode: rental.zipCode,
+        country: rental.country,
+        description: rental.description,
+        propertyType: rental.propertyType,
+        yearBuilt: rental.yearBuilt,
+        totalUnits: rental.totalUnits,
+        amenities: rental.amenities,
+        createdAt: rental.createdAt,
+        updatedAt: rental.updatedAt,
+        isActive: rental.isAvailable,
+        managerId: rental.managerId,
+        ownerId: rental.ownerId,
+        manager: rental.manager,
+        owner: rental.owner,
+        units: [], // Legacy field
       };
-
-      const property = await prisma.property.update({
-        where: { id },
-        data: formattedData,
-        include: {
-          manager: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true
-            }
-          },
-          owner: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true
-            }
-          },
-          units: true
-        }
-      });
-
-      return property;
     } catch (error) {
       throw handleDatabaseError(error);
     }
   }
 
   /**
+   * @deprecated Use rentalService.setRentalAvailability() instead
    * Set property active status
    * @param id Property ID
    * @param isActive Active status
    * @returns The updated property
    */
   async setPropertyStatus(id: string, isActive: boolean): Promise<any> {
+    console.warn('PropertyService.setPropertyStatus is deprecated. Use rentalService.setRentalAvailability() instead.');
+    
     try {
-      const property = await prisma.property.update({
-        where: { id },
-        data: { isActive }
-      });
+      const rental = await rentalService.setRentalAvailability(id, isActive);
 
-      return property;
+      // Map rental data to property format for backward compatibility
+      return {
+        id: rental.id,
+        name: rental.title,
+        address: rental.address,
+        city: rental.city,
+        state: rental.state,
+        zipCode: rental.zipCode,
+        country: rental.country,
+        description: rental.description,
+        propertyType: rental.propertyType,
+        yearBuilt: rental.yearBuilt,
+        totalUnits: rental.totalUnits,
+        amenities: rental.amenities,
+        createdAt: rental.createdAt,
+        updatedAt: rental.updatedAt,
+        isActive: rental.isAvailable,
+        managerId: rental.managerId,
+        ownerId: rental.ownerId,
+      };
     } catch (error) {
       throw handleDatabaseError(error);
     }
   }
 
   /**
+   * @deprecated Use rentalService.setRentalAvailability() instead
    * Delete a property (soft delete by setting isActive to false)
    * @param id Property ID
    * @returns The deactivated property
    */
   async softDeleteProperty(id: string): Promise<any> {
+    console.warn('PropertyService.softDeleteProperty is deprecated. Use rentalService.setRentalAvailability() instead.');
     return this.setPropertyStatus(id, false);
   }
 
   /**
+   * @deprecated Use rentalService.deleteRental() instead
    * Permanently delete a property and related data
    * @param id Property ID
    * @returns True if successful
    */
   async hardDeleteProperty(id: string): Promise<boolean> {
+    console.warn('PropertyService.hardDeleteProperty is deprecated. Use rentalService.deleteRental() instead.');
+    
     try {
-      // Delete related units first
-      await prisma.unit.deleteMany({
-        where: { propertyId: id }
-      });
-
-      // Delete property documents
-      await prisma.document.deleteMany({
-        where: { propertyId: id }
-      });
-
-      // Delete the property
-      await prisma.property.delete({
-        where: { id }
-      });
-
+      await rentalService.deleteRental(id);
       return true;
     } catch (error) {
       throw handleDatabaseError(error);
@@ -364,12 +355,15 @@ export class PropertyService {
   }
 
   /**
+   * @deprecated Use rentalService.getRentals() with grouping instead
    * Count properties by type
    * @returns Count of properties by type
    */
   async countPropertiesByType(): Promise<Record<string, number>> {
+    console.warn('PropertyService.countPropertiesByType is deprecated. Use rentalService.getRentals() with grouping instead.');
+    
     try {
-      const counts = await prisma.property.groupBy({
+      const counts = await prisma.rental.groupBy({
         by: ['propertyType'],
         _count: {
           id: true

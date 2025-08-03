@@ -1,85 +1,28 @@
-import { Unit } from './unit';
+/**
+ * @deprecated This type definition has been removed. Use Rental interface instead.
+ * All property functionality is now handled through the unified Rental model.
+ * 
+ * Migration guide:
+ * - Property interface → Rental interface with type: 'PROPERTY'
+ * - CreatePropertyRequest → CreateRentalDto with type: 'PROPERTY'
+ * - UpdatePropertyRequest → UpdateRentalDto
+ */
 
-export interface Property {
-  id: string;
-  name: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
-  description?: string;
-  propertyType: PropertyType;
-  yearBuilt?: number;
-  totalUnits: number;
-  amenities?: string[];
-  createdAt: string;
-  updatedAt: string;
-  isActive: boolean;
-  managerId: string;
-  ownerId: string;
-  latitude?: number;
-  longitude?: number;
-  units?: Unit[];
-  images?: PropertyImage[];
-}
+import { Rental } from './rental';
 
-export interface PropertyImage {
-  id: number;
-  propertyId: string;
-  filename: string;
-  originalFilename: string;
-  mimetype: string;
-  size: number;
-  url: string;
-  uri?: string; // Add uri field for local images
-  isFeatured: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+console.error('Property types have been removed. Please use Rental interface instead.');
 
-export enum PropertyType {
-  APARTMENT = 'APARTMENT',
-  HOUSE = 'HOUSE',
-  CONDO = 'CONDO',
-  TOWNHOUSE = 'TOWNHOUSE',
-  COMMERCIAL = 'COMMERCIAL',
-  INDUSTRIAL = 'INDUSTRIAL',
-  OTHER = 'OTHER'
+export interface Property extends Rental {
+  /** @deprecated Use Rental interface directly */
 }
 
 export interface CreatePropertyRequest {
-  name: string;
-  address: {
-    street: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  };
-  description?: string;
-  propertyType: PropertyType;
-  yearBuilt?: number;
-  totalUnits: number;
-  amenities?: string[];
-  latitude?: number;
-  longitude?: number;
+  /** @deprecated Use CreateRentalDto instead */
 }
 
 export interface UpdatePropertyRequest {
-  name?: string;
-  address?: {
-    street?: string;
-    city?: string;
-    state?: string;
-    zipCode?: string;
-    country?: string;
-  };
-  description?: string;
-  propertyType?: PropertyType;
-  yearBuilt?: number;
-  totalUnits?: number;
-  amenities?: string[];
-  latitude?: number;
-  longitude?: number;
+  /** @deprecated Use UpdateRentalDto instead */
 }
+
+// Re-export for backward compatibility during transition
+export { Rental as PropertyReplacement } from './rental';

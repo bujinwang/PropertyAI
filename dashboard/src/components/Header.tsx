@@ -4,16 +4,21 @@ import {
   AppBar,
   Toolbar,
   Typography,
-  Button,
   IconButton,
   Box,
   Menu,
   MenuItem,
   Avatar,
   Divider,
+  Badge,
+  Tooltip,
 } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import {
+  Menu as MenuIcon,
+  AccountCircle as AccountCircleIcon,
+  Notifications as NotificationsIcon,
+  Search as SearchIcon,
+} from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 
 interface HeaderProps {
@@ -46,51 +51,79 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
   };
 
   return (
-    <AppBar position="fixed">
+    <AppBar 
+      position="fixed" 
+      sx={{ 
+        zIndex: (theme) => theme.zIndex.drawer + 1,
+        backgroundColor: 'primary.main',
+      }}
+    >
       <Toolbar>
         <IconButton
-          size="large"
-          edge="start"
           color="inherit"
-          aria-label="menu"
-          sx={{ mr: 2 }}
+          aria-label="open drawer"
+          edge="start"
           onClick={onMenuToggle}
+          sx={{ mr: 2, display: { sm: 'none' } }}
         >
           <MenuIcon />
         </IconButton>
         
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+        <Typography 
+          variant="h6" 
+          noWrap 
+          component="div" 
+          sx={{ 
+            flexGrow: 1,
+            display: { xs: 'none', sm: 'block' }
+          }}
+        >
           PropertyAI Dashboard
         </Typography>
         
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Button 
-            color="inherit" 
-            component={RouterLink} 
-            to="/"
-            sx={{ mx: 1 }}
-          >
-            Home
-          </Button>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          {/* Search Icon */}
+          <Tooltip title="Search">
+            <IconButton color="inherit" size="large">
+              <SearchIcon />
+            </IconButton>
+          </Tooltip>
           
-          <Button 
-            color="inherit" 
-            component={RouterLink} 
-            to="/tenant-screening"
-            sx={{ mx: 1 }}
-          >
-            Tenant Screening
-          </Button>
-
-          <Button
-            color="inherit"
-            component={RouterLink}
-            to="/tenant-ratings"
-            sx={{ mx: 1 }}
-          >
-            Tenant Ratings
-          </Button>
+          {/* Notifications */}
+          <Tooltip title="Notifications">
+            <IconButton color="inherit" size="large">
+              <Badge badgeContent={4} color="error">
+                <NotificationsIcon />
+              </Badge>
+            </IconButton>
+          </Tooltip>
           
+          {/* Quick Access Links */}
+          <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1, ml: 2 }}>
+            <Tooltip title="Rental Listings">
+              <IconButton 
+                color="inherit" 
+                component={RouterLink} 
+                to="/rentals"
+                size="small"
+              >
+                <Typography variant="body2">Rentals</Typography>
+              </IconButton>
+            </Tooltip>
+            
+            <Tooltip title="Tenant Screening">
+              <IconButton 
+                color="inherit" 
+                component={RouterLink} 
+                to="/tenant-screening"
+                size="small"
+              >
+                <Typography variant="body2">Screening</Typography>
+              </IconButton>
+            </Tooltip>
+          </Box>
+          
+          {/* User Menu */}
           <IconButton
             onClick={handleClick}
             size="small"
@@ -146,6 +179,9 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
         >
           <MenuItem onClick={handleProfile}>
             <Avatar /> Profile
+          </MenuItem>
+          <MenuItem component={RouterLink} to="/settings" onClick={handleClose}>
+            Settings
           </MenuItem>
           <Divider />
           <MenuItem onClick={handleLogout}>Logout</MenuItem>

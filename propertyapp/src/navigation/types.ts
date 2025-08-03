@@ -1,44 +1,58 @@
-import { RouteProp } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { PortfolioSize } from '../services/setupWizardService';
-import { UserRole } from '../types/auth';
-import { NavigatorScreenParams } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RouteProp } from '@react-navigation/native';
 
-// Main tab navigator param list
-export type MainTabParamList = {
-  Home: undefined;
-  Properties: undefined;
-  Maintenance: undefined;
-  Messages: undefined;
-  Profile: undefined;
-};
-
-// Add AIGuidedSetupWizardScreen to RootStackParamList
 export type RootStackParamList = {
+  // Auth Stack
   Login: undefined;
   Register: undefined;
   ForgotPassword: undefined;
-  Main: NavigatorScreenParams<MainTabParamList> | undefined;
-  PropertyForm: { propertyId?: string };
+  
+  // Main App Stack
+  MainTabs: undefined;
+  
+  // Property/Rental Management (Updated for unified model)
+  RentalList: undefined;
+  RentalDetail: { rentalId: string };
+  RentalForm: { rentalId?: string };
+  
+  // Legacy routes (for backward compatibility)
+  PropertyList: undefined;
   PropertyDetail: { propertyId: string };
-  UnitList: { propertyId: string; propertyName: string };
-  UnitForm: { propertyId: string; unitId?: string };
+  PropertyForm: { propertyId?: string };
+  
+  UnitList: { propertyId?: string };
   UnitDetail: { unitId: string };
-  CreateListing: { unitId: string; propertyId: string };
-  MaintenanceRequestForm: { propertyId?: string; unitId?: string };
-  MaintenanceRequestDetail: { requestId: string };
-  PropertyPhotos: { propertyId: string };
-  PhotoManagement: { propertyId: string };
-  Chat: { conversationId: string };
-  AIGuidedSetupWizard: {
-    isFirstLogin?: boolean;
-    role?: UserRole;
-    portfolioSize?: PortfolioSize;
-  };
-  DataPrivacyCompliance: undefined;
-  SecuritySettings: undefined;
-  Application: { unitId: string };
-  PublicListing: { listingId?: string };
+  UnitForm: { unitId?: string; propertyId?: string };
+  
+  ListingList: undefined;
+  ListingDetail: { listingId: string };
+  ListingForm: { listingId?: string };
+  
+  // Tenant Management
+  TenantList: undefined;
+  TenantDetail: { tenantId: string };
+  TenantForm: { tenantId?: string };
+  
+  // Application Management
+  ApplicationList: undefined;
+  ApplicationDetail: { applicationId: string };
+  ApplicationForm: { applicationId?: string };
+  
+  // Maintenance
+  MaintenanceList: undefined;
+  MaintenanceDetail: { maintenanceId: string };
+  MaintenanceForm: { maintenanceId?: string };
+  
+  // Financial
+  FinancialDashboard: undefined;
+  PaymentList: undefined;
+  PaymentDetail: { paymentId: string };
+  
+  // Settings
+  Settings: undefined;
+  Profile: undefined;
+  
+  // Legacy compatibility - keeping old property details route
   PropertyDetails: { propertyId: string };
 };
 
@@ -49,10 +63,18 @@ export type NavigationProps<T extends keyof RootStackParamList> = {
 };
 
 // Type declaration for React Navigation to have proper typing
-export {};
 declare global {
-  // Extend React Navigation to use our RootStackParamList types
-  export namespace ReactNavigation {
-    export interface RootParamList extends RootStackParamList {}
+  namespace ReactNavigation {
+    interface RootParamList extends RootStackParamList {}
   }
 }
+
+// Screen-specific navigation prop types
+export type RentalListNavigationProp = NativeStackNavigationProp<RootStackParamList, 'RentalList'>;
+export type RentalDetailNavigationProp = NativeStackNavigationProp<RootStackParamList, 'RentalDetail'>;
+export type RentalFormNavigationProp = NativeStackNavigationProp<RootStackParamList, 'RentalForm'>;
+
+// Legacy navigation prop types (for backward compatibility)
+export type PropertyListNavigationProp = NativeStackNavigationProp<RootStackParamList, 'PropertyList'>;
+export type PropertyDetailNavigationProp = NativeStackNavigationProp<RootStackParamList, 'PropertyDetail'>;
+export type PropertyFormNavigationProp = NativeStackNavigationProp<RootStackParamList, 'PropertyForm'>;

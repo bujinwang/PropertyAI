@@ -1,6 +1,7 @@
 import express from 'express';
 import propertyRoutes from './propertyRoutes';
 import unitRoutes from './unitRoutes';
+import rentalRoutes from './rentalRoutes';
 import imageRoutes from './imageRoutes';
 import searchRoutes from './searchRoutes';
 import geocodingRoutes from './geocodingRoutes';
@@ -64,6 +65,10 @@ router.get(`${API_PREFIX}/health`, (req, res) => {
 });
 
 // Register routes
+// NEW: Rental routes (unified model)
+router.use(`${API_PREFIX}/rentals`, rentalRoutes); // New unified rental management routes
+
+// LEGACY: Keep existing routes for backward compatibility during transition
 router.use(`${API_PREFIX}/properties`, propertyRoutes);
 router.use(`${API_PREFIX}/units`, unitRoutes);
 router.use(`${API_PREFIX}`, imageRoutes); // Image routes handle both property and unit images

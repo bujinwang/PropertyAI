@@ -46,29 +46,17 @@ const mockPrismaClient = {
     delete: jest.fn(),
     deleteMany: jest.fn(),
   },
-  property: {
-    create: jest.fn().mockImplementation((data: any) => Promise.resolve({ id: 'mock-property-id', ...data.data })),
-    findMany: jest.fn().mockResolvedValue([{ id: 'mock-property-id', name: 'Test Property' }]),
+  // UPDATED: Use rental instead of legacy models
+  rental: {
+    create: jest.fn().mockImplementation((data: any) => Promise.resolve({ id: 'mock-rental-id', ...data.data })),
+    findMany: jest.fn().mockResolvedValue([{ id: 'mock-rental-id', title: 'Test Rental' }]),
     findUnique: jest.fn().mockImplementation((query: any) => {
         if (query.where.id === 'non-existent-id') {
             return Promise.resolve(null);
         }
-        return Promise.resolve({ id: query.where.id, name: 'Test Property' })
+        return Promise.resolve({ id: query.where.id, title: 'Test Rental' })
     }),
-    update: jest.fn().mockResolvedValue({ id: 'mock-property-id', name: 'Updated Property' }),
-    delete: jest.fn().mockResolvedValue({}),
-    deleteMany: jest.fn(),
-  },
-  unit: {
-    create: jest.fn().mockImplementation((data: any) => Promise.resolve({ id: 'mock-unit-id', ...data.data })),
-    findMany: jest.fn().mockResolvedValue([{ id: 'mock-unit-id', unitNumber: 'A101' }]),
-    findUnique: jest.fn().mockImplementation((query: any) => {
-        if (query.where.id === 'non-existent-id') {
-            return Promise.resolve(null);
-        }
-        return Promise.resolve({ id: query.where.id, unitNumber: 'A101' })
-    }),
-    update: jest.fn().mockResolvedValue({ id: 'mock-unit-id', monthlyRent: 1300, isOccupied: true }),
+    update: jest.fn().mockResolvedValue({ id: 'mock-rental-id', title: 'Updated Rental' }),
     delete: jest.fn().mockResolvedValue({}),
     deleteMany: jest.fn(),
     count: jest.fn().mockResolvedValue(1),
@@ -126,24 +114,8 @@ const mockPrismaClient = {
   workOrder: {
       deleteMany: jest.fn(),
   },
-  listingImage: {
-      deleteMany: jest.fn(),
-  },
-  aIListingSuggestion: {
-      deleteMany: jest.fn(),
-  },
-  aIPricingSuggestion: {
-      deleteMany: jest.fn(),
-  },
-  listing: {
-      deleteMany: jest.fn(),
-  },
-  unitImage: {
-      deleteMany: jest.fn(),
-  },
-  propertyImage: {
-      deleteMany: jest.fn(),
-  },
+  // REMOVED: Legacy model mocks (property, unit, listing, listingImage, unitImage, propertyImage)
+  // These have been consolidated into the rental model
   document: {
       deleteMany: jest.fn(),
   },

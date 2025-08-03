@@ -1,35 +1,38 @@
-import { Listing, Property, Unit } from '@prisma/client';
+import { Rental } from '@prisma/client';
 import { AppError } from '../middleware/errorMiddleware';
 
-interface ListingSeoData {
+interface RentalSeoData {
   title: string;
   description: string;
   address: string;
   propertyType: string;
-  rent: number; // Changed price to rent
+  rent: number;
   bedrooms?: number | null;
   bathrooms?: number | null;
   squareFootage?: number | null;
   amenities?: any;
 }
 
-export const prepareListingSeoData = (listing: Listing & { property: Property; unit: Unit }): ListingSeoData => {
-  if (!listing) {
-    throw new AppError('Listing not found', 404);
+export const prepareRentalSeoData = (rental: Rental): RentalSeoData => {
+  if (!rental) {
+    throw new AppError('Rental not found', 404);
   }
 
   return {
-    title: listing.title,
-    description: listing.description,
-    address: `${listing.property.address}, ${listing.property.city}, ${listing.property.state} ${listing.property.zipCode}`,
-    propertyType: listing.property.propertyType,
-    rent: listing.rent, // Changed price to rent
-    bedrooms: listing.unit.bedrooms,
-    bathrooms: listing.unit.bathrooms,
-    squareFootage: listing.unit.size,
-    amenities: listing.property.amenities,
+    title: rental.title,
+    description: rental.description || '',
+    address: `${rental.address}, ${rental.city}, ${rental.state} ${rental.zipCode}`,
+    propertyType: rental.propertyType,
+    rent: rental.rent,
+    bedrooms: rental.bedrooms,
+    bathrooms: rental.bathrooms,
+    squareFootage: rental.size,
+    amenities: rental.amenities,
   };
 };
+
+// Legacy function for backward compatibility
+export const prepareListingSeoData = prepareRentalSeoData;
 
 export const generateSlug = async (title: string, city: string, propertyType: string): Promise<string> => {
   const slugify = (text: string) => text.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
@@ -39,7 +42,12 @@ export const generateSlug = async (title: string, city: string, propertyType: st
   const prisma = new (await import('@prisma/client')).PrismaClient();
   let uniqueSlug = slug;
   let counter = 1;
-  while (await prisma.listing.findUnique({ where: { slug: uniqueSlug } })) {
+  
+  // Check against both rental and legacy listing tables during transition
+  while (
+    (await prisma.rental.findUnique({ where: { slug: uniqueSlug } })) ||
+    (await prisma.listing.findUnique({ where: { slug: uniqueSlug } }))
+  ) {
     uniqueSlug = `${slug}-${counter}`;
     counter++;
   }
@@ -47,14 +55,14 @@ export const generateSlug = async (title: string, city: string, propertyType: st
   return uniqueSlug;
 };
 
-export const generateMetaTags = (seoData: ListingSeoData) => {
+export const generateMetaTags = (seoData: RentalSeoData) => {
   const { title, description, propertyType, address } = seoData;
   const metaTitle = `${propertyType} in ${address} - ${title} | PropertyAI`;
   const metaDescription = description.substring(0, 160);
   return { metaTitle, metaDescription };
 };
 
-export const generateJsonLd = (seoData: ListingSeoData) => {
+export const generateJsonLd = (seoData: RentalSeoData) => {
   const { title, description, address, propertyType, rent, bedrooms, bathrooms, squareFootage } = seoData;
 
   const jsonLd = {
@@ -80,3 +88,6 @@ export const generateJsonLd = (seoData: ListingSeoData) => {
 
   return jsonLd;
 };
+
+// Type alias for backward compatibility
+export type ListingSeoData = RentalSeoData;

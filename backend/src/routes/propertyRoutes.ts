@@ -1,8 +1,16 @@
 import { Router } from 'express';
 import PropertyController from '../controllers/propertyController';
 import { authMiddleware } from '../middleware/authMiddleware';
+import { deprecationWarning } from '../middleware/deprecation';
+import { legacyRouteMapper } from '../middleware/legacy-mapping';
 
 const router = Router();
+
+// Apply deprecation warning to all routes
+router.use(deprecationWarning('/api/rentals', '2024-05-01'));
+
+// Apply legacy route mapping
+router.use(legacyRouteMapper);
 
 // GET / route with role-based access
 router.get('/', (req, res, next) => {

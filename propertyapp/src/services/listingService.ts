@@ -83,11 +83,36 @@ const getPublicListings = async (filters: {
   return response;
 };
 
+/**
+ * @deprecated This service has been removed. Use rentalService instead.
+ * All listing functionality is now handled through the unified Rental model.
+ * 
+ * Migration guide:
+ * - listingService.getListings() → rentalService.getRentals({ isActive: true })
+ * - listingService.getListingById(id) → rentalService.getRentalById(id)
+ * - listingService.createListing(data) → rentalService.createRental(data)
+ * - listingService.updateListing(id, data) → rentalService.updateRental(id, data)
+ * - listingService.deleteListing(id) → rentalService.deleteRental(id)
+ */
+
+import { rentalService } from './rentalService';
+
+console.error('listingService has been removed. Please use rentalService instead.');
+
 export const listingService = {
-  getListings,
-  getListingById,
-  createListing,
-  updateListing,
-  deleteListing,
-  getPublicListings,
+  getListings: () => {
+    throw new Error('listingService.getListings() has been removed. Use rentalService.getRentals({ isActive: true }) instead.');
+  },
+  getListingById: () => {
+    throw new Error('listingService.getListingById() has been removed. Use rentalService.getRentalById() instead.');
+  },
+  createListing: () => {
+    throw new Error('listingService.createListing() has been removed. Use rentalService.createRental() instead.');
+  },
+  updateListing: () => {
+    throw new Error('listingService.updateListing() has been removed. Use rentalService.updateRental() instead.');
+  },
+  deleteListing: () => {
+    throw new Error('listingService.deleteListing() has been removed. Use rentalService.deleteRental() instead.');
+  },
 };

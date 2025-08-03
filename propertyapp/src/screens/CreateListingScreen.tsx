@@ -18,11 +18,9 @@ import { COLORS, FONTS, SPACING } from '@/constants/theme';
 import { TextInput } from '@/components/ui/TextInput';
 import { Button } from '@/components/ui/Button';
 import { RootStackParamList } from '@/navigation/types';
-import { listingService } from '@/services/listingService';
-import { unitService } from '@/services/unitService';
-import { propertyService } from '@/services/propertyService';
-import { CreateListingRequest, ListingStatus } from '@/types/listing';
-import { Unit } from '@/types/unit';
+import { rentalService } from '@/services/rentalService';
+import { CreateRentalDto } from '@/types/rental';
+import { Rental } from '@/types/rental';
 
 type CreateListingScreenRouteProp = RouteProp<RootStackParamList, 'CreateListing'>;
 
@@ -30,7 +28,7 @@ interface CreateListingFormValues {
   title: string;
   description: string;
   price: string;
-  status: ListingStatus;
+  status: string;
 }
 
 const validationSchema = Yup.object().shape({
@@ -54,8 +52,7 @@ const CreateListingScreen = () => {
   const { unitId, propertyId } = route.params;
 
   const [loading, setLoading] = useState(false);
-  const [unit, setUnit] = useState<Unit | null>(null);
-  const [property, setProperty] = useState<any>(null);
+  const [rental, setRental] = useState<Rental | null>(null);
   const [listingType, setListingType] = useState<'UNIT' | 'PROPERTY'>(unitId ? 'UNIT' : 'PROPERTY');
 
   useEffect(() => {
@@ -64,18 +61,14 @@ const CreateListingScreen = () => {
 
   const loadDetails = async () => {
     try {
-      if (unitId) {
-        const unitData = await unitService.getUnitById(unitId);
-        setUnit(unitData);
-        setListingType('UNIT');
-      } else {
-        const propertyData = await propertyService.getPropertyById(propertyId);
-        setProperty(propertyData);
-        setListingType('PROPERTY');
+      if (unitId || propertyId) {
+        const rentalData = await rentalService.getRentalById(unitId || propertyId);
+        setRental(rentalData);
+        setListingType(rentalData.unitNumber ? 'UNIT' : 'PROPERTY');
       }
     } catch (error) {
-      console.error('Failed to load details:', error);
-      Alert.alert('Error', 'Failed to load property/unit details');
+      console.error('Failed to load rental details:', error);
+      Alert.alert('Error', 'Failed to load rental details');
     }
   };
 
@@ -83,96 +76,105 @@ const CreateListingScreen = () => {
     title: '',
     description: '',
     price: '',
-    status: ListingStatus.DRAFT,
+    status: 'DRAFT',
   };
 
   const handleSubmit = async (values: CreateListingFormValues) => {
     setLoading(true);
     try {
-      const listingData: CreateListingRequest = {
+      const rentalData: CreateRentalDto = {
         title: values.title,
         description: values.description,
-        price: parseFloat(values.price),
-        propertyId: propertyId,
-        unitId: unitId || undefined,
+        rent: parseFloat(values.price),
+        address: rental?.address || '',
+        city: rental?.city || '',
+        state: rental?.state || '',
+        zipCode: rental?.zipCode || '',
+        propertyType: rental?.propertyType || 'APARTMENT',
         status: values.status,
+        isActive: values.status === 'ACTIVE',
+        managerId: rental?.managerId || '',
+        ownerId: rental?.ownerId || '',
+        createdById: rental?.createdById || '',
       };
 
-      await listingService.createListing(listingData);
-      Alert.alert('Success', 'Listing created successfully');
+      await rentalService.createRental(rentalData);
+      Alert.alert('Success', 'Rental listing created successfully');
       navigation.goBack();
     } catch (error) {
-      console.error('Failed to create listing:', error);
-      Alert.alert('Error', 'Failed to create listing');
+      console.error('Failed to create rental listing:', error);
+      Alert.alert('Error', 'Failed to create rental listing');
     } finally {
       setLoading(false);
     }
   };
 
   const generateAutoTitle = () => {
-    if (listingType === 'UNIT' && unit) {
+    if (listingType === 'UNIT' && rental && rental.unitNumber) {
       const features = [];
-      if (unit.bedrooms) features.push(`${unit.bedrooms} bed`);
-      if (unit.bathrooms) features.push(`${unit.bathrooms} bath`);
-      if (unit.size) features.push(`${unit.size} sq ft`);
+      if (rental.bedrooms) features.push(`${rental.bedrooms} bed`);
+      if (rental.bathrooms) features.push(`${rental.bathrooms} bath`);
+      if (rental.size) features.push(`${rental.size} sq ft`);
       
       const featuresText = features.length > 0 ? ` - ${features.join(', ')}` : '';
-      return `Unit ${unit.unitNumber} Available${featuresText}`;
-    } else if (listingType === 'PROPERTY' && property) {
-      if (property.totalUnits === 1) {
-        return `${property.name || 'Beautiful'} ${property.propertyType} Available`;
+      return `Unit ${rental.unitNumber} Available${featuresText}`;
+    } else if (listingType === 'PROPERTY' && rental) {
+      if (rental.totalUnits === 1) {
+        return `${rental.title || 'Beautiful'} ${rental.propertyType} Available`;
       } else {
-        return `${property.name || 'Property'} - ${property.totalUnits} Unit ${property.propertyType} Available`;
+        return `${rental.title || 'Property'} - ${rental.totalUnits} Unit ${rental.propertyType} Available`;
       }
     }
     return '';
   };
 
   const generateAutoDescription = () => {
-    if (listingType === 'UNIT' && unit) {
-      let description = `Beautiful unit ${unit.unitNumber} available for rent`;
+    if (listingType === 'UNIT' && rental && rental.unitNumber) {
+      let description = `Beautiful unit ${rental.unitNumber} available for rent`;
       
-      if (unit.bedrooms && unit.bathrooms) {
-        description += ` featuring ${unit.bedrooms} bedroom${unit.bedrooms > 1 ? 's' : ''} and ${unit.bathrooms} bathroom${unit.bathrooms > 1 ? 's' : ''}`;
+      if (rental.bedrooms && rental.bathrooms) {
+        description += ` featuring ${rental.bedrooms} bedroom${rental.bedrooms > 1 ? 's' : ''} and ${rental.bathrooms} bathroom${rental.bathrooms > 1 ? 's' : ''}`;
       }
       
-      if (unit.size) {
-        description += ` with ${unit.size} square feet of living space`;
+      if (rental.size) {
+        description += ` with ${rental.size} square feet of living space`;
       }
       
-      if (unit.floorNumber) {
-        description += ` located on floor ${unit.floorNumber}`;
+      if (rental.floorNumber) {
+        description += ` located on floor ${rental.floorNumber}`;
       }
       
-      if (unit.features && unit.features.length > 0) {
-        description += `. Features include: ${unit.features.join(', ')}`;
+      if (rental.amenities && Object.keys(rental.amenities).length > 0) {
+        const amenityList = Object.keys(rental.amenities).filter(key => rental.amenities[key]);
+        description += `. Features include: ${amenityList.join(', ')}`;
       }
       
-      if (unit.dateAvailable) {
-        description += `. Available from ${unit.dateAvailable}`;
+      if (rental.availableDate) {
+        description += `. Available from ${new Date(rental.availableDate).toLocaleDateString()}`;
       }
       
       description += `. Don't miss this opportunity!`;
       return description;
-    } else if (listingType === 'PROPERTY' && property) {
-      let description = `Beautiful ${property.propertyType} property available for rent`;
+    } else if (listingType === 'PROPERTY' && rental) {
+      let description = `Beautiful ${rental.propertyType} property available for rent`;
       
-      if (property.address) {
-        description += ` located at ${property.address}`;
+      if (rental.address) {
+        description += ` located at ${rental.address}`;
       }
       
-      if (property.totalUnits === 1) {
+      if (rental.totalUnits === 1) {
         description += `. This single-family home offers comfortable living with modern amenities`;
       } else {
-        description += `. This ${property.totalUnits}-unit ${property.propertyType} offers great investment potential`;
+        description += `. This ${rental.totalUnits}-unit ${rental.propertyType} offers great investment potential`;
       }
       
-      if (property.amenities && property.amenities.length > 0) {
-        description += `. Features include: ${property.amenities.join(', ')}`;
+      if (rental.amenities && Object.keys(rental.amenities).length > 0) {
+        const amenityList = Object.keys(rental.amenities).filter(key => rental.amenities[key]);
+        description += `. Features include: ${amenityList.join(', ')}`;
       }
       
-      if (property.yearBuilt) {
-        description += `. Built in ${property.yearBuilt}`;
+      if (rental.yearBuilt) {
+        description += `. Built in ${rental.yearBuilt}`;
       }
       
       description += `. Contact us for current availability and pricing!`;
@@ -185,20 +187,21 @@ const CreateListingScreen = () => {
     setFieldValue('title', generateAutoTitle());
     setFieldValue('description', generateAutoDescription());
     
-    if (listingType === 'UNIT' && unit && unit.rent) {
-      setFieldValue('price', unit.rent.toString());
-    } else if (listingType === 'PROPERTY' && property) {
-      // Default price for property listings based on type and location
-      const defaultPrice = property.propertyType === 'house' ? 2000 : 
-                          property.propertyType === 'apartment' ? 1500 : 1200;
+    if (rental && rental.rent) {
+      setFieldValue('price', rental.rent.toString());
+    } else {
+      // Default price based on property type
+      const defaultPrice = rental?.propertyType === 'HOUSE' ? 2000 : 
+                          rental?.propertyType === 'APARTMENT' ? 1500 : 1200;
       setFieldValue('price', defaultPrice.toString());
     }
   };
 
-  if (!unit && !property) {
+  if (!rental) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={styles.loadingText}>Loading rental details...</Text>
       </View>
     );
   }
