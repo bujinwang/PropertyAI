@@ -109,6 +109,27 @@ export class RentalService {
       throw error;
     }
   }
+
+  async getPublicRentals(searchQuery?: string): Promise<Rental[]> {
+    try {
+      const queryParams = new URLSearchParams();
+      
+      if (searchQuery) {
+        // Add search parameters that the backend expects
+        queryParams.append('search', searchQuery);
+      }
+      
+      const url = queryParams.toString() 
+        ? `${this.baseUrl}/public?${queryParams.toString()}`
+        : `${this.baseUrl}/public`;
+        
+      const response = await api.get(url);
+      return response.data.data || response.data;
+    } catch (error) {
+      console.error('Error fetching public rentals:', error);
+      throw error;
+    }
+  }
 }
 
 export const rentalService = new RentalService();

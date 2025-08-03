@@ -263,12 +263,5 @@ export const api = new ApiService(API_URL);
 
 // Specific API calls
 export const getPublicListings = (query?: string) => {
-  return api.get('/properties/public/listings', { params: { search: query } });
+  return api.get('/rentals/public', { params: { search: query } });
 };
-
-export const getPropertyDetails = (propertyId: string) => {
-  return api.get(`/properties/${propertyId}`);
-};
-
-// Export default instance
-export default api;

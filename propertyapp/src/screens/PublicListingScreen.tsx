@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, TextInput, SafeAreaView } from 'react-native';
-import { getPublicListings } from '../services/api';
-import { Property } from '../types/property';
+import { rentalService } from '../services/rentalService';
+import { Rental } from '../types/rental';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/types';
 import { debounce } from 'lodash';
 import { shadows } from '../utils/shadows';
-import { Ionicons } from '@expo/vector-icons';
 
 type PublicListingScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -23,14 +22,15 @@ type Props = {
 
 const PublicListingScreen: React.FC<Props> = ({ navigation, route }) => {
   const { listingId } = route.params || {};
-  const [listings, setListings] = useState<Property[]>([]);
+  const [listings, setListings] = useState<Rental[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   const fetchListings = async (query = '') => {
     setLoading(true);
     try {
-      const data = await getPublicListings(query);
+      const data = await rentalService.getPublicRentals(query);
       setListings(data);
     } catch (error) {
       console.error('Error fetching public listings:', error);
@@ -83,12 +83,12 @@ const PublicListingScreen: React.FC<Props> = ({ navigation, route }) => {
     </View>
   );
 
-  const renderItem = ({ item }: { item: Property }) => (
+  const renderItem = ({ item }: { item: Rental }) => (
     <TouchableOpacity
       style={styles.itemContainer}
       onPress={() => navigation.navigate('PropertyDetails', { propertyId: item.id })}
     >
-      <Image source={{ uri: item.photos[0] }} style={styles.thumbnail} />
+      <Image source={{ uri: item.photos?.[0] || 'https://via.placeholder.com/100' }} style={styles.thumbnail} />
       <View style={styles.textContainer}>
         <Text style={styles.title}>{item.address}</Text>
         <Text>{`$${item.rent} / month`}</Text>
@@ -101,6 +101,17 @@ const PublicListingScreen: React.FC<Props> = ({ navigation, route }) => {
     return (
       <View style={styles.centered}>
         <Text>Loading...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={() => fetchListings()}>
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -118,6 +129,7 @@ const PublicListingScreen: React.FC<Props> = ({ navigation, route }) => {
   );
 };
 
+// Add error styles
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -208,6 +220,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 4,
+  },
+  errorText: {
+    color: '#dc3545',
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontWeight: '600',
   },
 });
 
