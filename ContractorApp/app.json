@@ -7,6 +7,9 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "extra": {
+      "API_BASE_URL": "http://localhost:3001/api"
+    },
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",

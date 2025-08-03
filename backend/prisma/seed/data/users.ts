@@ -40,6 +40,32 @@ export const users: UserSeed[] = [
     role: UserRole.PROPERTY_MANAGER,
   },
   
+  // Vendors/Contractors
+  {
+    email: 'contractor@propertyai.com',
+    password: 'Password123!',
+    firstName: 'John',
+    lastName: 'Contractor',
+    phone: '555-111-2222',
+    role: UserRole.VENDOR,
+  },
+  {
+    email: 'plumber@propertyai.com',
+    password: 'Password123!',
+    firstName: 'Mike',
+    lastName: 'Plumber',
+    phone: '555-222-3333',
+    role: UserRole.VENDOR,
+  },
+  {
+    email: 'electrician@propertyai.com',
+    password: 'Password123!',
+    firstName: 'Sarah',
+    lastName: 'Electrician',
+    phone: '555-333-4444',
+    role: UserRole.VENDOR,
+  },
+  
   // Tenants
   {
     email: 'john.tenant@example.com',
@@ -98,4 +124,4 @@ export const users: UserSeed[] = [
     role: UserRole.TENANT,
     isActive: false,
   },
-]; 
+];

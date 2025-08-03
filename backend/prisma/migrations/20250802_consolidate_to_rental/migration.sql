@@ -120,3 +120,90 @@ ALTER TABLE "MaintenanceRequest" ADD CONSTRAINT "MaintenanceRequest_rentalId_fke
 ALTER TABLE "OnCallSchedule" ADD CONSTRAINT "OnCallSchedule_rentalId_fkey" FOREIGN KEY ("rentalId") REFERENCES "Rental"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 ALTER TABLE "PredictiveMaintenance" ADD CONSTRAINT "PredictiveMaintenance_rentalId_fkey" FOREIGN KEY ("rentalId") REFERENCES "Rental"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 ALTER TABLE "WhiteLabelConfig" ADD CONSTRAINT "WhiteLabelConfig_rentalId_fkey" FOREIGN KEY ("rentalId") REFERENCES "Rental"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- Step 9: Clean up old unitId columns and constraints
+-- Remove unitId constraints and column from Lease table
+DO $$ 
+BEGIN
+    -- Drop foreign key constraint if it exists
+    IF EXISTS (SELECT 1 FROM information_schema.table_constraints 
+               WHERE constraint_name = 'Lease_unitId_fkey' AND table_name = 'Lease') THEN
+        ALTER TABLE "Lease" DROP CONSTRAINT "Lease_unitId_fkey";
+    END IF;
+    
+    -- Drop unique constraint if it exists
+    IF EXISTS (SELECT 1 FROM information_schema.table_constraints 
+               WHERE constraint_name = 'Lease_unitId_key' AND table_name = 'Lease') THEN
+        ALTER TABLE "Lease" DROP CONSTRAINT "Lease_unitId_key";
+    END IF;
+    
+    -- Drop index if it exists
+    IF EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'Lease_unitId_idx') THEN
+        DROP INDEX "Lease_unitId_idx";
+    END IF;
+    
+    -- Drop column if it exists
+    IF EXISTS (SELECT 1 FROM information_schema.columns 
+               WHERE table_name = 'Lease' AND column_name = 'unitId') THEN
+        ALTER TABLE "Lease" DROP COLUMN "unitId";
+    END IF;
+END $$;
+
+-- Make rentalId required for Lease table
+ALTER TABLE "Lease" ALTER COLUMN "rentalId" SET NOT NULL;
+
+-- Add unique constraint for rentalId in Lease table
+ALTER TABLE "Lease" ADD CONSTRAINT "Lease_rentalId_key" UNIQUE ("rentalId");
+
+-- Step 10: Clean up old propertyId columns and constraints
+-- Remove propertyId constraints and column from MaintenanceRequest table
+DO $$ 
+BEGIN
+    -- Drop foreign key constraint if it exists
+    IF EXISTS (SELECT 1 FROM information_schema.table_constraints 
+               WHERE constraint_name = 'MaintenanceRequest_propertyId_fkey' AND table_name = 'MaintenanceRequest') THEN
+        ALTER TABLE "MaintenanceRequest" DROP CONSTRAINT "MaintenanceRequest_propertyId_fkey";
+    END IF;
+    
+    -- Drop index if it exists
+    IF EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'MaintenanceRequest_propertyId_idx') THEN
+        DROP INDEX "MaintenanceRequest_propertyId_idx";
+    END IF;
+    
+    -- Drop column if it exists
+    IF EXISTS (SELECT 1 FROM information_schema.columns 
+               WHERE table_name = 'MaintenanceRequest' AND column_name = 'propertyId') THEN
+        ALTER TABLE "MaintenanceRequest" DROP COLUMN "propertyId";
+    END IF;
+END $$;
+
+-- Make rentalId required for MaintenanceRequest table
+ALTER TABLE "MaintenanceRequest" ALTER COLUMN "rentalId" SET NOT NULL;
+
+-- Step 11: Clean up old unitId columns and constraints from MaintenanceRequest table
+-- Remove unitId constraints and column from MaintenanceRequest table
+DO $$ 
+BEGIN
+    -- Drop foreign key constraint if it exists
+    IF EXISTS (SELECT 1 FROM information_schema.table_constraints 
+               WHERE constraint_name = 'MaintenanceRequest_unitId_fkey' AND table_name = 'MaintenanceRequest') THEN
+        ALTER TABLE "MaintenanceRequest" DROP CONSTRAINT "MaintenanceRequest_unitId_fkey";
+    END IF;
+    
+    -- Drop unique constraint if it exists
+    IF EXISTS (SELECT 1 FROM information_schema.table_constraints 
+               WHERE constraint_name = 'MaintenanceRequest_unitId_key' AND table_name = 'MaintenanceRequest') THEN
+        ALTER TABLE "MaintenanceRequest" DROP CONSTRAINT "MaintenanceRequest_unitId_key";
+    END IF;
+    
+    -- Drop index if it exists
+    IF EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'MaintenanceRequest_unitId_idx') THEN
+        DROP INDEX "MaintenanceRequest_unitId_idx";
+    END IF;
+    
+    -- Drop column if it exists
+    IF EXISTS (SELECT 1 FROM information_schema.columns 
+               WHERE table_name = 'MaintenanceRequest' AND column_name = 'unitId') THEN
+        ALTER TABLE "MaintenanceRequest" DROP COLUMN "unitId";
+    END IF;
+END $$;
