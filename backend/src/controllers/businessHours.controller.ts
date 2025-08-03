@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import * as businessHoursService from '../services/businessHours.service';
 
-export const getBusinessHoursByPropertyId = async (req: Request, res: Response) => {
+export const getBusinessHoursByRentalId = async (req: Request, res: Response) => { // Updated function name
   try {
-    const { propertyId } = req.params;
-    const businessHours = await businessHoursService.getBusinessHoursByPropertyId(propertyId);
+    const { rentalId } = req.params; // Changed from propertyId to rentalId
+    const businessHours = await businessHoursService.getBusinessHoursByRentalId(rentalId); // Updated service call
     res.status(200).json(businessHours);
   } catch (error: any) {
     res.status(500).json({ message: error.message });

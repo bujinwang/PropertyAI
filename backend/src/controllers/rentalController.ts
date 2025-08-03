@@ -173,6 +173,86 @@ export class RentalController {
   }
   
   /**
+   * Get public rentals (for public listing pages)
+   * @param req Request
+   * @param res Response
+   */
+  async getPublicRentals(req: Request, res: Response): Promise<Response> {
+    try {
+      const {
+        city,
+        state,
+        zipCode,
+        propertyType,
+        minBedrooms,
+        maxBedrooms,
+        minBathrooms,
+        maxBathrooms,
+        minRent,
+        maxRent,
+        minSize,
+        maxSize,
+        page = 1,
+        limit = 10,
+        sortField = 'createdAt',
+        sortOrder = 'desc'
+      } = req.query;
+      
+      // Build filter object for public listings (only active and available)
+      const filters: RentalFilterParams = {
+        isActive: true,
+        isAvailable: true,
+        status: ListingStatus.ACTIVE
+      };
+      
+      if (city) filters.city = String(city);
+      if (state) filters.state = String(state);
+      if (zipCode) filters.zipCode = String(zipCode);
+      if (propertyType) filters.propertyType = propertyType as any;
+      if (minBedrooms) filters.minBedrooms = parseInt(String(minBedrooms), 10);
+      if (maxBedrooms) filters.maxBedrooms = parseInt(String(maxBedrooms), 10);
+      if (minBathrooms) filters.minBathrooms = parseFloat(String(minBathrooms));
+      if (maxBathrooms) filters.maxBathrooms = parseFloat(String(maxBathrooms));
+      if (minRent) filters.minRent = parseFloat(String(minRent));
+      if (maxRent) filters.maxRent = parseFloat(String(maxRent));
+      if (minSize) filters.minSize = parseFloat(String(minSize));
+      if (maxSize) filters.maxSize = parseFloat(String(maxSize));
+      
+      // Validate sort order
+      const validSortOrder = sortOrder === 'asc' || sortOrder === 'desc' 
+        ? sortOrder 
+        : 'desc';
+      
+      const result = await rentalService.getRentals(
+        filters,
+        parseInt(String(page), 10),
+        parseInt(String(limit), 10),
+        String(sortField),
+        validSortOrder as 'asc' | 'desc'
+      );
+      
+      return res.status(200).json({
+        status: 'success',
+        data: result.rentals,
+        meta: {
+          total: result.total,
+          page: result.page,
+          limit: result.limit,
+          totalPages: result.totalPages
+        }
+      });
+    } catch (error: any) {
+      console.error('Error getting public rentals:', error);
+      
+      return res.status(error.status || 500).json({
+        status: 'error',
+        message: error.message || 'Failed to get public rentals',
+        code: error.code
+      });
+    }
+  }
+
+  /**
    * Get rentals by manager ID
    * @param req Request
    * @param res Response
@@ -590,11 +670,12 @@ export class RentalController {
    */
   async searchRentals(req: Request, res: Response): Promise<Response> {
     try {
-      const searchParams = req.body;
+      const { searchTerm, ...filters } = req.body;
       const { page = 1, limit = 10 } = req.query;
       
       const result = await rentalService.searchRentals(
-        searchParams,
+        searchTerm || '',
+        filters,
         parseInt(String(page), 10),
         parseInt(String(limit), 10)
       );
@@ -714,10 +795,10 @@ export class RentalController {
       
       return res.status(200).json({
         status: 'success',
-        message: `${result.successful.length} rentals deleted successfully`,
+        message: `${result.deletedCount} rentals deleted successfully`,
         data: {
-          successful: result.successful,
-          failed: result.failed
+          deletedCount: result.deletedCount,
+          success: result.success
         }
       });
     } catch (error: any) {

@@ -281,15 +281,15 @@ router.post('/properties/:propertyId/images', authenticateToken, upload.array('i
       });
     }
 
-    // Verify user owns the property
-    const property = await prisma.property.findFirst({
+    // Verify user owns the rental (property)
+    const rental = await prisma.rental.findFirst({
       where: {
         id: propertyId,
         ownerId: userId,
       },
     });
 
-    if (!property) {
+    if (!rental) {
       return res.status(403).json({
         success: false,
         error: 'Access denied or property not found',
@@ -306,12 +306,12 @@ router.post('/properties/:propertyId/images', authenticateToken, upload.array('i
       }
     );
 
-    // In the /properties/:propertyId/images route
-    const propertyImages = await Promise.all(
+    // Create rental images instead of property images
+    const rentalImages = await Promise.all(
       results.map((result, index) =>
-        prisma.propertyImage.create({
+        prisma.rentalImage.create({
           data: {
-            propertyId,
+            rentalId: propertyId,
             url: result.url,
             ...(result.thumbnailUrl && { thumbnailUrl: result.thumbnailUrl }),
             ...(req.body.captions?.[index] && { caption: req.body.captions[index] }),
@@ -324,7 +324,7 @@ router.post('/properties/:propertyId/images', authenticateToken, upload.array('i
 
     res.json({
       success: true,
-      data: propertyImages,
+      data: rentalImages,
     });
   } catch (error: any) {
     console.error('Error uploading property images:', error);
@@ -360,7 +360,7 @@ router.post('/leases/:leaseId/documents', authenticateToken, upload.single('docu
         id: leaseId,
         OR: [
           { tenantId: userId },
-          { unit: { property: { ownerId: userId } } },
+          { rental: { ownerId: userId } }, // Updated to use rental instead of unit.property
         ],
       },
     });

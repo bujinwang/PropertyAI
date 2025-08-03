@@ -47,36 +47,38 @@ describe('Contractor API', () => {
         lastName: 'Tenant',
       },
     });
-    const property = await prisma.property.create({
+    
+    const rental = await prisma.rental.create({
         data: {
-            name: 'Test Property',
+            title: 'Test Property Unit 101',
             address: '123 Test St',
             city: 'Test City',
             state: 'TS',
             zipCode: '12345',
             country: 'USA',
             propertyType: 'APARTMENT',
-            totalUnits: 1,
-            managerId: vendorUser.id, // Or create a manager user
-            ownerId: vendorUser.id, // Or create an owner user
-        }
-    });
-    const unit = await prisma.unit.create({
-        data: {
             unitNumber: '101',
-            propertyId: property.id,
-            tenantId: tenantUser.id,
+            bedrooms: 1,
+            bathrooms: 1,
+            rent: 1000,
+            deposit: 1000,
+            managerId: vendorUser.id,
+            ownerId: vendorUser.id,
+            createdById: vendorUser.id,
+            status: 'ACTIVE',
+            isAvailable: false,
         }
     });
+    
     const maintenanceRequest = await prisma.maintenanceRequest.create({
         data: {
             title: 'Leaky Faucet',
             description: 'The kitchen faucet is dripping.',
-            propertyId: property.id,
-            unitId: unit.id,
+            rentalId: rental.id, // Use rentalId instead of propertyId and unitId
             requestedById: tenantUser.id,
         }
     });
+    
     workOrder = await prisma.workOrder.create({
       data: {
         title: 'Leaky Faucet',
@@ -93,8 +95,7 @@ describe('Contractor API', () => {
 
   afterAll(async () => {
     await prisma.user.deleteMany({});
-    await prisma.property.deleteMany({});
-    await prisma.unit.deleteMany({});
+    await prisma.rental.deleteMany({});
     await prisma.maintenanceRequest.deleteMany({});
     await prisma.workOrder.deleteMany({});
   });

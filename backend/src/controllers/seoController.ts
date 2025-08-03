@@ -30,34 +30,26 @@ export const getRentalSeoData = async (req: Request, res: Response, next: NextFu
   }
 };
 
-// Legacy function for backward compatibility
+// Legacy function for backward compatibility - now redirects to rental
 export const getSeoData = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { listingId } = req.params;
-    const listing = await prisma.listing.findUnique({
-      where: { id: listingId },
-      include: { property: true, unit: true },
+    
+    // Try to find a rental with this ID (assuming listingId maps to rentalId)
+    const rental = await prisma.rental.findUnique({
+      where: { id: listingId }
     });
 
-    if (!listing) {
-      return next(new AppError('Listing not found', 404));
+    if (!rental) {
+      return next(new AppError('Rental not found', 404));
     }
 
-    if (!listing.unit) {
-      return next(new AppError('No unit found for this listing', 404));
-    }
-
-    const listingWithSingleUnit = {
-      ...listing,
-      unit: listing.unit,
-    };
-
-    const seoData = seoService.prepareListingSeoData(listingWithSingleUnit);
+    const seoData = seoService.prepareRentalSeoData(rental);
     const metaTags = seoService.generateMetaTags(seoData);
     const jsonLd = seoService.generateJsonLd(seoData);
 
     res.json({
-      slug: listing.slug,
+      slug: rental.slug,
       ...metaTags,
       jsonLd,
     });

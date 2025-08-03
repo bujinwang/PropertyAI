@@ -3,7 +3,7 @@ import * as emergencyProtocolController from '../controllers/emergencyProtocol.c
 
 const router = Router();
 
-router.get('/properties/:propertyId/emergency-protocols', emergencyProtocolController.getEmergencyProtocolsByPropertyId);
+router.get('/rentals/:rentalId/emergency-protocols', emergencyProtocolController.getEmergencyProtocolsByRentalId); // Updated route and function name
 router.post('/emergency-protocols', emergencyProtocolController.createEmergencyProtocol);
 router.put('/emergency-protocols/:id', emergencyProtocolController.updateEmergencyProtocol);
 router.delete('/emergency-protocols/:id', emergencyProtocolController.deleteEmergencyProtocol);

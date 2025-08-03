@@ -31,7 +31,7 @@ const prisma = new PrismaClient();
 
 interface ImageAnalysis {
   id: string;
-  propertyId: string;
+  rentalId: string;
   imageUrl: string;
   analysis: {
     labels: Array<{
@@ -94,7 +94,7 @@ interface PropertyCondition {
 }
 
 interface PhotoUploadRequest {
-  propertyId: string;
+  rentalId: string;
   file: Express.Multer.File;
   roomType?: string;
   description?: string;
@@ -126,7 +126,7 @@ class PhotoAnalysisService {
       // Upload image to S3
       const imageKey = await this.uploadImageToS3(
         request.file,
-        request.propertyId
+        request.rentalId
       );
       const imageUrl = `https://${this.BUCKET_NAME}.s3.amazonaws.com/${imageKey}`;
 
@@ -141,7 +141,7 @@ class PhotoAnalysisService {
 
       const imageAnalysis: ImageAnalysis = {
         id: uuidv4(),
-        propertyId: request.propertyId,
+        rentalId: request.rentalId,
         imageUrl,
         analysis,
         recommendations,
@@ -150,7 +150,7 @@ class PhotoAnalysisService {
       };
 
       // Store analysis results in database
-      await this.storeAnalysisResult(request.propertyId, imageAnalysis);
+      await this.storeAnalysisResult(request.rentalId, imageAnalysis);
 
       return imageAnalysis;
     } catch (error) {
@@ -165,9 +165,9 @@ class PhotoAnalysisService {
 
   private async uploadImageToS3(
     file: Express.Multer.File,
-    propertyId: string
+    rentalId: string
   ): Promise<string> {
-    const key = `properties/${propertyId}/photos/${uuidv4()}-${
+    const key = `rentals/${rentalId}/photos/${uuidv4()}-${
       file.originalname
     }`;
 

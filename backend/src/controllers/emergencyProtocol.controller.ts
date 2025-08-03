@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import * as emergencyProtocolService from '../services/emergencyProtocol.service';
 
-export const getEmergencyProtocolsByPropertyId = async (req: Request, res: Response) => {
+export const getEmergencyProtocolsByRentalId = async (req: Request, res: Response) => { // Updated function name
   try {
-    const { propertyId } = req.params;
-    const emergencyProtocols = await emergencyProtocolService.getEmergencyProtocolsByPropertyId(propertyId);
+    const { rentalId } = req.params; // Changed from propertyId to rentalId
+    const emergencyProtocols = await emergencyProtocolService.getEmergencyProtocolsByRentalId(rentalId); // Updated service call
     res.status(200).json(emergencyProtocols);
   } catch (error: any) {
     res.status(500).json({ message: error.message });

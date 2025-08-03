@@ -2,9 +2,9 @@ import { zillowService } from './zillow.service';
 import { getApartmentsComps } from './apartmentsComService';
 
 class MarketDataService {
-  async getComps(propertyId: string) {
-    const zillowComps = await zillowService.getComps(propertyId);
-    const apartmentsComps = await getApartmentsComps(propertyId);
+  async getComps(rentalId: string) {
+    const zillowComps = await zillowService.getComps(rentalId);
+    const apartmentsComps = await getApartmentsComps(rentalId);
 
     return {
       zillow: zillowComps,

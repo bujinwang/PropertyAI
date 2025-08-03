@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 interface AuthenticatedSocket {
   userId: string;
   email: string;
-  roles: string[];
+  role: string; // Changed from 'roles: string[]' to 'role: string' since User has a single role field
 }
 
 export class WebSocketService {
@@ -41,7 +41,7 @@ export class WebSocketService {
           select: { 
             id: true, 
             email: true, 
-            roles: { select: { name: true } }
+            role: true // Changed from 'roles: { select: { name: true } }' to 'role: true'
           }
         });
 
@@ -52,7 +52,7 @@ export class WebSocketService {
         (socket as any).user = {
           userId: user.id,
           email: user.email,
-          roles: user.roles.map(r => r.name)
+          role: user.role // Changed from 'roles: user.roles.map(r => r.name)' to 'role: user.role'
         };
 
         next();

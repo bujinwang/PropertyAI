@@ -1,5 +1,5 @@
 import express from 'express';
-import { unitController } from '../controllers/unitController';
+import unitController from '../controllers/unitController';
 import { deprecationWarning } from '../middleware/deprecation';
 import { legacyRouteMapper } from '../middleware/legacy-mapping';
 
@@ -17,7 +17,7 @@ router.use(legacyRouteMapper);
  * @access  Private (Property Manager, Admin)
  * @deprecated Use /api/rentals instead
  */
-router.get('/', (req, res) => unitController.getUnits(req, res));
+router.get('/', unitController.getAllUnits);
 
 /**
  * @route   POST /api/units
@@ -25,7 +25,7 @@ router.get('/', (req, res) => unitController.getUnits(req, res));
  * @access  Private (Property Manager, Admin)
  * @deprecated Use /api/rentals instead
  */
-router.post('/', (req, res) => unitController.createUnit(req, res));
+router.post('/', unitController.createUnit);
 
 /**
  * @route   GET /api/units/property/:propertyId
@@ -33,7 +33,7 @@ router.post('/', (req, res) => unitController.createUnit(req, res));
  * @access  Private (Property Manager, Admin, Owner)
  * @deprecated Use /api/rentals?parentRentalId=:propertyId instead
  */
-router.get('/property/:propertyId', (req, res) => unitController.getUnitsByProperty(req, res));
+router.get('/property/:propertyId', unitController.getAllUnits);
 
 /**
  * @route   GET /api/units/property/:propertyId/occupancy
@@ -41,7 +41,7 @@ router.get('/property/:propertyId', (req, res) => unitController.getUnitsByPrope
  * @access  Private (Property Manager, Admin, Owner)
  * @deprecated Use /api/rentals/:propertyId/analytics instead
  */
-router.get('/property/:propertyId/occupancy', (req, res) => unitController.getPropertyOccupancy(req, res));
+router.get('/property/:propertyId/occupancy', unitController.getAllUnits);
 
 /**
  * @route   GET /api/units/:id
@@ -49,7 +49,7 @@ router.get('/property/:propertyId/occupancy', (req, res) => unitController.getPr
  * @access  Private (Property Manager, Admin, Tenant if associated)
  * @deprecated Use /api/rentals/:id instead
  */
-router.get('/:id', (req, res) => unitController.getUnitById(req, res));
+router.get('/:id', unitController.getUnitById);
 
 /**
  * @route   PUT /api/units/:id
@@ -57,7 +57,7 @@ router.get('/:id', (req, res) => unitController.getUnitById(req, res));
  * @access  Private (Property Manager, Admin)
  * @deprecated Use /api/rentals/:id instead
  */
-router.put('/:id', (req, res) => unitController.updateUnit(req, res));
+router.put('/:id', unitController.updateUnit);
 
 /**
  * @route   PUT /api/units/:id/availability
@@ -65,7 +65,7 @@ router.put('/:id', (req, res) => unitController.updateUnit(req, res));
  * @access  Private (Property Manager, Admin)
  * @deprecated Use /api/rentals/:id with isAvailable field instead
  */
-router.put('/:id/availability', (req, res) => unitController.setUnitAvailability(req, res));
+router.put('/:id/availability', unitController.updateUnit);
 
 /**
  * @route   PUT /api/units/:id/tenant
@@ -73,7 +73,7 @@ router.put('/:id/availability', (req, res) => unitController.setUnitAvailability
  * @access  Private (Property Manager, Admin)
  * @deprecated Use /api/leases instead
  */
-router.put('/:id/tenant', (req, res) => unitController.assignTenant(req, res));
+router.put('/:id/tenant', unitController.updateUnit);
 
 /**
  * @route   DELETE /api/units/:id/tenant
@@ -81,7 +81,7 @@ router.put('/:id/tenant', (req, res) => unitController.assignTenant(req, res));
  * @access  Private (Property Manager, Admin)
  * @deprecated Use /api/leases/:id/terminate instead
  */
-router.delete('/:id/tenant', (req, res) => unitController.removeTenant(req, res));
+router.delete('/:id/tenant', unitController.deleteUnit);
 
 /**
  * @route   DELETE /api/units/:id
@@ -89,6 +89,6 @@ router.delete('/:id/tenant', (req, res) => unitController.removeTenant(req, res)
  * @access  Private (Admin only)
  * @deprecated Use /api/rentals/:id instead
  */
-router.delete('/:id', (req, res) => unitController.deleteUnit(req, res));
+router.delete('/:id', unitController.deleteUnit);
 
 export default router;

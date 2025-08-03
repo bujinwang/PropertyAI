@@ -1,11 +1,11 @@
 import { prisma } from '../config/database';
 
-export const getWhiteLabelConfigByPropertyId = async (propertyId: string) => {
-  return prisma.whiteLabelConfig.findFirst({ // Changed findUnique to findFirst
+export const getWhiteLabelConfigByPropertyId = async (rentalId: string) => {
+  return prisma.whiteLabelConfig.findFirst({
     where: {
-      Property: {
+      Rental: {
         some: {
-          id: propertyId
+          id: rentalId
         }
       }
     },
@@ -20,7 +20,7 @@ export const createWhiteLabelConfig = async (data: {
   token: string;
   platform: string;
   userId: string;
-  propertyId: string; // Added propertyId to the input data
+  rentalId: string;
 }) => {
   return prisma.whiteLabelConfig.create({
     data: {
@@ -31,13 +31,13 @@ export const createWhiteLabelConfig = async (data: {
       token: data.token,
       platform: data.platform,
       userId: data.userId,
-      Property: {
-        connect: { id: data.propertyId }
+      Rental: {
+        connect: { id: data.rentalId }
       },
       user: {
         connect: { id: data.userId }
       }
-    } as any, // Cast to any to bypass type checking
+    } as any,
   });
 };
 

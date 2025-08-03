@@ -6,8 +6,8 @@ const prisma = new PrismaClient();
 class ContractorService {
   public async getWorkOrders(vendorId: string) {
     return prisma.workOrder.findMany({
-      where: { assignments: { some: { vendorId } } },
-      include: { maintenanceRequest: true },
+      where: { WorkOrderAssignment: { some: { vendorId } } },
+      include: { MaintenanceRequest: true },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -16,9 +16,9 @@ class ContractorService {
     return prisma.workOrder.findUnique({
       where: { id: workOrderId },
       include: {
-        maintenanceRequest: { include: { property: true, unit: true } },
-        assignments: { include: { vendor: true } },
-        quotes: true,
+        MaintenanceRequest: { include: { Rental: true } },
+        WorkOrderAssignment: { include: { Vendor: true } },
+        WorkOrderQuote: true,
       },
     });
   }
@@ -57,7 +57,7 @@ class ContractorService {
   public async declineWorkOrder(workOrderId: string, vendorId: string) {
     const workOrder = await prisma.workOrder.findUnique({
       where: { id: workOrderId },
-      include: { assignments: true },
+      include: { WorkOrderAssignment: true },
     });
 
     if (!workOrder) {
@@ -65,7 +65,7 @@ class ContractorService {
     }
 
     // Remove the current assignment
-    const assignment = workOrder.assignments.find(a => a.vendorId === vendorId);
+    const assignment = workOrder.WorkOrderAssignment.find((a: any) => a.vendorId === vendorId);
     if (assignment) {
       await prisma.workOrderAssignment.delete({ where: { id: assignment.id } });
     }
@@ -108,13 +108,13 @@ class ContractorService {
   public async sendMessage(workOrderId: string, senderId: string, content: string) {
     const workOrder = await prisma.workOrder.findUnique({
       where: { id: workOrderId },
-      include: { maintenanceRequest: { include: { requestedBy: true } } },
+      include: { MaintenanceRequest: { include: { User: true } } },
     });
     if (!workOrder) {
       throw new Error('Work order not found');
     }
 
-    const recipient = workOrder.maintenanceRequest.requestedBy;
+    const recipient = workOrder.MaintenanceRequest.User;
 
     const message = await prisma.message.create({
       data: {

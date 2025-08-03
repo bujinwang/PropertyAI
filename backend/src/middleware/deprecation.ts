@@ -1,4 +1,6 @@
 
+import { Request, Response, NextFunction } from 'express';
+
 // Legacy Route Deprecation Middleware
 export const deprecationWarning = (newPath: string, removalDate: string) => {
   return (req: Request, res: Response, next: NextFunction) => {

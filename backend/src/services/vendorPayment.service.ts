@@ -12,12 +12,12 @@ class VendorPaymentService {
     const workOrder = await prisma.workOrder.findUnique({
       where: { id: workOrderId },
       include: {
-        assignments: {
+        WorkOrderAssignment: { // Changed from 'assignments' to 'WorkOrderAssignment'
           include: {
-            vendor: true,
+            Vendor: true, // Changed from 'vendor' to 'Vendor'
           },
         },
-        costEstimation: true, // Include costEstimation
+        CostEstimation: true, // Changed from 'costEstimation' to 'CostEstimation'
       },
     });
 
@@ -25,17 +25,17 @@ class VendorPaymentService {
       throw new Error('Work order not found');
     }
 
-    const assignment = workOrder.assignments[0];
+    const assignment = workOrder.WorkOrderAssignment[0]; // Updated property name
     if (!assignment) {
       throw new Error('Work order is not assigned to a vendor');
     }
 
-    const vendor = assignment.vendor;
+    const vendor = assignment.Vendor; // Updated property name
     if (!vendor.stripeAccountId) {
       throw new Error('Vendor does not have a Stripe account connected');
     }
 
-    const amount = workOrder.costEstimation?.estimatedCost || 0;
+    const amount = workOrder.CostEstimation?.estimatedCost || 0; // Updated property name
     if (!amount) {
       throw new Error('Work order does not have an estimated cost');
     }

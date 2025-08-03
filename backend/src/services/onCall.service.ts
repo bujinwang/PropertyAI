@@ -1,16 +1,16 @@
 import { prisma } from '../config/database';
 
-export const getOnCallSchedulesByPropertyId = async (propertyId: string) => {
+export const getOnCallSchedulesByPropertyId = async (rentalId: string) => {
   return prisma.onCallSchedule.findMany({
-    where: { propertyId },
-    include: { rotations: true },
+    where: { rentalId },
+    include: { OnCallRotation: true }, // Changed from 'rotations' to 'OnCallRotation'
   });
 };
 
 export const createOnCallSchedule = async (data: {
   name: string;
   description?: string;
-  propertyId: string;
+  rentalId: string;
 }) => {
   return prisma.onCallSchedule.create({
     data,

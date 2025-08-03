@@ -1,4 +1,4 @@
-import { Listing } from '@prisma/client';
+import { Rental } from '@prisma/client';
 import { AppError } from '../middleware/errorMiddleware';
 import { PrismaClient } from '@prisma/client';
 import { TwitterApi } from 'twitter-api-v2';
@@ -6,7 +6,7 @@ import { TwitterApi } from 'twitter-api-v2';
 const prisma = new PrismaClient();
 
 interface ISocialMediaPublisher {
-  publish(listing: Listing, config: any, message: string): Promise<any>;
+  publish(rental: Rental, config: any, message: string): Promise<any>;
 }
 
 class TwitterPublishingAdapter implements ISocialMediaPublisher {
@@ -21,8 +21,8 @@ class TwitterPublishingAdapter implements ISocialMediaPublisher {
     });
   }
 
-  async publish(listing: Listing, config: any, message: string) {
-    const tweet = `${message}\n\n${listing.title}\n${listing.description}\n\nRent: $${listing.rent}`; // Changed price to rent
+  async publish(rental: Rental, config: any, message: string) {
+    const tweet = `${message}\n\n${rental.title}\n${rental.description}\n\nRent: $${rental.rent}`;
     const { data: createdTweet } = await this.client.v2.tweet(tweet);
     return { success: true, url: `https://twitter.com/someuser/status/${createdTweet.id}` };
   }
@@ -37,10 +37,10 @@ const getPlatformAdapter = (platform: string, config: any): ISocialMediaPublishe
   }
 };
 
-export const publishToSocialMedia = async (listingId: string, platforms: string[], message: string) => {
-  const listing = await prisma.listing.findUnique({ where: { id: listingId } });
-  if (!listing) {
-    throw new AppError('Listing not found', 404);
+export const publishToSocialMedia = async (rentalId: string, platforms: string[], message: string) => {
+  const rental = await prisma.rental.findUnique({ where: { id: rentalId } });
+  if (!rental) {
+    throw new AppError('Rental not found', 404);
   }
 
   const results: any = {};
@@ -52,7 +52,7 @@ export const publishToSocialMedia = async (listingId: string, platforms: string[
         throw new AppError(`Platform not configured: ${platform}`, 400);
       }
       const adapter = getPlatformAdapter(platform, config);
-      const result = await adapter.publish(listing, config, message);
+      const result = await adapter.publish(rental, config, message);
       results[platform] = { success: true, data: result };
     } catch (error) {
       results[platform] = { success: false, error: (error as Error).message };

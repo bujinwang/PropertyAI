@@ -5,8 +5,7 @@ const prisma = new PrismaClient();
 
 describe('Payment Approval Service', () => {
   let testUserId: string;
-  let testPropertyId: string;
-  let testUnitId: string;
+  let testRentalId: string;
   let testLeaseId: string;
   let testTransactionId: string;
 
@@ -23,30 +22,28 @@ describe('Payment Approval Service', () => {
     });
     testUserId = user.id;
 
-    const property = await prisma.property.create({
+    const rental = await prisma.rental.create({
       data: {
-        name: 'Test Property',
+        title: 'Test Property Unit 101',
         address: '123 Test St',
         city: 'Test City',
         state: 'TS',
         zipCode: '12345',
         country: 'US',
         propertyType: 'APARTMENT',
-        totalUnits: 10,
+        unitNumber: '101',
+        bedrooms: 2,
+        bathrooms: 1,
+        rent: 1000,
+        deposit: 1000,
         managerId: user.id,
         ownerId: user.id,
-      },
-    });
-    testPropertyId = property.id;
-
-    const unit = await prisma.unit.create({
-      data: {
-        unitNumber: '101',
-        propertyId: property.id,
+        createdById: user.id,
+        status: 'ACTIVE',
         isAvailable: false,
       },
     });
-    testUnitId = unit.id;
+    testRentalId = rental.id;
 
     const lease = await prisma.lease.create({
       data: {
@@ -54,7 +51,7 @@ describe('Payment Approval Service', () => {
         endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
         rentAmount: 1000,
         securityDeposit: 1000,
-        unitId: unit.id,
+        rentalId: rental.id, // Use rentalId instead of unitId
         tenantId: user.id,
       },
     });
@@ -75,9 +72,8 @@ describe('Payment Approval Service', () => {
   afterAll(async () => {
     // Clean up test data
     await prisma.transaction.deleteMany({ where: { leaseId: testLeaseId } });
-    await prisma.lease.deleteMany({ where: { unitId: testUnitId } });
-    await prisma.unit.deleteMany({ where: { propertyId: testPropertyId } });
-    await prisma.property.deleteMany({ where: { ownerId: testUserId } });
+    await prisma.lease.deleteMany({ where: { rentalId: testRentalId } });
+    await prisma.rental.deleteMany({ where: { ownerId: testUserId } });
     await prisma.user.deleteMany({ where: { id: testUserId } });
     await prisma.$disconnect();
   });

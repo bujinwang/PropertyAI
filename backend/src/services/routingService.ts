@@ -17,7 +17,7 @@ class RoutingService {
       await prisma.workOrder.create({
         data: {
           maintenanceRequestId: requestId,
-          assignments: {
+          WorkOrderAssignment: {
             create: {
               vendorId: vendor.id,
             },

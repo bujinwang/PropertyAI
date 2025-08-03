@@ -5,14 +5,14 @@ import * as publishingService from '../services/publishingService';
 
 export const publishListing = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { listingId, platforms } = req.body;
-    const listing = await prisma.listing.findUnique({ where: { id: listingId } });
+    const { rentalId, platforms } = req.body; // Changed from listingId to rentalId
+    const rental = await prisma.rental.findUnique({ where: { id: rentalId } });
 
-    if (!listing) {
-      return next(new AppError('Listing not found', 404));
+    if (!rental) {
+      return next(new AppError('Rental not found', 404));
     }
 
-    const results = await publishingService.publishToListingPlatforms(listing, platforms);
+    const results = await publishingService.publishToListingPlatforms(rental, platforms);
     res.json(results);
   } catch (error) {
     next(error);

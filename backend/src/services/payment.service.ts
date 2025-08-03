@@ -90,35 +90,31 @@ export const paymentService = {
   getPendingTransactions: async (userId: string): Promise<Transaction[]> => {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: { propertiesOwned: true }
+      include: { rentalsOwned: true } // Changed from 'RentalOwner' to 'rentalsOwned'
     });
 
     if (!user) {
       throw new Error('User not found');
     }
 
-    const propertyIds = user.propertiesOwned.map(property => property.id);
+    const rentalIds = user.rentalsOwned.map((rental: any) => rental.id); // Changed from 'RentalOwner' to 'rentalsOwned' and added type annotation
 
     return prisma.transaction.findMany({
       where: {
         status: TransactionStatus.PENDING,
-        lease: {
-          unit: {
-            propertyId: {
-              in: propertyIds
+        Lease: {
+          Rental: {
+            id: {
+              in: rentalIds
             }
           }
         }
       },
       include: {
-        lease: {
+        Lease: {
           include: {
-            unit: {
-              include: {
-                property: true
-              }
-            },
-            tenant: true
+            Rental: true,
+            User: true
           }
         }
       },
@@ -131,37 +127,37 @@ export const paymentService = {
   getPendingVendorPayments: async (userId: string): Promise<VendorPayment[]> => {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: { propertiesOwned: true }
+      include: { rentalsOwned: true } // Changed from 'RentalOwner' to 'rentalsOwned'
     });
 
     if (!user) {
       throw new Error('User not found');
     }
 
-    const propertyIds = user.propertiesOwned.map(property => property.id);
+    const rentalIds = user.rentalsOwned.map((rental: any) => rental.id); // Changed from 'RentalOwner' to 'rentalsOwned' and added type annotation
 
     return prisma.vendorPayment.findMany({
       where: {
         status: PaymentStatus.PENDING,
-        workOrder: {
-          maintenanceRequest: {
-            propertyId: {
-              in: propertyIds
+        WorkOrder: { // Changed from 'workOrder' to 'WorkOrder'
+          MaintenanceRequest: { // Changed from 'maintenanceRequest' to 'MaintenanceRequest'
+            rentalId: {
+              in: rentalIds
             }
           }
         }
       },
       include: {
-        workOrder: {
+        WorkOrder: { // Changed from 'workOrder' to 'WorkOrder'
           include: {
-            maintenanceRequest: {
+            MaintenanceRequest: { // Changed from 'maintenanceRequest' to 'MaintenanceRequest'
               include: {
-                property: true
+                Rental: true
               }
             }
           }
         },
-        vendor: true
+        Vendor: true // Changed from 'vendor' to 'Vendor'
       },
       orderBy: {
         createdAt: 'desc'

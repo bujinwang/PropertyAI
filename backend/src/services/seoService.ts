@@ -38,16 +38,12 @@ export const generateSlug = async (title: string, city: string, propertyType: st
   const slugify = (text: string) => text.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
   let slug = slugify(`${propertyType}-in-${city}-${title}`);
   
-  // ensure uniqueness
+  // ensure uniqueness - only check rental table now
   const prisma = new (await import('@prisma/client')).PrismaClient();
   let uniqueSlug = slug;
   let counter = 1;
   
-  // Check against both rental and legacy listing tables during transition
-  while (
-    (await prisma.rental.findUnique({ where: { slug: uniqueSlug } })) ||
-    (await prisma.listing.findUnique({ where: { slug: uniqueSlug } }))
-  ) {
+  while (await prisma.rental.findUnique({ where: { slug: uniqueSlug } })) {
     uniqueSlug = `${slug}-${counter}`;
     counter++;
   }

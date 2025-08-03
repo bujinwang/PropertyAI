@@ -53,19 +53,19 @@ The image upload system consists of several components:
 
 | Method | Endpoint | Description | Auth Required | Roles |
 |--------|----------|-------------|--------------|-------|
-| `POST` | `/api/properties/:propertyId/images` | Upload property images | Yes | ADMIN, PROPERTY_MANAGER |
-| `GET` | `/api/properties/:propertyId/images` | Get property images | Yes | Any |
-| `DELETE` | `/api/properties/images/:imageId` | Delete property image | Yes | ADMIN, PROPERTY_MANAGER |
-| `PATCH` | `/api/properties/:propertyId/images/:imageId/featured` | Set featured image | Yes | ADMIN, PROPERTY_MANAGER |
+| `POST` | `/api/rentals/:propertyId/images` | Upload property images | Yes | ADMIN, PROPERTY_MANAGER |
+| `GET` | `/api/rentals/:propertyId/images` | Get property images | Yes | Any |
+| `DELETE` | `/api/rentals/images/:imageId` | Delete property image | Yes | ADMIN, PROPERTY_MANAGER |
+| `PATCH` | `/api/rentals/:propertyId/images/:imageId/featured` | Set featured image | Yes | ADMIN, PROPERTY_MANAGER |
 
 ### Unit Images
 
 | Method | Endpoint | Description | Auth Required | Roles |
 |--------|----------|-------------|--------------|-------|
-| `POST` | `/api/units/:unitId/images` | Upload unit images | Yes | ADMIN, PROPERTY_MANAGER |
-| `GET` | `/api/units/:unitId/images` | Get unit images | Yes | Any |
-| `DELETE` | `/api/units/images/:imageId` | Delete unit image | Yes | ADMIN, PROPERTY_MANAGER |
-| `PATCH` | `/api/units/:unitId/images/:imageId/featured` | Set featured image | Yes | ADMIN, PROPERTY_MANAGER |
+| `POST` | `/api/rentals/:unitId/images` | Upload unit images | Yes | ADMIN, PROPERTY_MANAGER |
+| `GET` | `/api/rentals/:unitId/images` | Get unit images | Yes | Any |
+| `DELETE` | `/api/rentals/images/:imageId` | Delete unit image | Yes | ADMIN, PROPERTY_MANAGER |
+| `PATCH` | `/api/rentals/:unitId/images/:imageId/featured` | Set featured image | Yes | ADMIN, PROPERTY_MANAGER |
 
 ## Authentication & Authorization
 
@@ -121,7 +121,7 @@ const uploadPropertyImage = async (propertyId, setLoading) => {
     
     // 4. Make API request
     const response = await axios.post(
-      `${API_BASE_URL}/api/properties/${propertyId}/images?featured=true`,
+      `${API_BASE_URL}/api/rentals/${propertyId}/images?featured=true`,
       formData,
       {
         headers: {
@@ -153,7 +153,7 @@ const getPropertyImages = async (propertyId, page = 1, limit = 20) => {
     const token = await AsyncStorage.getItem('authToken');
     
     const response = await axios.get(
-      `${API_BASE_URL}/api/properties/${propertyId}/images?page=${page}&limit=${limit}`,
+      `${API_BASE_URL}/api/rentals/${propertyId}/images?page=${page}&limit=${limit}`,
       {
         headers: {
           'Authorization': `Bearer ${token}`

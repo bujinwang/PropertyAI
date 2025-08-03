@@ -1,4 +1,6 @@
 
+import { Request, Response, NextFunction } from 'express';
+
 // Route Mapping Middleware for Legacy Support
 export const legacyRouteMapper = (req: Request, res: Response, next: NextFunction) => {
   const legacyMappings: Record<string, string> = {

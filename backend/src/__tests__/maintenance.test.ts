@@ -8,8 +8,7 @@ const prisma = new PrismaClient();
 describe('Maintenance Endpoints', () => {
   let authToken: string;
   let userId: string;
-  let propertyId: string;
-  let unitId: string;
+  let rentalId: string;
 
   beforeAll(async () => {
     const user = await prisma.user.create({
@@ -24,29 +23,28 @@ describe('Maintenance Endpoints', () => {
     userId = user.id;
     authToken = jwt.sign({ id: userId, role: 'PROPERTY_MANAGER' }, process.env.JWT_SECRET || 'secret');
 
-    const property = await prisma.property.create({
+    const rental = await prisma.rental.create({
       data: {
-        name: 'Test Property for Maintenance',
+        title: 'Test Property Unit M101',
         address: '123 Maintenance Test St',
         city: 'Test City',
         state: 'TS',
         zipCode: '12345',
         country: 'USA',
         propertyType: 'APARTMENT',
-        totalUnits: 10,
+        unitNumber: 'M101',
+        bedrooms: 2,
+        bathrooms: 1,
+        rent: 1500,
+        deposit: 1500,
         ownerId: userId,
-        managerId: userId
+        managerId: userId,
+        createdById: userId,
+        status: 'ACTIVE',
+        isAvailable: true,
       }
     });
-    propertyId = property.id;
-
-    const unit = await prisma.unit.create({
-        data: {
-            unitNumber: 'M101',
-            propertyId: propertyId,
-        }
-    });
-    unitId = unit.id;
+    rentalId = rental.id;
   });
 
   describe('POST /api/maintenance', () => {
@@ -57,8 +55,7 @@ describe('Maintenance Endpoints', () => {
         .send({
           title: 'Leaky faucet',
           description: 'The kitchen faucet is dripping.',
-          propertyId: propertyId,
-          unitId: unitId,
+          rentalId: rentalId, // Use rentalId instead of propertyId and unitId
           priority: 'HIGH',
           requestedById: userId,
         });

@@ -22,11 +22,11 @@ class ApplicationController {
       const applicant = await prisma.user.findUnique({ 
         where: { id: application.applicantId },
         include: {
-          devices: true
+          Device: true
         }
       });
-      if (applicant?.devices && applicant.devices.length > 0) {
-        const device = applicant.devices[0];
+      if (applicant?.Device && applicant.Device.length > 0) {
+        const device = applicant.Device[0];
         const pushToken = device.pushToken || '';
         const platform = device.deviceType || 'android';
         const title = 'Application Received';

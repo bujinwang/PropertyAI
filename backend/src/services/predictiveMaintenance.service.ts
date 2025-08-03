@@ -48,11 +48,11 @@ class PredictiveMaintenanceService {
     return prisma.appliance.findUnique({
       where: { id: applianceId },
       include: {
-        unit: {
+        Rental: {
           include: {
-            maintenanceRequests: {
+            MaintenanceRequests: {
               include: {
-                workOrder: true,
+                WorkOrder: true,
               },
             },
           },
@@ -65,7 +65,7 @@ class PredictiveMaintenanceService {
     const features: any = {};
     
     features.age = (new Date().getTime() - new Date(appliance.purchaseDate).getTime()) / (1000 * 60 * 60 * 24 * 365);
-    features.maintenance_count = appliance.unit.maintenanceRequests.length;
+    features.maintenance_count = appliance.Rental.MaintenanceRequests.length;
     features.time_since_last_maintenance = appliance.lastMaintenanceDate 
       ? (new Date().getTime() - new Date(appliance.lastMaintenanceDate).getTime()) / (1000 * 60 * 60 * 24)
       : 0;

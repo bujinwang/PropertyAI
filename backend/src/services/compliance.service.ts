@@ -8,12 +8,12 @@ class ComplianceService {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
-        applications: true,
-        leases: true,
-        sentMessages: true,
-        receivedMessages: true,
-        notifications: true,
-        devices: true,
+        Application: true, // Changed from 'applications' to 'Application'
+        Lease: true, // Changed from 'leases' to 'Lease'
+        Message_Message_senderIdToUser: true, // Changed from 'sentMessages' to the correct relationship name
+        Message_Message_receiverIdToUser: true, // Changed from 'receivedMessages' to the correct relationship name
+        Notification: true, // Changed from 'notifications' to 'Notification'
+        Device: true, // Changed from 'devices' to 'Device'
       },
     });
 

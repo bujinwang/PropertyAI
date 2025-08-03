@@ -1,53 +1,46 @@
-/**
- * @deprecated This controller has been deprecated in favor of rentalController.
- * All Listing functionality has been consolidated into the Rental model.
- * 
- * Migration Guide:
- * - Use /api/rentals instead of /api/listings
- * - Listing data is now stored in the Rental model with isActive: true
- * 
- * This file will be removed in a future version.
- */
-
 import { Request, Response } from 'express';
 
-const DEPRECATION_MESSAGE = {
-  status: 'error',
-  message: 'This endpoint has been deprecated. Please use /api/rentals instead.',
-  migration: {
-    'GET /api/listings': 'GET /api/rentals?isActive=true',
-    'GET /api/listings/:id': 'GET /api/rentals/:id',
-    'POST /api/listings': 'POST /api/rentals (with isActive: true)',
-    'PUT /api/listings/:id': 'PUT /api/rentals/:id',
-    'DELETE /api/listings/:id': 'DELETE /api/rentals/:id'
-  },
-  documentation: '/api/rentals/docs'
+/**
+ * DEPRECATED: Listing Controller
+ * 
+ * This controller has been deprecated as part of the migration to the unified Rental model.
+ * All listing operations have been consolidated into the Rental model.
+ * 
+ * Migration Guide:
+ * - Use /api/rentals endpoints instead of /api/listings
+ * - Update your client code to use rentalService
+ * - See MIGRATION_GUIDE.md for detailed mapping
+ * 
+ * This controller will be removed in the next major version.
+ */
+
+const deprecatedResponse = (req: Request, res: Response) => {
+  res.status(410).json({
+    error: 'Endpoint Deprecated',
+    message: `The ${req.originalUrl} endpoint has been deprecated and consolidated into the Rental model.`,
+    migration: {
+      newEndpoint: '/api/rentals',
+      documentation: '/docs/migration-guide',
+      deprecatedSince: '2025-01-02',
+      removalDate: '2025-02-01'
+    }
+  });
 };
 
-export const getPublicListings = async (req: Request, res: Response) => {
-  return res.status(410).json(DEPRECATION_MESSAGE);
+// All legacy endpoints return deprecation notice
+export const getAllListings = deprecatedResponse;
+export const createListing = deprecatedResponse;
+export const getListingById = deprecatedResponse;
+export const updateListing = deprecatedResponse;
+export const deleteListing = deprecatedResponse;
+export const getPublicListings = deprecatedResponse;
+
+// Export default for backward compatibility
+export default {
+  getAllListings,
+  createListing,
+  getListingById,
+  updateListing,
+  deleteListing,
+  getPublicListings
 };
-
-class ListingController {
-  async getAllListings(req: Request, res: Response) {
-    return res.status(410).json(DEPRECATION_MESSAGE);
-  }
-
-  async createListing(req: Request, res: Response) {
-    return res.status(410).json(DEPRECATION_MESSAGE);
-  }
-
-  async getListingById(req: Request, res: Response) {
-    return res.status(410).json(DEPRECATION_MESSAGE);
-  }
-
-  async updateListing(req: Request, res: Response) {
-    return res.status(410).json(DEPRECATION_MESSAGE);
-  }
-
-  async deleteListing(req: Request, res: Response) {
-    return res.status(410).json(DEPRECATION_MESSAGE);
-  }
-}
-
-export default new ListingController();

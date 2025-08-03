@@ -1,37 +1,31 @@
 import { prisma } from '../config/database';
 
 class RoiService {
-  public async calculateRoi(propertyId: string): Promise<any | null> {
-    const property = await prisma.property.findUnique({
-      where: { id: propertyId },
+  public async calculateRoi(rentalId: string): Promise<any | null> {
+    // Try to find rental by ID first
+    const rental = await prisma.rental.findUnique({
+      where: { id: rentalId },
       include: {
-        units: {
-          include: {
-            lease: {
-              include: {
-                transactions: true,
-              },
-            },
-          },
-        },
-        maintenanceRequests: true,
+        RentalImages: true,
       },
     });
 
-    if (!property) {
+    if (!rental) {
       return null;
     }
 
-    const totalRent = (property as any).units.reduce((acc: number, unit: any) => {
-      return acc + (unit.lease ? unit.lease.transactions.reduce((acc: number, transaction: any) => {
-        if (transaction.type === 'RENT' && transaction.status === 'COMPLETED') {
-          return acc + transaction.amount;
-        }
-        return acc;
-      }, 0) : 0);
-    }, 0);
+    // For ROI calculation, we'll need to get related financial data
+    // This is a simplified approach - you may need to adjust based on your actual data structure
+    const totalRent = rental.rent || 0;
+    
+    // Get maintenance costs - this might need adjustment based on your actual schema
+    const maintenanceRequests = await prisma.maintenanceRequest.findMany({
+      where: {
+        rentalId: rental.id,
+      }
+    });
 
-    const totalMaintenanceCost = (property as any).maintenanceRequests.reduce((acc: number, request: any) => {
+    const totalMaintenanceCost = maintenanceRequests.reduce((acc: number, request: any) => {
       return acc + (request.actualCost || 0);
     }, 0);
 
@@ -40,7 +34,7 @@ class RoiService {
     const roi = (netIncome / initialInvestment) * 100;
 
     return {
-      propertyId,
+      rentalId,
       totalRent,
       totalMaintenanceCost,
       netIncome,

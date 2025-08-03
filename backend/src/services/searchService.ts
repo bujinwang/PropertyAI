@@ -41,7 +41,7 @@ export interface PropertySearchParams {
   isActive?: boolean;                 // Include inactive properties
   
   // For unit search
-  propertyId?: string;                // Filter units by property ID
+  rentalId?: string;                  // Filter units by rental ID
   
   // Sorting and pagination
   sortField?: string;                 // Field to sort by
@@ -119,62 +119,49 @@ export class SearchService {
       // Full-text search across multiple fields
       if (query) {
         where.OR = [
-          { name: { contains: query, mode: 'insensitive' } },
+          { title: { contains: query, mode: 'insensitive' } },
           { description: { contains: query, mode: 'insensitive' } },
           { address: { contains: query, mode: 'insensitive' } },
           { city: { contains: query, mode: 'insensitive' } }
         ];
       }
 
-      // Amenities filter (JSON field search)
-      if (amenities && amenities.length > 0) {
-        // We'll need to filter this in JavaScript after fetching the data
-        // as JSON filtering is complex and varies by database
-      }
-
-      // Unit-related filters (these will be applied separately in unit filtering)
-      const unitFilters: any = {};
-
-      if (isAvailable !== undefined) {
-        unitFilters.isAvailable = isAvailable;
-      }
-
-      if (availableFrom) {
-        unitFilters.dateAvailable = { lte: new Date(availableFrom) };
-      }
-
-      if (bedrooms !== undefined) {
-        unitFilters.bedrooms = { gte: bedrooms };
-      }
-
-      if (bathrooms !== undefined) {
-        unitFilters.bathrooms = { gte: bathrooms };
-      }
-
-      if (minSize !== undefined) {
-        unitFilters.size = { ...(unitFilters.size || {}), gte: minSize };
-      }
-
-      if (maxSize !== undefined) {
-        unitFilters.size = { ...(unitFilters.size || {}), lte: maxSize };
-      }
-
+      // Add rent filters directly to rental model
       if (minRent !== undefined) {
-        unitFilters.rent = { ...(unitFilters.rent || {}), gte: minRent };
+        where.rent = { ...(where.rent || {}), gte: minRent };
       }
 
       if (maxRent !== undefined) {
-        unitFilters.rent = { ...(unitFilters.rent || {}), lte: maxRent };
+        where.rent = { ...(where.rent || {}), lte: maxRent };
       }
 
-      // Check if we have unit filters
-      const hasUnitFilters = Object.keys(unitFilters).length > 0;
+      // Add bedroom filter
+      if (bedrooms !== undefined) {
+        where.bedrooms = { gte: bedrooms };
+      }
 
-      // If we have unit filters, we need to filter properties that have at least one unit matching
-      if (hasUnitFilters) {
-        where.units = {
-          some: unitFilters
-        };
+      // Add bathroom filter
+      if (bathrooms !== undefined) {
+        where.bathrooms = { gte: bathrooms };
+      }
+
+      // Add size filters
+      if (minSize !== undefined) {
+        where.size = { ...(where.size || {}), gte: minSize };
+      }
+
+      if (maxSize !== undefined) {
+        where.size = { ...(where.size || {}), lte: maxSize };
+      }
+
+      // Add availability filter
+      if (isAvailable !== undefined) {
+        where.isAvailable = isAvailable;
+      }
+
+      // Add available date filter
+      if (availableFrom) {
+        where.availableDate = { lte: new Date(availableFrom) };
       }
 
       // Geolocation proximity search
@@ -195,17 +182,17 @@ export class SearchService {
 
       // Execute count and query in parallel
       const [totalCount, properties] = await Promise.all([
-        // Count query
-        prisma.property.count({ where }),
+        // Count query - using rental instead of property
+        prisma.rental.count({ where }),
         
-        // Main query
-        prisma.property.findMany({
+        // Main query - using rental instead of property
+        prisma.rental.findMany({
           where,
           skip,
           take,
           orderBy,
           include: {
-            manager: {
+            Manager: {
               select: {
                 id: true,
                 firstName: true,
@@ -213,7 +200,7 @@ export class SearchService {
                 email: true
               }
             },
-            owner: {
+            Owner: {
               select: {
                 id: true,
                 firstName: true,
@@ -221,21 +208,7 @@ export class SearchService {
                 email: true
               }
             },
-            units: {
-              where: hasUnitFilters ? unitFilters : undefined,
-              select: {
-                id: true,
-                unitNumber: true,
-                bedrooms: true,
-                bathrooms: true,
-                size: true,
-                rent: true,
-                isAvailable: true,
-                dateAvailable: true,
-                features: true
-              }
-            },
-            images: {
+            RentalImages: {
               where: {
                 isFeatured: true
               },
@@ -250,7 +223,7 @@ export class SearchService {
       let filteredCount = totalCount;
       
       if (latitude !== undefined && longitude !== undefined && radius !== undefined) {
-        filteredProperties = properties.filter(property => {
+        filteredProperties = properties.filter((property: any) => {
           if (!property.latitude || !property.longitude) return false;
           
           // Calculate distance in miles using Haversine formula
@@ -270,7 +243,7 @@ export class SearchService {
         
         // If sorting by distance, sort the filtered properties
         if (sortField === 'distance') {
-          filteredProperties.sort((a, b) => {
+          filteredProperties.sort((a: any, b: any) => {
             const distA = (a as any).distance || 0;
             const distB = (b as any).distance || 0;
             return sortOrder === 'asc' ? distA - distB : distB - distA;
@@ -283,7 +256,7 @@ export class SearchService {
 
       // Apply amenities filtering if needed
       if (amenities && amenities.length > 0) {
-        filteredProperties = filteredProperties.filter(property => {
+        filteredProperties = filteredProperties.filter((property: any) => {
           if (!property.amenities) return false;
           
           // Parse amenities if it's a string
@@ -292,7 +265,7 @@ export class SearchService {
             : property.amenities;
             
           // Check if all required amenities are included
-          return amenities.every(amenity => 
+          return amenities.every((amenity: string) => 
             propertyAmenities.includes(amenity)
           );
         });
@@ -318,6 +291,8 @@ export class SearchService {
 
   /**
    * Search for available units with advanced filtering
+   * Note: Since there's no separate Unit model, this searches Rental records
+   * that represent individual units or unit-like properties
    */
   async searchAvailableUnits(params: PropertySearchParams) {
     try {
@@ -329,7 +304,7 @@ export class SearchService {
         minSize,
         maxSize,
         availableFrom,
-        propertyId,
+        rentalId,
         sortField = 'rent',
         sortOrder = 'asc',
         page = 1,
@@ -341,14 +316,14 @@ export class SearchService {
         isAvailable: true
       };
 
-      // Add property ID filter if provided
-      if (propertyId) {
-        where.propertyId = propertyId;
+      // Add rental ID filter if provided
+      if (rentalId) {
+        where.id = rentalId;
       }
 
       // Add available date filter
       if (availableFrom) {
-        where.dateAvailable = { lte: new Date(availableFrom) };
+        where.availableDate = { lte: new Date(availableFrom) };
       }
 
       // Add bedroom filter
@@ -387,28 +362,17 @@ export class SearchService {
 
       // Execute count and query in parallel
       const [count, units] = await Promise.all([
-        // Count query
-        prisma.unit.count({ where }),
+        // Count query - using rental instead of unit
+        prisma.rental.count({ where }),
         
-        // Main query
-        prisma.unit.findMany({
+        // Main query - using rental instead of unit
+        prisma.rental.findMany({
           where,
           skip,
           take,
           orderBy,
           include: {
-            property: {
-              select: {
-                id: true,
-                name: true,
-                address: true,
-                city: true,
-                state: true,
-                zipCode: true,
-                propertyType: true
-              }
-            },
-            images: {
+            RentalImages: {
               where: {
                 isFeatured: true
               },
@@ -462,4 +426,4 @@ function toRadians(degrees: number): number {
 }
 
 // Export singleton instance
-export const searchService = new SearchService(); 
+export const searchService = new SearchService();

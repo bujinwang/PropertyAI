@@ -59,7 +59,7 @@ class DataSyncService {
             leaseTerms: lease.leaseTerms,
             status: lease.status,
             signedDate: lease.signedDate,
-            unitId: lease.unitId,
+            rentalId: lease.rentalId, // Changed from unitId to rentalId
             tenantId: lease.tenantId,
           },
         });

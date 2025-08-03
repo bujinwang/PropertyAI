@@ -1,20 +1,26 @@
 import { prisma } from '../config/database';
 
-export const getBusinessHoursByPropertyId = async (propertyId: string) => {
+export const getBusinessHoursByRentalId = async (rentalId: string) => {
   return prisma.businessHours.findMany({
-    where: { propertyId },
+    where: { rentalId },
   });
 };
 
 export const createBusinessHours = async (data: {
-  propertyId: string;
+  rentalId: string;
   dayOfWeek: number;
   openTime: string;
   closeTime: string;
   isClosed: boolean;
 }) => {
   return prisma.businessHours.create({
-    data,
+    data: {
+      rentalId: data.rentalId,
+      dayOfWeek: data.dayOfWeek,
+      openTime: data.openTime,
+      closeTime: data.closeTime,
+      isClosed: data.isClosed,
+    },
   });
 };
 

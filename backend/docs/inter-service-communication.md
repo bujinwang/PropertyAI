@@ -26,8 +26,8 @@ Each microservice exposes internal endpoints that can be called by other service
 - `/api/users/basic/:id` - Get basic user information
 
 #### Properties Service
-- `/api/properties/validate/:id` - Validate if a property exists and is active
-- `/api/properties/basic/:id` - Get basic property information
+- `/api/rentals/validate/:id` - Validate if a property exists and is active
+- `/api/rentals/basic/:id` - Get basic property information
 
 ### Security
 

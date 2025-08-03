@@ -7,14 +7,14 @@ import { costEstimationService } from './costEstimation.service';
 const prisma = new PrismaClient();
 
 type EmergencyRoutingRuleWithVendor = Prisma.EmergencyRoutingRuleGetPayload<{
-  include: { vendor: true };
+  include: { Vendor: true };
 }>;
 
 class TriageService {
   public async triageRequest(requestId: string): Promise<void> {
     const request = await prisma.maintenanceRequest.findUnique({
       where: { id: requestId },
-      include: { requestedBy: true },
+      include: { User: true },
     });
 
     if (!request) {
@@ -29,7 +29,7 @@ class TriageService {
     // Update request with analyzed data
     await prisma.maintenanceRequest.update({
       where: { id: requestId },
-      data: { priority: priority as Priority, category: { connectOrCreate: { where: { name: category }, create: { name: category } } } },
+      data: { priority: priority as Priority, categoryId: category },
     });
 
     // 2. Apply routing rules
@@ -49,23 +49,23 @@ class TriageService {
       where: {
         priority: priority as Priority,
       },
-      include: { vendor: true },
+      include: { Vendor: true },
     });
   }
 
-  private async executeAction(rule: EmergencyRoutingRuleWithVendor, request: MaintenanceRequest & { requestedBy: any }) {
+  private async executeAction(rule: EmergencyRoutingRuleWithVendor, request: MaintenanceRequest & { User: any }) {
     console.log(`Executing rule: ${rule.id} for request: ${request.id}`);
-    if (rule.vendor) {
+    if (rule.Vendor) {
       // Assign to vendor and notify
       const newWorkOrder = await prisma.workOrder.create({
         data: {
           title: request.title,
           description: request.description,
           priority: request.priority,
-          maintenanceRequest: { connect: { id: request.id } },
-          assignments: {
+          MaintenanceRequest: { connect: { id: request.id } },
+          WorkOrderAssignment: {
             create: {
-              vendor: { connect: { id: rule.vendor.id } },
+              Vendor: { connect: { id: rule.Vendor.id } },
             },
           },
         },
@@ -74,8 +74,8 @@ class TriageService {
       // Trigger AI cost estimation
       await costEstimationService.estimateCost(newWorkOrder.id);
 
-      if (rule.vendor.phone) {
-        await communicationService.sendSms(rule.vendor.phone, `New work order assigned: ${request.title}`);
+      if (rule.Vendor.phone) {
+        await communicationService.sendSms(rule.Vendor.phone, `New work order assigned: ${request.title}`);
       }
     }
   }

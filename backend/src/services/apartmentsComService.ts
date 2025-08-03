@@ -38,25 +38,36 @@ const toApartmentsComFormat = (rental: Rental) => {
 
 // Legacy function for backward compatibility
 const toApartmentsComFormatLegacy = async (listing: any) => {
-  const unit = await prisma.unit.findFirst({ where: { listingId: listing.id } });
-  const property = await prisma.property.findUnique({ where: { id: listing.propertyId } });
+  // Try to find the rental that corresponds to this listing
+  const rental = await prisma.rental.findFirst({ 
+    where: { 
+      // Assuming there's some way to link listing to rental
+      // This might need adjustment based on your actual data structure
+      id: listing.rentalId || listing.id
+    } 
+  });
 
+  if (rental) {
+    return toApartmentsComFormat(rental);
+  }
+
+  // Fallback to constructing from listing data if no rental found
   return toXML({
     listing: {
       title: listing.title,
       description: listing.description,
       rent: listing.rent,
       url: `${process.env.FRONTEND_URL}/public-listing/${listing.slug}`,
-      bedrooms: unit?.bedrooms,
-      bathrooms: unit?.bathrooms,
-      squareFootage: unit?.size,
-      propertyType: property?.propertyType,
+      bedrooms: listing.bedrooms,
+      bathrooms: listing.bathrooms,
+      squareFootage: listing.size,
+      propertyType: listing.propertyType,
       isAvailable: listing.isActive,
       dateAvailable: listing.availableDate,
-      address: property?.address,
-      city: property?.city,
-      state: property?.state,
-      zipCode: property?.zipCode
+      address: listing.address,
+      city: listing.city,
+      state: listing.state,
+      zipCode: listing.zipCode
     }
   });
 };
@@ -118,6 +129,24 @@ export const removeFromApartmentsCom = async (apartmentsComListingId: string): P
   } catch (error: any) {
     console.error('Error removing from Apartments.com:', error);
     throw new AppError(error.message || 'Failed to remove from Apartments.com', error.status || 500);
+  }
+};
+
+export const getApartmentsComps = async (rentalId: string): Promise<any> => {
+  try {
+    // For now, return a placeholder response since Apartments.com doesn't have a direct comps API
+    // This would need to be implemented based on Apartments.com's actual API capabilities
+    console.log(`Getting comparable properties for rental ${rentalId} from Apartments.com`);
+    
+    return {
+      source: 'apartments.com',
+      rentalId,
+      comparables: [],
+      message: 'Apartments.com comparable properties feature not yet implemented'
+    };
+  } catch (error: any) {
+    console.error('Error getting Apartments.com comps:', error);
+    throw new AppError(error.message || 'Failed to get Apartments.com comparables', error.status || 500);
   }
 };
 

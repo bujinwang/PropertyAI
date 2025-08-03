@@ -10,9 +10,9 @@ export const generateDescription = async (req: Request, res: Response, next: Nex
 
     console.log(`[DEBUG] Received propertyId: ${propertyId}`);
 
-    const property = await prisma.property.findUnique({
+    const property = await prisma.rental.findUnique({
       where: { id: propertyId },
-      include: { units: true, images: true, listings: true }, // Include related data if needed by AI service
+      include: { RentalImages: true }, // Include related data if needed by AI service
     });
 
     console.log(`[DEBUG] Property found by Prisma:`, property);
@@ -28,18 +28,17 @@ export const generateDescription = async (req: Request, res: Response, next: Nex
     // Construct details object for AI service from property data
     const propertyDetailsForAI = {
       propertyType: property.propertyType,
-      bedrooms: property.units.length > 0 ? property.units[0].bedrooms : null, // Assuming first unit for bedrooms/bathrooms
-      bathrooms: property.units.length > 0 ? property.units[0].bathrooms : null,
+      bedrooms: property.bedrooms,
+      bathrooms: property.bathrooms,
       amenities: property.amenities ? JSON.parse(property.amenities as string) : [],
       // Add other relevant property fields here
-      name: property.name,
+      title: property.title,
       address: property.address,
       city: property.city,
       state: property.state,
       zipCode: property.zipCode,
       country: property.country,
       yearBuilt: property.yearBuilt,
-      totalUnits: property.totalUnits,
       // Merge with any additional details from req.body if necessary
       ...details
     };
@@ -47,11 +46,11 @@ export const generateDescription = async (req: Request, res: Response, next: Nex
     // The photos from req.body are likely image URLs or similar,
     // but the backend aiService.generatePropertyDescription expects string[] (image URLs).
     // We'll use the images from the property object for now.
-    const imageUrls = property.images.map(img => img.url);
+    const imageUrls = property.RentalImages.map((img: any) => img.url);
 
     const description = await aiService.generatePropertyDescription(imageUrls, propertyDetailsForAI);
     
-    await prisma.property.update({ // Update Property description, not Listing
+    await prisma.rental.update({ // Update Rental description, not Listing
         where: { id: propertyId },
         data: { 
           description: description
@@ -118,17 +117,17 @@ export const smartResponse = async (req: Request, res: Response, next: NextFunct
 
 export const generatePrice = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { listingId } = req.params;
-    const listing = await prisma.listing.findUnique({
-      where: { id: listingId },
-      include: { property: true, unit: true },
+    const { rentalId } = req.params; // Changed from listingId to rentalId
+    const rental = await prisma.rental.findUnique({
+      where: { id: rentalId },
+      include: { RentalImages: true }, // Include rental images instead of property/unit
     });
 
-    if (!listing) {
-      return next(new AppError('Listing not found', 404));
+    if (!rental) {
+      return next(new AppError('Rental not found', 404));
     }
 
-    const price = await aiService.generatePriceRecommendation(listing);
+    const price = await aiService.generatePriceRecommendation(rental);
     res.json(price);
   } catch (error) {
     next(error);

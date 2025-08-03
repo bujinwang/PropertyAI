@@ -3,17 +3,13 @@ import { WorkOrder } from '@prisma/client';
 import { aiOrchestrationService } from './aiOrchestration.service';
 
 class CostEstimationService {
-  public async collectDataForCostEstimation(workOrderId: string): Promise<any | null> { // Changed return type to any for flexibility
+  public async collectDataForCostEstimation(workOrderId: string): Promise<any | null> {
     const workOrder = await prisma.workOrder.findUnique({
       where: { id: workOrderId },
       include: {
-        maintenanceRequest: {
+        MaintenanceRequest: {
           include: {
-            unit: {
-              include: {
-                property: true,
-              },
-            },
+            Rental: true,
           },
         },
       },
@@ -22,7 +18,7 @@ class CostEstimationService {
   }
 
   public async estimateCost(workOrderId: string): Promise<any | null> {
-    const workOrder: any = await this.collectDataForCostEstimation(workOrderId); // Explicitly type workOrder as any
+    const workOrder: any = await this.collectDataForCostEstimation(workOrderId);
 
     if (workOrder) {
       const prompt = `
@@ -30,8 +26,8 @@ class CostEstimationService {
         - Title: ${workOrder.title}
         - Description: ${workOrder.description}
         - Priority: ${workOrder.priority}
-        - Property Type: ${workOrder.maintenanceRequest?.unit?.property?.propertyType}
-        - Location: ${workOrder.maintenanceRequest?.unit?.property?.city}, ${workOrder.maintenanceRequest?.unit?.property?.state}
+        - Property Type: ${workOrder.MaintenanceRequest?.Rental?.propertyType}
+        - Location: ${workOrder.MaintenanceRequest?.Rental?.city}, ${workOrder.MaintenanceRequest?.Rental?.state}
 
         Provide the estimated cost as a single number (e.g., 250.00) and a confidence score between 0 and 1.
         Format the output as a JSON object with "estimatedCost" and "confidence" keys.

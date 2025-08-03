@@ -39,25 +39,25 @@ describe('Payment Service', () => {
       },
     });
 
-    const property = await prisma.property.create({
+    const rental = await prisma.rental.create({
       data: {
-        name: 'Test Property',
+        title: 'Test Property Unit 101',
         address: '123 Test St',
         city: 'Test City',
         state: 'TS',
         zipCode: '12345',
         country: 'TC',
         propertyType: 'APARTMENT',
-        totalUnits: 1,
+        unitNumber: '101',
+        bedrooms: 2,
+        bathrooms: 1,
+        rent: 1000,
+        deposit: 500,
         managerId: manager.id,
         ownerId: owner.id,
-      },
-    });
-
-    const unit = await prisma.unit.create({
-      data: {
-        unitNumber: '101',
-        propertyId: property.id,
+        createdById: owner.id,
+        status: 'ACTIVE',
+        isAvailable: false,
       },
     });
 
@@ -76,7 +76,7 @@ describe('Payment Service', () => {
         endDate: new Date(),
         rentAmount: 1000,
         securityDeposit: 500,
-        unitId: unit.id,
+        rentalId: rental.id, // Use rentalId instead of unitId
         tenantId: tenant.id,
       },
     });

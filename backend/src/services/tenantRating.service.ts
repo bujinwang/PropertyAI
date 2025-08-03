@@ -21,7 +21,7 @@ export class TenantRatingService {
         tenantId,
       },
       include: {
-        rater: true,
+        User_TenantRating_raterIdToUser: true, // Changed from 'rater: true' to the correct relationship name
       },
     });
   }

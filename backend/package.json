@@ -22,7 +22,11 @@
     "cleanup:legacy": "ts-node scripts/cleanup-legacy-migration.ts",
     "cleanup:legacy:dry-run": "ts-node scripts/cleanup-legacy-migration.ts --dry-run",
     "test:migration": "jest tests/migration-helpers.test.ts",
-    "test:no-legacy": "jest --testPathIgnorePatterns=/legacy-tests/"
+    "test:no-legacy": "jest --testPathIgnorePatterns=/legacy-tests/",
+    "update:integrations": "ts-node scripts/update-external-integrations.ts",
+    "monitor:deprecated": "curl http://localhost:3001/api/monitoring/deprecated-usage",
+    "schedule:cleanup": "ts-node scripts/schedule-cleanup.ts",
+    "final:cleanup": "ts-node scripts/cleanup-legacy-migration.ts --final"
   },
   "keywords": [
     "property",

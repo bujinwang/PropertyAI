@@ -236,8 +236,7 @@ router.post('/maintenance-events/:maintenanceRequestId', authenticateToken, [
     const maintenanceRequest = await prisma.maintenanceRequest.findUnique({
       where: { id: maintenanceRequestId },
       include: {
-        property: true,
-        unit: true
+        Rental: true // Changed from 'property: true, unit: true' to 'Rental: true'
       }
     });
 
@@ -253,7 +252,7 @@ router.post('/maintenance-events/:maintenanceRequestId', authenticateToken, [
       maintenanceRequestId,
       {
         title: maintenanceRequest.title,
-        description: `Maintenance request for ${maintenanceRequest.property.name} - Unit ${maintenanceRequest.unit.unitNumber}: ${maintenanceRequest.description}`,
+        description: `Maintenance request for ${maintenanceRequest.Rental.title} - ${maintenanceRequest.Rental.unitNumber ? `Unit ${maintenanceRequest.Rental.unitNumber}: ` : ''}${maintenanceRequest.description}`, // Updated to use Rental properties
         scheduledDate: new Date(scheduledDate),
         duration,
         attendees

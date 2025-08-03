@@ -5,7 +5,7 @@ import imageService from '../services/imageService';
 
 export const uploadListingImage = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { listingId } = req.params;
+    const { rentalId } = req.params;
     const file = req.file;
 
     if (!file) {
@@ -14,11 +14,16 @@ export const uploadListingImage = async (req: Request, res: Response, next: Next
 
     const optimizedImage = await imageService.enhanceAndOptimize(file);
 
-    const image = await prisma.listingImage.create({
+    const image = await prisma.rentalImage.create({
       data: {
-        listingId,
+        rentalId,
+        filename: optimizedImage.filename || file.filename,
+        originalFilename: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size,
         url: optimizedImage.url,
-        isFeatured: req.query.featured === 'true', // Assuming 'featured' is a query param
+        cdnUrl: optimizedImage.cdnUrl,
+        isFeatured: req.query.featured === 'true',
       },
     });
 

@@ -10,7 +10,7 @@ interface CreateTenantDto {
   firstName: string;
   lastName: string;
   phone?: string;
-  unitId?: string; // Link to a unit, which links to a property
+  rentalId?: string; // Link to a rental (changed from unitId)
   // Add other relevant fields for creating a tenant (User)
 }
 
@@ -20,7 +20,7 @@ interface UpdateTenantDto {
   lastName?: string;
   phone?: string;
   isActive?: boolean; // User status
-  unitId?: string; // Update associated unit
+  rentalId?: string; // Update associated rental (changed from unitId)
   // Add other fields that can be updated for a tenant (User)
 }
 
@@ -51,9 +51,8 @@ export class TenantService {
           lastName: data.lastName,
           phone: data.phone,
           role: UserRole.TENANT,
-          units: data.unitId ? {
-            connect: { id: data.unitId }
-          } : undefined,
+          // Note: The relationship to rental would need to be handled through Lease model
+          // as tenants are connected to rentals through leases, not directly
           // Map other fields as necessary
         },
       });
@@ -82,18 +81,20 @@ export class TenantService {
   }
 
   /**
-   * Retrieves all tenants (Users with role TENANT), optionally filtered by property ID.
-   * @param propertyId - Optional property ID to filter tenants.
+   * Retrieves all tenants (Users with role TENANT), optionally filtered by rental ID.
+   * @param rentalId - Optional rental ID to filter tenants.
    * @returns An array of tenant (User) objects.
    */
-  async getAllTenants(propertyId?: string): Promise<User[]> {
+  async getAllTenants(rentalId?: string): Promise<User[]> {
     try {
       const whereClause: any = { role: UserRole.TENANT };
 
-      if (propertyId) {
-        whereClause.units = {
+      if (rentalId) {
+        // Filter tenants by rental through active leases
+        whereClause.Lease = {
           some: {
-            propertyId: propertyId,
+            rentalId: rentalId,
+            status: 'ACTIVE' // Only active leases
           },
         };
       }
@@ -101,11 +102,19 @@ export class TenantService {
       const tenants = await this.prisma.user.findMany({
         where: whereClause,
         include: {
-          units: {
-            select: {
-              id: true,
-              unitNumber: true,
-              propertyId: true,
+          Lease: {
+            where: {
+              status: 'ACTIVE'
+            },
+            include: {
+              Rental: {
+                select: {
+                  id: true,
+                  title: true,
+                  unitNumber: true,
+                  address: true,
+                },
+              },
             },
           },
         },
@@ -133,34 +142,11 @@ export class TenantService {
         isActive: data.isActive,
       };
 
-      if (data.unitId) {
-        // Disconnect from old unit if exists and connect to new one
-        const currentTenant = await this.prisma.user.findUnique({
-          where: { id },
-          include: { units: true }
-        });
-
-        if (currentTenant && currentTenant.units.length > 0) {
-          updateData.units = {
-            disconnect: currentTenant.units.map(unit => ({ id: unit.id })),
-            connect: { id: data.unitId }
-          };
-        } else {
-          updateData.units = {
-            connect: { id: data.unitId }
-          };
-        }
-      } else if (data.unitId === null) { // Explicitly set to null to remove unit association
-        const currentTenant = await this.prisma.user.findUnique({
-          where: { id },
-          include: { units: true }
-        });
-        if (currentTenant && currentTenant.units.length > 0) {
-          updateData.units = {
-            disconnect: currentTenant.units.map(unit => ({ id: unit.id }))
-          };
-        }
-      }
+      // Note: Rental association is handled through Lease model
+      // If you need to change a tenant's rental, you would need to:
+      // 1. End the current lease
+      // 2. Create a new lease for the new rental
+      // This is more complex than a simple update and should be handled separately
 
       const updatedTenant = await this.prisma.user.update({
         where: { id, role: UserRole.TENANT },

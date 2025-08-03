@@ -207,8 +207,8 @@ export async function updatePropertyGeolocation(
   geocodeResult: GeocodeResult
 ) {
   try {
-    // Update the property with geocode information
-    const updatedProperty = await prisma.property.update({
+    // Update the rental (property) with geocode information
+    const updatedProperty = await prisma.rental.update({
       where: { id: propertyId },
       data: {
         latitude: geocodeResult.latitude,
@@ -304,4 +304,39 @@ function parseAddressComponents(addressComponents: any[]) {
   });
 
   return components;
+}
+
+/**
+ * Updates a rental's geolocation data in the database
+ * @param rentalId ID of the rental to update
+ * @param geocodeResult Geocoding result data
+ * @returns Updated rental
+ */
+export async function updateRentalGeolocation(
+  rentalId: string,
+  geocodeResult: GeocodeResult
+) {
+  try {
+    // Update the rental with geocode information
+    const updatedRental = await prisma.rental.update({
+      where: { id: rentalId },
+      data: {
+        latitude: geocodeResult.latitude,
+        longitude: geocodeResult.longitude,
+        address: geocodeResult.formattedAddress,
+        // Update address components from the geocode result
+        ...(geocodeResult.components.locality && { city: geocodeResult.components.locality }),
+        ...(geocodeResult.components.administrativeAreaLevel1 && { 
+          state: geocodeResult.components.administrativeAreaLevel1 
+        }),
+        ...(geocodeResult.components.postalCode && { zipCode: geocodeResult.components.postalCode }),
+        ...(geocodeResult.components.country && { country: geocodeResult.components.country }),
+      },
+    });
+
+    return updatedRental;
+  } catch (error) {
+    console.error('Error in updateRentalGeolocation:', error);
+    throw error;
+  }
 }

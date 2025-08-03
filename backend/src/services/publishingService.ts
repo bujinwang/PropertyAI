@@ -16,7 +16,7 @@ export const publishRentalToListingPlatforms = async (rental: Rental, platforms:
 
   if (platforms.includes('zillow')) {
     try {
-      const result = await zillowService.publishRentalToZillow(rental);
+      const result = await zillowService.publishToZillow(rental);
       results.zillow = { success: true, data: result };
     } catch (error) {
       results.zillow = { success: false, error: (error as Error).message };
@@ -25,7 +25,7 @@ export const publishRentalToListingPlatforms = async (rental: Rental, platforms:
 
   if (platforms.includes('apartments.com')) {
     try {
-      const result = await apartmentsComService.publishRentalToApartmentsCom(rental);
+      const result = await apartmentsComService.publishToApartmentsCom(rental);
       results['apartments.com'] = { success: true, data: result };
     } catch (error) {
       results['apartments.com'] = { success: false, error: (error as Error).message };
@@ -108,10 +108,8 @@ export const publishRentalById = async (rentalId: string, platforms: string[]) =
  */
 export const getRentalPublishingStatus = async (rentalId: string) => {
   const rental = await prisma.rental.findUnique({ 
-    where: { id: rentalId },
-    include: {
-      publishingHistory: true // Assuming this relation exists
-    }
+    where: { id: rentalId }
+    // Removed publishingHistory include as it doesn't exist in schema
   });
 
   if (!rental) {

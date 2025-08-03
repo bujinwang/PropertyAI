@@ -1,5 +1,5 @@
 import { prisma } from '../config/database';
-import { Vendor, WorkOrder, Property, MaintenanceRequestCategory, VendorPerformanceRating } from '@prisma/client';
+import { Vendor, WorkOrder, Rental, MaintenanceRequestCategory, VendorPerformanceRating } from '@prisma/client';
 import vendorPerformanceService from './vendorPerformanceService';
 
 type VendorWithPerformance = Vendor & {
@@ -40,7 +40,7 @@ async function getVendorWorkload(vendorId: string): Promise<number> {
   const openAssignments = await prisma.workOrderAssignment.count({
     where: {
       vendorId,
-      workOrder: {
+      WorkOrder: {
         status: { in: ['OPEN', 'ASSIGNED', 'IN_PROGRESS'] },
       },
     },
@@ -64,11 +64,11 @@ async function scoreVendor(vendor: Vendor, workOrder: any): Promise<number> {
   // 3. Specialty match
   let specialtyScore = 0;
   if (
-    workOrder.maintenanceRequest &&
-    workOrder.maintenanceRequest.categoryId &&
+    workOrder.MaintenanceRequest &&
+    workOrder.MaintenanceRequest.categoryId &&
     v.specialty
   ) {
-    specialtyScore = v.specialty === workOrder.maintenanceRequest.categoryId ? 1 : 0;
+    specialtyScore = v.specialty === workOrder.MaintenanceRequest.categoryId ? 1 : 0;
   }
   // 4. Cost (lower is better)
   let costScore = 1;
@@ -79,19 +79,19 @@ async function scoreVendor(vendor: Vendor, workOrder: any): Promise<number> {
   let proximityScore = 1;
   if (
     v.latitude !== undefined && v.longitude !== undefined &&
-    workOrder.maintenanceRequest?.property?.latitude !== undefined &&
-    workOrder.maintenanceRequest?.property?.longitude !== undefined
+    workOrder.MaintenanceRequest?.Rental?.latitude !== undefined &&
+    workOrder.MaintenanceRequest?.Rental?.longitude !== undefined
   ) {
     const distance = haversineDistance(
       v.latitude, v.longitude,
-      workOrder.maintenanceRequest.property.latitude,
-      workOrder.maintenanceRequest.property.longitude
+      workOrder.MaintenanceRequest.Rental.latitude,
+      workOrder.MaintenanceRequest.Rental.longitude
     );
     proximityScore = Math.max(0, 1 - distance / 50); // <10km=1, >50km=0
   }
   // 6. Certification (bonus if required)
   let certificationScore = 0;
-  const requiredCert = workOrder.maintenanceRequest?.category?.requiredCertification;
+  const requiredCert = workOrder.MaintenanceRequest?.MaintenanceRequestCategory?.requiredCertification;
   if (requiredCert && Array.isArray(v.certifications) && v.certifications.includes(requiredCert)) {
     certificationScore = 1;
   }
@@ -115,10 +115,10 @@ class SmartRoutingService {
     const workOrder = await prisma.workOrder.findUnique({
       where: { id: workOrderId },
       include: {
-        maintenanceRequest: {
+        MaintenanceRequest: {
           include: {
-            property: true,
-            category: true,
+            Rental: true,
+            MaintenanceRequestCategory: true,
           },
         },
       },
@@ -128,12 +128,12 @@ class SmartRoutingService {
       throw new Error('Work order not found');
     }
 
-    const { maintenanceRequest } = workOrder;
-    const property = maintenanceRequest.property;
-    const category = maintenanceRequest.category;
+    const { MaintenanceRequest } = workOrder;
+    const rental = MaintenanceRequest.Rental;
+    const category = MaintenanceRequest.MaintenanceRequestCategory;
 
-    if (!property || !category) {
-      throw new Error('Property or category not found for work order');
+    if (!rental || !category) {
+      throw new Error('Rental or category not found for work order');
     }
 
     const availableVendors = await prisma.vendor.findMany({
@@ -141,7 +141,7 @@ class SmartRoutingService {
         availability: 'AVAILABLE',
         specialty: category.name,
         serviceAreas: {
-          has: property.zipCode,
+          has: rental.zipCode,
         },
       },
       include: {
@@ -183,10 +183,10 @@ class SmartRoutingService {
     const workOrder = await prisma.workOrder.findUnique({
       where: { id: workOrderId },
       include: {
-        maintenanceRequest: {
+        MaintenanceRequest: {
           include: {
-            property: true,
-            category: true,
+            Rental: true,
+            MaintenanceRequestCategory: true,
           },
         },
       },
@@ -199,16 +199,16 @@ class SmartRoutingService {
     // Enhanced filtering: specialty, service area, availability
     let contractors = [];
     if (
-      workOrder.maintenanceRequest &&
-      workOrder.maintenanceRequest.categoryId &&
-      workOrder.maintenanceRequest.property?.zipCode
+      workOrder.MaintenanceRequest &&
+      workOrder.MaintenanceRequest.categoryId &&
+      workOrder.MaintenanceRequest.Rental?.zipCode
     ) {
       contractors = await prisma.vendor.findMany({
         where: {
-          specialty: workOrder.maintenanceRequest.categoryId,
+          specialty: workOrder.MaintenanceRequest.categoryId,
           availability: 'AVAILABLE',
           serviceAreas: {
-            has: workOrder.maintenanceRequest.property.zipCode,
+            has: workOrder.MaintenanceRequest.Rental.zipCode,
           },
         },
       });
@@ -236,7 +236,7 @@ class SmartRoutingService {
       where: { id: workOrderId },
       data: {
         status: 'ASSIGNED',
-        assignments: {
+        WorkOrderAssignment: {
           create: {
             vendorId: bestContractor.id,
           },

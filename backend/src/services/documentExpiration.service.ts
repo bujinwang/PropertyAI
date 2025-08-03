@@ -21,14 +21,14 @@ class DocumentExpirationService {
         },
       },
       include: {
-        tenant: true,
+        User: true, // Changed from 'tenant: true' to 'User: true'
       },
     });
 
     for (const lease of expiringLeases) {
       const subject = 'Lease Renewal Reminder';
-      const message = `Dear ${lease.tenant.firstName},\n\nThis is a reminder that your lease is expiring on ${lease.endDate.toDateString()}.\n\nPlease contact us to discuss renewal options.\n\nThank you,\nPropertyAI`;
-      await sendEmail(lease.tenant.email, subject, message);
+      const message = `Dear ${lease.User.firstName},\n\nThis is a reminder that your lease is expiring on ${lease.endDate.toDateString()}.\n\nPlease contact us to discuss renewal options.\n\nThank you,\nPropertyAI`; // Changed from 'lease.tenant.firstName' to 'lease.User.firstName'
+      await sendEmail(lease.User.email, subject, message); // Changed from 'lease.tenant.email' to 'lease.User.email'
     }
   }
 }

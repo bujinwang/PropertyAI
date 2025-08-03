@@ -109,12 +109,12 @@ export async function updatePropertyLocation(req: Request, res: Response) {
       return res.status(400).json({ success: false, message: 'Address is required' });
     }
 
-    // Check if property exists
-    const property = await prisma.property.findUnique({
+    // Check if rental (property) exists
+    const rental = await prisma.rental.findUnique({
       where: { id },
     });
 
-    if (!property) {
+    if (!rental) {
       return res.status(404).json({
         success: false,
         message: `Property with ID ${id} not found`,
@@ -131,7 +131,7 @@ export async function updatePropertyLocation(req: Request, res: Response) {
       });
     }
 
-    // Update property with geocoded information
+    // Update rental with geocoded information
     const updatedProperty = await geocodingService.updatePropertyGeolocation(id, geocodeResult);
 
     return res.status(200).json({
@@ -206,12 +206,12 @@ export async function batchGeocodeProperties(req: Request, res: Response) {
     // Process each property
     for (const propertyId of propertyIds) {
       try {
-        // Get the property
-        const property = await prisma.property.findUnique({
+        // Get the rental (property)
+        const rental = await prisma.rental.findUnique({
           where: { id: propertyId },
         });
 
-        if (!property) {
+        if (!rental) {
           errors.push({
             propertyId,
             error: `Property with ID ${propertyId} not found`,
@@ -220,7 +220,7 @@ export async function batchGeocodeProperties(req: Request, res: Response) {
         }
 
         // Create address string
-        const addressString = `${property.address}, ${property.city}, ${property.state} ${property.zipCode}, ${property.country}`;
+        const addressString = `${rental.address}, ${rental.city}, ${rental.state} ${rental.zipCode}, ${rental.country}`;
 
         // Geocode the address
         const geocodeResult = await geocodingService.geocodeAddress(addressString);
@@ -233,7 +233,7 @@ export async function batchGeocodeProperties(req: Request, res: Response) {
           continue;
         }
 
-        // Update property with geocoded information
+        // Update rental with geocoded information
         const updatedProperty = await geocodingService.updatePropertyGeolocation(propertyId, geocodeResult);
         
         results.push({
@@ -263,4 +263,4 @@ export async function batchGeocodeProperties(req: Request, res: Response) {
       message: error instanceof Error ? error.message : 'Internal server error during batch geocoding',
     });
   }
-} 
+}

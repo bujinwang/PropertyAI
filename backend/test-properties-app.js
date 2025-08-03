@@ -11,7 +11,7 @@ async function testPropertiesApp() {
     const token = loginResponse.data.token;
     
     // Test properties endpoint (what the app will call)
-    const propertiesResponse = await axios.get('http://localhost:5001/api/properties', {
+    const propertiesResponse = await axios.get('http://localhost:5001/api/rentals', {
       headers: {
         'Authorization': `Bearer ${token}`
       }

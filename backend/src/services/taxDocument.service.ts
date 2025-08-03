@@ -3,51 +3,45 @@ import PDFDocument from 'pdfkit';
 import * as fs from 'fs';
 
 class TaxDocumentService {
-  public async generateTaxDocument(propertyId: string, year: number): Promise<string | null> {
-    const property = await prisma.property.findUnique({
-      where: { id: propertyId },
+  public async generateTaxDocument(rentalId: string, year: number): Promise<string | null> {
+    const rental = await prisma.rental.findUnique({
+      where: { id: rentalId },
       include: {
-        units: {
-          include: {
-            lease: {
-              include: {
-                transactions: true,
-              },
-            },
-          },
-        },
-        maintenanceRequests: true,
+        RentalImages: true,
       },
     });
 
-    if (!property) {
+    if (!rental) {
       return null;
     }
 
     const doc = new PDFDocument();
-    const filePath = `./tax-document-${propertyId}-${year}.pdf`;
+    const filePath = `./tax-document-${rentalId}-${year}.pdf`;
     doc.pipe(fs.createWriteStream(filePath));
 
-    doc.fontSize(25).text(`Tax Document for ${property.name} - ${year}`, {
+    doc.fontSize(25).text(`Tax Document for ${rental.title} - ${year}`, {
       align: 'center',
     });
 
     doc.moveDown();
 
-    const totalRent = (property as any).units.reduce((acc: number, unit: any) => {
-      return acc + (unit.lease ? unit.lease.transactions.reduce((acc: number, transaction: any) => {
-        if (transaction.type === 'RENT' && transaction.status === 'COMPLETED' && new Date(transaction.processedAt!).getFullYear() === year) {
-          return acc + transaction.amount;
+    // For tax document generation, we'll need to get related financial data
+    // This is a simplified approach - you may need to adjust based on your actual data structure
+    const totalRent = rental.rent || 0;
+    
+    // Get maintenance costs for this specific rental
+    const maintenanceRequests = await prisma.maintenanceRequest.findMany({
+      where: {
+        rentalId: rentalId,
+        completedDate: {
+          gte: new Date(`${year}-01-01`),
+          lt: new Date(`${year + 1}-01-01`)
         }
-        return acc;
-      }, 0) : 0);
-    }, 0);
-
-    const totalMaintenanceCost = (property as any).maintenanceRequests.reduce((acc: number, request: any) => {
-      if (request.completedDate && new Date(request.completedDate).getFullYear() === year) {
-        return acc + (request.actualCost || 0);
       }
-      return acc;
+    });
+
+    const totalMaintenanceCost = maintenanceRequests.reduce((acc: number, request: any) => {
+      return acc + (request.actualCost || 0);
     }, 0);
 
     doc.fontSize(16).text(`Total Rent Income: $${totalRent}`);

@@ -56,7 +56,7 @@ export class UXReviewService {
         status: data.status || UXReviewStatus.PENDING,
       },
       include: {
-        reviewer: {
+        User: {
           select: {
             id: true,
             firstName: true,
@@ -64,9 +64,9 @@ export class UXReviewService {
             email: true,
           },
         },
-        assignments: {
+        UXReviewAssignment: {
           include: {
-            assignee: {
+            User: {
               select: {
                 id: true,
                 firstName: true,
@@ -76,9 +76,9 @@ export class UXReviewService {
             },
           },
         },
-        comments: {
+        UXReviewComment: {
           include: {
-            author: {
+            User: {
               select: {
                 id: true,
                 firstName: true,
@@ -114,7 +114,7 @@ export class UXReviewService {
     return await prisma.uXReview.findMany({
       where,
       include: {
-        reviewer: {
+        User: {
           select: {
             id: true,
             firstName: true,
@@ -122,9 +122,9 @@ export class UXReviewService {
             email: true,
           },
         },
-        assignments: {
+        UXReviewAssignment: {
           include: {
-            assignee: {
+            User: {
               select: {
                 id: true,
                 firstName: true,
@@ -134,9 +134,9 @@ export class UXReviewService {
             },
           },
         },
-        comments: {
+        UXReviewComment: {
           include: {
-            author: {
+            User: {
               select: {
                 id: true,
                 firstName: true,
@@ -155,7 +155,7 @@ export class UXReviewService {
     return await prisma.uXReview.findUnique({
       where: { id },
       include: {
-        reviewer: {
+        User: {
           select: {
             id: true,
             firstName: true,
@@ -163,9 +163,9 @@ export class UXReviewService {
             email: true,
           },
         },
-        assignments: {
+        UXReviewAssignment: {
           include: {
-            assignee: {
+            User: {
               select: {
                 id: true,
                 firstName: true,
@@ -175,9 +175,9 @@ export class UXReviewService {
             },
           },
         },
-        comments: {
+        UXReviewComment: {
           include: {
-            author: {
+            User: {
               select: {
                 id: true,
                 firstName: true,
@@ -197,7 +197,7 @@ export class UXReviewService {
       where: { id },
       data,
       include: {
-        reviewer: {
+        User: {
           select: {
             id: true,
             firstName: true,
@@ -205,9 +205,9 @@ export class UXReviewService {
             email: true,
           },
         },
-        assignments: {
+        UXReviewAssignment: {
           include: {
-            assignee: {
+            User: {
               select: {
                 id: true,
                 firstName: true,
@@ -217,9 +217,9 @@ export class UXReviewService {
             },
           },
         },
-        comments: {
+        UXReviewComment: {
           include: {
-            author: {
+            User: {
               select: {
                 id: true,
                 firstName: true,
@@ -243,7 +243,7 @@ export class UXReviewService {
     return await prisma.uXReviewComment.create({
       data,
       include: {
-        author: {
+        User: {
           select: {
             id: true,
             firstName: true,
@@ -259,7 +259,7 @@ export class UXReviewService {
     return await prisma.uXReviewAssignment.create({
       data,
       include: {
-        assignee: {
+        User: {
           select: {
             id: true,
             firstName: true,
@@ -267,7 +267,7 @@ export class UXReviewService {
             email: true,
           },
         },
-        review: {
+        UXReview: {
           select: {
             id: true,
             title: true,
@@ -286,7 +286,7 @@ export class UXReviewService {
         createdById: data.createdById,
       },
       include: {
-        createdBy: {
+        User: {
           select: {
             id: true,
             firstName: true,
@@ -312,7 +312,7 @@ export class UXReviewService {
     return await prisma.uXSurvey.findMany({
       where,
       include: {
-        createdBy: {
+        User: {
           select: {
             id: true,
             firstName: true,
@@ -332,7 +332,7 @@ export class UXReviewService {
         respondentId: data.respondentId,
       },
       include: {
-        respondent: {
+        User: {
           select: {
             id: true,
             firstName: true,
@@ -340,7 +340,7 @@ export class UXReviewService {
             email: true,
           },
         },
-        survey: {
+        UXSurvey: {
           select: {
             id: true,
             title: true,

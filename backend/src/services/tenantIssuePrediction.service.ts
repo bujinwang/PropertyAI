@@ -29,9 +29,8 @@ export const getTenantIssuePredictionById = async (id: string) => {
 export const getMaintenanceRequests = async () => {
   return prisma.maintenanceRequest.findMany({
     include: {
-      property: true,
-      unit: true,
-      requestedBy: true,
+      Rental: true,
+      User: true,
     },
   });
 };
@@ -46,10 +45,10 @@ export const predictTenantIssues = async (tenantId: string) => {
   const tenant = await prisma.user.findUnique({
     where: { id: tenantId },
     include: {
-      maintenanceRequests: true,
-      leases: {
+      MaintenanceRequest: true,
+      Lease: {
         include: {
-          transactions: true,
+          Transaction: true,
         },
       },
     },
@@ -61,7 +60,8 @@ export const predictTenantIssues = async (tenantId: string) => {
 
   const tenantData = {
     ...tenant,
-    payments: tenant.leases.flatMap(l => l.transactions),
+    maintenanceRequests: tenant.MaintenanceRequest,
+    payments: tenant.Lease.flatMap(l => l.Transaction),
   };
 
   return predictTenantIssue(tenantData);

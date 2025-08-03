@@ -12,7 +12,7 @@ class ReminderService {
         status: 'ACTIVE',
       },
       include: {
-        tenant: true,
+        User: true,
       },
     });
 
@@ -26,14 +26,14 @@ class ReminderService {
         const message = `Your rent payment of $${lease.rentAmount} is due in ${diffDays} days.`;
         await sendNotification(
           'email',
-          lease.tenant.email,
+          lease.User.email,
           'Upcoming Rent Payment',
           message
         );
-        if (lease.tenant.phone) {
+        if (lease.User.phone) {
           await sendNotification(
             'sms',
-            lease.tenant.phone,
+            lease.User.phone,
             'Upcoming Rent Payment',
             message
           );

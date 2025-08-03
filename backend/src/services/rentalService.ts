@@ -766,6 +766,399 @@ export class RentalService {
     
     return `${baseSlug}-${Date.now()}`;
   }
+
+  /**
+   * Build where clause from filters
+   * @param filters Filter parameters
+   * @returns Prisma where clause
+   */
+  private buildWhereClause(filters: RentalFilterParams): any {
+    return {
+      ...(filters.title && {
+        title: { contains: filters.title, mode: 'insensitive' }
+      }),
+      ...(filters.city && {
+        city: { contains: filters.city, mode: 'insensitive' }
+      }),
+      ...(filters.state && {
+        state: { contains: filters.state, mode: 'insensitive' }
+      }),
+      ...(filters.zipCode && {
+        zipCode: { contains: filters.zipCode }
+      }),
+      ...(filters.propertyType && {
+        propertyType: filters.propertyType
+      }),
+      ...(filters.minBedrooms && {
+        bedrooms: { gte: filters.minBedrooms }
+      }),
+      ...(filters.maxBedrooms && {
+        bedrooms: { lte: filters.maxBedrooms }
+      }),
+      ...(filters.minBathrooms && {
+        bathrooms: { gte: filters.minBathrooms }
+      }),
+      ...(filters.maxBathrooms && {
+        bathrooms: { lte: filters.maxBathrooms }
+      }),
+      ...(filters.minRent && {
+        rent: { gte: filters.minRent }
+      }),
+      ...(filters.maxRent && {
+        rent: { lte: filters.maxRent }
+      }),
+      ...(filters.minSize && {
+        size: { gte: filters.minSize }
+      }),
+      ...(filters.maxSize && {
+        size: { lte: filters.maxSize }
+      }),
+      ...(filters.isAvailable !== undefined && {
+        isAvailable: filters.isAvailable
+      }),
+      ...(filters.status && {
+        status: filters.status
+      }),
+      ...(filters.managerId && {
+        managerId: filters.managerId
+      }),
+      ...(filters.ownerId && {
+        ownerId: filters.ownerId
+      }),
+      ...(filters.isActive !== undefined && {
+        isActive: filters.isActive
+      })
+    };
+  }
+
+  /**
+   * Search rentals with text-based search
+   * @param searchTerm Search term
+   * @param filters Additional filters
+   * @param page Page number
+   * @param limit Items per page
+   * @returns Search results
+   */
+  async searchRentals(
+    searchTerm: string,
+    filters: RentalFilterParams = {},
+    page: number = 1,
+    limit: number = 10
+  ): Promise<{
+    rentals: any[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    try {
+      const where: any = {
+        ...this.buildWhereClause(filters),
+        OR: [
+          { title: { contains: searchTerm, mode: 'insensitive' } },
+          { description: { contains: searchTerm, mode: 'insensitive' } },
+          { address: { contains: searchTerm, mode: 'insensitive' } },
+          { city: { contains: searchTerm, mode: 'insensitive' } },
+          { state: { contains: searchTerm, mode: 'insensitive' } },
+          { zipCode: { contains: searchTerm, mode: 'insensitive' } }
+        ]
+      };
+
+      const [rentals, total] = await Promise.all([
+        prisma.rental.findMany({
+          where,
+          include: {
+            RentalImages: true,
+            Manager: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                phone: true
+              }
+            },
+            Owner: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                phone: true
+              }
+            }
+          },
+          skip: (page - 1) * limit,
+          take: limit,
+          orderBy: { createdAt: 'desc' }
+        }),
+        prisma.rental.count({ where })
+      ]);
+
+      return {
+        rentals,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      };
+    } catch (error) {
+      throw handleDatabaseError(error);
+    }
+  }
+
+  /**
+   * Bulk create rentals
+   * @param rentals Array of rental data
+   * @returns Created rentals with success/failure tracking
+   */
+  async bulkCreateRentals(rentals: CreateRentalDto[]): Promise<{
+    successful: any[];
+    failed: Array<{ data: CreateRentalDto; error: string }>;
+  }> {
+    try {
+      const successful = [];
+      const failed = [];
+      
+      for (const rentalData of rentals) {
+        try {
+          const rental = await this.createRental(rentalData);
+          successful.push(rental);
+        } catch (error: any) {
+          failed.push({
+            data: rentalData,
+            error: error.message || 'Failed to create rental'
+          });
+        }
+      }
+
+      return { successful, failed };
+    } catch (error) {
+      throw handleDatabaseError(error);
+    }
+  }
+
+  /**
+   * Bulk update rentals
+   * @param updates Array of update objects with id and data
+   * @returns Updated rentals with success/failure tracking
+   */
+  async bulkUpdateRentals(updates: { id: string; data: UpdateRentalDto }[]): Promise<{
+    successful: any[];
+    failed: Array<{ id: string; data: UpdateRentalDto; error: string }>;
+  }> {
+    try {
+      const successful = [];
+      const failed = [];
+      
+      for (const update of updates) {
+        try {
+          const rental = await this.updateRental(update.id, update.data);
+          successful.push(rental);
+        } catch (error: any) {
+          failed.push({
+            id: update.id,
+            data: update.data,
+            error: error.message || 'Failed to update rental'
+          });
+        }
+      }
+
+      return { successful, failed };
+    } catch (error) {
+      throw handleDatabaseError(error);
+    }
+  }
+
+  /**
+   * Bulk delete rentals
+   * @param ids Array of rental IDs
+   * @returns Success status with detailed results
+   */
+  async bulkDeleteRentals(ids: string[]): Promise<{
+    success: boolean;
+    deletedCount: number;
+    successful: string[];
+    failed: Array<{ id: string; error: string }>;
+  }> {
+    try {
+      const successful = [];
+      const failed = [];
+      
+      for (const id of ids) {
+        try {
+          const success = await this.deleteRental(id);
+          if (success) {
+            successful.push(id);
+          } else {
+            failed.push({
+              id,
+              error: 'Failed to delete rental'
+            });
+          }
+        } catch (error: any) {
+          failed.push({
+            id,
+            error: error.message || 'Failed to delete rental'
+          });
+        }
+      }
+
+      return {
+        success: true,
+        deletedCount: successful.length,
+        successful,
+        failed
+      };
+    } catch (error) {
+      throw handleDatabaseError(error);
+    }
+  }
+
+  /**
+   * Get rental analytics
+   * @param filters Analytics filters
+   * @returns Analytics data
+   */
+  async getRentalAnalytics(filters: {
+    managerId?: string;
+    ownerId?: string;
+    startDate?: Date;
+    endDate?: Date;
+  } = {}): Promise<{
+    totalRentals: number;
+    availableRentals: number;
+    rentedRentals: number;
+    occupancyRate: number;
+    averageRent: number;
+    totalRevenue: number;
+    rentalsByType: Record<string, number>;
+    rentalsByStatus: Record<string, number>;
+    monthlyTrends: Array<{
+      month: string;
+      rentals: number;
+      revenue: number;
+    }>;
+  }> {
+    try {
+      const where: any = {};
+      
+      if (filters.managerId) {
+        where.managerId = filters.managerId;
+      }
+      
+      if (filters.ownerId) {
+        where.ownerId = filters.ownerId;
+      }
+
+      if (filters.startDate || filters.endDate) {
+        where.createdAt = {};
+        if (filters.startDate) {
+          where.createdAt.gte = filters.startDate;
+        }
+        if (filters.endDate) {
+          where.createdAt.lte = filters.endDate;
+        }
+      }
+
+      const [
+        totalRentals,
+        availableRentals,
+        rentedRentals,
+        averageRent,
+        totalRevenue,
+        rentalsByType,
+        rentalsByStatus
+      ] = await Promise.all([
+        prisma.rental.count({ where }),
+        prisma.rental.count({ 
+          where: { ...where, isAvailable: true } 
+        }),
+        prisma.rental.count({ 
+          where: { ...where, isAvailable: false } 
+        }),
+        prisma.rental.aggregate({
+          where,
+          _avg: { rent: true }
+        }),
+        prisma.rental.aggregate({
+          where,
+          _sum: { rent: true }
+        }),
+        prisma.rental.groupBy({
+          by: ['propertyType'],
+          where,
+          _count: { id: true }
+        }),
+        prisma.rental.groupBy({
+          by: ['status'],
+          where,
+          _count: { id: true }
+        })
+      ]);
+
+      const occupancyRate = totalRentals > 0 ? rentedRentals / totalRentals : 0;
+
+      // Convert grouped results to records
+      const rentalsByTypeRecord: Record<string, number> = {};
+      rentalsByType.forEach((item: any) => {
+        if (item.propertyType) {
+          rentalsByTypeRecord[item.propertyType] = item._count.id;
+        }
+      });
+
+      const rentalsByStatusRecord: Record<string, number> = {};
+      rentalsByStatus.forEach((item: any) => {
+        if (item.status) {
+          rentalsByStatusRecord[item.status] = item._count.id;
+        }
+      });
+
+      // Get monthly trends (last 12 months)
+      const monthlyTrends = [];
+      const now = new Date();
+      for (let i = 11; i >= 0; i--) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const nextDate = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+        
+        const monthWhere = {
+          ...where,
+          createdAt: {
+            gte: date,
+            lt: nextDate
+          }
+        };
+
+        const [monthRentals, monthRevenue] = await Promise.all([
+          prisma.rental.count({ where: monthWhere }),
+          prisma.rental.aggregate({
+            where: monthWhere,
+            _sum: { rent: true }
+          })
+        ]);
+
+        monthlyTrends.push({
+          month: date.toISOString().substring(0, 7), // YYYY-MM format
+          rentals: monthRentals,
+          revenue: monthRevenue._sum.rent || 0
+        });
+      }
+
+      return {
+        totalRentals,
+        availableRentals,
+        rentedRentals,
+        occupancyRate,
+        averageRent: averageRent._avg.rent || 0,
+        totalRevenue: totalRevenue._sum.rent || 0,
+        rentalsByType: rentalsByTypeRecord,
+        rentalsByStatus: rentalsByStatusRecord,
+        monthlyTrends
+      };
+    } catch (error) {
+      throw handleDatabaseError(error);
+    }
+  }
 }
 
 // Export a singleton instance

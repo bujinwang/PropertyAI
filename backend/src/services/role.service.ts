@@ -2,7 +2,7 @@ import { prisma } from '../config/database';
 
 export const getRoles = async () => {
   return prisma.role.findMany({
-    include: { permissions: true },
+    include: { Permission: true }, // Changed from 'permissions' to 'Permission'
   });
 };
 
@@ -13,7 +13,7 @@ export const createRole = async (data: {
   return prisma.role.create({
     data: {
       name: data.name,
-      permissions: {
+      Permission: { // Changed from 'permissions' to 'Permission'
         connect: data.permissions.map((id) => ({ id })),
       },
     },

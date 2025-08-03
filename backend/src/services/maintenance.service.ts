@@ -18,20 +18,17 @@ class MaintenanceService {
         updatedAt: true,
         scheduledDate: true,
         completedDate: true,
-        propertyId: true,
-        unitId: true,
+        rentalId: true,
         requestedById: true,
         categoryId: true,
-        property: {
+        Rental: {
           select: {
             id: true,
-            name: true,
-          },
-        },
-        unit: {
-          select: {
-            id: true,
+            title: true,
             unitNumber: true,
+            address: true,
+            city: true,
+            state: true,
           },
         },
       },

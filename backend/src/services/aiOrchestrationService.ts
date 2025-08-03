@@ -17,35 +17,34 @@ export class AiOrchestrationService {
   }
 
   async generateLeaseAgreement(
-    propertyId: string,
-    unitId: string,
+    rentalId: string,
     tenantId: string,
     startDate: Date,
     endDate: Date,
     rentAmount: number,
     securityDeposit: number
   ): Promise<any> {
-    const property = await prisma.property.findUnique({ where: { id: propertyId } });
-    const unit = await prisma.unit.findUnique({ where: { id: unitId } });
+    // Use rental instead of separate property and unit
+    const rental = await prisma.rental.findUnique({ where: { id: rentalId } });
     const tenant = await prisma.user.findUnique({ where: { id: tenantId } });
 
-    if (!property || !unit || !tenant) {
-      throw new Error('Invalid property, unit, or tenant');
+    if (!rental || !tenant) {
+      throw new Error('Invalid rental or tenant');
     }
 
     const prompt = `
       Generate a standard lease agreement with the following details:
-      - Landlord: ${property.name}
+      - Landlord: ${rental.title}
       - Tenant: ${tenant.firstName} ${tenant.lastName}
-      - Property Address: ${property.address}, ${property.city}, ${property.state} ${property.zipCode}
-      - Unit: ${unit.unitNumber}
+      - Property Address: ${rental.address}, ${rental.city}, ${rental.state} ${rental.zipCode}
+      - Unit: ${rental.unitNumber || 'N/A'}
       - Lease Term: ${startDate.toDateString()} to ${endDate.toDateString()}
       - Rent: $${rentAmount} per month
       - Security Deposit: $${securityDeposit}
     `;
 
     const leaseText = await generativeAIService.generateText(prompt);
-    const documentName = `Lease_Agreement_${tenant.lastName}_${unit.unitNumber}.txt`;
+    const documentName = `Lease_Agreement_${tenant.lastName}_${rental.unitNumber || rental.id}.txt`;
     const documentUrl = `leases/${documentName}`;
 
     const command = new PutObjectCommand({
@@ -62,14 +61,14 @@ export class AiOrchestrationService {
         rentAmount,
         securityDeposit,
         leaseTerms: leaseText,
-        unit: { connect: { id: unitId } },
-        tenant: { connect: { id: tenantId } },
-        documents: {
+        Rental: { connect: { id: rentalId } },
+        User: { connect: { id: tenantId } },
+        Document: {
           create: {
             name: documentName,
             type: 'LEASE',
             url: documentUrl,
-            uploadedBy: { connect: { id: tenantId } },
+            User: { connect: { id: tenantId } },
           },
         },
       },

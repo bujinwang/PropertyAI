@@ -1,14 +1,14 @@
 import { prisma } from '../config/database';
 
-export const getAppliancesByUnitId = async (unitId: string) => {
+export const getAppliancesByRentalId = async (rentalId: string) => {
   return prisma.appliance.findMany({
-    where: { unitId },
+    where: { rentalId },
   });
 };
 
 export const createAppliance = async (data: {
-  name: string; // Added name as it's required by schema
-  unitId: string;
+  name: string;
+  rentalId: string;
   type: string;
   brand?: string;
   model?: string;
@@ -18,8 +18,9 @@ export const createAppliance = async (data: {
 }) => {
   return prisma.appliance.create({
     data: {
-      ...data,
-      name: data.name, // Ensure name is explicitly passed
+      name: data.name,
+      rentalId: data.rentalId,
+      type: data.type,
     },
   });
 };

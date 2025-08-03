@@ -127,7 +127,7 @@ export class SearchController {
     try {
       // Get all query parameters
       const {
-        propertyId,
+        rentalId, // Changed from propertyId to rentalId
         bedrooms,
         bathrooms,
         minRent,
@@ -148,9 +148,9 @@ export class SearchController {
         isAvailable: true
       };
 
-      // Add property ID filter if provided
-      if (propertyId) {
-        searchParams.propertyId = propertyId as string;
+      // Add rental ID filter if provided
+      if (rentalId) {
+        searchParams.rentalId = rentalId as string; // Changed from propertyId to rentalId
       }
 
       // Add unit features if provided
@@ -200,4 +200,4 @@ export class SearchController {
 }
 
 // Export singleton instance
-export const searchController = new SearchController(); 
+export const searchController = new SearchController();

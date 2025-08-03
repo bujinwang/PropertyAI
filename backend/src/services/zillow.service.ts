@@ -11,8 +11,8 @@ class ZillowService {
     this.apiKey = config.zillow.apiKey;
   }
 
-  async getComps(propertyId: string): Promise<any> {
-    const url = `https://api.zillow.com/v1/property/${propertyId}/comps`;
+  async getComps(rentalId: string): Promise<any> {
+    const url = `https://api.zillow.com/v1/property/${rentalId}/comps`;
     const response = await axios.get(url, {
       params: {
         'zws-id': this.apiKey,

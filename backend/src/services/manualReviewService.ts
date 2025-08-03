@@ -2,8 +2,8 @@ import { PrismaClient, ApplicationStatus } from '@prisma/client';
 import { pushNotificationService } from './pushNotification.service';
 import { Prisma } from '@prisma/client';
 
-type ApplicationWithApplicantAndDevices = Prisma.ApplicationGetPayload<{
-  include: { applicant: { include: { devices: true } } };
+type ApplicationWithUserAndDevices = Prisma.ApplicationGetPayload<{
+  include: { User: { include: { Device: true } } };
 }>;
 
 const prisma = new PrismaClient();
@@ -13,21 +13,17 @@ class ManualReviewService {
     return prisma.application.findMany({ where: { status: 'PENDING' } });
   }
 
-
   async approveApplication(applicationId: string) {
-    const application: ApplicationWithApplicantAndDevices = await prisma.application.update({
+    const application: ApplicationWithUserAndDevices = await prisma.application.update({
       where: { id: applicationId },
       data: { status: ApplicationStatus.APPROVED },
-      include: { applicant: { include: { devices: true } } },
+      include: { User: { include: { Device: true } } },
     });
 
-    const applicant = await prisma.user.findUnique({
-      where: { id: application.applicantId },
-      include: { devices: true },
-    });
+    const applicant = application.User;
 
-    if (applicant && applicant.devices.length > 0) {
-      const device = applicant.devices[0];
+    if (applicant && applicant.Device.length > 0) {
+      const device = applicant.Device[0];
       const pushToken = device.pushToken;
       const platform = device.os; // Use 'os' instead of 'platform'
       const title = 'Application Approved!';
@@ -46,19 +42,16 @@ class ManualReviewService {
   }
 
   async rejectApplication(applicationId: string) {
-    const application: ApplicationWithApplicantAndDevices = await prisma.application.update({
+    const application: ApplicationWithUserAndDevices = await prisma.application.update({
       where: { id: applicationId },
       data: { status: ApplicationStatus.REJECTED },
-      include: { applicant: { include: { devices: true } } },
+      include: { User: { include: { Device: true } } },
     });
 
-    const applicant = await prisma.user.findUnique({
-      where: { id: application.applicantId },
-      include: { devices: true },
-    });
+    const applicant = application.User;
 
-    if (applicant && applicant.devices.length > 0) {
-      const device = applicant.devices[0];
+    if (applicant && applicant.Device.length > 0) {
+      const device = applicant.Device[0];
       const pushToken = device.pushToken;
       const platform = device.os;
       const title = 'Application Update';

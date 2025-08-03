@@ -36,36 +36,38 @@ describe('Manager API', () => {
             lastName: 'Tenant',
         }
     });
-    const property = await prisma.property.create({
+    
+    const rental = await prisma.rental.create({
         data: {
-            name: 'Test Property 2',
+            title: 'Test Property Unit 102',
             address: '456 Test St',
             city: 'Test City',
             state: 'TS',
             zipCode: '54321',
             country: 'USA',
             propertyType: 'APARTMENT',
-            totalUnits: 1,
+            unitNumber: '102',
+            bedrooms: 2,
+            bathrooms: 1,
+            rent: 1200,
+            deposit: 1200,
             managerId: managerUser.id,
             ownerId: managerUser.id,
+            createdById: managerUser.id,
+            status: 'ACTIVE',
+            isAvailable: false,
         }
     });
-    const unit = await prisma.unit.create({
-        data: {
-            unitNumber: '102',
-            propertyId: property.id,
-            tenantId: tenantUser.id,
-        }
-    });
+    
     const maintenanceRequest = await prisma.maintenanceRequest.create({
         data: {
             title: 'Broken Heater',
             description: 'The heater is not working.',
-            propertyId: property.id,
-            unitId: unit.id,
+            rentalId: rental.id, // Use rentalId instead of propertyId and unitId
             requestedById: tenantUser.id,
         }
     });
+    
     const vendor = await prisma.vendor.create({
         data: {
             name: 'Test Vendor 2',
@@ -78,6 +80,7 @@ describe('Manager API', () => {
             certifications: ['Cert B'],
         }
     });
+    
     workOrder = await prisma.workOrder.create({
       data: {
         title: 'Broken Heater',
@@ -85,6 +88,7 @@ describe('Manager API', () => {
         maintenanceRequestId: maintenanceRequest.id,
       },
     });
+    
     quote = await prisma.workOrderQuote.create({
         data: {
             workOrderId: workOrder.id,
@@ -97,8 +101,7 @@ describe('Manager API', () => {
 
   afterAll(async () => {
     await prisma.user.deleteMany({});
-    await prisma.property.deleteMany({});
-    await prisma.unit.deleteMany({});
+    await prisma.rental.deleteMany({});
     await prisma.maintenanceRequest.deleteMany({});
     await prisma.workOrder.deleteMany({});
     await prisma.vendor.deleteMany({});

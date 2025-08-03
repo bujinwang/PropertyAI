@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import * as applianceService from '../services/appliance.service';
 
-export const getAppliancesByUnitId = async (req: Request, res: Response) => {
+export const getAppliancesByRentalId = async (req: Request, res: Response) => { // Updated function name
   try {
-    const { unitId } = req.params;
-    const appliances = await applianceService.getAppliancesByUnitId(unitId);
+    const { rentalId } = req.params; // Changed from unitId to rentalId
+    const appliances = await applianceService.getAppliancesByRentalId(rentalId); // Updated service call
     res.status(200).json(appliances);
   } catch (error: any) {
     res.status(500).json({ message: error.message });

@@ -5,8 +5,7 @@ class DocumentController {
   async generateLease(req: Request, res: Response) {
     try {
       const {
-        propertyId,
-        unitId,
+        rentalId, // Changed from propertyId and unitId to rentalId
         tenantId,
         startDate,
         endDate,
@@ -15,8 +14,7 @@ class DocumentController {
       } = req.body;
 
       const lease = await aiOrchestrationService.generateLeaseAgreement(
-        propertyId,
-        unitId,
+        rentalId, // Now using single rentalId instead of propertyId and unitId
         tenantId,
         new Date(startDate),
         new Date(endDate),

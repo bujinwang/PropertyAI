@@ -78,7 +78,7 @@ router.post('/lease/:leaseId', authenticateToken, [
     const leaseData = req.body;
     const lease = await prisma.lease.findUnique({
       where: { id: leaseId },
-      include: { unit: { include: { property: true } } }
+      include: { Rental: true }
     });
     if (!lease) {
       return res.status(404).json({ success: false, error: 'Lease not found' });

@@ -1,16 +1,16 @@
 import { prisma } from '../config/database';
 
-export const getEscalationPoliciesByPropertyId = async (propertyId: string) => {
+export const getEscalationPoliciesByPropertyId = async (rentalId: string) => {
   return prisma.escalationPolicy.findMany({
-    where: { propertyId },
-    include: { rules: true },
+    where: { rentalId },
+    include: { EscalationPolicyRule: true }, // Changed from 'rules' to 'EscalationPolicyRule'
   });
 };
 
 export const createEscalationPolicy = async (data: {
   name: string;
   description?: string;
-  propertyId: string;
+  rentalId: string;
 }) => {
   return prisma.escalationPolicy.create({
     data,

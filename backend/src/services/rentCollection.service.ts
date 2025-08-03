@@ -18,13 +18,13 @@ class RentCollectionService {
         },
       },
       include: {
-        tenant: true,
+        User: true, // Changed from 'tenant: true' to 'User: true'
       },
     });
 
     for (const lease of leases) {
       const rentDueDate = new Date(lease.renewalDate!);
-      this.sendRentReminder(lease.tenant.email, lease.tenant.firstName, lease.rentAmount, rentDueDate);
+      this.sendRentReminder(lease.User.email, lease.User.firstName, lease.rentAmount, rentDueDate); // Changed from 'lease.tenant' to 'lease.User'
     }
   }
 

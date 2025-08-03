@@ -1,25 +1,26 @@
 import { prisma } from '../config/database';
 
-export const getEmergencyProtocolsByPropertyId = async (propertyId: string) => {
+export const getEmergencyProtocolsByRentalId = async (rentalId: string) => {
   return prisma.emergencyProtocol.findMany({
-    where: { propertyId },
+    where: { rentalId },
   });
 };
 
 export const createEmergencyProtocol = async (data: {
-  name: string; // Added name as it's required by schema
-  description: string; // Added description as it's required by schema
-  propertyId: string;
-  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'EMERGENCY';
-  contactName: string;
-  contactPhone: string;
-  instructions: string;
+  name: string;
+  description: string;
+  rentalId: string;
+  priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'EMERGENCY';
+  contactName?: string;
+  contactPhone?: string;
+  instructions?: any;
 }) => {
   return prisma.emergencyProtocol.create({
     data: {
-      ...data,
       name: data.name,
       description: data.description,
+      rentalId: data.rentalId,
+      instructions: data.instructions,
     },
   });
 };

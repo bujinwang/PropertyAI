@@ -11,15 +11,15 @@ datasource db {
 }
 
 model AIImageAnalysis {
-  id             String   @id
+  id             String   @id @default(cuid())
   analysisResult Json?
   createdAt      DateTime @default(now())
   imageId        String   @unique
-  updatedAt      DateTime
+  updatedAt      DateTime @updatedAt
 }
 
 model AIUsageLog {
-  id        String   @id
+  id        String   @id @default(cuid())
   userId    String?
   toolName  String
   input     Json?
@@ -33,7 +33,7 @@ model AIUsageLog {
 }
 
 model ApiKey {
-  id        String    @id
+  id        String    @id @default(cuid())
   key       String    @unique
   userId    String
   expiresAt DateTime?
@@ -46,26 +46,26 @@ model ApiKey {
 }
 
 model Appliance {
-  id        String   @id
+  id        String   @id @default(cuid())
   rentalId  String
   name      String
   createdAt DateTime @default(now())
   type      String
-  updatedAt DateTime
+  updatedAt DateTime @updatedAt
   Rental    Rental   @relation(fields: [rentalId], references: [id])
 
   @@index([rentalId])
 }
 
 model Application {
-  id              String            @id
+  id              String            @id @default(cuid())
   rentalId        String
   applicantId     String
   status          ApplicationStatus @default(PENDING)
   notes           String?
   appliedDate     DateTime          @default(now())
   createdAt       DateTime          @default(now())
-  updatedAt       DateTime
+  updatedAt       DateTime @updatedAt
   User            User              @relation(fields: [applicantId], references: [id])
   Rental          Rental            @relation(fields: [rentalId], references: [id])
   BackgroundCheck BackgroundCheck?
@@ -77,7 +77,7 @@ model Application {
 }
 
 model AuditEntry {
-  id         String   @id
+  id         String   @id @default(cuid())
   userId     String?
   action     String
   timestamp  DateTime @default(now())
@@ -92,25 +92,25 @@ model AuditEntry {
 }
 
 model BackgroundCheck {
-  id          String      @id
+  id          String      @id @default(cuid())
   status      String
   reportUrl   String?
   applicantId String      @unique
   createdAt   DateTime    @default(now())
-  updatedAt   DateTime
+  updatedAt   DateTime @updatedAt
   Application Application @relation(fields: [applicantId], references: [id])
 
   @@index([applicantId])
 }
 
 model BusinessHours {
-  id        String   @id
+  id        String   @id @default(cuid())
   rentalId  String
   openTime  String
   closeTime String
   createdAt DateTime @default(now())
   isClosed  Boolean  @default(false)
-  updatedAt DateTime
+  updatedAt DateTime @updatedAt
   dayOfWeek Int
   Rental    Rental   @relation(fields: [rentalId], references: [id])
 
@@ -118,10 +118,10 @@ model BusinessHours {
 }
 
 model Consent {
-  id        String   @id
+  id        String   @id @default(cuid())
   userId    String
   createdAt DateTime @default(now())
-  updatedAt DateTime
+  updatedAt DateTime @updatedAt
   agreedAt  DateTime @default(now())
   type      String
   User      User     @relation(fields: [userId], references: [id])
@@ -131,20 +131,20 @@ model Consent {
 }
 
 model CostEstimation {
-  id            String    @id
+  id            String    @id @default(cuid())
   workOrderId   String    @unique
   estimatedCost Float
   createdAt     DateTime  @default(now())
   details       String?
-  updatedAt     DateTime
+  updatedAt     DateTime @updatedAt
   WorkOrder     WorkOrder @relation(fields: [workOrderId], references: [id])
 }
 
 model Device {
-  id         String   @id
+  id         String   @id @default(cuid())
   userId     String
   createdAt  DateTime @default(now())
-  updatedAt  DateTime
+  updatedAt  DateTime @updatedAt
   deviceType String
   lastLogin  DateTime @default(now())
   model      String?
@@ -156,12 +156,12 @@ model Device {
 }
 
 model Document {
-  id                   String              @id
+  id                   String              @id @default(cuid())
   name                 String
   type                 DocumentType
   url                  String
   uploadedAt           DateTime            @default(now())
-  updatedAt            DateTime
+  updatedAt            DateTime @updatedAt
   description          String?
   rentalId             String?
   leaseId              String?
@@ -181,21 +181,21 @@ model Document {
 }
 
 model EmergencyProtocol {
-  id           String   @id
+  id           String   @id @default(cuid())
   rentalId     String
   description  String
   name         String
   createdAt    DateTime @default(now())
   instructions Json?
-  updatedAt    DateTime
+  updatedAt    DateTime @updatedAt
   Rental       Rental   @relation(fields: [rentalId], references: [id])
 }
 
 model EmergencyRoutingRule {
-  id        String   @id
+  id        String   @id @default(cuid())
   vendorId  String
   createdAt DateTime @default(now())
-  updatedAt DateTime
+  updatedAt DateTime @updatedAt
   priority  Priority @unique
   Vendor    Vendor   @relation(fields: [vendorId], references: [id])
 
@@ -203,21 +203,21 @@ model EmergencyRoutingRule {
 }
 
 model EscalationPolicy {
-  id                   String                 @id
+  id                   String                 @id @default(cuid())
   name                 String
   description          String?
   rentalId             String
   createdAt            DateTime               @default(now())
-  updatedAt            DateTime
+  updatedAt            DateTime @updatedAt
   Rental               Rental                 @relation(fields: [rentalId], references: [id])
   EscalationPolicyRule EscalationPolicyRule[]
 }
 
 model EscalationPolicyRule {
-  id               String           @id
+  id               String           @id @default(cuid())
   policyId         String
   createdAt        DateTime         @default(now())
-  updatedAt        DateTime
+  updatedAt        DateTime @updatedAt
   order            Int
   action           String
   assignedToUserId String?
@@ -229,20 +229,20 @@ model EscalationPolicyRule {
 }
 
 model FollowUp {
-  id         String   @id
+  id         String   @id @default(cuid())
   messageId  String   @unique
   status     String
   followUpAt DateTime
   createdAt  DateTime @default(now())
-  updatedAt  DateTime
+  updatedAt  DateTime @updatedAt
   Message    Message  @relation(fields: [messageId], references: [id])
 }
 
 model KnowledgeBaseEntry {
-  id        String   @id
+  id        String   @id @default(cuid())
   category  String?
   createdAt DateTime @default(now())
-  updatedAt DateTime
+  updatedAt DateTime @updatedAt
   answer    String
   question  String
   keywords  String[]
@@ -251,15 +251,15 @@ model KnowledgeBaseEntry {
 }
 
 model Language {
-  id        String   @id
+  id        String   @id @default(cuid())
   code      String   @unique
   name      String
   createdAt DateTime @default(now())
-  updatedAt DateTime
+  updatedAt DateTime @updatedAt
 }
 
 model Lease {
-  id              String         @id
+  id              String         @id @default(cuid())
   startDate       DateTime
   endDate         DateTime
   rentAmount      Float
@@ -268,7 +268,7 @@ model Lease {
   status          LeaseStatus    @default(ACTIVE)
   signedDate      DateTime       @default(now())
   createdAt       DateTime       @default(now())
-  updatedAt       DateTime
+  updatedAt       DateTime @updatedAt
   rentalId        String         @unique
   renewalDate     DateTime?
   tenantId        String
@@ -280,13 +280,13 @@ model Lease {
 }
 
 model MaintenanceRequest {
-  id                         String                      @id
+  id                         String                      @id @default(cuid())
   title                      String
   description                String
   status                     MaintenanceStatus           @default(OPEN)
   priority                   Priority                    @default(MEDIUM)
   createdAt                  DateTime                    @default(now())
-  updatedAt                  DateTime
+  updatedAt                  DateTime @updatedAt
   scheduledDate              DateTime?
   completedDate              DateTime?
   notes                      String?
@@ -310,25 +310,25 @@ model MaintenanceRequest {
 }
 
 model MaintenanceRequestCategory {
-  id                 String               @id
+  id                 String               @id @default(cuid())
   name               String               @unique
   description        String?
   createdAt          DateTime             @default(now())
-  updatedAt          DateTime
+  updatedAt          DateTime @updatedAt
   MaintenanceRequest MaintenanceRequest[]
 }
 
 model MaintenanceResponseTime {
-  id                   String             @id
+  id                   String             @id @default(cuid())
   maintenanceRequestId String             @unique
   createdAt            DateTime           @default(now())
   responseTime         Int
-  updatedAt            DateTime
+  updatedAt            DateTime @updatedAt
   MaintenanceRequest   MaintenanceRequest @relation(fields: [maintenanceRequestId], references: [id])
 }
 
 model MarketData {
-  id           String        @id
+  id           String        @id @default(cuid())
   averageRent  Float
   location     String
   vacancyRate  Float
@@ -342,7 +342,7 @@ model MarketData {
 }
 
 model Message {
-  id                            String              @id
+  id                            String              @id @default(cuid())
   content                       String
   senderId                      String
   maintenanceRequestId          String?
@@ -361,7 +361,7 @@ model Message {
 }
 
 model Notification {
-  id        String   @id
+  id        String   @id @default(cuid())
   message   String
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
@@ -375,7 +375,7 @@ model Notification {
 }
 
 model OAuthAccessToken {
-  id          String   @id
+  id          String   @id @default(cuid())
   accessToken String   @unique
   expiresAt   DateTime
   createdAt   DateTime @default(now())
@@ -384,7 +384,7 @@ model OAuthAccessToken {
 }
 
 model OAuthConnection {
-  id           String    @id
+  id           String    @id @default(cuid())
   accessToken  String
   refreshToken String?
   userId       String
@@ -392,7 +392,7 @@ model OAuthConnection {
   provider     String
   createdAt    DateTime  @default(now())
   expiresAt    DateTime?
-  updatedAt    DateTime
+  updatedAt    DateTime @updatedAt
   User         User      @relation(fields: [userId], references: [id])
 
   @@unique([provider, providerId])
@@ -400,30 +400,30 @@ model OAuthConnection {
 }
 
 model OnCallRotation {
-  id             String         @id
+  id             String         @id @default(cuid())
   scheduleId     String
   userId         String
   startDate      DateTime
   endDate        DateTime
   createdAt      DateTime       @default(now())
-  updatedAt      DateTime
+  updatedAt      DateTime @updatedAt
   OnCallSchedule OnCallSchedule @relation(fields: [scheduleId], references: [id])
   User           User           @relation(fields: [userId], references: [id])
 }
 
 model OnCallSchedule {
-  id             String           @id
+  id             String           @id @default(cuid())
   name           String
   description    String?
   rentalId       String
   createdAt      DateTime         @default(now())
-  updatedAt      DateTime
+  updatedAt      DateTime @updatedAt
   OnCallRotation OnCallRotation[]
   Rental         Rental           @relation(fields: [rentalId], references: [id])
 }
 
 model PasswordResetToken {
-  id        String   @id
+  id        String   @id @default(cuid())
   token     String   @unique
   userId    String
   expiresAt DateTime
@@ -432,36 +432,36 @@ model PasswordResetToken {
 }
 
 model Permission {
-  id          String   @id
+  id          String   @id @default(cuid())
   name        String   @unique
   createdAt   DateTime @default(now())
-  updatedAt   DateTime
+  updatedAt   DateTime @updatedAt
   description String?
   Role        Role[]
 }
 
 model PhotoAnalysis {
-  id                   String             @id
+  id                   String             @id @default(cuid())
   maintenanceRequestId String             @unique
   analysisResult       Json?
   createdAt            DateTime           @default(now())
-  updatedAt            DateTime
+  updatedAt            DateTime @updatedAt
   MaintenanceRequest   MaintenanceRequest @relation(fields: [maintenanceRequestId], references: [id])
 }
 
 model PredictiveMaintenance {
-  id         String   @id
+  id         String   @id @default(cuid())
   rentalId   String
   createdAt  DateTime @default(now())
   prediction Json?
-  updatedAt  DateTime
+  updatedAt  DateTime @updatedAt
   Rental     Rental   @relation(fields: [rentalId], references: [id])
 
   @@index([rentalId])
 }
 
 model Rental {
-  id                 String        @id
+  id                 String        @id @default(cuid())
   title              String
   description        String?
   address            String
@@ -538,7 +538,7 @@ model RentalImage {
   cdnUrl           String?
   isFeatured       Boolean  @default(false)
   createdAt        DateTime @default(now())
-  updatedAt        DateTime
+  updatedAt        DateTime @updatedAt
 
   Rental Rental @relation(fields: [rentalId], references: [id])
 
@@ -547,28 +547,28 @@ model RentalImage {
 }
 
 model RiskAssessment {
-  id            String      @id
+  id            String      @id @default(cuid())
   applicationId String      @unique
   score         Float
   details       Json?
   createdAt     DateTime    @default(now())
-  updatedAt     DateTime
+  updatedAt     DateTime @updatedAt
   Application   Application @relation(fields: [applicationId], references: [id])
 
   @@index([applicationId])
 }
 
 model Role {
-  id         String       @id
+  id         String       @id @default(cuid())
   name       String       @unique
   createdAt  DateTime     @default(now())
-  updatedAt  DateTime
+  updatedAt  DateTime @updatedAt
   Permission Permission[]
   User       User[]
 }
 
 model ScheduledEvent {
-  id          String    @id
+  id          String    @id @default(cuid())
   workOrderId String    @unique
   startTime   DateTime
   endTime     DateTime
@@ -576,45 +576,45 @@ model ScheduledEvent {
   title       String
   createdAt   DateTime  @default(now())
   location    String?
-  updatedAt   DateTime
+  updatedAt   DateTime @updatedAt
   WorkOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
 }
 
 model Screening {
-  id            String      @id
+  id            String      @id @default(cuid())
   applicationId String      @unique
   createdAt     DateTime    @default(now())
   reportUrl     String?
   status        String
-  updatedAt     DateTime
+  updatedAt     DateTime @updatedAt
   Application   Application @relation(fields: [applicationId], references: [id])
 
   @@index([applicationId])
 }
 
 model TenantIssuePrediction {
-  id          String    @id
+  id          String    @id @default(cuid())
   tenantId    String
   predictedAt DateTime  @default(now())
   createdAt   DateTime  @default(now())
   issueType   String
   likelihood  Float
   resolvedAt  DateTime?
-  updatedAt   DateTime
+  updatedAt   DateTime @updatedAt
   User        User      @relation(fields: [tenantId], references: [id])
 
   @@index([tenantId])
 }
 
 model TenantRating {
-  id                               String   @id
+  id                               String   @id @default(cuid())
   leaseId                          String
   tenantId                         String
   raterId                          String
   rating                           Int
   comment                          String?
   createdAt                        DateTime @default(now())
-  updatedAt                        DateTime
+  updatedAt                        DateTime @updatedAt
   Lease                            Lease    @relation(fields: [leaseId], references: [id])
   User_TenantRating_raterIdToUser  User     @relation("TenantRating_raterIdToUser", fields: [raterId], references: [id])
   User_TenantRating_tenantIdToUser User     @relation("TenantRating_tenantIdToUser", fields: [tenantId], references: [id])
@@ -625,7 +625,7 @@ model TenantRating {
 }
 
 model Transaction {
-  id              String            @id
+  id              String            @id @default(cuid())
   amount          Float
   type            TransactionType
   status          TransactionStatus @default(PENDING)
@@ -634,7 +634,7 @@ model Transaction {
   leaseId         String
   approvedById    String?
   transactionDate DateTime          @default(now())
-  updatedAt       DateTime
+  updatedAt       DateTime @updatedAt
   User            User?             @relation(fields: [approvedById], references: [id])
   Lease           Lease             @relation(fields: [leaseId], references: [id])
 
@@ -644,7 +644,7 @@ model Transaction {
 }
 
 model UXReview {
-  id                 String               @id
+  id                 String               @id @default(cuid())
   title              String
   description        String?
   status             UXReviewStatus       @default(PENDING)
@@ -652,7 +652,7 @@ model UXReview {
   componentType      UXComponentType
   reviewerId         String
   createdAt          DateTime             @default(now())
-  updatedAt          DateTime
+  updatedAt          DateTime @updatedAt
   User               User                 @relation(fields: [reviewerId], references: [id])
   UXReviewAssignment UXReviewAssignment[]
   UXReviewComment    UXReviewComment[]
@@ -664,12 +664,12 @@ model UXReview {
 }
 
 model UXReviewAssignment {
-  id         String                   @id
+  id         String                   @id @default(cuid())
   reviewId   String
   assigneeId String
   status     UXReviewAssignmentStatus @default(PENDING)
   createdAt  DateTime                 @default(now())
-  updatedAt  DateTime
+  updatedAt  DateTime @updatedAt
   User       User                     @relation(fields: [assigneeId], references: [id])
   UXReview   UXReview                 @relation(fields: [reviewId], references: [id])
 
@@ -679,12 +679,12 @@ model UXReviewAssignment {
 }
 
 model UXReviewComment {
-  id        String   @id
+  id        String   @id @default(cuid())
   reviewId  String
   content   String
   authorId  String
   createdAt DateTime @default(now())
-  updatedAt DateTime
+  updatedAt DateTime @updatedAt
   User      User     @relation(fields: [authorId], references: [id])
   UXReview  UXReview @relation(fields: [reviewId], references: [id])
 
@@ -693,13 +693,13 @@ model UXReviewComment {
 }
 
 model UXSurvey {
-  id               String             @id
+  id               String             @id @default(cuid())
   title            String
   description      String?
   status           SurveyStatus       @default(DRAFT)
   createdById      String
   createdAt        DateTime           @default(now())
-  updatedAt        DateTime
+  updatedAt        DateTime @updatedAt
   User             User               @relation(fields: [createdById], references: [id])
   UXSurveyQuestion UXSurveyQuestion[]
   UXSurveyResponse UXSurveyResponse[]
@@ -709,12 +709,12 @@ model UXSurvey {
 }
 
 model UXSurveyAnswer {
-  id               String           @id
+  id               String           @id @default(cuid())
   responseId       String
   questionId       String
   value            String
   createdAt        DateTime         @default(now())
-  updatedAt        DateTime
+  updatedAt        DateTime @updatedAt
   UXSurveyQuestion UXSurveyQuestion @relation(fields: [questionId], references: [id])
   UXSurveyResponse UXSurveyResponse @relation(fields: [responseId], references: [id])
 
@@ -722,14 +722,14 @@ model UXSurveyAnswer {
 }
 
 model UXSurveyQuestion {
-  id             String           @id
+  id             String           @id @default(cuid())
   surveyId       String
   question       String
   type           QuestionType
   options        Json?
   order          Int
   createdAt      DateTime         @default(now())
-  updatedAt      DateTime
+  updatedAt      DateTime @updatedAt
   UXSurveyAnswer UXSurveyAnswer[]
   UXSurvey       UXSurvey         @relation(fields: [surveyId], references: [id])
 
@@ -737,12 +737,12 @@ model UXSurveyQuestion {
 }
 
 model UXSurveyResponse {
-  id             String           @id
+  id             String           @id @default(cuid())
   surveyId       String
   respondentId   String
   submittedAt    DateTime         @default(now())
   createdAt      DateTime         @default(now())
-  updatedAt      DateTime
+  updatedAt      DateTime @updatedAt
   UXSurveyAnswer UXSurveyAnswer[]
   User           User             @relation(fields: [respondentId], references: [id])
   UXSurvey       UXSurvey         @relation(fields: [surveyId], references: [id])
@@ -752,7 +752,7 @@ model UXSurveyResponse {
 }
 
 model User {
-  id                                       String                    @id
+  id                                       String                    @id @default(cuid())
   email                                    String                    @unique
   password                                 String
   firstName                                String
@@ -760,7 +760,7 @@ model User {
   phone                                    String?
   role                                     UserRole                  @default(TENANT)
   createdAt                                DateTime                  @default(now())
-  updatedAt                                DateTime
+  updatedAt                                DateTime                  @updatedAt
   isActive                                 Boolean                   @default(true)
   mfaEnabled                               Boolean                   @default(false)
   mfaSecret                                String?
@@ -816,7 +816,7 @@ model User {
 }
 
 model Vendor {
-  id                      String                    @id
+  id                      String                    @id @default(cuid())
   name                    String
   contactPersonId         String?                   @unique
   phone                   String
@@ -824,7 +824,7 @@ model Vendor {
   address                 String
   specialty               String
   createdAt               DateTime                  @default(now())
-  updatedAt               DateTime
+  updatedAt               DateTime @updatedAt
   certifications          String[]
   hourlyRate              Float?
   serviceAreas            String[]
@@ -843,14 +843,14 @@ model Vendor {
 }
 
 model VendorPayment {
-  id            String        @id
+  id            String        @id @default(cuid())
   amount        Float
   status        PaymentStatus @default(PENDING)
   workOrderId   String
   vendorId      String
   transactionId String?
   createdAt     DateTime      @default(now())
-  updatedAt     DateTime
+  updatedAt     DateTime @updatedAt
   approvedById  String?
   paymentDate   DateTime      @default(now())
   User          User?         @relation(fields: [approvedById], references: [id])
@@ -863,14 +863,14 @@ model VendorPayment {
 }
 
 model VendorPerformanceRating {
-  id          String    @id
+  id          String    @id @default(cuid())
   vendorId    String
   workOrderId String
   ratedById   String
   comment     String?
   createdAt   DateTime  @default(now())
   rating      Int
-  updatedAt   DateTime
+  updatedAt   DateTime @updatedAt
   User        User      @relation(fields: [ratedById], references: [id])
   Vendor      Vendor    @relation(fields: [vendorId], references: [id])
   WorkOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
@@ -881,9 +881,9 @@ model VendorPerformanceRating {
 }
 
 model WhiteLabelConfig {
-  id             String   @id
+  id             String   @id @default(cuid())
   createdAt      DateTime @default(now())
-  updatedAt      DateTime
+  updatedAt      DateTime @updatedAt
   platform       String
   token          String   @unique
   userId         String
@@ -899,13 +899,13 @@ model WhiteLabelConfig {
 }
 
 model WorkOrder {
-  id                      String                    @id
+  id                      String                    @id @default(cuid())
   title                   String
   description             String
   status                  WorkOrderStatus           @default(OPEN)
   priority                Priority
   createdAt               DateTime                  @default(now())
-  updatedAt               DateTime
+  updatedAt               DateTime @updatedAt
   completedAt             DateTime?
   maintenanceRequestId    String                    @unique
   CostEstimation          CostEstimation?
@@ -918,7 +918,7 @@ model WorkOrder {
 }
 
 model WorkOrderAssignment {
-  id          String    @id
+  id          String    @id @default(cuid())
   workOrderId String
   vendorId    String
   assignedAt  DateTime  @default(now())
@@ -928,14 +928,14 @@ model WorkOrderAssignment {
 }
 
 model WorkOrderQuote {
-  id          String      @id
+  id          String      @id @default(cuid())
   workOrderId String
   vendorId    String
   amount      Float
   details     String?
   status      QuoteStatus @default(PENDING)
   createdAt   DateTime    @default(now())
-  updatedAt   DateTime
+  updatedAt   DateTime @updatedAt
   Vendor      Vendor      @relation(fields: [vendorId], references: [id])
   WorkOrder   WorkOrder   @relation(fields: [workOrderId], references: [id])
 }
