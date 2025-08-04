@@ -98,14 +98,14 @@ const amenityOptions = [
 ];
 
 const validationSchema = Yup.object().shape({
-  title: Yup.string().required('Property title is required'),
+  title: Yup.string().required('Rental title is required'),
   description: Yup.string().required('Description is required'),
   address: Yup.string().required('Street address is required'),
   city: Yup.string().required('City is required'),
   state: Yup.string().required('State is required'),
   zipCode: Yup.string().required('ZIP code is required'),
   country: Yup.string().required('Country is required'),
-  propertyType: Yup.string().required('Property type is required'),
+  propertyType: Yup.string().required('Rental type is required'),
   rentalType: Yup.string().required('Rental type is required'),
   bedrooms: Yup.string().required('Number of bedrooms is required'),
   bathrooms: Yup.string().required('Number of bathrooms is required'),
@@ -193,7 +193,7 @@ export function PropertyFormScreen() {
       console.log('Set property state to:', newPropertyState);
     } catch (error) {
       console.error('Error fetching rental details:', error);
-      Alert.alert('Error', 'Failed to load property details');
+      Alert.alert('Error', 'Failed to load rental details');
     } finally {
       setIsLoading(false);
     }
@@ -234,8 +234,8 @@ export function PropertyFormScreen() {
       }
       console.log('API response:', response);
       Alert.alert(
-        isEditing ? 'Property Updated' : 'Property Created',
-        isEditing ? 'Your property has been successfully updated.' : 'Your new property has been successfully created.',
+        isEditing ? 'Rental Updated' : 'Rental Created',
+        isEditing ? 'Your rental has been successfully updated.' : 'Your new rental has been successfully created.',
         [
           {
             text: 'OK',
@@ -250,8 +250,8 @@ export function PropertyFormScreen() {
         ]
       );
     } catch (error) {
-      console.error('Error submitting property:', error);
-      Alert.alert('Error', 'There was an error submitting the property. Please try again.');
+      console.error('Error submitting rental:', error);
+      Alert.alert('Error', 'There was an error submitting the rental. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -336,11 +336,12 @@ export function PropertyFormScreen() {
     }
   };
 
-  if (isLoading && isEditing) {
+  // Add loading state check
+  if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={styles.loadingText}>Loading property details...</Text>
+        <Text style={styles.loadingText}>Loading rental details...</Text>
       </View>
     );
   }
@@ -365,7 +366,7 @@ export function PropertyFormScreen() {
             <>
               <View style={styles.header}>
                 <Text style={styles.title}>
-                  {isEditing ? 'Edit Property' : 'Add New Property'}
+                  {isEditing ? 'Edit Rental' : 'Add New Rental'}
                 </Text>
                 <StepIndicator
                   steps={steps}
@@ -380,12 +381,12 @@ export function PropertyFormScreen() {
                     <Text style={styles.stepTitle}>Basic Information</Text>
                     
                     <TextInput
-                      label="Property Title"
+                      label="Rental Title"
                       value={values.title}
                       onChangeText={handleChange('title')}
                       onBlur={handleBlur('title')}
                       error={touched.title ? errors.title : undefined}
-                      placeholder="Enter a title for your property"
+                      placeholder="Enter a title for your rental"
                     />
 
                     <TextInput
@@ -394,13 +395,13 @@ export function PropertyFormScreen() {
                       onChangeText={handleChange('description')}
                       onBlur={handleBlur('description')}
                       error={touched.description ? errors.description : undefined}
-                      placeholder="Describe your property (or leave empty for AI generation later)"
+                      placeholder="Describe your rental (or leave empty for AI generation later)"
                       multiline
                       numberOfLines={4}
                     />
 
                     <SelectInput
-                      label="Property Type"
+                      label="Rental Type"
                       value={values.propertyType}
                       onChange={(value: string | number) => setFieldValue('propertyType', value)}
                       options={propertyTypes}
@@ -421,7 +422,7 @@ export function PropertyFormScreen() {
                       onChangeText={handleChange('totalUnits')}
                       onBlur={handleBlur('totalUnits')}
                       error={touched.totalUnits ? errors.totalUnits : undefined}
-                      placeholder="Total number of units in the property"
+                      placeholder="Total number of units in the rental"
                       keyboardType="numeric"
                     />
                   </View>
@@ -429,7 +430,7 @@ export function PropertyFormScreen() {
 
                 {currentStep === 1 && (
                   <View style={styles.stepContent}>
-                    <Text style={styles.stepTitle}>Property Address</Text>
+                    <Text style={styles.stepTitle}>Rental Address</Text>
                     
                     <TextInput
                       label="Street Address"
@@ -491,7 +492,7 @@ export function PropertyFormScreen() {
 
                 {currentStep === 2 && (
                   <View style={styles.stepContent}>
-                    <Text style={styles.stepTitle}>Property Details</Text>
+                    <Text style={styles.stepTitle}>Rental Details</Text>
                     
                     <View style={styles.row}>
                       <View style={styles.halfColumn}>
@@ -568,9 +569,9 @@ export function PropertyFormScreen() {
 
                 {currentStep === 3 && (
                   <View style={styles.stepContent}>
-                    <Text style={styles.stepTitle}>Property Images & AI Features</Text>
+                    <Text style={styles.stepTitle}>Rental Images & AI Features</Text>
                     <Text style={styles.subtitle}>
-                      Add images of your property and use AI to enhance your listing.
+                      Add images of your rental and use AI to enhance your listing.
                     </Text>
 
                     <ImagePickerMultiple
@@ -585,7 +586,7 @@ export function PropertyFormScreen() {
                         <View style={styles.aiSection}>
                           <Text style={styles.sectionTitle}>AI-Generated Description</Text>
                           <Text style={styles.subtitle}>
-                            Generate a compelling property description based on your property details and images.
+                            Generate a compelling rental description based on your rental details and images.
                           </Text>
                           <Button
                             title="Generate AI Description"
@@ -598,7 +599,7 @@ export function PropertyFormScreen() {
                         <View style={styles.aiSection}>
                           <Text style={styles.sectionTitle}>Pricing Recommendation</Text>
                           <Text style={styles.subtitle}>
-                            Get market-based pricing recommendations for your property.
+                            Get market-based pricing recommendations for your rental.
                           </Text>
                           <Button
                             title="Get Pricing Recommendation"
@@ -614,9 +615,9 @@ export function PropertyFormScreen() {
 
                 {currentStep === 4 && (
                   <View style={styles.stepContent}>
-                    <Text style={styles.stepTitle}>Review Property</Text>
+                    <Text style={styles.stepTitle}>Review Rental</Text>
                     <Text style={styles.subtitle}>
-                      Please review the details of your property listing before submitting.
+                      Please review the details of your rental listing before submitting.
                     </Text>
 
                     <View style={styles.reviewSection}>
@@ -624,7 +625,7 @@ export function PropertyFormScreen() {
                       <Text style={styles.reviewLabel}>Description</Text>
                       <Text style={styles.reviewDescription}>{values.description}</Text>
                       
-                      <Text style={styles.reviewLabel}>Property Type</Text>
+                      <Text style={styles.reviewLabel}>Rental Type</Text>
                       <Text style={styles.reviewValue}>
                         {propertyTypes.find(type => type.value === values.propertyType)?.label}
                       </Text>
@@ -690,7 +691,7 @@ export function PropertyFormScreen() {
                   />
                 ) : (
                   <Button
-                    title={isEditing ? 'Update Property' : 'Create Property'}
+                    title={isEditing ? 'Update Rental' : 'Create Rental'}
                     onPress={() => handleSubmit()}
                     loading={isSubmitting}
                     style={styles.footerButton}
