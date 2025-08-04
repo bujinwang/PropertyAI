@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { apiService } from './apiService';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
@@ -125,6 +126,18 @@ export interface RentalResponse {
   };
 }
 
+// Public endpoints (no authentication required)
+export const getPublicRentals = async (): Promise<RentalResponse> => {
+  const response = await axios.get(`${API_URL}/rentals/public`);
+  return response.data;
+};
+
+export const getPublicRental = async (id: string): Promise<Rental> => {
+  const response = await axios.get(`${API_URL}/rentals/public/${id}`);
+  return response.data.data;
+};
+
+// Protected endpoints (authentication required)
 export const getRentals = async (filters?: RentalFilterParams): Promise<RentalResponse> => {
   const params = new URLSearchParams();
   
@@ -136,27 +149,27 @@ export const getRentals = async (filters?: RentalFilterParams): Promise<RentalRe
     });
   }
   
-  const response = await axios.get(`${API_URL}/rentals?${params.toString()}`);
+  const response = await apiService.get(`/rentals?${params.toString()}`);
   return response.data;
 };
 
 export const getRental = async (id: string): Promise<Rental> => {
-  const response = await axios.get(`${API_URL}/rentals/${id}`);
+  const response = await apiService.get(`/rentals/${id}`);
   return response.data.data;
 };
 
 export const createRental = async (rental: CreateRentalDto): Promise<Rental> => {
-  const response = await axios.post(`${API_URL}/rentals`, rental);
+  const response = await apiService.post(`/rentals`, rental);
   return response.data.data;
 };
 
 export const updateRental = async (id: string, rental: Partial<CreateRentalDto>): Promise<Rental> => {
-  const response = await axios.put(`${API_URL}/rentals/${id}`, rental);
+  const response = await apiService.put(`/rentals/${id}`, rental);
   return response.data.data;
 };
 
 export const deleteRental = async (id: string): Promise<void> => {
-  await axios.delete(`${API_URL}/rentals/${id}`);
+  await apiService.delete(`/rentals/${id}`);
 };
 
 export const setRentalAvailability = async (
@@ -164,7 +177,7 @@ export const setRentalAvailability = async (
   isAvailable: boolean, 
   availableDate?: string
 ): Promise<Rental> => {
-  const response = await axios.put(`${API_URL}/rentals/${id}/availability`, {
+  const response = await apiService.put(`/rentals/${id}/availability`, {
     isAvailable,
     availableDate
   });
@@ -172,24 +185,24 @@ export const setRentalAvailability = async (
 };
 
 export const setRentalStatus = async (id: string, status: string): Promise<Rental> => {
-  const response = await axios.put(`${API_URL}/rentals/${id}/status`, { status });
+  const response = await apiService.put(`/rentals/${id}/status`, { status });
   return response.data.data;
 };
 
 export const setRentalActiveStatus = async (id: string, isActive: boolean): Promise<Rental> => {
-  const response = await axios.put(`${API_URL}/rentals/${id}/active`, { isActive });
+  const response = await apiService.put(`/rentals/${id}/active`, { isActive });
   return response.data.data;
 };
 
 export const getRentalsByManager = async (managerId: string, includeInactive?: boolean): Promise<Rental[]> => {
   const params = includeInactive ? '?includeInactive=true' : '';
-  const response = await axios.get(`${API_URL}/rentals/manager/${managerId}${params}`);
+  const response = await apiService.get(`/rentals/manager/${managerId}${params}`);
   return response.data.data;
 };
 
 export const getRentalsByOwner = async (ownerId: string, includeInactive?: boolean): Promise<Rental[]> => {
   const params = includeInactive ? '?includeInactive=true' : '';
-  const response = await axios.get(`${API_URL}/rentals/owner/${ownerId}${params}`);
+  const response = await apiService.get(`/rentals/owner/${ownerId}${params}`);
   return response.data.data;
 };
 
@@ -198,17 +211,6 @@ export const getRentalStats = async (managerId?: string, ownerId?: string): Prom
   if (managerId) params.append('managerId', managerId);
   if (ownerId) params.append('ownerId', ownerId);
   
-  const response = await axios.get(`${API_URL}/rentals/stats?${params.toString()}`);
-  return response.data.data;
-};
-
-export const getRentalCountsByType = async (): Promise<Record<string, number>> => {
-  const response = await axios.get(`${API_URL}/rentals/counts-by-type`);
-  return response.data.data;
-};
-
-export const getPublicRentals = async (search?: string): Promise<Rental[]> => {
-  const params = search ? `?search=${encodeURIComponent(search)}` : '';
-  const response = await axios.get(`${API_URL}/rentals/public${params}`);
+  const response = await apiService.get(`/rentals/analytics/summary?${params.toString()}`);
   return response.data.data;
 };

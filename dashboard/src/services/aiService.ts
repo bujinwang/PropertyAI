@@ -389,9 +389,12 @@ export const aiCommunicationService = new AICommunicationService();
 export const aiRiskAssessmentService = new AIRiskAssessmentService();
 export const emergencyResponseService = new EmergencyResponseService();
 
-// Export all services as default
-export default {
+// Export all services as default and named export
+const aiService = {
   communication: aiCommunicationService,
   riskAssessment: aiRiskAssessmentService,
   emergencyResponse: emergencyResponseService,
 };
+
+export { aiService };
+export default aiService;

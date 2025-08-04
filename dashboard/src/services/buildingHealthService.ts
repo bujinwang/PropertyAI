@@ -345,4 +345,4 @@ export class BuildingHealthService {
   }
 }
 
-export { BuildingHealthService };
+// Remove this duplicate export line

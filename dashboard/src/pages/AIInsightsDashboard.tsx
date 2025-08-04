@@ -35,7 +35,11 @@ import {
  People as PeopleIcon,
  Insights as InsightsIcon
 } from '@mui/icons-material';
+// Change from:
 import { LoadingStateIndicator } from '../design-system/components/ai/LoadingStateIndicator';
+
+// To:
+import LoadingStateIndicator from '../design-system/components/ai/LoadingStateIndicator';
 import { 
  Insight, 
  InsightCategoryGroup, 

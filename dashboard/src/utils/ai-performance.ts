@@ -253,26 +253,3 @@ export const createLazyAIComponent = <T extends React.ComponentType<any>>(
     );
   });
 };
-
-/**
- * Bundle size optimization - tree-shakeable exports
- */
-export {
-  // Core hooks
-  useConfidenceLevel,
-  useConfidenceColor,
-  useCachedAICalculation,
-  useAIExplanation,
-  useOptimizedAIProps,
-  
-  // Performance hooks
-  useAIPerformanceMonitor,
-  useAIComponentPerformance,
-  useDebouncedAIFeedback,
-  useThrottledAIUpdate,
-  
-  // Utilities
-  cleanupAICache,
-  initializeAICacheCleanup,
-  createLazyAIComponent,
-};

@@ -33,7 +33,11 @@ import {
 } from '@mui/icons-material';
 import { ApplicantComparisonProps, RiskFactor, RiskFactorImpact } from '../../types/risk-assessment';
 import { RiskLevelIndicator } from './RiskLevelIndicator';
+// Change from:
 import { ConfidenceIndicator } from '../../design-system/components/ai/ConfidenceIndicator';
+
+// To:
+import ConfidenceIndicator from '../../design-system/components/ai/ConfidenceIndicator';
 
 /**
  * Applicant comparison interface component

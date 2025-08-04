@@ -22,11 +22,30 @@ import {
  Save as SaveIcon
 } from '@mui/icons-material';
 import { getRental, createRental, updateRental, CreateRentalDto } from '../services/rentalService';
+import { useAuth } from '../contexts/AuthContext';
 
-const RentalForm = () => {
+const RentalForm: React.FC = () => {
  const { id } = useParams<{ id: string }>();
  const navigate = useNavigate();
+ const { user, isAuthenticated } = useAuth();
  const isEdit = Boolean(id);
+
+ // Redirect to login if not authenticated
+ useEffect(() => {
+  if (!isAuthenticated) {
+   navigate('/login');
+   return;
+  }
+ }, [isAuthenticated, navigate]);
+
+ // Don't render the form if user is not authenticated
+ if (!isAuthenticated || !user) {
+  return (
+   <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+    <Typography>Please log in to access this page.</Typography>
+   </Box>
+  );
+ }
  
  const [formData, setFormData] = useState<CreateRentalDto>({
   title: '',
@@ -42,14 +61,26 @@ const RentalForm = () => {
   isAvailable: true,
   isActive: true,
   status: 'DRAFT',
-  managerId: '', // This should be set from user context
-  ownerId: '', // This should be set from user context
-  createdById: '' // This should be set from user context
+  managerId: user?.id || '', // Set from user context
+  ownerId: user?.id || '', // Set from user context
+  createdById: user?.id || '' // Set from user context
  });
  
  const [loading, setLoading] = useState(false);
  const [error, setError] = useState<string | null>(null);
  const [success, setSuccess] = useState<string | null>(null);
+
+ useEffect(() => {
+  if (user && !isEdit) {
+   // Update user-related fields when user context is available for new rentals
+   setFormData(prev => ({
+    ...prev,
+    managerId: user.id,
+    ownerId: user.id,
+    createdById: user.id
+   }));
+  }
+ }, [user, isEdit]);
 
  useEffect(() => {
   if (isEdit && id) {

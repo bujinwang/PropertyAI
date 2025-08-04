@@ -64,19 +64,21 @@ export default defineConfig(({ command, mode }) => {
       alias: {
         '@': path.resolve(__dirname, 'src'),
       },
+      // Force single React instance
+      dedupe: ['react', 'react-dom', '@emotion/react', '@emotion/styled'],
     },
     server: {
-      port: 3002, // Use port 3002 for frontend
+      port: 3002,
       host: '127.0.0.1',
       strictPort: false,
       hmr: {
-        port: 24679, // Different HMR port
+        port: 24679,
         host: '127.0.0.1',
       },
       cors: true,
     },
     preview: {
-      port: 3002, // Change from 3000 to 3002 to match server port
+      port: 3002,
       host: true,
     },
     define: {
@@ -84,34 +86,10 @@ export default defineConfig(({ command, mode }) => {
       __VERSION__: JSON.stringify(env.npm_package_version || '0.1.0'),
       'process.env.NODE_ENV': JSON.stringify(mode),
     },
-    // Enable gzip compression in production
-    ...(isProduction && {
-      build: {
-        ...{
-          outDir: '../build',
-          emptyOutDir: true,
-          sourcemap: false,
-          minify: 'terser',
-          terserOptions: {
-            compress: {
-              drop_console: true,
-              drop_debugger: true,
-            },
-          },
-          rollupOptions: {
-            output: {
-              manualChunks: {
-                vendor: ['react', 'react-dom'],
-                mui: ['@mui/material', '@mui/icons-material'],
-                charts: ['chart.js', 'react-chartjs-2'],
-                router: ['react-router-dom'],
-              },
-            },
-          },
-          chunkSizeWarningLimit: 1000,
-        },
-        reportCompressedSize: true,
-      },
-    }),
+    optimizeDeps: {
+      // Force pre-bundling of React to avoid multiple instances
+      include: ['react', 'react-dom', 'react-router-dom', '@emotion/react', '@emotion/styled'],
+      force: true,
+    },
   };
 });

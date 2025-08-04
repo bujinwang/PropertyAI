@@ -49,11 +49,28 @@ const RentalListings = () => {
  const fetchRentals = async () => {
   try {
    setLoading(true);
-   const response = await getRentals(filters);
-   setRentals(response.data);
-   if (response.meta) {
-    setTotalPages(response.meta.totalPages);
-    setTotal(response.meta.total);
+   setError('');
+   
+   try {
+    // Try to fetch with authentication first
+    const response = await getRentals(filters);
+    setRentals(response.data);
+    if (response.meta) {
+     setTotalPages(response.meta.totalPages);
+     setTotal(response.meta.total);
+    }
+   } catch (authError: any) {
+    // If authentication fails (401), fall back to public endpoints
+    if (authError.response?.status === 401) {
+     console.warn('Authentication failed, falling back to public rentals');
+     const publicResponse = await getPublicRentals();
+     setRentals(publicResponse.data);
+     // Public endpoints don't have pagination, so set defaults
+     setTotalPages(1);
+     setTotal(publicResponse.data.length);
+    } else {
+     throw authError;
+    }
    }
   } catch (err: any) {
    setError(err.message || 'Failed to fetch rentals');

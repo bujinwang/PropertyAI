@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
+// Change from:
 import { analyzePhoto } from '../services/apiService';
+
+// To:
+import { apiService } from '../services/apiService';
+
+// And update the usage in handleAnalyze function:
+const result = await apiService.analyzePhoto(maintenanceRequestId, imageUrl);
 
 interface PhotoAnalysisProps {
   maintenanceRequestId: string;
@@ -22,7 +29,7 @@ const PhotoAnalysis: React.FC<PhotoAnalysisProps> = ({ maintenanceRequestId }) =
     setAnalysisResult(null);
 
     try {
-      const result = await analyzePhoto(maintenanceRequestId, imageUrl);
+      const result = await apiService.analyzePhoto(maintenanceRequestId, imageUrl);
       setAnalysisResult(result);
     } catch (err) {
       setError('Failed to analyze photo.');

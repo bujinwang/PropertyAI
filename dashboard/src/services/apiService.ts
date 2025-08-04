@@ -2,7 +2,7 @@ import axios, { AxiosRequestConfig } from 'axios';
 import type { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
 
 // This should be configured through environment variables for the dashboard
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 // Helper functions for token management in a web environment
 const getAuthToken = (): string | null => {
@@ -180,6 +180,18 @@ class ApiService {
     }
   }
 
+  public async analyzePhoto(maintenanceRequestId: string, imageUrl: string): Promise<any> {
+    try {
+      const response = await this.post<any>('/photo-analysis', { 
+        maintenanceRequestId, 
+        imageUrl 
+      });
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as ApiError);
+    }
+  }
+
   private handleError(error: ApiError): never {
     console.error('API Error:', error);
     throw error;
@@ -188,3 +200,7 @@ class ApiService {
 
 export const apiService = new ApiService();
 export default ApiService;
+
+// Export standalone functions for backward compatibility
+export const analyzePhoto = (maintenanceRequestId: string, imageUrl: string) => 
+  apiService.analyzePhoto(maintenanceRequestId, imageUrl);

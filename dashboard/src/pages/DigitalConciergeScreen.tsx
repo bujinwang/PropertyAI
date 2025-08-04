@@ -17,7 +17,11 @@ import {
 import SendIcon from '@mui/icons-material/Send';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import PersonIcon from '@mui/icons-material/Person';
+// Change from:
 import { aiService } from '../services/aiService';
+
+// To:
+import aiService from '../services/aiService';
 
 interface Message {
   id: string;

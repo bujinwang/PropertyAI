@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { Application, Document, Property } from '../types/tenant-screening';
-import { useAuth } from '../contexts/AuthContext';
 
 // Get the base URL from environment variables
 const baseURL = import.meta.env.VITE_API_URL || '/api';
@@ -127,3 +126,6 @@ export const tenantScreeningApi = {
 };
 
 export default api;
+
+// Re-export apiService for compatibility
+export { apiService } from './apiService';

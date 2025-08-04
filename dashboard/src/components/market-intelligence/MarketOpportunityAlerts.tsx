@@ -43,9 +43,15 @@ import {
  Bookmark,
  Share,
 } from '@mui/icons-material';
+// Change from:
 import { AIGeneratedContent } from '../../design-system/components/ai/AIGeneratedContent';
 import { ConfidenceIndicator } from '../../design-system/components/ai/ConfidenceIndicator';
 import { ExplanationTooltip } from '../../design-system/components/ai/ExplanationTooltip';
+
+// To:
+import AIGeneratedContent from '../../design-system/components/ai/AIGeneratedContent';
+import ConfidenceIndicator from '../../design-system/components/ai/ConfidenceIndicator';
+import ExplanationTooltip from '../../design-system/components/ai/ExplanationTooltip';
 import { MarketOpportunity } from '../../types/market-intelligence';
 import { AIFeedback } from '../../types/ai';
 

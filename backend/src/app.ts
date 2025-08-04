@@ -61,6 +61,8 @@ app.use(cors({
   origin: [
     'http://localhost:3000', // Dashboard
     'http://localhost:3002', // Dashboard (new port)
+    'http://127.0.0.1:3000', // Dashboard (127.0.0.1)
+    'http://127.0.0.1:3002', // Dashboard (127.0.0.1 new port)
     'http://localhost:5000', // PropertyApp frontend
     'http://localhost:5001', // Backend API
     'http://localhost:8081', // Expo web app
