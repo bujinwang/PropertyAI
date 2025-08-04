@@ -108,13 +108,6 @@ const ManageListingsScreen = ({ navigation }: ManageListingsScreenProps) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Manage Rentals</Text>
-      {/* Deprecation notice */}
-      <View style={styles.deprecationNotice}>
-        <Ionicons name="warning-outline" size={16} color="#f39c12" />
-        <Text style={styles.deprecationText}>
-          This screen has been updated to use the unified Rental model
-        </Text>
-      </View>
       
       {rentals.length === 0 ? (
         <View style={styles.centered}>
@@ -152,22 +145,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 10,
     color: '#333',
-  },
-  deprecationNotice: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff3cd',
-    padding: 10,
-    marginBottom: 20,
-    borderRadius: 5,
-    borderLeftWidth: 4,
-    borderLeftColor: '#f39c12',
-  },
-  deprecationText: {
-    marginLeft: 8,
-    fontSize: 14,
-    color: '#856404',
-    flex: 1,
   },
   centered: {
     flex: 1,
