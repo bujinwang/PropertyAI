@@ -105,10 +105,9 @@ export const getStoredUser = (): OAuthLoginResponse['user'] | null => {
 export const logout = async (): Promise<void> => {
   localStorage.removeItem('sessionToken');
   localStorage.removeItem('user');
-  // Update global application state to reflect logout
-  // Assuming Redux store
-import { store } from '../store';
-  store.dispatch({ type: 'AUTH_LOGOUT' });
+  localStorage.removeItem('authToken');
+  localStorage.removeItem('refreshToken');
+  
   // Call backend logout endpoint if necessary
   try {
     await api.post('/auth/logout');

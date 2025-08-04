@@ -5,10 +5,13 @@ import { addBreadcrumb } from './utils/monitoring';
 import { AuthProvider } from './contexts/AuthContext';
 import { AppErrorBoundary } from './components/error-boundary/AppErrorBoundary';
 import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
 // Lazy load components for better performance
 const Dashboard = lazy(() => import('./pages/Dashboard'));
+const LoginScreen = lazy(() => import('./pages/LoginScreen'));
+const RegisterScreen = lazy(() => import('./pages/RegisterScreen'));
 const TenantScreening = lazy(() => import('./pages/TenantScreening'));
 const ApplicationDetail = lazy(() => import('./pages/ApplicationDetail'));
 const ApplicationForm = lazy(() => import('./pages/ApplicationForm'));
@@ -71,7 +74,16 @@ function App() {
             }>
               <Suspense fallback={<div>Loading...</div>}>
                 <Routes>
-                  <Route path="/" element={<Layout />}>
+                  {/* Public routes */}
+                  <Route path="/login" element={<LoginScreen />} />
+                  <Route path="/register" element={<RegisterScreen />} />
+                  
+                  {/* Protected routes */}
+                  <Route path="/" element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }>
                     <Route index element={<Dashboard />} />
                     
                     {/* Rental Management Routes */}

@@ -11,8 +11,9 @@ interface User {
 interface AuthContextType {
   user: User | null;
   token: string | null;
+  refreshToken: string | null;
   isAuthenticated: boolean;
-  login: (user: User, token: string) => void;
+  login: (user: User, token: string, refreshToken?: string) => void;
   logout: () => void;
 }
 
@@ -25,11 +26,13 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [refreshToken, setRefreshToken] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   useEffect(() => {
     // Check if user is already logged in by looking for token in localStorage
-    const storedToken = localStorage.getItem('token');
+    const storedToken = localStorage.getItem('authToken');
+    const storedRefreshToken = localStorage.getItem('refreshToken');
     const storedUser = localStorage.getItem('user');
     
     if (storedToken && storedUser) {
@@ -37,38 +40,46 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
         setToken(storedToken);
+        setRefreshToken(storedRefreshToken);
         setIsAuthenticated(true);
       } catch (error) {
         console.error('Error parsing stored user data:', error);
         // Clear invalid data
-        localStorage.removeItem('token');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
       }
     }
   }, []);
 
-  const login = (userData: User, authToken: string) => {
+  const login = (userData: User, authToken: string, refreshTokenValue?: string) => {
     setUser(userData);
     setToken(authToken);
+    setRefreshToken(refreshTokenValue || null);
     setIsAuthenticated(true);
     
     // Store in localStorage for persistence
-    localStorage.setItem('token', authToken);
+    localStorage.setItem('authToken', authToken);
     localStorage.setItem('user', JSON.stringify(userData));
+    if (refreshTokenValue) {
+      localStorage.setItem('refreshToken', refreshTokenValue);
+    }
   };
 
   const logout = () => {
     setUser(null);
     setToken(null);
+    setRefreshToken(null);
     setIsAuthenticated(false);
     
     // Clear from localStorage
-    localStorage.removeItem('token');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ user, token, refreshToken, isAuthenticated, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

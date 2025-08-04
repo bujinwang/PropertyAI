@@ -1,4 +1,31 @@
+interface LoginResponse {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  };
+  token: string;
+}
+
 class AuthService {
+  async login(email: string, password: string): Promise<LoginResponse> {
+    const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/api/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Login failed');
+    }
+
+    return response.json();
+  }
+
   async oauthLogin(provider: 'google' | 'facebook', token: string) {
     const response = await fetch(`/api/auth/${provider}/token`, {
       method: 'POST',

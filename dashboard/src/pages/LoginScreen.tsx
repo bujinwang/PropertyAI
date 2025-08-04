@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -10,15 +10,18 @@ import {
   Divider,
   Alert,
   CircularProgress,
+  Link,
 } from '@mui/material';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { useAuth } from '../contexts/AuthContext';
 import { handleOAuthLogin } from '../services/oauthService';
+import authService from '../services/authService';
 
 interface LocationState {
   from?: {
     pathname: string;
   };
+  message?: string;
 }
 
 const LoginScreen: React.FC = () => {
@@ -29,10 +32,18 @@ const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Get the page they were trying to access
+  // Get the page they were trying to access and any messages
   const from = (location.state as LocationState)?.from?.pathname || '/';
+  const message = (location.state as LocationState)?.message;
+
+  useEffect(() => {
+    if (message) {
+      setSuccess(message);
+    }
+  }, [message]);
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
@@ -45,35 +56,24 @@ const LoginScreen: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
     setLoading(true);
 
     try {
-      // This would be replaced with your actual login API call
-      // const response = await api.post('/auth/login', { email, password });
-      
-      // Simulating a successful login for now
-      setTimeout(() => {
-        const mockUser = {
-          id: '123',
-          name: 'Test User',
-          email: email,
-          role: 'admin',
-        };
-        const mockToken = 'mock-jwt-token';
-        
-        login(mockUser, mockToken);
-        navigate(from, { replace: true });
-        setLoading(false);
-      }, 1000);
-    } catch (err) {
+      const result = await authService.login(email, password);
+      login(result.user, result.token);
+      navigate(from, { replace: true });
+    } catch (err: any) {
       console.error('Login failed:', err);
-      setError('Invalid email or password. Please try again.');
+      setError(err.message || 'Invalid email or password. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleLoginSuccess = async (credentialResponse: CredentialResponse) => {
     setError(null);
+    setSuccess(null);
     setLoading(true);
 
     try {
@@ -131,6 +131,12 @@ const LoginScreen: React.FC = () => {
             </Alert>
           )}
           
+          {success && (
+            <Alert severity="success" sx={{ width: '100%', mb: 2 }}>
+              {success}
+            </Alert>
+          )}
+          
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
             <TextField
               margin="normal"
@@ -167,6 +173,12 @@ const LoginScreen: React.FC = () => {
             >
               {loading ? <CircularProgress size={24} /> : 'Sign In'}
             </Button>
+            
+            <Box sx={{ textAlign: 'center', mb: 2 }}>
+              <Link component={RouterLink} to="/register" variant="body2">
+                Don't have an account? Sign up
+              </Link>
+            </Box>
           </Box>
           
           <Divider sx={{ my: 2, width: '100%' }}>OR</Divider>
