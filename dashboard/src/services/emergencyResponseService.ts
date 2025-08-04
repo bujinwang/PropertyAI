@@ -391,24 +391,48 @@ class EmergencyResponseService {
 
   // WebSocket connection for real-time updates
   connectToAlerts(onAlert: (alert: EmergencyAlert) => void, onUpdate: (update: any) => void): WebSocket {
-    const ws = new WebSocket(`${this.baseUrl.replace('http', 'ws')}/api/emergency-response/ws`);
+    // Check if WebSocket is supported
+    if (typeof WebSocket === 'undefined') {
+      throw new Error('WebSocket is not supported in this environment');
+    }
+
+    const wsUrl = `${this.baseUrl.replace('http', 'ws')}/api/emergency-response/ws`;
+    console.log('Attempting to connect to WebSocket:', wsUrl);
+    
+    const ws = new WebSocket(wsUrl);
+    
+    ws.onopen = () => {
+      console.log('WebSocket connected successfully');
+    };
     
     ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      
-      if (data.type === 'alert') {
-        onAlert({
-          ...data.alert,
-          timestamp: new Date(data.alert.timestamp),
-          estimatedResolution: data.alert.estimatedResolution ? new Date(data.alert.estimatedResolution) : undefined,
-          updates: data.alert.updates.map((update: any) => ({
-            ...update,
-            timestamp: new Date(update.timestamp)
-          }))
-        });
-      } else if (data.type === 'update') {
-        onUpdate(data);
+      try {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'alert') {
+          onAlert({
+            ...data.alert,
+            timestamp: new Date(data.alert.timestamp),
+            estimatedResolution: data.alert.estimatedResolution ? new Date(data.alert.estimatedResolution) : undefined,
+            updates: data.alert.updates.map((update: any) => ({
+              ...update,
+              timestamp: new Date(update.timestamp)
+            }))
+          });
+        } else if (data.type === 'update') {
+          onUpdate(data);
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
       }
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    ws.onclose = (event) => {
+      console.log('WebSocket connection closed:', event.code, event.reason);
     };
 
     return ws;

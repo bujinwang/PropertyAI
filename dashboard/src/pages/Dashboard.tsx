@@ -136,7 +136,7 @@ const Dashboard: React.FC = () => {
 
       {/* Stats Cards */}
       <Grid container spacing={3} mb={4}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -154,7 +154,7 @@ const Dashboard: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -177,7 +177,7 @@ const Dashboard: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -200,7 +200,7 @@ const Dashboard: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -221,7 +221,7 @@ const Dashboard: React.FC = () => {
 
       {/* Additional Stats Row */}
       <Grid container spacing={3} mb={4}>
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid xs={12} sm={6} md={4}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -239,7 +239,7 @@ const Dashboard: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid xs={12} sm={6} md={4}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -260,7 +260,7 @@ const Dashboard: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid xs={12} sm={6} md={4}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -281,14 +281,14 @@ const Dashboard: React.FC = () => {
 
       {/* Quick Actions */}
       <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+        <Grid xs={12} md={6}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
                 Quick Actions
               </Typography>
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
+                <Grid xs={12} sm={6}>
                   <Button
                     fullWidth
                     variant="outlined"
@@ -299,7 +299,7 @@ const Dashboard: React.FC = () => {
                     Add New Rental
                   </Button>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid xs={12} sm={6}>
                   <Button
                     fullWidth
                     variant="outlined"
@@ -310,7 +310,7 @@ const Dashboard: React.FC = () => {
                     Screen Tenant
                   </Button>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid xs={12} sm={6}>
                   <Button
                     fullWidth
                     variant="outlined"
@@ -321,7 +321,7 @@ const Dashboard: React.FC = () => {
                     View AI Insights
                   </Button>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid xs={12} sm={6}>
                   <Button
                     fullWidth
                     variant="outlined"
@@ -337,7 +337,7 @@ const Dashboard: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid xs={12} md={6}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>

@@ -115,27 +115,51 @@ export const CriticalAlertsDashboard: React.FC<CriticalAlertsDashboardProps> = (
 
   // Setup real-time connection
   useEffect(() => {
-    const ws = emergencyResponseService.connectToAlerts(
-      (newAlert) => {
-        setAlerts(prev => {
-          const exists = prev.find(alert => alert.id === newAlert.id);
-          if (exists) {
-            return prev.map(alert => alert.id === newAlert.id ? newAlert : alert);
+    // Add error handling for WebSocket connection
+    let ws: WebSocket | null = null;
+    
+    try {
+      ws = emergencyResponseService.connectToAlerts(
+        (newAlert) => {
+          setAlerts(prev => {
+            const exists = prev.find(alert => alert.id === newAlert.id);
+            if (exists) {
+              return prev.map(alert => alert.id === newAlert.id ? newAlert : alert);
+            }
+            return [newAlert, ...prev];
+          });
+        },
+        (update) => {
+          if (update.type === 'status_change' || update.type === 'assignment') {
+            loadAlerts(); // Refresh the list
           }
-          return [newAlert, ...prev];
-        });
-      },
-      (update) => {
-        if (update.type === 'status_change' || update.type === 'assignment') {
-          loadAlerts(); // Refresh the list
         }
-      }
-    );
+      );
 
-    setWsConnection(ws);
+      // Add error handling for WebSocket
+      ws.onerror = (error) => {
+        console.warn('WebSocket connection failed:', error);
+        // Fallback to polling if WebSocket fails
+        setError('Real-time updates unavailable. Using polling instead.');
+      };
+
+      ws.onclose = (event) => {
+        if (!event.wasClean) {
+          console.warn('WebSocket connection closed unexpectedly');
+          // Could implement reconnection logic here
+        }
+      };
+
+      setWsConnection(ws);
+    } catch (error) {
+      console.warn('Failed to establish WebSocket connection:', error);
+      setError('Real-time updates unavailable. Refresh manually to see latest alerts.');
+    }
 
     return () => {
-      ws.close();
+      if (ws) {
+        ws.close();
+      }
     };
   }, [loadAlerts]);
 

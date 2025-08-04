@@ -76,7 +76,7 @@ export default defineConfig(({ command, mode }) => {
       cors: true,
     },
     preview: {
-      port: 3000,
+      port: 3002, // Change from 3000 to 3002 to match server port
       host: true,
     },
     define: {
