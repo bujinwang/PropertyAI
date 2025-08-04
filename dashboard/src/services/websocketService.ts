@@ -274,7 +274,7 @@ export class WebSocketService {
 }
 
 // Create service instances for different endpoints
-const baseUrl = process.env.REACT_APP_WS_URL || 'ws://localhost:3001';
+const baseUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:3001';
 
 export const emergencyWebSocketService = new WebSocketService({
   url: `${baseUrl}/emergency-response`,

@@ -14,7 +14,7 @@ import {
 } from '../types/emergency-response';
 
 class EmergencyResponseService {
-  private baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+  private baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
   // Alert management
   async getAlerts(filters?: AlertFilters, sort?: AlertSortOptions): Promise<EmergencyAlert[]> {

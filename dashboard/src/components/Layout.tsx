@@ -16,7 +16,6 @@ import {
 import {
   Dashboard as DashboardIcon,
   Home as HomeIcon,
-  Business as BusinessIcon,
   People as PeopleIcon,
   Assessment as AssessmentIcon,
   Settings as SettingsIcon,
@@ -49,11 +48,11 @@ const navigationItems: NavigationItem[] = [
     path: '/',
   },
   {
-    text: 'Property Management',
-    icon: <BusinessIcon />,
+    text: 'Rental Management',
+    icon: <HomeIcon />,
     children: [
       {
-        text: 'Rental Listings',
+        text: 'All Rentals',
         icon: <ApartmentIcon />,
         path: '/rentals',
       },
@@ -61,19 +60,6 @@ const navigationItems: NavigationItem[] = [
         text: 'Add New Rental',
         icon: <RealEstateAgentIcon />,
         path: '/rentals/new',
-      },
-      // Legacy routes (for backward compatibility)
-      {
-        text: 'Legacy Properties ⚠️',
-        icon: <BusinessIcon />,
-        path: '/properties',
-        deprecated: true,
-      },
-      {
-        text: 'Legacy Units ⚠️',
-        icon: <HomeIcon />,
-        path: '/units',
-        deprecated: true,
       },
     ],
   },

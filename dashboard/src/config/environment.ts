@@ -63,18 +63,18 @@ const getEnvironment = (): Environment => {
     return 'production';
   }
   
-  // Build-time detection
-  return (process.env.NODE_ENV as Environment) || 'development';
+  // Build-time detection - use Vite's import.meta.env instead of process.env
+  return (import.meta.env.MODE as Environment) || 'development';
 };
 
 const environment = getEnvironment();
 
 // Base configuration
 const baseConfig: Omit<EnvironmentConfig, 'environment'> = {
-  version: process.env.REACT_APP_VERSION || '1.0.0',
-  buildDate: process.env.REACT_APP_BUILD_DATE || new Date().toISOString(),
+  version: import.meta.env.VITE_APP_VERSION || '1.0.0',
+  buildDate: import.meta.env.VITE_APP_BUILD_DATE || new Date().toISOString(),
   api: {
-    baseUrl: process.env.REACT_APP_API_URL || 'http://localhost:3001',
+    baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:3001',
     timeout: 30000,
     retries: 3,
   },
@@ -96,12 +96,12 @@ const baseConfig: Omit<EnvironmentConfig, 'environment'> = {
   monitoring: {
     enabled: true,
     sentry: {
-      dsn: process.env.REACT_APP_SENTRY_DSN,
+      dsn: import.meta.env.VITE_SENTRY_DSN,
       environment,
       tracesSampleRate: 0.1,
     },
     analytics: {
-      googleAnalyticsId: process.env.REACT_APP_GA_ID,
+      googleAnalyticsId: import.meta.env.VITE_GA_ID,
       enabled: true,
     },
   },
@@ -118,7 +118,7 @@ const environmentConfigs: Record<Environment, Partial<EnvironmentConfig>> = {
   development: {
     api: {
       ...baseConfig.api,
-      baseUrl: process.env.REACT_APP_API_URL || 'http://localhost:3001',
+      baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:3001',
     },
     ai: {
       ...baseConfig.ai,
@@ -152,7 +152,7 @@ const environmentConfigs: Record<Environment, Partial<EnvironmentConfig>> = {
   staging: {
     api: {
       ...baseConfig.api,
-      baseUrl: process.env.REACT_APP_API_URL || 'https://api-staging.propertyflow.ai',
+      baseUrl: import.meta.env.VITE_API_URL || 'https://api-staging.propertyflow.ai',
     },
     ai: {
       ...baseConfig.ai,
@@ -184,7 +184,7 @@ const environmentConfigs: Record<Environment, Partial<EnvironmentConfig>> = {
   production: {
     api: {
       ...baseConfig.api,
-      baseUrl: process.env.REACT_APP_API_URL || 'https://api.propertyflow.ai',
+      baseUrl: import.meta.env.VITE_API_URL || 'https://api.propertyflow.ai',
     },
     ai: {
       ...baseConfig.ai,

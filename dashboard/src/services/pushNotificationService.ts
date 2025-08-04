@@ -36,8 +36,8 @@ export interface NotificationPermissionStatus {
 }
 
 class PushNotificationService {
-  private baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-  private vapidPublicKey = process.env.REACT_APP_VAPID_PUBLIC_KEY || '';
+  private baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+  private vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
   private registration: ServiceWorkerRegistration | null = null;
   private subscription: PushSubscription | null = null;
 

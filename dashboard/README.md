@@ -1,46 +1,54 @@
-# Getting Started with Create React App
+# PropertyAI Rental Management Dashboard
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A modern, rental-focused dashboard built with React, TypeScript, and Material-UI for managing rental properties efficiently.
 
-## Available Scripts
+## 🏠 Features
 
-In the project directory, you can run:
+### Core Rental Management
+- **Rental Listings**: View, search, and filter all rental properties
+- **Add/Edit Rentals**: Complete rental property management
+- **Rental Details**: Comprehensive property information and management
+- **Availability Management**: Track and update rental availability status
 
-### `npm start`
+### Tenant Management
+- **Tenant Screening**: Advanced tenant application processing
+- **Tenant Ratings**: Rate and review tenant performance
+- **Tenant Sentiment Analysis**: AI-powered tenant satisfaction tracking
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### AI & Analytics
+- **AI Insights**: Intelligent property management recommendations
+- **Risk Assessment**: AI-powered risk analysis for rentals and tenants
+- **Market Intelligence**: Real-time market data and trends
+- **Personalization**: Customized dashboard experience
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+### Operations
+- **Maintenance Management**: Track and manage property maintenance
+- **Predictive Maintenance**: AI-powered maintenance scheduling
+- **Building Health Monitoring**: Real-time property condition tracking
+- **Emergency Response**: Crisis management and emergency protocols
 
-### `npm test`
+### Financial Management
+- **Financial Overview**: Revenue tracking and financial analytics
+- **Vendor Performance**: Monitor and evaluate service providers
+- **Vendor Bidding**: Competitive bidding platform for services
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Communication
+- **Communication Hub**: Centralized messaging system
+- **AI Communication Training**: Improve tenant communication
+- **Digital Concierge**: Automated tenant assistance
+- **Community Engagement**: Foster tenant community building
 
-### `npm run build`
+## 🚀 Getting Started
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Prerequisites
+- Node.js (v18 or higher)
+- npm or yarn
+- Backend API running (see backend documentation)
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Installation
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd PropertyAI/dashboard
+   ```

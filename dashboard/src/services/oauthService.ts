@@ -2,7 +2,7 @@ import axios from 'axios';
 import { CredentialResponse } from '@react-oauth/google';
 import api from './api';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 interface OAuthLoginResponse {
   token: string; // Session token from backend

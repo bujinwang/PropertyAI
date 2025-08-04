@@ -22,25 +22,30 @@ import {
   Notifications as NotificationsIcon,
   Add as AddIcon,
   Visibility as VisibilityIcon,
+  AttachMoney as MoneyIcon,
 } from '@mui/icons-material';
 
 interface DashboardStats {
   totalRentals: number;
   availableRentals: number;
+  occupiedRentals: number;
   occupancyRate: number;
   totalApplications: number;
   pendingApplications: number;
   monthlyRevenue: number;
+  averageRent: number;
 }
 
 const Dashboard: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats>({
     totalRentals: 0,
     availableRentals: 0,
+    occupiedRentals: 0,
     occupancyRate: 0,
     totalApplications: 0,
     pendingApplications: 0,
     monthlyRevenue: 0,
+    averageRent: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -51,13 +56,19 @@ const Dashboard: React.FC = () => {
         // In a real app, this would fetch from your API
         await new Promise(resolve => setTimeout(resolve, 1000));
         
+        const totalRentals = 45;
+        const availableRentals = 8;
+        const occupiedRentals = totalRentals - availableRentals;
+        
         setStats({
-          totalRentals: 45,
-          availableRentals: 8,
-          occupancyRate: 82.2,
+          totalRentals,
+          availableRentals,
+          occupiedRentals,
+          occupancyRate: ((occupiedRentals / totalRentals) * 100),
           totalApplications: 127,
           pendingApplications: 12,
           monthlyRevenue: 125000,
+          averageRent: 2800,
         });
       } catch (error) {
         console.error('Failed to load dashboard data:', error);
@@ -91,7 +102,7 @@ const Dashboard: React.FC = () => {
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4" component="h1">
-          Dashboard
+          Rental Management Dashboard
         </Typography>
         <Box display="flex" gap={1}>
           <Button
@@ -116,7 +127,7 @@ const Dashboard: React.FC = () => {
       {/* Welcome Message */}
       <Alert severity="info" sx={{ mb: 3 }}>
         <Typography variant="body1">
-          Welcome to PropertyAI Dashboard! You now have access to the new unified Rental Management system. 
+          Welcome to your Rental Management Dashboard! Manage all your rental properties from one central location.
           <Button component={Link} to="/rentals" sx={{ ml: 1 }}>
             Explore Rentals
           </Button>
@@ -149,7 +160,7 @@ const Dashboard: React.FC = () => {
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
                   <Typography color="textSecondary" gutterBottom>
-                    Available Units
+                    Available Rentals
                   </Typography>
                   <Typography variant="h4">
                     {stats.availableRentals}
@@ -175,7 +186,7 @@ const Dashboard: React.FC = () => {
                     Occupancy Rate
                   </Typography>
                   <Typography variant="h4">
-                    {stats.occupancyRate}%
+                    {stats.occupancyRate.toFixed(1)}%
                   </Typography>
                   <LinearProgress 
                     variant="determinate" 
@@ -201,7 +212,67 @@ const Dashboard: React.FC = () => {
                     {formatCurrency(stats.monthlyRevenue)}
                   </Typography>
                 </Box>
-                <TrendingUpIcon color="success" sx={{ fontSize: 40 }} />
+                <MoneyIcon color="success" sx={{ fontSize: 40 }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Additional Stats Row */}
+      <Grid container spacing={3} mb={4}>
+        <Grid item xs={12} sm={6} md={4}>
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Box>
+                  <Typography color="textSecondary" gutterBottom>
+                    Occupied Rentals
+                  </Typography>
+                  <Typography variant="h4">
+                    {stats.occupiedRentals}
+                  </Typography>
+                </Box>
+                <HomeIcon color="primary" sx={{ fontSize: 40 }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={4}>
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Box>
+                  <Typography color="textSecondary" gutterBottom>
+                    Pending Applications
+                  </Typography>
+                  <Typography variant="h4">
+                    {stats.pendingApplications}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    of {stats.totalApplications} total
+                  </Typography>
+                </Box>
+                <PeopleIcon color="warning" sx={{ fontSize: 40 }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={4}>
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Box>
+                  <Typography color="textSecondary" gutterBottom>
+                    Average Rent
+                  </Typography>
+                  <Typography variant="h4">
+                    {formatCurrency(stats.averageRent)}
+                  </Typography>
+                </Box>
+                <MoneyIcon color="info" sx={{ fontSize: 40 }} />
               </Box>
             </CardContent>
           </Card>
@@ -274,21 +345,24 @@ const Dashboard: React.FC = () => {
               </Typography>
               <Box>
                 <Typography variant="body2" color="textSecondary" gutterBottom>
-                  • New rental application received for Unit 4B
+                  • New rental application received for Downtown Apartment
                 </Typography>
                 <Typography variant="body2" color="textSecondary" gutterBottom>
-                  • Maintenance request completed for Unit 2A
+                  • Maintenance request completed for Sunset Villa
                 </Typography>
                 <Typography variant="body2" color="textSecondary" gutterBottom>
-                  • Rent payment received from Tenant John Doe
+                  • Rent payment received from John Doe
                 </Typography>
                 <Typography variant="body2" color="textSecondary" gutterBottom>
-                  • New rental listing published: Downtown Apartment
+                  • New rental listing published: Modern Loft
+                </Typography>
+                <Typography variant="body2" color="textSecondary" gutterBottom>
+                  • Lease renewal signed for Garden View Apartment
                 </Typography>
               </Box>
             </CardContent>
             <CardActions>
-              <Button size="small" component={Link} to="/notifications">
+              <Button size="small" component={Link} to="/communications">
                 View All Activity
               </Button>
             </CardActions>

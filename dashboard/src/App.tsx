@@ -1,22 +1,18 @@
 import React, { Suspense, useEffect, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { GoogleOAuthProvider } from '@react-oauth/google';
-import { trackPageView, addBreadcrumb } from './utils/analytics';
+import { trackPageView } from './utils/analytics';
+import { addBreadcrumb } from './utils/monitoring';
+import { AuthProvider } from './contexts/AuthContext';
+import { AppErrorBoundary } from './components/error-boundary/AppErrorBoundary';
 import Layout from './components/Layout';
 import './App.css';
 
 // Lazy load components for better performance
 const Dashboard = lazy(() => import('./pages/Dashboard'));
-const PropertyListings = lazy(() => import('./pages/PropertyListings'));
-const PropertyDetail = lazy(() => import('./pages/PropertyDetail'));
-const PropertyForm = lazy(() => import('./pages/PropertyForm'));
 const TenantScreening = lazy(() => import('./pages/TenantScreening'));
 const ApplicationDetail = lazy(() => import('./pages/ApplicationDetail'));
 const ApplicationForm = lazy(() => import('./pages/ApplicationForm'));
-const UnitListings = lazy(() => import('./pages/UnitListings'));
-const UnitDetail = lazy(() => import('./pages/UnitDetail'));
-const UnitForm = lazy(() => import('./pages/UnitForm'));
-// NEW: Rental components
+// Rental components
 const RentalListings = lazy(() => import('./pages/RentalListings'));
 const RentalDetail = lazy(() => import('./pages/RentalDetail'));
 const RentalForm = lazy(() => import('./pages/RentalForm'));
@@ -47,8 +43,6 @@ const DocumentVerificationDemo = lazy(() => import('./pages/DocumentVerification
 const TenantRatingPage = lazy(() => import('./pages/TenantRatingPage'));
 const UXReviewDashboard = lazy(() => import('./pages/UXReviewDashboard'));
 
-const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID_HERE";
-
 // Component to track page views
 function PageTracker() {
   const location = useLocation();
@@ -63,72 +57,70 @@ function PageTracker() {
 
 function App() {
   return (
-    <GoogleOAuthProvider clientId={clientId}>
-      <Router>
-        <PageTracker />
-        <div className="App">
-          <Suspense fallback={<div>Loading...</div>}>
-            <Routes>
-              <Route path="/" element={<Layout />}>
-                <Route index element={<Dashboard />} />
-                
-                {/* NEW: Rental Management Routes (Unified Model) */}
-                <Route path="rentals" element={<RentalListings />} />
-                <Route path="rentals/new" element={<RentalForm />} />
-                <Route path="rentals/:id" element={<RentalDetail />} />
-                <Route path="rentals/:id/edit" element={<RentalForm />} />
-                
-                {/* LEGACY: Property Management Routes (Keep for backward compatibility) */}
-                <Route path="properties" element={<PropertyListings />} />
-                <Route path="properties/new" element={<PropertyForm />} />
-                <Route path="properties/:id" element={<PropertyDetail />} />
-                <Route path="properties/:id/edit" element={<PropertyForm />} />
-                
-                {/* LEGACY: Unit Management Routes (Keep for backward compatibility) */}
-                <Route path="units" element={<UnitListings />} />
-                <Route path="units/new" element={<UnitForm />} />
-                <Route path="units/:id" element={<UnitDetail />} />
-                <Route path="units/:id/edit" element={<UnitForm />} />
-                
-                {/* Tenant Screening Routes */}
-                <Route path="tenant-screening" element={<TenantScreening />} />
-                <Route path="tenant-screening/applications/:id" element={<ApplicationDetail />} />
-                <Route path="tenant-screening/applications/new" element={<ApplicationForm />} />
-                <Route path="tenant-screening/applications/:id/edit" element={<ApplicationForm />} />
-                
-                {/* Other Routes */}
-                <Route path="marketing" element={<Marketing />} />
-                <Route path="communications" element={<CommunicationHub />} />
-                <Route path="maintenance" element={<MaintenancePage />} />
-                <Route path="financials" element={<FinancialPage />} />
-                <Route path="maintenance-dashboard" element={<MaintenanceDashboard />} />
-                <Route path="predictive-maintenance" element={<PredictiveMaintenanceDashboard />} />
-                <Route path="ai-personalization" element={<AIPersonalizationDashboard />} />
-                <Route path="ai-risk-assessment" element={<AIRiskAssessmentDashboard />} />
-                <Route path="document-verification" element={<DocumentVerificationStatusScreen />} />
-                <Route path="building-health" element={<BuildingHealthMonitorScreen />} />
-                <Route path="ai-insights" element={<AIInsightsDashboard />} />
-                <Route path="ai-communication-training" element={<AICommunicationTrainingScreen />} />
-                <Route path="market-intelligence" element={<MarketIntelligenceScreen />} />
-                <Route path="tenant-sentiment" element={<TenantSentimentDashboard />} />
-                <Route path="emergency-response" element={<EmergencyResponseCenterScreen />} />
-                <Route path="vendor-performance" element={<VendorPerformanceAnalyticsScreen />} />
-                <Route path="vendor-bidding" element={<VendorBiddingPlatformScreen />} />
-                <Route path="external-integrations" element={<ExternalSystemsIntegrationDashboard />} />
-                <Route path="security-settings" element={<SecuritySettingsDashboard />} />
-                <Route path="access-control" element={<AccessControlManagementScreen />} />
-                <Route path="community-engagement" element={<CommunityEngagementPortal />} />
-                <Route path="digital-concierge" element={<DigitalConciergeScreen />} />
-                <Route path="ai-components-demo" element={<AIComponentsDemo />} />
-                <Route path="document-verification-demo" element={<DocumentVerificationDemo />} />
-                <Route path="tenant-ratings" element={<TenantRatingPage />} />
-                <Route path="ux-review" element={<UXReviewDashboard />} />
-              </Route>
-            </Routes>
-          </Suspense>
-        </div>
-      </Router>
-    </GoogleOAuthProvider>
+    <AppErrorBoundary>
+      <AuthProvider>
+        <Router>
+          <PageTracker />
+          <div className="App">
+            <AppErrorBoundary fallback={
+              <div style={{ padding: '20px', textAlign: 'center' }}>
+                <h2>Unable to load the application routes</h2>
+                <p>Please refresh the page or contact support if the issue persists.</p>
+                <button onClick={() => window.location.reload()}>Refresh Page</button>
+              </div>
+            }>
+              <Suspense fallback={<div>Loading...</div>}>
+                <Routes>
+                  <Route path="/" element={<Layout />}>
+                    <Route index element={<Dashboard />} />
+                    
+                    {/* Rental Management Routes */}
+                    <Route path="rentals" element={<RentalListings />} />
+                    <Route path="rentals/new" element={<RentalForm />} />
+                    <Route path="rentals/:id" element={<RentalDetail />} />
+                    <Route path="rentals/:id/edit" element={<RentalForm />} />
+                    
+                    {/* Tenant Screening Routes */}
+                    <Route path="tenant-screening" element={<TenantScreening />} />
+                    <Route path="tenant-screening/applications/:id" element={<ApplicationDetail />} />
+                    <Route path="tenant-screening/applications/new" element={<ApplicationForm />} />
+                    <Route path="tenant-screening/applications/:id/edit" element={<ApplicationForm />} />
+                    
+                    {/* Other Routes */}
+                    <Route path="marketing" element={<Marketing />} />
+                    <Route path="communications" element={<CommunicationHub />} />
+                    <Route path="maintenance" element={<MaintenancePage />} />
+                    <Route path="financials" element={<FinancialPage />} />
+                    <Route path="maintenance-dashboard" element={<MaintenanceDashboard />} />
+                    <Route path="predictive-maintenance" element={<PredictiveMaintenanceDashboard />} />
+                    <Route path="ai-personalization" element={<AIPersonalizationDashboard />} />
+                    <Route path="ai-risk-assessment" element={<AIRiskAssessmentDashboard />} />
+                    <Route path="document-verification" element={<DocumentVerificationStatusScreen />} />
+                    <Route path="building-health" element={<BuildingHealthMonitorScreen />} />
+                    <Route path="ai-insights" element={<AIInsightsDashboard />} />
+                    <Route path="ai-communication-training" element={<AICommunicationTrainingScreen />} />
+                    <Route path="market-intelligence" element={<MarketIntelligenceScreen />} />
+                    <Route path="tenant-sentiment" element={<TenantSentimentDashboard />} />
+                    <Route path="emergency-response" element={<EmergencyResponseCenterScreen />} />
+                    <Route path="vendor-performance" element={<VendorPerformanceAnalyticsScreen />} />
+                    <Route path="vendor-bidding" element={<VendorBiddingPlatformScreen />} />
+                    <Route path="external-integrations" element={<ExternalSystemsIntegrationDashboard />} />
+                    <Route path="security-settings" element={<SecuritySettingsDashboard />} />
+                    <Route path="access-control" element={<AccessControlManagementScreen />} />
+                    <Route path="community-engagement" element={<CommunityEngagementPortal />} />
+                    <Route path="digital-concierge" element={<DigitalConciergeScreen />} />
+                    <Route path="ai-components-demo" element={<AIComponentsDemo />} />
+                    <Route path="document-verification-demo" element={<DocumentVerificationDemo />} />
+                    <Route path="tenant-ratings" element={<TenantRatingPage />} />
+                    <Route path="ux-review" element={<UXReviewDashboard />} />
+                  </Route>
+                </Routes>
+              </Suspense>
+            </AppErrorBoundary>
+          </div>
+        </Router>
+      </AuthProvider>
+    </AppErrorBoundary>
   );
 }
 

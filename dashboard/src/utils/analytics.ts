@@ -29,11 +29,11 @@ class AnalyticsService {
   }
 
   private initialize() {
-    if (config.analytics.enabled && config.analytics.analyticsId) {
+    if (config.monitoring.analytics.enabled && config.monitoring.analytics.googleAnalyticsId) {
       this.initializeGoogleAnalytics();
     }
     
-    if (config.monitoring.performanceMonitoring) {
+    if (config.ai.performanceMonitoring) {
       this.initializePerformanceMonitoring();
     }
 
@@ -45,7 +45,7 @@ class AnalyticsService {
     // Initialize Google Analytics 4
     const script = document.createElement('script');
     script.async = true;
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${config.analytics.analyticsId}`;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${config.monitoring.analytics.googleAnalyticsId}`;
     document.head.appendChild(script);
 
     // Initialize gtag
@@ -56,7 +56,7 @@ class AnalyticsService {
     (window as any).gtag = gtag;
 
     gtag('js', new Date());
-    gtag('config', config.analytics.analyticsId, {
+    gtag('config', config.monitoring.analytics.googleAnalyticsId, {
       app_name: 'PropertyFlow AI Dashboard',
       app_version: config.version,
       debug_mode: config.features.debugMode,
@@ -193,7 +193,7 @@ class AnalyticsService {
    * Track user interaction events
    */
   trackEvent(event: AnalyticsEvent) {
-    if (!this.initialized || !config.analytics.enabled) {
+    if (!this.initialized || !config.monitoring.analytics.enabled) {
       return;
     }
 
@@ -217,7 +217,7 @@ class AnalyticsService {
    * Track performance metrics
    */
   trackPerformance(metric: PerformanceMetric) {
-    if (!this.initialized || !config.monitoring.performanceMonitoring) {
+    if (!this.initialized || !config.ai.performanceMonitoring) {
       return;
     }
 
@@ -246,14 +246,14 @@ class AnalyticsService {
    * Track page views
    */
   trackPageView(path: string, title?: string) {
-    if (!this.initialized || !config.analytics.enabled) {
+    if (!this.initialized || !config.monitoring.analytics.enabled) {
       return;
     }
 
     debugLog('Tracking page view:', path);
 
     if ((window as any).gtag) {
-      (window as any).gtag('config', config.analytics.analyticsId, {
+      (window as any).gtag('config', config.monitoring.analytics.googleAnalyticsId, {
         page_path: path,
         page_title: title,
       });
@@ -264,14 +264,14 @@ class AnalyticsService {
    * Track user properties
    */
   setUserProperties(properties: Record<string, string | number>) {
-    if (!this.initialized || !config.analytics.enabled) {
+    if (!this.initialized || !config.monitoring.analytics.enabled) {
       return;
     }
 
     debugLog('Setting user properties:', properties);
 
     if ((window as any).gtag) {
-      (window as any).gtag('config', config.analytics.analyticsId, {
+      (window as any).gtag('config', config.monitoring.analytics.googleAnalyticsId, {
         custom_map: properties,
       });
     }
@@ -280,7 +280,7 @@ class AnalyticsService {
   private sendToCustomAnalytics(event: AnalyticsEvent) {
     // Send to custom analytics endpoint
     if (config.environment === 'production') {
-      fetch(`${config.apiBaseUrl}/analytics/events`, {
+      fetch(`${config.api.baseUrl}/analytics/events`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -300,7 +300,7 @@ class AnalyticsService {
   private sendToMonitoringService(metric: PerformanceMetric) {
     // Send to monitoring service
     if (config.environment === 'production') {
-      fetch(`${config.apiBaseUrl}/monitoring/metrics`, {
+      fetch(`${config.api.baseUrl}/monitoring/metrics`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -2,7 +2,7 @@ import axios, { AxiosRequestConfig } from 'axios';
 import type { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
 
 // This should be configured through environment variables for the dashboard
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 // Helper functions for token management in a web environment
 const getAuthToken = (): string | null => {

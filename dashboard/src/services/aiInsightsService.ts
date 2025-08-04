@@ -15,7 +15,7 @@ import {
 } from '../types/ai-insights';
 import { apiService } from './api';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 class AIInsightsService {
   /**

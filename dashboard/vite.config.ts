@@ -44,37 +44,9 @@ export default defineConfig(({ command, mode }) => {
               }
               return 'vendor-other';
             }
-            
-            // AI component chunks
-            if (id.includes('/design-system/components/ai/')) {
-              return 'ai-core';
-            }
-            if (id.includes('/components/risk-assessment/') || 
-                id.includes('/components/communication-training/') ||
-                id.includes('/components/emergency-response/')) {
-              return 'ai-components';
-            }
-            if (id.includes('/pages/') && (
-                id.includes('AI') || 
-                id.includes('Risk') || 
-                id.includes('Emergency') ||
-                id.includes('Market') ||
-                id.includes('Building') ||
-                id.includes('Document')
-            )) {
-              return 'ai-screens';
-            }
-            if (id.includes('/utils/ai-performance') || 
-                id.includes('/utils/analytics') || 
-                id.includes('/utils/monitoring')) {
-              return 'ai-utils';
-            }
-            
-            // Default chunk
             return 'main';
           },
         },
-        // Tree shaking optimization
         treeshake: {
           moduleSideEffects: false,
           propertyReadSideEffects: false,
@@ -85,7 +57,6 @@ export default defineConfig(({ command, mode }) => {
     },
     plugins: [
       react({
-        // Enable React Fast Refresh in development
         fastRefresh: !isProduction,
       }),
     ],
@@ -95,18 +66,23 @@ export default defineConfig(({ command, mode }) => {
       },
     },
     server: {
-      port: 3000,
-      open: true,
-      host: true,
+      port: 3002, // Use port 3002 for frontend
+      host: '127.0.0.1',
+      strictPort: false,
+      hmr: {
+        port: 24679, // Different HMR port
+        host: '127.0.0.1',
+      },
+      cors: true,
     },
     preview: {
       port: 3000,
       host: true,
     },
     define: {
-      // Make environment variables available at build time
       __BUILD_DATE__: JSON.stringify(env.BUILD_DATE || new Date().toISOString()),
-      __VERSION__: JSON.stringify(process.env.npm_package_version || '0.1.0'),
+      __VERSION__: JSON.stringify(env.npm_package_version || '0.1.0'),
+      'process.env.NODE_ENV': JSON.stringify(mode),
     },
     // Enable gzip compression in production
     ...(isProduction && {
@@ -138,4 +114,4 @@ export default defineConfig(({ command, mode }) => {
       },
     }),
   };
-}); 
+});

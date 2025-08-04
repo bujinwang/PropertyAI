@@ -3,7 +3,7 @@ import { Application, Document, Property } from '../types/tenant-screening';
 import { useAuth } from '../contexts/AuthContext';
 
 // Get the base URL from environment variables
-const baseURL = process.env.REACT_APP_API_BASE_URL || '/api';
+const baseURL = import.meta.env.VITE_API_URL || '/api';
 
 // Create axios instance
 const api = axios.create({
@@ -126,4 +126,4 @@ export const tenantScreeningApi = {
   },
 };
 
-export default api; 
+export default api;
