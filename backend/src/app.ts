@@ -8,7 +8,7 @@ import configurePassport from './config/passport';
 import routes from './routes';
 // Import only routes that are NOT in the centralized routes file
 import socialMediaRoutes from './routes/socialMediaRoutes';
-import photoRoutes from './routes/photoRoutes';
+// import photoRoutes from './routes/photoRoutes';
 import voiceRoutes from './routes/voiceRoutes';
 import aiRoutingRoutes from './routes/aiRouting.routes';
 import costEstimationRoutes from './routes/costEstimation.routes';
@@ -61,8 +61,10 @@ app.use(cors({
   origin: [
     'http://localhost:3000', // Dashboard
     'http://localhost:3002', // Dashboard (new port)
+    'http://localhost:3003', // Dashboard (current port)
     'http://127.0.0.1:3000', // Dashboard (127.0.0.1)
     'http://127.0.0.1:3002', // Dashboard (127.0.0.1 new port)
+    'http://127.0.0.1:3003', // Dashboard (127.0.0.1 current port)
     'http://localhost:5000', // PropertyApp frontend
     'http://localhost:5001', // Backend API
     'http://localhost:8081', // Expo web app
@@ -104,7 +106,7 @@ app.use(routes);
 
 // Then add routes that are NOT in the centralized routes file
 app.use('/api/social-media', socialMediaRoutes);
-app.use('/api/photo', photoRoutes);
+// app.use('/api/photo', photoRoutes);
 app.use('/api/voice', voiceRoutes);
 app.use('/api/ai-routing', aiRoutingRoutes);
 app.use('/api/cost-estimation', costEstimationRoutes);

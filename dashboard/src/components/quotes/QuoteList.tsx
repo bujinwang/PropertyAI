@@ -1,17 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Text, Button, VStack, HStack, Divider, useToast } from '@chakra-ui/react';
+import { 
+  Box, 
+  Typography, 
+  Button, 
+  Stack, 
+  Divider, 
+  Paper,
+  Alert,
+  Snackbar
+} from '@mui/material';
 import { getQuotesForWorkOrder, approveQuote, rejectQuote } from '../../services/manager.api';
 
 const QuoteList = ({ workOrderId }) => {
   const [quotes, setQuotes] = useState([]);
-  const toast = useToast();
+  const [toast, setToast] = useState({ open: false, message: '', severity: 'info' });
+
+  const showToast = (message: string, severity: 'success' | 'error' | 'info' = 'info') => {
+    setToast({ open: true, message, severity });
+  };
+
+  const handleCloseToast = () => {
+    setToast({ ...toast, open: false });
+  };
 
   const fetchQuotes = async () => {
     try {
       const response = await getQuotesForWorkOrder(workOrderId);
       setQuotes(response.data);
     } catch (error) {
-      toast({ title: 'Error fetching quotes', status: 'error', duration: 3000, isClosable: true });
+      showToast('Error fetching quotes', 'error');
     }
   };
 
@@ -22,41 +39,84 @@ const QuoteList = ({ workOrderId }) => {
   const handleApprove = async (quoteId) => {
     try {
       await approveQuote(quoteId);
-      toast({ title: 'Quote approved', status: 'success', duration: 3000, isClosable: true });
+      showToast('Quote approved', 'success');
       fetchQuotes(); // Refresh the list
     } catch (error) {
-      toast({ title: 'Error approving quote', status: 'error', duration: 3000, isClosable: true });
+      showToast('Error approving quote', 'error');
     }
   };
 
   const handleReject = async (quoteId) => {
     try {
       await rejectQuote(quoteId);
-      toast({ title: 'Quote rejected', status: 'success', duration: 3000, isClosable: true });
+      showToast('Quote rejected', 'success');
       fetchQuotes(); // Refresh the list
     } catch (error) {
-      toast({ title: 'Error rejecting quote', status: 'error', duration: 3000, isClosable: true });
+      showToast('Error rejecting quote', 'error');
     }
   };
 
   return (
-    <Box mt={8}>
-      <Text fontSize="xl" fontWeight="bold" mb={4}>Quotes</Text>
-      <VStack divider={<Divider />} spacing={4} align="stretch">
+    <Box sx={{ mt: 4 }}>
+      <Typography variant="h5" fontWeight="bold" sx={{ mb: 2 }}>
+        Quotes
+      </Typography>
+      <Stack spacing={2} divider={<Divider />}>
         {quotes.map((quote) => (
-          <Box key={quote.id} p={4} borderWidth="1px" borderRadius="md" opacity={quote.status !== 'PENDING' ? 0.5 : 1}>
-            <HStack justifyContent="space-between">
-              <Text fontWeight="bold">{quote.vendor.name}</Text>
-              <Text fontSize="lg" fontWeight="bold">${quote.amount.toFixed(2)}</Text>
-            </HStack>
-            <Text mt={2} color="gray.600">{quote.details}</Text>
-            <HStack mt={4} spacing={4}>
-              <Button colorScheme="green" size="sm" onClick={() => handleApprove(quote.id)} isDisabled={quote.status !== 'PENDING'}>Approve</Button>
-              <Button colorScheme="red" size="sm" onClick={() => handleReject(quote.id)} isDisabled={quote.status !== 'PENDING'}>Reject</Button>
-            </HStack>
-          </Box>
+          <Paper 
+            key={quote.id} 
+            sx={{ 
+              p: 2, 
+              opacity: quote.status !== 'PENDING' ? 0.5 : 1,
+              border: 1,
+              borderColor: 'divider'
+            }}
+          >
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="h6" fontWeight="bold">
+                {quote.vendor.name}
+              </Typography>
+              <Typography variant="h6" fontWeight="bold">
+                ${quote.amount.toFixed(2)}
+              </Typography>
+            </Box>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              {quote.details}
+            </Typography>
+            <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+              <Button 
+                variant="contained" 
+                color="success" 
+                size="small" 
+                onClick={() => handleApprove(quote.id)} 
+                disabled={quote.status !== 'PENDING'}
+              >
+                Approve
+              </Button>
+              <Button 
+                variant="contained" 
+                color="error" 
+                size="small" 
+                onClick={() => handleReject(quote.id)} 
+                disabled={quote.status !== 'PENDING'}
+              >
+                Reject
+              </Button>
+            </Stack>
+          </Paper>
         ))}
-      </VStack>
+      </Stack>
+      
+      <Snackbar 
+        open={toast.open} 
+        autoHideDuration={3000} 
+        onClose={handleCloseToast}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert onClose={handleCloseToast} severity={toast.severity} sx={{ width: '100%' }}>
+          {toast.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
