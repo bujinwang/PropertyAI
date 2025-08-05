@@ -2,7 +2,11 @@ import axios, { AxiosRequestConfig } from 'axios';
 import type { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
 
 // This should be configured through environment variables for the dashboard
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/api';
+
+// Debug: Log the API URL being used
+console.log('API_URL being used:', API_URL);
+console.log('Environment VITE_API_URL:', import.meta.env.VITE_API_URL);
 
 // Helper functions for token management in a web environment
 const getAuthToken = (): string | null => {

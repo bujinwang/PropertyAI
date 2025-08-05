@@ -31,7 +31,7 @@ import {
  Delete as DeleteIcon,
  Search as SearchIcon
 } from '@mui/icons-material';
-import { getRentals, deleteRental, Rental, RentalFilterParams } from '../services/rentalService';
+import { getRentals, getPublicRentals, deleteRental, Rental, RentalFilterParams } from '../services/rentalService';
 
 const RentalListings = () => {
  const [rentals, setRentals] = useState<Rental[]>([]);
@@ -61,7 +61,7 @@ const RentalListings = () => {
     }
    } catch (authError: any) {
     // If authentication fails (401), fall back to public endpoints
-    if (authError.response?.status === 401) {
+    if (authError.status === 401) {
      console.warn('Authentication failed, falling back to public rentals');
      const publicResponse = await getPublicRentals();
      setRentals(publicResponse.data);

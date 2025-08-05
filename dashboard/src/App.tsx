@@ -12,10 +12,10 @@ import ProtectedRoute from './components/ProtectedRoute';
 import theme from './design-system/theme';
 import './App.css';
 
-// Lazy load components for better performance
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const LoginScreen = lazy(() => import('./pages/LoginScreen'));
-const RegisterScreen = lazy(() => import('./pages/RegisterScreen'));
+// Import components - temporarily non-lazy for debugging
+import Dashboard from './pages/Dashboard';
+import LoginScreen from './pages/LoginScreen';
+import RegisterScreen from './pages/RegisterScreen';
 const TenantScreening = lazy(() => import('./pages/TenantScreening'));
 const ApplicationDetail = lazy(() => import('./pages/ApplicationDetail'));
 const ApplicationForm = lazy(() => import('./pages/ApplicationForm'));
@@ -62,9 +62,18 @@ function PageTracker() {
   return null;
 }
 
+// Wrapper component for lazy-loaded routes
+function LazyRoute({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      {children}
+    </Suspense>
+  );
+}
+
 function App() {
   return (
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || "demo-client-id"}>
+    <GoogleOAuthProvider clientId={(import.meta as any).env.VITE_GOOGLE_CLIENT_ID || "demo-client-id"}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <AppErrorBoundary>
@@ -79,7 +88,6 @@ function App() {
                   <button onClick={() => window.location.reload()}>Refresh Page</button>
                 </div>
               }>
-                <Suspense fallback={<div>Loading...</div>}>
                   <Routes>
                     {/* Public routes */}
                     <Route path="/login" element={<LoginScreen />} />
@@ -94,10 +102,26 @@ function App() {
                       <Route index element={<Dashboard />} />
                       
                       {/* Rental Management Routes */}
-                      <Route path="rentals" element={<RentalListings />} />
-                      <Route path="rentals/new" element={<RentalForm />} />
-                      <Route path="rentals/:id" element={<RentalDetail />} />
-                      <Route path="rentals/:id/edit" element={<RentalForm />} />
+                      <Route path="rentals" element={
+                        <Suspense fallback={<div>Loading...</div>}>
+                          <RentalListings />
+                        </Suspense>
+                      } />
+                      <Route path="rentals/new" element={
+                        <Suspense fallback={<div>Loading...</div>}>
+                          <RentalForm />
+                        </Suspense>
+                      } />
+                      <Route path="rentals/:id" element={
+                        <Suspense fallback={<div>Loading...</div>}>
+                          <RentalDetail />
+                        </Suspense>
+                      } />
+                      <Route path="rentals/:id/edit" element={
+                        <Suspense fallback={<div>Loading...</div>}>
+                          <RentalForm />
+                        </Suspense>
+                      } />
                       
                       {/* Tenant Screening Routes */}
                       <Route path="tenant-screening" element={<TenantScreening />} />
@@ -133,11 +157,19 @@ function App() {
                       <Route path="tenant-ratings" element={<TenantRatingPage />} />
                       <Route path="ux-review" element={<UXReviewDashboard />} />
                     </Route>
+                    
+                    {/* Catch-all route for unmatched paths */}
+                    <Route path="*" element={
+                      <div style={{ padding: '20px', textAlign: 'center' }}>
+                        <h2>Page Not Found</h2>
+                        <p>The requested page could not be found.</p>
+                        <button onClick={() => window.location.href = '/'}>Go to Dashboard</button>
+                      </div>
+                    } />
                   </Routes>
-                </Suspense>
               </AppErrorBoundary>
-            </div>
-          </Router>
+              </div>
+            </Router>
         </AuthProvider>
       </AppErrorBoundary>
     </ThemeProvider>

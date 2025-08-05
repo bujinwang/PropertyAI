@@ -1,6 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 
-// Define a basic User interface, can be expanded later
 interface User {
   id: string;
   name: string;
@@ -30,7 +29,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   useEffect(() => {
-    // Check if user is already logged in by looking for token in localStorage
     const storedToken = localStorage.getItem('authToken');
     const storedRefreshToken = localStorage.getItem('refreshToken');
     const storedUser = localStorage.getItem('user');
@@ -44,7 +42,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setIsAuthenticated(true);
       } catch (error) {
         console.error('Error parsing stored user data:', error);
-        // Clear invalid data
         localStorage.removeItem('authToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
@@ -58,7 +55,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setRefreshToken(refreshTokenValue || null);
     setIsAuthenticated(true);
     
-    // Store in localStorage for persistence
     localStorage.setItem('authToken', authToken);
     localStorage.setItem('user', JSON.stringify(userData));
     if (refreshTokenValue) {
@@ -72,7 +68,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setRefreshToken(null);
     setIsAuthenticated(false);
     
-    // Clear from localStorage
     localStorage.removeItem('authToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');

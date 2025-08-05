@@ -128,12 +128,12 @@ export interface RentalResponse {
 
 // Public endpoints (no authentication required)
 export const getPublicRentals = async (): Promise<RentalResponse> => {
-  const response = await axios.get(`${API_URL}/rentals/public`);
+  const response = await apiService.get(`/rentals/public`);
   return response.data;
 };
 
 export const getPublicRental = async (id: string): Promise<Rental> => {
-  const response = await axios.get(`${API_URL}/rentals/public/${id}`);
+  const response = await apiService.get(`/rentals/public/${id}`);
   return response.data.data;
 };
 
