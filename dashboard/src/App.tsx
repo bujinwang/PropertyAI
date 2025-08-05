@@ -24,6 +24,10 @@ const RentalListings = lazy(() => import('./pages/RentalListings'));
 const RentalDetail = lazy(() => import('./pages/RentalDetail'));
 const RentalForm = lazy(() => import('./pages/RentalForm'));
 const Marketing = lazy(() => import('./pages/Marketing'));
+const MarketingCampaigns = lazy(() => import('./pages/marketing/MarketingCampaigns'));
+const MarketingAnalytics = lazy(() => import('./pages/marketing/MarketingAnalytics'));
+const MarketingPromotions = lazy(() => import('./pages/marketing/MarketingPromotions'));
+const MarketingSyndication = lazy(() => import('./pages/marketing/MarketingSyndication'));
 const CommunicationHub = lazy(() => import('./pages/CommunicationHub'));
 const MaintenancePage = lazy(() => import('./pages/MaintenancePage'));
 const FinancialPage = lazy(() => import('./pages/FinancialPage'));
@@ -129,8 +133,30 @@ function App() {
                       <Route path="tenant-screening/applications/new" element={<ApplicationForm />} />
                       <Route path="tenant-screening/applications/:id/edit" element={<ApplicationForm />} />
                       
-                      {/* Other Routes */}
+                      {/* Marketing Routes */}
                       <Route path="marketing" element={<Marketing />} />
+                      <Route path="marketing/campaigns" element={
+                        <Suspense fallback={<div>Loading...</div>}>
+                          <MarketingCampaigns />
+                        </Suspense>
+                      } />
+                      <Route path="marketing/analytics" element={
+                        <Suspense fallback={<div>Loading...</div>}>
+                          <MarketingAnalytics />
+                        </Suspense>
+                      } />
+                      <Route path="marketing/promotions" element={
+                        <Suspense fallback={<div>Loading...</div>}>
+                          <MarketingPromotions />
+                        </Suspense>
+                      } />
+                      <Route path="marketing/syndication" element={
+                        <Suspense fallback={<div>Loading...</div>}>
+                          <MarketingSyndication />
+                        </Suspense>
+                      } />
+                      
+                      {/* Other Routes */}
                       <Route path="communications" element={<CommunicationHub />} />
                       <Route path="maintenance" element={<MaintenancePage />} />
                       <Route path="financials" element={<FinancialPage />} />

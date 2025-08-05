@@ -41,6 +41,7 @@ See the [CI/CD documentation](.github/workflows/README.md) for more details.
    npm run prisma:generate
    npm run prisma:migrate
    npm run dev
+   npm run dev:node
    ```
 
 3. **Dashboard Setup**
@@ -48,6 +49,7 @@ See the [CI/CD documentation](.github/workflows/README.md) for more details.
    cd dashboard
    npm install
    npm run dev
+   npm run dev:dashboard
    ```
 
 4. **Property App Setup**

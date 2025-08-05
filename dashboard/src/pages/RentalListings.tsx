@@ -161,7 +161,7 @@ const RentalListings = () => {
       Filters
      </Typography>
      <Grid container spacing={2}>
-      <Grid xs={12} sm={6} md={3}>
+      <Grid xs={12} sm={6} md={4}>
        <TextField
         fullWidth
         label="Search Title"
@@ -172,7 +172,7 @@ const RentalListings = () => {
         }}
        />
       </Grid>
-      <Grid xs={12} sm={6} md={3}>
+      <Grid xs={12} sm={6} md={4}>
        <TextField
         fullWidth
         label="City"
@@ -180,7 +180,7 @@ const RentalListings = () => {
         onChange={(e) => handleFilterChange('city', e.target.value)}
        />
       </Grid>
-      <Grid xs={12} sm={6} md={3}>
+      <Grid xs={12} sm={6} md={4}>
        <FormControl fullWidth>
         <InputLabel>Property Type</InputLabel>
         <Select
@@ -199,7 +199,7 @@ const RentalListings = () => {
         </Select>
        </FormControl>
       </Grid>
-      <Grid xs={12} sm={6} md={3}>
+      <Grid xs={12} sm={6} md={4}>
        <FormControl fullWidth>
         <InputLabel>Status</InputLabel>
         <Select
@@ -215,7 +215,7 @@ const RentalListings = () => {
         </Select>
        </FormControl>
       </Grid>
-      <Grid xs={12} sm={6} md={3}>
+      <Grid xs={12} sm={6} md={4}>
        <TextField
         fullWidth
         label="Min Rent"
@@ -224,7 +224,7 @@ const RentalListings = () => {
         onChange={(e) => handleFilterChange('minRent', e.target.value ? Number(e.target.value) : undefined)}
        />
       </Grid>
-      <Grid xs={12} sm={6} md={3}>
+      <Grid xs={12} sm={6} md={4}>
        <TextField
         fullWidth
         label="Max Rent"
@@ -233,12 +233,12 @@ const RentalListings = () => {
         onChange={(e) => handleFilterChange('maxRent', e.target.value ? Number(e.target.value) : undefined)}
        />
       </Grid>
-      <Grid xs={12} sm={6} md={3}>
+      <Grid xs={12} sm={6} md={4}>
        <FormControl fullWidth>
         <InputLabel>Availability</InputLabel>
         <Select
          value={filters.isAvailable !== undefined ? filters.isAvailable.toString() : ''}
-         onChange={(e) => handleFilterChange('isAvailable', e.target.value === '' ? undefined : e.target.value === 'true')}
+         onChange={(e) => handleFilterChange('isAvailable', e.target.value === 'true')}
          label="Availability"
         >
          <MenuItem value="">All</MenuItem>
