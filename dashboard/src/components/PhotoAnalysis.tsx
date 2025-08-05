@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-// Change from:
-import { analyzePhoto } from '../services/apiService';
-
-// To:
 import { apiService } from '../services/apiService';
-
-// And update the usage in handleAnalyze function:
-const result = await apiService.analyzePhoto(maintenanceRequestId, imageUrl);
 
 interface PhotoAnalysisProps {
   maintenanceRequestId: string;
