@@ -71,15 +71,24 @@ class ApiService {
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
           try {
-            const response = await axios.post<{ token: string }>(`${API_URL}/auth/refresh`, {}, {
-              headers: {
-                'Authorization': `Bearer ${this.token}`,
-              }
+            const refreshToken = localStorage.getItem('refreshToken');
+            if (!refreshToken) {
+              throw new Error('No refresh token available');
+            }
+            
+            const response = await axios.post<{ token: string; refreshToken: string }>(`${API_URL}/auth/refresh-token`, {
+              refreshToken: refreshToken
             });
+            
             const newToken = response.data.token;
+            const newRefreshToken = response.data.refreshToken;
+            
             if (newToken) {
               this.token = newToken;
               storeAuthToken(newToken);
+              if (newRefreshToken) {
+                localStorage.setItem('refreshToken', newRefreshToken);
+              }
               if (originalRequest.headers) {
                 originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
               }
@@ -88,6 +97,14 @@ class ApiService {
           } catch (refreshError) {
             this.token = null;
             localStorage.removeItem('authToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+            
+            // Redirect to login page
+            if (typeof window !== 'undefined') {
+              window.location.href = '/login';
+            }
+            
             return Promise.reject({
               message: 'Session expired. Please log in again.',
               status: 401,

@@ -61,7 +61,7 @@ const LoginScreen: React.FC = () => {
 
     try {
       const result = await authService.login(email, password);
-      login(result.user, result.token);
+      login(result.data.user, result.data.token, result.data.refreshToken);
       navigate(from, { replace: true });
     } catch (err: any) {
       console.error('Login failed:', err);

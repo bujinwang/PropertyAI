@@ -1,11 +1,14 @@
 interface LoginResponse {
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    role: string;
+  data: {
+    user: {
+      id: string;
+      name: string;
+      email: string;
+      role: string;
+    };
+    token: string;
+    refreshToken: string;
   };
-  token: string;
 }
 
 class AuthService {

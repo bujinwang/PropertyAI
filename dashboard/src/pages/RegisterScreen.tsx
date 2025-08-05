@@ -85,7 +85,7 @@ const RegisterScreen: React.FC = () => {
       // After successful registration, log the user in
       try {
         const loginResult = await authService.login(formData.email, formData.password);
-        login(loginResult.user, loginResult.token);
+        login(loginResult.data.user, loginResult.data.token, loginResult.data.refreshToken);
         navigate('/', { replace: true });
       } catch (loginError) {
         // If auto-login fails, redirect to login page
