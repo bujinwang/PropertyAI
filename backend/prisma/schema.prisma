@@ -612,6 +612,10 @@ model TenantRating {
   tenantId                         String
   raterId                          String
   rating                           Int
+  categories                       Json?
+  overallRating                    Decimal?
+  tags                             String[]
+  attachments                      String[]
   comment                          String?
   createdAt                        DateTime @default(now())
   updatedAt                        DateTime @updatedAt
@@ -622,6 +626,7 @@ model TenantRating {
   @@index([leaseId])
   @@index([raterId])
   @@index([tenantId])
+  @@index([overallRating])
 }
 
 model Transaction {

@@ -33,7 +33,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const storedRefreshToken = localStorage.getItem('refreshToken');
     const storedUser = localStorage.getItem('user');
     
-    if (storedToken && storedUser) {
+    if (storedToken && storedUser && storedUser !== 'undefined') {
       try {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);

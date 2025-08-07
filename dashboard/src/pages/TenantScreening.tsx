@@ -174,7 +174,7 @@ const TenantScreening: React.FC = () => {
      variant="contained"
      startIcon={<AddIcon />}
      component={Link}
-     to="/application-form"
+     to="/tenant-screening/applications/new"
     >
      New Application
     </Button>
@@ -339,7 +339,7 @@ const TenantScreening: React.FC = () => {
          <Tooltip title="View Details">
           <IconButton
            component={Link}
-           to={`/application/${application.id}`}
+           to={`/tenant-screening/applications/${application.id}`}
            size="small"
            color="primary"
           >

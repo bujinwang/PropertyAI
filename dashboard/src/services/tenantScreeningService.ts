@@ -3,10 +3,22 @@ import { Application, ApplicationFormData } from '../types/tenantScreening';
 
 const getApplications = async (): Promise<Application[]> => {
   try {
-    const response = await api.get<Application[]>('/tenant-screening/applications');
+    // Remove the '/tenant-screening' prefix
+    const response = await api.get<Application[]>('/applications');
     return response.data;
   } catch (error) {
     console.error('Error fetching applications:', error);
+    throw error;
+  }
+};
+
+const createApplication = async (applicationData: ApplicationFormData): Promise<Application> => {
+  try {
+    // Remove the '/tenant-screening' prefix
+    const response = await api.post<Application>('/applications', applicationData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating application:', error);
     throw error;
   }
 };
@@ -21,22 +33,35 @@ const getApplicationById = async (id: string): Promise<Application> => {
   }
 };
 
-const createApplication = async (applicationData: ApplicationFormData): Promise<Application> => {
+const updateApplication = async (id: string, applicationData: Partial<ApplicationFormData>): Promise<Application> => {
   try {
-    const response = await api.post<Application>('/tenant-screening/applications', applicationData);
+    // Change from '/tenant-screening/applications' to '/applications'
+    const response = await api.put<Application>(`/applications/${id}`, applicationData);
     return response.data;
   } catch (error) {
-    console.error('Error creating application:', error);
+    console.error(`Error updating application ${id}:`, error);
     throw error;
   }
 };
 
-const updateApplication = async (id: string, applicationData: Partial<ApplicationFormData>): Promise<Application> => {
+const getApplications = async (): Promise<Application[]> => {
   try {
-    const response = await api.put<Application>(`/tenant-screening/applications/${id}`, applicationData);
+    // Change from '/tenant-screening/applications' to '/applications'
+    const response = await api.get<Application[]>('/applications');
     return response.data;
   } catch (error) {
-    console.error(`Error updating application ${id}:`, error);
+    console.error('Error fetching applications:', error);
+    throw error;
+  }
+};
+
+const getApplicationById = async (id: string): Promise<Application> => {
+  try {
+    // Change from '/tenant-screening/applications' to '/applications'
+    const response = await api.get<Application>(`/applications/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching application ${id}:`, error);
     throw error;
   }
 };
@@ -106,4 +131,4 @@ const tenantScreeningService = {
   getScreeningIssueAlerts,
 };
 
-export default tenantScreeningService; 
+export default tenantScreeningService;

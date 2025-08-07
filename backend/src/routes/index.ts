@@ -36,6 +36,7 @@ import modelPerformanceRoutes from './modelPerformance.routes';
 import { rateLimiter } from '../middleware/rateLimitMiddleware';
 import { RequestHandler } from 'express';
 import databaseOptimizationRoutes from './databaseOptimization.routes';
+import tenantRatingRoutes from './tenantRating.routes';
 import propertyDescriptionRoutes from './propertyDescription.routes';
 import pricingRoutes from './pricing.routes';
 import photoEnhancementRoutes from './photoEnhancement.routes';
@@ -114,6 +115,7 @@ router.use(`${API_PREFIX}/manager`, managerRoutes);
 router.use(`${API_PREFIX}/listings`, publicListingRoutes);
 router.use(`${API_PREFIX}/ux-review`, uxReviewRoutes);
 router.use(`${API_PREFIX}/marketing`, marketingRoutes);
+router.use(`${API_PREFIX}/tenant-ratings`, tenantRatingRoutes);
 
 router.post(`${API_PREFIX}/cache/clear`, (req, res) => {
   const { key } = req.body;

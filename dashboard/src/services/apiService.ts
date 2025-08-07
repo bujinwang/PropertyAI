@@ -51,12 +51,30 @@ class ApiService {
     // Add request interceptor for authentication
     this.api.interceptors.request.use(
       async (config: AxiosRequestConfig) => {
-        if (!this.token) {
-          this.token = getAuthToken();
+        // Always get the latest token from localStorage
+        const currentToken = getAuthToken();
+        
+        console.log('🔍 Request Interceptor Debug:', {
+          url: config.url,
+          method: config.method,
+          hasToken: !!currentToken,
+          tokenLength: currentToken?.length,
+          tokenPreview: currentToken ? `${currentToken.substring(0, 20)}...` : 'null',
+          hasHeaders: !!config.headers,
+          currentHeaders: config.headers
+        });
+        
+        if (currentToken) {
+          // Ensure headers object exists
+          if (!config.headers) {
+            config.headers = {};
+          }
+          config.headers['Authorization'] = `Bearer ${currentToken}`;
+          console.log('✅ Authorization header set:', config.headers['Authorization']?.substring(0, 30) + '...');
+        } else {
+          console.log('❌ No token found in localStorage');
         }
-        if (this.token) {
-          config.headers['Authorization'] = `Bearer ${this.token}`;
-        }
+        
         return config;
       },
       (error) => Promise.reject(error)

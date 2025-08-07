@@ -1,4 +1,4 @@
-import { createTheme } from '@mui/material/styles';
+import { createTheme, alpha } from '@mui/material/styles';
 
 // Define the color palette
 const palette = {
@@ -70,10 +70,14 @@ const typography = {
   },
 };
 
-// Create the theme
+// Create the theme with alpha function support
 const theme = createTheme({
   palette,
   typography,
 });
 
+// Add alpha function to theme for compatibility
+(theme as any).alpha = alpha;
+
 export default theme;
+export { alpha };

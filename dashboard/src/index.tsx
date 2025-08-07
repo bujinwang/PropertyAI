@@ -28,9 +28,10 @@ const root = ReactDOM.createRoot(
 const renderApp = () => {
   try {
     root.render(
-      <React.StrictMode>
+      // Temporarily remove StrictMode to debug hook issues
+      // <React.StrictMode>
         <App />
-      </React.StrictMode>
+      // </React.StrictMode>
     );
   } catch (error) {
     console.error('Failed to render app:', error);
