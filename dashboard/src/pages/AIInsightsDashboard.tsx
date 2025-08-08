@@ -35,10 +35,6 @@ import {
  People as PeopleIcon,
  Insights as InsightsIcon
 } from '@mui/icons-material';
-// Change from:
-import { LoadingStateIndicator } from '../design-system/components/ai/LoadingStateIndicator';
-
-// To:
 import LoadingStateIndicator from '../design-system/components/ai/LoadingStateIndicator';
 import { 
  Insight, 
@@ -106,7 +102,7 @@ const AIInsightsDashboard: React.FC = () => {
    
    setState(prev => ({
     ...prev,
-    categories: insightsResponse.categories,
+    categories: insightsResponse.categories || [],
     loading: false,
     lastUpdated: new Date()
    }));
@@ -468,7 +464,7 @@ const AIInsightsDashboard: React.FC = () => {
       // Single category view
       <Grid container spacing={3}>
        {state.categories
-        .filter(category => state.categories[activeTab - 1]?.id === category.id)
+        .filter(category => activeTab > 0 && state.categories[activeTab - 1]?.id === category.id)
         .flatMap(category => category.insights)
         .map((insight) => (
          <Grid xs={12} md={6} lg={4} key={insight.id}>
@@ -485,7 +481,7 @@ const AIInsightsDashboard: React.FC = () => {
    </Grid>
 
    {/* Empty State */}
-   {!state.loading && state.categories.every(cat => cat.insights.length === 0) && (
+   {!state.loading && state.categories.every(cat => !cat.insights || cat.insights.length === 0) && (
     <Box sx={{ textAlign: 'center', py: 8 }}>
      <InsightsIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
      <Typography variant="h6" color="text.secondary" gutterBottom>

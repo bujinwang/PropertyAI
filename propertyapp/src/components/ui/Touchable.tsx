@@ -101,13 +101,13 @@ export const BackButton: React.FC<{ onPress: () => void }> = ({ onPress }) => (
     size="large"
     onPress={onPress}
     hitSlop={12}
-    style={styles.backButton}
+    style={backStyles.backButton}
   >
     {/* Add back arrow icon here */}
   </Touchable>
 );
 
-const styles = StyleSheet.create({
+const backStyles = StyleSheet.create({
   backButton: {
     position: 'absolute',
     top: 16,

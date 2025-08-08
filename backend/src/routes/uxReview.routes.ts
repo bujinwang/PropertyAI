@@ -49,7 +49,53 @@ router.get('/', async (req, res) => {
 
 router.get('/stats', async (req, res) => {
   try {
-    res.json({ message: 'Stats endpoint not implemented' });
+    const [byStatus, byPriority, byComponentType, totalCount, last7Days] = await Promise.all([
+      (async () => {
+        const prisma = new (await import('@prisma/client')).PrismaClient();
+        return prisma.uXReview.groupBy({
+          by: ['status'],
+          _count: { _all: true },
+        });
+      })(),
+      (async () => {
+        const prisma = new (await import('@prisma/client')).PrismaClient();
+        const all = await prisma.uXReview.findMany({ select: { priority: true } });
+        const map: Record<string, number> = {};
+        for (const r of all) map[r.priority] = (map[r.priority] || 0) + 1;
+        return Object.entries(map).map(([priority, count]) => ({ priority, _count: { _all: count } }));
+      })(),
+      (async () => {
+        const prisma = new (await import('@prisma/client')).PrismaClient();
+        const all = await prisma.uXReview.findMany({ select: { componentType: true } });
+        const map: Record<string, number> = {};
+        for (const r of all) map[r.componentType] = (map[r.componentType] || 0) + 1;
+        return Object.entries(map).map(([componentType, count]) => ({ componentType, _count: { _all: count } }));
+      })(),
+      (async () => {
+        const prisma = new (await import('@prisma/client')).PrismaClient();
+        return prisma.uXReview.count();
+      })(),
+      (async () => {
+        const prisma = new (await import('@prisma/client')).PrismaClient();
+        const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        return prisma.uXReview.count({ where: { createdAt: { gte: since } } });
+      })(),
+    ]);
+
+    const formatCounts = (arr: any[], key: string) =>
+      arr.reduce((acc: Record<string, number>, item: any) => {
+        const k = item[key];
+        acc[k] = (item._count?._all as number) || 0;
+        return acc;
+      }, {});
+
+    res.json({
+      total: totalCount,
+      last7Days,
+      countsByStatus: formatCounts(byStatus as any[], 'status'),
+      countsByPriority: formatCounts(byPriority as any[], 'priority'),
+      countsByComponentType: formatCounts(byComponentType as any[], 'componentType'),
+    });
   } catch (error) {
     res.status(400).json({ error: (error as Error).message });
   }

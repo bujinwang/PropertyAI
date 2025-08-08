@@ -1,7 +1,7 @@
 import React, { ReactElement } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useAuth } from '@/contexts';
-import { Button } from '@/@propertyai/shared/components/Button';
+import { Button } from '@/components/ui/Button';
 import { UserRole } from '@/types/auth';
 
 interface ProtectedRouteProps {
@@ -30,12 +30,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         <Text style={styles.message}>
           You are not authorized to view this content. Please log in with an appropriate account.
         </Text>
-        <Button 
-          title="Log Out" 
-          variant="primary" 
-          onPress={logout}
-          style={styles.button}
-        />
+        <Button title="Log Out" mode="contained" onPress={logout} style={styles.button} />
       </View>
     );
   }
@@ -52,7 +47,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         </Text>
         <Button 
           title="Go Back" 
-          variant="outline" 
+          mode="outlined" 
           onPress={() => {
             // Handle navigation back
             // This would typically use navigation, but we're keeping it simple

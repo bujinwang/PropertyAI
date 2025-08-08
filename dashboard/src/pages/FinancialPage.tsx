@@ -1,6 +1,6 @@
 import React from 'react';
 import { Container, Typography, Box } from '@mui/material';
-import PaymentApproval from '../../components/financial/PaymentApproval';
+import PaymentApproval from '../components/financial/PaymentApproval';
 
 const FinancialPage: React.FC = () => {
   return (

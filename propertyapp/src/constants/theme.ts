@@ -13,6 +13,11 @@ export const COLORS = {
   success: '#34C759',
   warning: '#FFCC00',
   error: '#FF3B30',
+  // aliases used across UI components
+  white: '#FFFFFF',
+  gray: '#808080',
+  danger: '#FF3B30',
+  surface: '#FFFFFF',
 };
 
 export const FONTS = {

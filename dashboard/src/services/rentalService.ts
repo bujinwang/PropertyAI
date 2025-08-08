@@ -129,6 +129,9 @@ export interface RentalResponse {
 // Public endpoints (no authentication required)
 export const getPublicRentals = async (): Promise<RentalResponse> => {
   const response = await apiService.get(`/rentals/public`);
+  if (response.error) {
+    throw new Error(response.error.message || 'Failed to fetch public rentals');
+  }
   return response.data;
 };
 
@@ -150,6 +153,9 @@ export const getRentals = async (filters?: RentalFilterParams): Promise<RentalRe
   }
   
   const response = await apiService.get(`/rentals?${params.toString()}`);
+  if (response.error) {
+    throw new Error(response.error.message || 'Failed to fetch rentals');
+  }
   return response.data;
 };
 

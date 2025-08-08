@@ -3,7 +3,7 @@ import {
   Container,
   Typography,
   Box,
-  Grid2 as Grid,
+  Grid,
   Alert,
   CircularProgress,
 } from '@mui/material';

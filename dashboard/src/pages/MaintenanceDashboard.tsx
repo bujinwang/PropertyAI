@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button } from '@mui/material';
-import axios from 'axios';
+import { apiService } from '../services/apiService';
 
 const MaintenanceDashboard: React.FC = () => {
   const [tickets, setTickets] = useState<any[]>([]);
@@ -8,7 +8,7 @@ const MaintenanceDashboard: React.FC = () => {
   useEffect(() => {
     const fetchTickets = async () => {
       try {
-        const response = await axios.get<any[]>('http://localhost:5000/api/maintenance');
+        const response = await apiService.get<any[]>('/maintenance');
         setTickets(response.data);
       } catch (error) {
         console.error('Error fetching maintenance tickets:', error);
@@ -20,7 +20,7 @@ const MaintenanceDashboard: React.FC = () => {
 
   const handlePredictFailure = async (applianceId: string) => {
     try {
-      const response = await axios.get<{ prediction: string }>(`http://localhost:5000/api/predictive-maintenance/predict/${applianceId}`);
+      const response = await apiService.get<{ prediction: string }>(`/predictive-maintenance/predict/${applianceId}`);
       alert(`Prediction for appliance ${applianceId}: ${response.data.prediction}`);
     } catch (error) {
       console.error('Error predicting failure:', error);

@@ -8,7 +8,7 @@
  * - UpdateListingRequest → UpdateRentalDto
  */
 
-import { Rental } from './rental';
+import type { Rental } from './rental';
 
 console.error('Listing types have been removed. Please use Rental interface instead.');
 
@@ -25,4 +25,4 @@ export interface UpdateListingRequest {
 }
 
 // Re-export for backward compatibility during transition
-export { Rental as ListingReplacement } from './rental';
+export type { Rental as ListingReplacement } from './rental';

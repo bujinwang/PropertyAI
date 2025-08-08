@@ -10,7 +10,7 @@ import {
   CardHeader,
   Typography,
   Box,
-  Grid2 as Grid,
+  Grid,
   Chip,
   FormControl,
   InputLabel,

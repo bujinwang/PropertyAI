@@ -31,7 +31,7 @@ import {
  Delete as DeleteIcon,
  Search as SearchIcon
 } from '@mui/icons-material';
-import { getRentals, getPublicRentals, deleteRental, Rental, RentalFilterParams } from '../services/rentalService';
+import { getRentals, deleteRental, Rental, RentalFilterParams } from '../services/rentalService';
 
 const RentalListings = () => {
  const [rentals, setRentals] = useState<Rental[]>([]);
@@ -49,31 +49,27 @@ const RentalListings = () => {
  const fetchRentals = async () => {
   try {
    setLoading(true);
-   setError('');
-   
-   try {
-    // Try to fetch with authentication first
-    const response = await getRentals(filters);
-    setRentals(response.data);
+   setError(null);
+   const response = await getRentals(filters);
+   if (response && response.data) {
+    setRentals(response.data || []);
     if (response.meta) {
      setTotalPages(response.meta.totalPages);
      setTotal(response.meta.total);
-    }
-   } catch (authError: any) {
-    // If authentication fails (401), fall back to public endpoints
-    if (authError.status === 401) {
-     console.warn('Authentication failed, falling back to public rentals');
-     const publicResponse = await getPublicRentals();
-     setRentals(publicResponse.data);
-     // Public endpoints don't have pagination, so set defaults
-     setTotalPages(1);
-     setTotal(publicResponse.data.length);
     } else {
-     throw authError;
+     setTotalPages(1);
+     setTotal(response.data.length);
     }
+   } else {
+    setRentals([]);
+    setTotalPages(1);
+    setTotal(0);
    }
   } catch (err: any) {
    setError(err.message || 'Failed to fetch rentals');
+   setRentals([]);
+   setTotal(0);
+   setTotalPages(1);
   } finally {
    setLoading(false);
   }

@@ -7,8 +7,10 @@ import {
   RefreshControl,
   Dimensions,
   FlatList,
+  Modal,
+  TouchableOpacity,
+  Text,
 } from 'react-native';
-import { Text } from '@/components/ui/Text';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -36,6 +38,7 @@ export const OptimizedHomeScreen: React.FC = () => {
   const { user, logout } = useAuth();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [refreshing, setRefreshing] = useState(false);
+  const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -234,10 +237,81 @@ export const OptimizedHomeScreen: React.FC = () => {
             title="+" 
             variant="primary" 
             style={styles.fab}
-            onPress={() => {/* TODO: Add quick action menu */}}
+            onPress={() => setIsQuickActionsOpen(true)}
           />
         </View>
       </ScrollView>
+
+      {/* Quick Actions Bottom Sheet */}
+      <Modal
+        animationType="slide"
+        transparent
+        visible={isQuickActionsOpen}
+        onRequestClose={() => setIsQuickActionsOpen(false)}
+      >
+        <TouchableOpacity
+          activeOpacity={1}
+          style={styles.modalBackdrop}
+          onPress={() => setIsQuickActionsOpen(false)}
+        />
+        <View style={styles.sheetContainer}>
+          <View style={styles.sheetHandle} />
+          <Text style={styles.sheetTitle}>Quick Actions</Text>
+          <View style={styles.sheetActions}>
+            <Button
+              title="AI Setup Wizard"
+              variant="primary"
+              onPress={() => {
+                setIsQuickActionsOpen(false);
+                navigation.navigate('AIGuidedSetupWizard');
+              }}
+              style={styles.sheetActionButton}
+            />
+            <Button
+              title="View Properties"
+              variant="outline"
+              onPress={() => {
+                setIsQuickActionsOpen(false);
+                navigation.navigate('PropertyList');
+              }}
+              style={styles.sheetActionButton}
+            />
+            <Button
+              title="Add Property"
+              variant="outline"
+              onPress={() => {
+                setIsQuickActionsOpen(false);
+                navigation.navigate('PropertyCreate');
+              }}
+              style={styles.sheetActionButton}
+            />
+            <Button
+              title="Maintenance Request"
+              variant="outline"
+              onPress={() => {
+                setIsQuickActionsOpen(false);
+                navigation.navigate('MaintenanceCreate');
+              }}
+              style={styles.sheetActionButton}
+            />
+            <Button
+              title="View Payments"
+              variant="outline"
+              onPress={() => {
+                setIsQuickActionsOpen(false);
+                navigation.navigate('Payments');
+              }}
+              style={styles.sheetActionButton}
+            />
+          </View>
+          <Button
+            title="Cancel"
+            variant="secondary"
+            onPress={() => setIsQuickActionsOpen(false)}
+            style={styles.sheetCancelButton}
+          />
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -339,6 +413,35 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333',
   },
+  // Newly added: used by renderSectionHeader
+  sectionHeader: {
+    paddingHorizontal: LAYOUT.spacing.md,
+    paddingVertical: LAYOUT.spacing.sm,
+    backgroundColor: '#fff',
+  },
+  // Newly added: quick actions horizontal list styling
+  quickActionCard: {
+    width: 260,
+  },
+  quickActionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111',
+  },
+  quickActionDescription: {
+    marginTop: LAYOUT.spacing.xs,
+    fontSize: 13,
+    color: '#666',
+  },
+  quickActionButton: {
+    alignSelf: 'flex-end',
+  },
+  horizontalList: {
+    paddingHorizontal: LAYOUT.spacing.md,
+  },
+  cardSeparator: {
+    width: LAYOUT.spacing.md,
+  },
   fabContainer: {
     position: 'absolute',
     bottom: SAFE_AREA.bottom + LAYOUT.spacing.md,
@@ -349,5 +452,49 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 28,
     elevation: 8,
+  },
+  modalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+  },
+  sheetContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingHorizontal: LAYOUT.spacing.md,
+    paddingTop: LAYOUT.spacing.md,
+    paddingBottom: SAFE_AREA.bottom + LAYOUT.spacing.md,
+  },
+  sheetHandle: {
+    alignSelf: 'center',
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#ddd',
+    marginBottom: LAYOUT.spacing.sm,
+  },
+  sheetTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: LAYOUT.spacing.md,
+  },
+  sheetActions: {
+    gap: LAYOUT.spacing.sm,
+  },
+  sheetActionButton: {
+    marginBottom: LAYOUT.spacing.sm,
+  },
+  sheetCancelButton: {
+    marginTop: LAYOUT.spacing.sm,
   },
 });

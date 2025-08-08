@@ -1,4 +1,5 @@
 import { AccessibilityInfo, findNodeHandle } from 'react-native';
+import { useEffect, useRef, useCallback } from 'react';
 
 // Accessibility configuration
 export const AccessibilityConfig = {
@@ -116,9 +117,6 @@ export class ScreenReader {
     this.announce(`${action} completed successfully`, 'polite');
   }
 }
-
-// Accessibility hooks
-import { useEffect, useRef } from 'react';
 
 export const useAccessibility = () => {
   const ref = useRef<any>(null);

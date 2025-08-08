@@ -16,10 +16,8 @@ import {
   Chip,
   IconButton
 } from '@mui/material';
-import {
-  Clear as ClearIcon,
-  FilterList as FilterListIcon
-} from '@mui/material';
+import ClearIcon from '@mui/icons-material/Clear';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import { FiltersPanelProps, InsightCategory, InsightPriority, TimeRange } from '../../types/ai-insights';
 
 const FiltersPanel: React.FC<FiltersPanelProps> = ({
