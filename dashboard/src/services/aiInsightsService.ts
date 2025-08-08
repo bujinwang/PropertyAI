@@ -13,7 +13,7 @@ import {
   InsightCategory,
   ChartData
 } from '../types/ai-insights';
-import { apiService } from './api';
+import { apiService } from './apiService';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -23,7 +23,7 @@ class AIInsightsService {
    */
   async getInsights(filters?: Partial<InsightFilters>): Promise<InsightsResponse> {
     try {
-      const response = await apiService.post('/api/ai/insights', filters || {});
+      const response = await apiService.post('/ai/insights', filters || {});
       return response.data;
     } catch (error) {
       console.error('Error fetching insights:', error);
@@ -36,7 +36,7 @@ class AIInsightsService {
    */
   async getInsightById(id: string): Promise<Insight | null> {
     try {
-      const response = await apiService.get(`/api/ai/insights/${id}`);
+      const response = await apiService.get(`/ai/insights/${id}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching insight:', error);
@@ -67,7 +67,7 @@ class AIInsightsService {
     completed: boolean
   ): Promise<void> {
     try {
-      await apiService.put(`/api/ai/insights/${insightId}/recommendations/${recommendationId}/actions/${actionId}`, {
+      await apiService.put(`/ai/insights/${insightId}/recommendations/${recommendationId}/actions/${actionId}`, {
         completed
       });
     } catch (error) {
@@ -85,7 +85,7 @@ class AIInsightsService {
     actionTaken?: boolean;
   }): Promise<void> {
     try {
-      await apiService.post(`/api/ai/insights/${insightId}/feedback`, feedback);
+      await apiService.post(`/ai/insights/${insightId}/feedback`, feedback);
     } catch (error) {
       console.error('Error submitting feedback:', error);
       throw new Error('Failed to submit feedback');
@@ -103,7 +103,7 @@ class AIInsightsService {
     lastUpdated: Date;
   }> {
     try {
-      const response = await apiService.get('/api/ai/insights/dashboard-summary');
+      const response = await apiService.get('/ai/insights/dashboard-summary');
       return response.data;
     } catch (error) {
       console.error('Error fetching dashboard summary:', error);
@@ -116,7 +116,7 @@ class AIInsightsService {
    */
   async getInsightCategories(): Promise<InsightCategoryGroup[]> {
     try {
-      const response = await apiService.get('/api/ai/insights/categories');
+      const response = await apiService.get('/ai/insights/categories');
       return response.data;
     } catch (error) {
       console.error('Error fetching insight categories:', error);
@@ -136,7 +136,7 @@ class AIInsightsService {
     }>;
   }> {
     try {
-      const response = await apiService.get(`/api/ai/insights/timeline?range=${timeRange}`);
+      const response = await apiService.get(`/ai/insights/timeline?range=${timeRange}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching insights timeline:', error);
@@ -149,7 +149,7 @@ class AIInsightsService {
    */
   async regenerateInsight(insightId: string): Promise<Insight> {
     try {
-      const response = await apiService.post(`/api/ai/insights/${insightId}/regenerate`);
+      const response = await apiService.post(`/ai/insights/${insightId}/regenerate`);
       return response.data;
     } catch (error) {
       console.error('Error regenerating insight:', error);
@@ -162,7 +162,7 @@ class AIInsightsService {
    */
   async markInsightAsRead(insightId: string, read: boolean): Promise<void> {
     try {
-      await apiService.put(`/api/ai/insights/${insightId}/read`, { read });
+      await apiService.put(`/ai/insights/${insightId}/read`, { read });
     } catch (error) {
       console.error('Error marking insight as read:', error);
       throw new Error('Failed to mark insight as read');
@@ -178,7 +178,7 @@ class AIInsightsService {
     limit?: number;
   }): Promise<AIRecommendation[]> {
     try {
-      const response = await apiService.post('/api/ai/recommendations', filters || {});
+      const response = await apiService.post('/ai/recommendations', filters || {});
       return response.data;
     } catch (error) {
       console.error('Error fetching AI recommendations:', error);

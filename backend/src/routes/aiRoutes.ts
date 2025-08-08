@@ -12,4 +12,9 @@ router.post('/follow-up', aiController.followUp);
 router.post('/assess-risk', aiController.assessRisk);
 router.post('/pricing-recommendation', pricingController.getPriceRecommendation);
 
+// Placeholder routes for AI Insights Dashboard
+router.post('/insights', aiController.getInsights);
+router.get('/insights/dashboard-summary', aiController.getDashboardSummary);
+router.get('/insights/categories', aiController.getInsightCategories);
+
 export default router;

@@ -413,7 +413,7 @@ const InsightCard: React.FC<InsightCardProps> = ({
         </Box>
 
         {/* Key Metrics */}
-        {!compact && insight.metrics.length > 0 && (
+        {!compact && insight.metrics && insight.metrics.length > 0 && (
           <Box sx={{ mb: 2 }}>
             <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
               Key Metrics
@@ -530,7 +530,7 @@ const InsightCard: React.FC<InsightCardProps> = ({
 
         {/* Tags */}
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
-          {insight.tags.slice(0, compact ? 2 : 3).map((tag, index) => (
+          {(insight.tags || []).slice(0, compact ? 2 : 3).map((tag, index) => (
             <Chip
               key={index}
               label={tag}
@@ -545,9 +545,9 @@ const InsightCard: React.FC<InsightCardProps> = ({
               }}
             />
           ))}
-          {insight.tags.length > (compact ? 2 : 3) && (
+          {(insight.tags || []).length > (compact ? 2 : 3) && (
             <Chip
-              label={`+${insight.tags.length - (compact ? 2 : 3)}`}
+              label={`+${(insight.tags || []).length - (compact ? 2 : 3)}`}
               size="small"
               variant="outlined"
               sx={{ 
@@ -571,7 +571,7 @@ const InsightCard: React.FC<InsightCardProps> = ({
             opacity: 0.7
           }}
         >
-          {insight.timestamp.toLocaleDateString()}
+          {new Date(insight.timestamp).toLocaleDateString()}
         </Typography>
       </CardContent>
     </Card>

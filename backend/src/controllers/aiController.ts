@@ -148,3 +148,75 @@ export const analyzeImage = async (req: Request, res: Response, next: NextFuncti
     next(error);
   }
 };
+
+// Placeholder for AI Insights Dashboard
+export const getInsights = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Mock data for now
+    const insights = [
+      {
+        id: 'insight1',
+        title: 'High Vacancy in Downtown Properties',
+        description: 'Properties in the downtown area are experiencing higher than average vacancy rates over the past quarter.',
+        category: 'operational',
+        priority: 'critical',
+        confidence: 0.95,
+        impact: 0.8,
+        recommendations: [
+          { id: 'rec1', text: 'Adjust rental prices for downtown units.', actions: [{ id: 'act1', text: 'Review pricing strategy', completed: false }] },
+          { id: 'rec2', text: 'Increase marketing efforts in downtown area.', actions: [{ id: 'act2', text: 'Launch social media campaign', completed: false }] }
+        ],
+        timestamp: new Date().toISOString(),
+        trend: 'up',
+      },
+      {
+        id: 'insight2',
+        title: 'Tenant Satisfaction Dropping for Maintenance',
+        description: 'Feedback from tenants indicates a decline in satisfaction regarding maintenance request resolution times.',
+        category: 'tenant_satisfaction',
+        priority: 'high',
+        confidence: 0.88,
+        impact: 0.7,
+        recommendations: [
+          { id: 'rec3', text: 'Investigate maintenance workflow bottlenecks.', actions: [{ id: 'act3', text: 'Analyze ticket resolution times', completed: false }] }
+        ],
+        timestamp: new Date().toISOString(),
+        trend: 'down',
+      },
+    ];
+
+    res.json({ status: 'success', data: { categories: [{ id: 'cat1', name: 'Operational', category: 'operational', insights: insights.filter(i => i.category === 'operational'), totalCount: insights.filter(i => i.category === 'operational').length }, { id: 'cat2', name: 'Tenant Satisfaction', category: 'tenant_satisfaction', insights: insights.filter(i => i.category === 'tenant_satisfaction'), totalCount: insights.filter(i => i.category === 'tenant_satisfaction').length }] } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getDashboardSummary = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Mock data for now
+    const summary = {
+      totalInsights: 15,
+      highPriorityCount: 5,
+      avgConfidence: 92.5,
+      categoryCounts: { operational: 8, financial: 4, tenant_satisfaction: 3 },
+      lastUpdated: new Date().toISOString(),
+    };
+    res.json({ status: 'success', data: summary });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getInsightCategories = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Mock data for now
+    const categories = [
+      { id: 'cat1', name: 'Operational', category: 'operational', totalCount: 8 },
+      { id: 'cat2', name: 'Financial', category: 'financial', totalCount: 4 },
+      { id: 'cat3', name: 'Tenant Satisfaction', category: 'tenant_satisfaction', totalCount: 3 },
+    ];
+    res.json({ status: 'success', data: categories });
+  } catch (error) {
+    next(error);
+  }
+};

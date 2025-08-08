@@ -85,10 +85,10 @@ const ExplanationTooltip: React.FC<ExplanationTooltipProps> = ({
           variant="body2" 
           sx={{ mb: 2 }}
         >
-          {explanation.content}
+          {explanation?.content || 'No explanation available'}
         </Typography>
         
-        {explanation.factors && explanation.factors.length > 0 && (
+        {explanation?.factors && explanation.factors.length > 0 && (
           <>
             <Divider sx={{ my: 1 }} />
             <Typography 
@@ -104,7 +104,7 @@ const ExplanationTooltip: React.FC<ExplanationTooltipProps> = ({
               role="list"
               aria-label="AI decision factors"
             >
-              {explanation.factors.map((factor, index) => (
+              {explanation?.factors?.map((factor, index) => (
                 <ListItem 
                   key={index} 
                   sx={{ py: 0.5, px: 0 }}
@@ -140,7 +140,7 @@ const ExplanationTooltip: React.FC<ExplanationTooltipProps> = ({
           </>
         )}
         
-        {explanation.methodology && (
+        {explanation?.methodology && (
           <>
             <Divider sx={{ my: 1 }} />
             <Typography variant="caption" sx={{ fontWeight: 600, mb: 0.5, display: 'block' }}>
@@ -152,14 +152,14 @@ const ExplanationTooltip: React.FC<ExplanationTooltipProps> = ({
           </>
         )}
         
-        {explanation.limitations && explanation.limitations.length > 0 && (
+        {explanation?.limitations && explanation.limitations.length > 0 && (
           <>
             <Divider sx={{ my: 1 }} />
             <Typography variant="caption" sx={{ fontWeight: 600, mb: 0.5, display: 'block' }}>
               Limitations:
             </Typography>
             <List dense sx={{ py: 0 }}>
-              {explanation.limitations.map((limitation, index) => (
+              {explanation?.limitations?.map((limitation, index) => (
                 <ListItem key={index} sx={{ py: 0.25, px: 0 }}>
                   <Typography variant="caption" color="text.secondary">
                     • {limitation}
