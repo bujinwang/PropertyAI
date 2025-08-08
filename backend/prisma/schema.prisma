@@ -350,6 +350,10 @@ model Message {
   readAt                        DateTime?
   receiverId                    String
   sentAt                        DateTime            @default(now())
+  sentiment                     Sentiment?          @default(NEUTRAL)
+  sentimentScore                Float?              // -1.0 to 1.0 sentiment score
+  category                      String?             // Issue category for analytics
+  isEarlyWarning                Boolean             @default(false)
   FollowUp                      FollowUp?
   MaintenanceRequest            MaintenanceRequest? @relation(fields: [maintenanceRequestId], references: [id])
   User_Message_receiverIdToUser User                @relation("Message_receiverIdToUser", fields: [receiverId], references: [id])
@@ -358,6 +362,9 @@ model Message {
   @@index([conversationId])
   @@index([receiverId])
   @@index([senderId])
+  @@index([sentiment])
+  @@index([category])
+  @@index([isEarlyWarning])
 }
 
 model Notification {

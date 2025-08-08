@@ -25,7 +25,7 @@ const createApplication = async (applicationData: ApplicationFormData): Promise<
 
 const getApplicationById = async (id: string): Promise<Application> => {
   try {
-    const response = await api.get<Application>(`/tenant-screening/applications/${id}`);
+    const response = await api.get<Application>(`/applications/${id}`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching application ${id}:`, error);
@@ -35,7 +35,6 @@ const getApplicationById = async (id: string): Promise<Application> => {
 
 const updateApplication = async (id: string, applicationData: Partial<ApplicationFormData>): Promise<Application> => {
   try {
-    // Change from '/tenant-screening/applications' to '/applications'
     const response = await api.put<Application>(`/applications/${id}`, applicationData);
     return response.data;
   } catch (error) {
@@ -44,40 +43,22 @@ const updateApplication = async (id: string, applicationData: Partial<Applicatio
   }
 };
 
-const getApplications = async (): Promise<Application[]> => {
-  try {
-    // Change from '/tenant-screening/applications' to '/applications'
-    const response = await api.get<Application[]>('/applications');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching applications:', error);
-    throw error;
-  }
-};
-
-const getApplicationById = async (id: string): Promise<Application> => {
-  try {
-    // Change from '/tenant-screening/applications' to '/applications'
-    const response = await api.get<Application>(`/applications/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching application ${id}:`, error);
-    throw error;
-  }
-};
+// Removed duplicate declarations of getApplications and getApplicationById
 
 const deleteApplication = async (id: string): Promise<void> => {
   try {
-    await api.delete(`/tenant-screening/applications/${id}`);
+    await api.delete(`/applications/${id}`);
   } catch (error) {
     console.error(`Error deleting application ${id}:`, error);
     throw error;
   }
 };
 
-const submitBackgroundCheck = async (id: string): Promise<Application> => {
+const submitBackgroundCheck = async (
+  id: string
+): Promise<{ transunionResult: any; experianResult: any }> => {
   try {
-    const response = await api.post<Application>(`/tenant-screening/applications/${id}/background-check`);
+    const response = await api.post(`/background-checks`, { applicationId: id });
     return response.data;
   } catch (error) {
     console.error(`Error submitting background check for application ${id}:`, error);
@@ -87,7 +68,7 @@ const submitBackgroundCheck = async (id: string): Promise<Application> => {
 
 const approveApplication = async (id: string): Promise<Application> => {
   try {
-    const response = await api.post<Application>(`/tenant-screening/applications/${id}/approve`);
+    const response = await api.put<Application>(`/applications/${id}`, { status: 'approved' });
     return response.data;
   } catch (error) {
     console.error(`Error approving application ${id}:`, error);
@@ -97,7 +78,10 @@ const approveApplication = async (id: string): Promise<Application> => {
 
 const rejectApplication = async (id: string, reason: string): Promise<Application> => {
   try {
-    const response = await api.post<Application>(`/tenant-screening/applications/${id}/reject`, { reason });
+    const response = await api.put<Application>(`/applications/${id}`, {
+      status: 'rejected',
+      rejectionReason: reason,
+    });
     return response.data;
   } catch (error) {
     console.error(`Error rejecting application ${id}:`, error);
@@ -111,7 +95,8 @@ const rejectApplication = async (id: string, reason: string): Promise<Applicatio
  */
 const getScreeningIssueAlerts = async (): Promise<any[]> => {
   try {
-    const response = await api.get<any[]>('/tenant-screening/alerts');
+    // Backend mounts this under /api/tenants/tenant-screening/alerts
+    const response = await api.get<any[]>('/tenants/tenant-screening/alerts');
     return response.data;
   } catch (error) {
     console.error('Error fetching screening issue alerts:', error);

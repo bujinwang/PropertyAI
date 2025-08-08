@@ -5,6 +5,7 @@ import { properties } from "./seed/data/properties";
 import { units } from "./seed/data/units";
 import { leases } from "./seed/data/leases";
 import { maintenanceRequests } from "./seed/data/maintenanceRequests";
+import { messages } from "./seed/data/messages";
 
 const prisma = new PrismaClient();
 
@@ -35,6 +36,7 @@ async function seedPostgreSQL() {
       prisma.message.deleteMany(),
       prisma.document.deleteMany(),
       prisma.maintenanceRequest.deleteMany(),
+      prisma.tenantRating.deleteMany(), // Add this line to fix foreign key constraint
       prisma.lease.deleteMany(),
       prisma.rentalImage.deleteMany(),
       prisma.rental.deleteMany(),
@@ -335,6 +337,44 @@ async function seedPostgreSQL() {
     console.log(
       `Seeded ${createdMaintenanceRequests.length} maintenance requests.`
     );
+
+    // Seed Messages with sentiment analytics
+    const createdMessages = [];
+    for (const messageData of messages) {
+      // Find sender and receiver users
+      const sender = createdUsers.find(u => u.id === messageData.senderId);
+      const receiver = createdUsers.find(u => u.id === messageData.receiverId);
+      
+      if (!sender || !receiver) {
+        console.warn(`Sender or receiver not found for message, skipping...`);
+        continue;
+      }
+
+      // Find maintenance request if specified
+      let maintenanceRequest = null;
+      if (messageData.maintenanceRequestId) {
+        maintenanceRequest = createdMaintenanceRequests.find(
+          mr => mr.id === messageData.maintenanceRequestId
+        );
+      }
+
+      const message = await prisma.message.create({
+        data: {
+          content: messageData.content,
+          senderId: messageData.senderId,
+          receiverId: messageData.receiverId,
+          maintenanceRequestId: messageData.maintenanceRequestId || null,
+          sentAt: messageData.createdAt ? new Date(messageData.createdAt) : new Date(),
+          readAt: messageData.readAt ? new Date(messageData.readAt) : null,
+          sentiment: messageData.sentiment || 'NEUTRAL',
+          sentimentScore: messageData.sentimentScore || 0.0,
+          category: messageData.category || null,
+          isEarlyWarning: messageData.isEarlyWarning || false,
+        },
+      });
+      createdMessages.push(message);
+    }
+    console.log(`Seeded ${createdMessages.length} messages with sentiment analytics.`);
 
     // Seed Market Data
     const marketDataItems = [
