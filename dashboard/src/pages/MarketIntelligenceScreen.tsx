@@ -16,6 +16,7 @@ import {
   CompetitorAnalysisMap,
 } from '../components/market-intelligence';
 import { marketIntelligenceService } from '../services/marketIntelligenceService';
+import { apiService } from '../services/apiService';
 import type {
   AISummary,
   CompetitorData,
