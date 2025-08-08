@@ -116,6 +116,14 @@ const DemandForecastCharts: React.FC<DemandForecastChartsProps> = ({
 
   // Prepare forecast chart data
   const forecastChartData = useMemo(() => {
+    // Add null check for forecasts
+    if (!forecasts || forecasts.length === 0) {
+      return {
+        labels: [],
+        datasets: []
+      };
+    }
+  
     const labels = forecasts.map(forecast => forecast.period);
     const demandValues = forecasts.map(forecast => forecast.predictedDemand);
     const confidenceValues = forecasts.map(forecast => forecast.confidence.value);
@@ -166,6 +174,14 @@ const DemandForecastCharts: React.FC<DemandForecastChartsProps> = ({
 
   // Prepare confidence chart data
   const confidenceChartData = useMemo(() => {
+    // Add null check for forecasts
+    if (!forecasts || forecasts.length === 0) {
+      return {
+        labels: [],
+        datasets: []
+      };
+    }
+  
     const labels = forecasts.map(forecast => forecast.period);
     const confidenceValues = forecasts.map(forecast => forecast.confidence.value);
 
@@ -254,7 +270,7 @@ const DemandForecastCharts: React.FC<DemandForecastChartsProps> = ({
 
   // Get overall forecast summary
   const overallTrend = useMemo(() => {
-    if (forecasts.length === 0) return 'stable';
+    if (!forecasts || forecasts.length === 0) return 'stable';
     const firstValue = forecasts[0].predictedDemand;
     const lastValue = forecasts[forecasts.length - 1].predictedDemand;
     const change = ((lastValue - firstValue) / firstValue) * 100;
@@ -265,7 +281,7 @@ const DemandForecastCharts: React.FC<DemandForecastChartsProps> = ({
   }, [forecasts]);
 
   const averageConfidence = useMemo(() => {
-    if (forecasts.length === 0) return 0;
+    if (!forecasts || forecasts.length === 0) return 0;
     return forecasts.reduce((sum, forecast) => sum + forecast.confidence.value, 0) / forecasts.length;
   }, [forecasts]);
 
@@ -358,7 +374,7 @@ const DemandForecastCharts: React.FC<DemandForecastChartsProps> = ({
                     Forecast Periods
                   </Typography>
                   <Typography variant="h4" color="primary">
-                    {forecasts.length}
+                    {forecasts?.length || 0}
                   </Typography>
                   <Typography variant="caption" color="textSecondary">
                     Data Points
@@ -408,7 +424,7 @@ const DemandForecastCharts: React.FC<DemandForecastChartsProps> = ({
               subheader="Key factors influencing demand predictions"
             />
             <CardContent>
-              {forecasts.length > 0 && forecasts[0].factors.map((factor) => (
+              {forecasts && forecasts.length > 0 && forecasts[0].factors?.map((factor) => (
                 <Accordion
                   key={factor.name}
                   expanded={expandedFactor === factor.name}

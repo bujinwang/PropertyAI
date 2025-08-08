@@ -69,7 +69,7 @@ const CompetitorAnalysisMap: React.FC<CompetitorAnalysisMapProps> = ({
 
   // Calculate map center based on competitor locations
   useEffect(() => {
-    if (competitors.length > 0) {
+    if (competitors && competitors.length > 0) {
       const avgLat = competitors.reduce((sum, comp) => sum + comp.location[0], 0) / competitors.length;
       const avgLng = competitors.reduce((sum, comp) => sum + comp.location[1], 0) / competitors.length;
       setCenter([avgLat, avgLng]);
@@ -90,7 +90,7 @@ const CompetitorAnalysisMap: React.FC<CompetitorAnalysisMapProps> = ({
     return 16; // Small
   };
 
-  const filteredCompetitors = competitors.filter(competitor => {
+  const filteredCompetitors = (competitors || []).filter(competitor => {
     if (mapFilter === 'all') return true;
     if (mapFilter === 'high-occupancy') return competitor.occupancyRate >= 90;
     if (mapFilter === 'low-occupancy') return competitor.occupancyRate < 80;
@@ -120,7 +120,7 @@ const CompetitorAnalysisMap: React.FC<CompetitorAnalysisMapProps> = ({
   };
 
   const handleRecenter = () => {
-    if (competitors.length > 0) {
+    if (competitors && competitors.length > 0) {
       const avgLat = competitors.reduce((sum, comp) => sum + comp.location[0], 0) / competitors.length;
       const avgLng = competitors.reduce((sum, comp) => sum + comp.location[1], 0) / competitors.length;
       setCenter([avgLat, avgLng]);
@@ -148,7 +148,7 @@ const CompetitorAnalysisMap: React.FC<CompetitorAnalysisMapProps> = ({
     <Card elevation={2}>
       <CardHeader
         title="Competitor Analysis Map"
-        subheader={`${filteredCompetitors.length} of ${competitors.length} competitors shown`}
+        subheader={`${filteredCompetitors.length} of ${competitors?.length || 0} competitors shown`}
         action={
           <Box display="flex" gap={1} alignItems="center">
             <FormControl size="small" sx={{ minWidth: 120 }}>

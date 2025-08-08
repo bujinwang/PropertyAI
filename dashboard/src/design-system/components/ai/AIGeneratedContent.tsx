@@ -35,8 +35,8 @@ import {
   announceToScreenReader
 } from '../../../utils/accessibility';
 
-const AIGeneratedContent: React.FC<AIGeneratedContentProps> = memo(({ 
-  children, 
+export const AIGeneratedContent: React.FC<AIGeneratedContentProps> = ({
+  children,
   confidence,
   explanation,
   onFeedback,
@@ -57,8 +57,9 @@ const AIGeneratedContent: React.FC<AIGeneratedContentProps> = memo(({
   // Performance monitoring
   const { startRender, endRender } = useAIPerformanceMonitor('AIGeneratedContent');
   
-  // Optimize props to prevent unnecessary re-renders
-  const optimizedProps = useOptimizedAIProps({ variant, showLabel, className, ...props });
+  // Optimize props to prevent unnecessary re-renders, excluding showLabel from DOM props
+  const { showLabel: _, ...domProps } = props;
+  const optimizedProps = useOptimizedAIProps({ variant, className, ...domProps });
 
   // Memoize expensive calculations using performance utilities
   const confidenceColor = useConfidenceColor(confidence || 0, true);
@@ -161,7 +162,7 @@ const AIGeneratedContent: React.FC<AIGeneratedContentProps> = memo(({
       {...ariaAttributes}
       {...optimizedProps}
     >
-      {optimizedProps.showLabel && (
+      {showLabel && (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <WbIncandescent 
@@ -354,7 +355,7 @@ const AIGeneratedContent: React.FC<AIGeneratedContentProps> = memo(({
       )}
     </Paper>
   );
-});
+};
 
 AIGeneratedContent.displayName = 'AIGeneratedContent';
 

@@ -50,6 +50,7 @@ import managerRoutes from './manager.routes';
 import publicListingRoutes from './publicListing.routes';
 import uxReviewRoutes from './uxReview.routes';
 import marketingRoutes from './marketing.routes';
+import marketIntelligenceRoutes from './marketIntelligence.routes';
 
 const router = express.Router();
 
@@ -118,6 +119,7 @@ router.use(`${API_PREFIX}/listings`, publicListingRoutes);
 router.use(`${API_PREFIX}/ux-review`, uxReviewRoutes);
 router.use(`${API_PREFIX}/marketing`, marketingRoutes);
 router.use(`${API_PREFIX}/tenant-ratings`, tenantRatingRoutes);
+router.use(`${API_PREFIX}/market-intelligence`, marketIntelligenceRoutes);
 
 router.post(`${API_PREFIX}/cache/clear`, (req, res) => {
   const { key } = req.body;

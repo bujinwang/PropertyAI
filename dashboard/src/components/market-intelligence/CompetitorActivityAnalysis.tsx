@@ -145,12 +145,12 @@ const CompetitorActivityAnalysis: React.FC<CompetitorActivityAnalysisProps> = ({
    <Card elevation={2}>
     <CardHeader
      title="Competitor Activity Analysis"
-     subheader={`Tracking ${competitors.length} key competitors in your market area`}
+     subheader={`Tracking ${competitors?.length || 0} key competitors in your market area`}
     />
     <CardContent>
      <Grid container spacing={3}>
-      {competitors.map((competitor) => (
-       <Grid xs={12} md={6} key={competitor.id}>
+      {(competitors || []).map((competitor) => (
+       <Grid size={{ xs: 12, md: 6 }} key={competitor.id}>
         <Card 
          variant="outlined" 
          sx={{ 

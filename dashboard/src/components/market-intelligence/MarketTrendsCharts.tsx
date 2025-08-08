@@ -98,6 +98,11 @@ const MarketTrendsCharts: React.FC<MarketTrendsChartsProps> = ({
 
   // Group trends by category
   const trendsByCategory = useMemo(() => {
+    // Add null check for trends
+    if (!trends || trends.length === 0) {
+      return {};
+    }
+    
     return trends.reduce((acc, trend) => {
       if (!acc[trend.category]) {
         acc[trend.category] = [];
@@ -250,7 +255,7 @@ const MarketTrendsCharts: React.FC<MarketTrendsChartsProps> = ({
             if (!latestTrend) return null;
 
             return (
-              <Grid xs={12} sm={6} md={3} key={category}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={category}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center' }}>
                     <Box display="flex" alignItems="center" justifyContent="center" gap={1} mb={1}>
@@ -286,7 +291,7 @@ const MarketTrendsCharts: React.FC<MarketTrendsChartsProps> = ({
         <Grid container spacing={3}>
           {/* Rent Prices Chart */}
           {trendsByCategory.rent && trendsByCategory.rent.length > 0 && (
-            <Grid xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Card variant="outlined">
                 <CardHeader
                   title="Average Rent Prices"
@@ -303,7 +308,7 @@ const MarketTrendsCharts: React.FC<MarketTrendsChartsProps> = ({
 
           {/* Vacancy Rates Chart */}
           {trendsByCategory.vacancy && trendsByCategory.vacancy.length > 0 && (
-            <Grid xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Card variant="outlined">
                 <CardHeader
                   title="Vacancy Rates"

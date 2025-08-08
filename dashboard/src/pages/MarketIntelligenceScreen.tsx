@@ -12,27 +12,27 @@ import {
   CompetitorActivityAnalysis,
   MarketOpportunityAlerts,
   MarketTrendsCharts,
-  CompetitorAnalysisMap,
   DemandForecastCharts,
+  CompetitorAnalysisMap,
 } from '../components/market-intelligence';
-import {
+import marketIntelligenceService from '../services/marketIntelligenceService';
+import type {
   AISummary,
   CompetitorData,
   MarketOpportunity,
   MarketTrend,
   DemandForecast,
 } from '../types/market-intelligence';
-import { AIFeedback } from '../types/ai';
-import marketIntelligenceService from '../services/marketIntelligenceService';
+import type { AIFeedback } from '../types/ai';
 
 const MarketIntelligenceScreen: React.FC = () => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [marketSummary, setMarketSummary] = useState<AISummary | null>(null);
   const [competitors, setCompetitors] = useState<CompetitorData[]>([]);
   const [opportunities, setOpportunities] = useState<MarketOpportunity[]>([]);
   const [marketTrends, setMarketTrends] = useState<MarketTrend[]>([]);
   const [demandForecasts, setDemandForecasts] = useState<DemandForecast[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadMarketData();
@@ -42,24 +42,40 @@ const MarketIntelligenceScreen: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-
-      // Load all market intelligence data
-      const [summaryData, competitorData, opportunityData, trendsData, forecastsData] = await Promise.all([
+  
+      // Load all market intelligence data with fallback values
+      const [summaryData, competitorData, opportunityData, trendsData, forecastsData] = await Promise.allSettled([
         marketIntelligenceService.fetchMarketSummary(),
         marketIntelligenceService.fetchCompetitorActivity(),
         marketIntelligenceService.fetchMarketOpportunities(),
         marketIntelligenceService.fetchMarketTrends(),
         marketIntelligenceService.fetchDemandForecasts(),
       ]);
-
-      setMarketSummary(summaryData);
-      setCompetitors(competitorData);
-      setOpportunities(opportunityData);
-      setMarketTrends(trendsData);
-      setDemandForecasts(forecastsData);
+  
+      // Handle results with fallbacks
+      setMarketSummary(summaryData.status === 'fulfilled' ? summaryData.value : null);
+      setCompetitors(competitorData.status === 'fulfilled' ? competitorData.value : []);
+      setOpportunities(opportunityData.status === 'fulfilled' ? opportunityData.value : []);
+      setMarketTrends(trendsData.status === 'fulfilled' ? trendsData.value : []);
+      setDemandForecasts(forecastsData.status === 'fulfilled' ? forecastsData.value : []);
+  
+      // Check if any requests failed
+      const failedRequests = [summaryData, competitorData, opportunityData, trendsData, forecastsData]
+        .filter(result => result.status === 'rejected');
+      
+      if (failedRequests.length > 0) {
+        console.warn(`${failedRequests.length} API requests failed, using fallback data`);
+      }
     } catch (err) {
       console.error('Error loading market data:', err);
       setError('Failed to load market intelligence data. Please try again.');
+  
+      // Set fallback empty data
+      setMarketSummary(null);
+      setCompetitors([]);
+      setOpportunities([]);
+      setMarketTrends([]);
+      setDemandForecasts([]);
     } finally {
       setLoading(false);
     }
@@ -159,7 +175,7 @@ const MarketIntelligenceScreen: React.FC = () => {
 
       <Grid container spacing={4}>
         {/* AI-Generated Market Summary */}
-        <Grid xs={12}>
+        <Grid size={12}>
           {marketSummary && (
             <MarketSummaryCard
               summary={marketSummary}
@@ -170,7 +186,7 @@ const MarketIntelligenceScreen: React.FC = () => {
         </Grid>
 
         {/* Market Trends Charts */}
-        <Grid xs={12}>
+        <Grid size={12}>
           <MarketTrendsCharts
             trends={marketTrends}
             loading={loading}
@@ -178,7 +194,7 @@ const MarketIntelligenceScreen: React.FC = () => {
         </Grid>
 
         {/* Competitor Analysis Map and Activity */}
-        <Grid xs={12} lg={6}>
+        <Grid size={{ xs: 12, lg: 6 }}>
           <CompetitorAnalysisMap
             competitors={competitors}
             onCompetitorSelect={handleCompetitorSelect}
@@ -186,7 +202,7 @@ const MarketIntelligenceScreen: React.FC = () => {
           />
         </Grid>
 
-        <Grid xs={12} lg={6}>
+        <Grid size={{ xs: 12, lg: 6 }}>
           <CompetitorActivityAnalysis
             competitors={competitors}
             onCompetitorSelect={handleCompetitorSelect}
@@ -196,7 +212,7 @@ const MarketIntelligenceScreen: React.FC = () => {
         </Grid>
 
         {/* Demand Forecast Charts */}
-        <Grid xs={12}>
+        <Grid size={12}>
           <DemandForecastCharts
             forecasts={demandForecasts}
             loading={loading}
@@ -204,7 +220,7 @@ const MarketIntelligenceScreen: React.FC = () => {
         </Grid>
 
         {/* Market Opportunity Alerts */}
-        <Grid xs={12}>
+        <Grid size={12}>
           <MarketOpportunityAlerts
             opportunities={opportunities}
             onOpportunityAction={handleOpportunityAction}

@@ -177,7 +177,6 @@ const ExplanationTooltip: React.FC<ExplanationTooltipProps> = ({
     <Tooltip
       title={renderContent()}
       placement={placement}
-      interactive={interactive}
       arrow
       open={isOpen}
       onOpen={handleOpen}
@@ -198,7 +197,11 @@ const ExplanationTooltip: React.FC<ExplanationTooltipProps> = ({
               },
             },
           },
-          onKeyDown: handleKeyDown,
+        },
+      }}
+      componentsProps={{
+        tooltip: {
+          interactive: interactive,
         },
       }}
     >

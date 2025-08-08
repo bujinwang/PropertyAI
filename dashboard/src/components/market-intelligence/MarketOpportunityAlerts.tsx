@@ -43,12 +43,12 @@ import {
  Bookmark,
  Share,
 } from '@mui/icons-material';
-// Change from:
-import { AIGeneratedContent } from '../../design-system/components/ai/AIGeneratedContent';
-import { ConfidenceIndicator } from '../../design-system/components/ai/ConfidenceIndicator';
-import { ExplanationTooltip } from '../../design-system/components/ai/ExplanationTooltip';
+// Remove these duplicate lines:
+// import { AIGeneratedContent } from '../../design-system/components/ai/AIGeneratedContent';
+// import { ConfidenceIndicator } from '../../design-system/components/ai/ConfidenceIndicator';
+// import { ExplanationTooltip } from '../../design-system/components/ai/ExplanationTooltip';
 
-// To:
+// Keep only these imports:
 import AIGeneratedContent from '../../design-system/components/ai/AIGeneratedContent';
 import ConfidenceIndicator from '../../design-system/components/ai/ConfidenceIndicator';
 import ExplanationTooltip from '../../design-system/components/ai/ExplanationTooltip';
@@ -156,11 +156,18 @@ const MarketOpportunityAlerts: React.FC<MarketOpportunityAlertsProps> = ({
   }
  };
 
- const sortedOpportunities = [...opportunities].sort((a, b) => {
-  const priorityOrder = { critical: 4, high: 3, medium: 2, low: 1 };
-  return priorityOrder[b.priority as keyof typeof priorityOrder] - 
-      priorityOrder[a.priority as keyof typeof priorityOrder];
- });
+ const sortedOpportunities = useMemo(() => {
+  // Add null check for opportunities
+  if (!opportunities || opportunities.length === 0) {
+    return [];
+  }
+  
+  return [...opportunities].sort((a, b) => {
+    const priorityOrder = { critical: 4, high: 3, medium: 2, low: 1 };
+    return priorityOrder[b.priority as keyof typeof priorityOrder] - 
+        priorityOrder[a.priority as keyof typeof priorityOrder];
+  });
+}, [opportunities]);
 
  if (loading) {
   return (
@@ -185,11 +192,11 @@ const MarketOpportunityAlerts: React.FC<MarketOpportunityAlertsProps> = ({
    <Card elevation={2}>
     <CardHeader
      title="Market Opportunities"
-     subheader={`${opportunities.length} opportunities identified with potential ROI insights`}
+     subheader={`${opportunities?.length || 0} opportunities identified with potential ROI insights`}
      action={
       <Box display="flex" gap={1}>
        {['critical', 'high', 'medium', 'low'].map((priority) => {
-        const count = opportunities.filter(op => op.priority === priority).length;
+        const count = opportunities?.filter(op => op.priority === priority).length || 0;
         return count > 0 ? (
          <Chip
           key={priority}
@@ -206,7 +213,7 @@ const MarketOpportunityAlerts: React.FC<MarketOpportunityAlertsProps> = ({
     <CardContent>
      <Grid container spacing={2}>
       {sortedOpportunities.map((opportunity) => (
-       <Grid xs={12} key={opportunity.id}>
+       <Grid size={12} key={opportunity.id}>
         <Card 
          variant="outlined"
          sx={{ 
