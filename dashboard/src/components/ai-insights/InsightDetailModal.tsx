@@ -174,7 +174,7 @@ export const InsightDetailModal: React.FC<InsightDetailModalProps> = ({
    fullScreen={isMobile}
    scroll="paper"
   >
-   <DialogTitle sx={{ m: 0, p: 2 }} disableTypography>
+   <DialogTitle sx={{ m: 0, p: 2 }}>
     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
       <Avatar sx={{ bgcolor: priorityColors[insight.priority] }}>

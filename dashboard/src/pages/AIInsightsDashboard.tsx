@@ -18,6 +18,7 @@ import { aiInsightsService } from '../services/aiInsightsService';
 import { InsightsDashboardState, InsightCategoryGroup, Insight } from '../types/ai-insights';
 import CategorySection from '../components/ai-insights/CategorySection';
 import InsightCard from '../components/ai-insights/InsightCard';
+import { InsightDetailModal } from '../components/ai-insights/InsightDetailModal';
 
 const AIInsightsDashboard: React.FC = () => {
   const [state, setState] = useState<InsightsDashboardState>({
@@ -90,6 +91,16 @@ const AIInsightsDashboard: React.FC = () => {
       ...prev,
       [categoryId]: !prev[categoryId]
     }));
+  };
+
+  // Handle insight click to show detail modal
+  const handleInsightClick = (insight: Insight) => {
+    setState(prev => ({ ...prev, selectedInsight: insight }));
+  };
+
+  // Handle modal close
+  const handleCloseModal = () => {
+    setState(prev => ({ ...prev, selectedInsight: null }));
   };
 
   // Initialize expanded categories
@@ -168,7 +179,7 @@ const AIInsightsDashboard: React.FC = () => {
                 <CategorySection
                   key={category.id}
                   category={category}
-                  onInsightClick={() => { /* Placeholder */ }}
+                  onInsightClick={handleInsightClick}
                   expanded={expandedCategories[category.id] ?? true}
                   onToggleExpanded={() => handleCategoryToggle(category.id)}
                 />
@@ -187,7 +198,7 @@ const AIInsightsDashboard: React.FC = () => {
                     <Grid item xs={12} md={6} lg={4} key={insight.id}>
                       <InsightCard
                         insight={insight}
-                        onClick={() => { /* Placeholder */ }}
+                        onClick={handleInsightClick}
                         showCategory={false}
                       />
                     </Grid>
@@ -197,6 +208,15 @@ const AIInsightsDashboard: React.FC = () => {
           )}
         </Grid>
       </Grid>
+
+      {/* Insight Detail Modal */}
+      {state.selectedInsight && (
+        <InsightDetailModal
+          insight={state.selectedInsight}
+          open={!!state.selectedInsight}
+          onClose={handleCloseModal}
+        />
+      )}
     </Container>
   );
 };

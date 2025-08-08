@@ -385,7 +385,7 @@ describe('ExplanationTooltip', () => {
     it('allows interaction with tooltip content when interactive is true', async () => {
       const user = userEvent;
       renderWithTheme(
-        <ExplanationTooltip title="Test" content="Test content" interactive={true}>
+        <ExplanationTooltip title="Test" content="Test content" interactive="true">
           <button>Trigger</button>
         </ExplanationTooltip>
       );

@@ -16,5 +16,6 @@ router.post('/pricing-recommendation', pricingController.getPriceRecommendation)
 router.post('/insights', aiController.getInsights);
 router.get('/insights/dashboard-summary', aiController.getDashboardSummary);
 router.get('/insights/categories', aiController.getInsightCategories);
+router.post('/insights/:insightId/regenerate', aiController.regenerateInsight);
 
 export default router;

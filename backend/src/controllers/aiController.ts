@@ -160,7 +160,7 @@ export const getInsights = async (req: Request, res: Response, next: NextFunctio
         description: 'Properties in the downtown area are experiencing higher than average vacancy rates over the past quarter.',
         category: 'operational',
         priority: 'critical',
-        confidence: 0.95,
+        confidence: 95, // Changed from 0.95 to 95
         impact: 0.8,
         recommendations: [
           { id: 'rec1', text: 'Adjust rental prices for downtown units.', actions: [{ id: 'act1', text: 'Review pricing strategy', completed: false }] },
@@ -175,7 +175,7 @@ export const getInsights = async (req: Request, res: Response, next: NextFunctio
         description: 'Feedback from tenants indicates a decline in satisfaction regarding maintenance request resolution times.',
         category: 'tenant_satisfaction',
         priority: 'high',
-        confidence: 0.88,
+        confidence: 88, // Changed from 0.88 to 88
         impact: 0.7,
         recommendations: [
           { id: 'rec3', text: 'Investigate maintenance workflow bottlenecks.', actions: [{ id: 'act3', text: 'Analyze ticket resolution times', completed: false }] }
@@ -217,6 +217,46 @@ export const getInsightCategories = async (req: Request, res: Response, next: Ne
     ];
     res.json({ status: 'success', data: categories });
   } catch (error) {
+    next(error);
+  }
+};
+
+
+export const regenerateInsight = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { insightId } = req.params;
+    
+    // Mock regeneration for now - in a real implementation, this would:
+    // 1. Fetch the original insight data
+    // 2. Re-run the AI analysis with updated data
+    // 3. Return the updated insight
+    
+    // For now, return a mock updated insight
+    const regeneratedInsight = {
+      id: insightId,
+      title: 'High Vacancy in Downtown Properties (Updated)',
+      description: 'Updated analysis shows properties in the downtown area are experiencing higher than average vacancy rates. Recent data indicates a slight improvement.',
+      category: 'operational',
+      priority: 'critical',
+      confidence: 97, // Slightly higher confidence after regeneration
+      impact: 0.8,
+      recommendations: [
+        { id: 'rec1', text: 'Adjust rental prices for downtown units.', actions: [{ id: 'act1', text: 'Review pricing strategy', completed: false }] },
+        { id: 'rec2', text: 'Increase marketing efforts in downtown area.', actions: [{ id: 'act2', text: 'Launch social media campaign', completed: false }] },
+        { id: 'rec3', text: 'Consider offering move-in incentives.', actions: [{ id: 'act3', text: 'Design incentive program', completed: false }] }
+      ],
+      timestamp: new Date().toISOString(),
+      trend: 'up',
+      updatedAt: new Date().toISOString(),
+    };
+
+    res.json({ 
+      status: 'success', 
+      data: regeneratedInsight,
+      message: 'Insight regenerated successfully'
+    });
+  } catch (error) {
+    console.error('Error regenerating insight:', error);
     next(error);
   }
 };
