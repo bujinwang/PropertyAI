@@ -50,7 +50,7 @@ const MarketSummaryCard: React.FC<MarketSummaryCardProps> = ({
   onFeedback,
   loading = false,
 }) => {
-  const [expandedRecommendation, setExpandedRecommendation] = useState<string | false>(false);
+  const [expandedRecommendation, setExpandedRecommendation] = useState<string | null>(null);
 
   const getMarketConditionColor = (condition: string) => {
     switch (condition) {
@@ -105,10 +105,24 @@ const MarketSummaryCard: React.FC<MarketSummaryCardProps> = ({
   if (loading) {
     return (
       <Card>
-        <CardHeader title="Market Intelligence Summary" />
+        <CardHeader title="Market Summary" />
         <CardContent>
           <Box display="flex" justifyContent="center" p={4}>
             <Typography color="textSecondary">Loading market summary...</Typography>
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Add null checks for summary data
+  if (!summary) {
+    return (
+      <Card>
+        <CardHeader title="Market Summary" />
+        <CardContent>
+          <Box display="flex" justifyContent="center" p={4}>
+            <Typography color="textSecondary">No market summary data available</Typography>
           </Box>
         </CardContent>
       </Card>
@@ -127,12 +141,12 @@ const MarketSummaryCard: React.FC<MarketSummaryCardProps> = ({
           title={
             <Box display="flex" alignItems="center" gap={2}>
               <Typography variant="h6" component="h2">
-                {summary.title}
+                {summary.title || 'Market Summary'}
               </Typography>
               <Chip
-                icon={getMarketConditionIcon(summary.marketCondition)}
-                label={summary.marketCondition.charAt(0).toUpperCase() + summary.marketCondition.slice(1)}
-                color={getMarketConditionColor(summary.marketCondition) as any}
+                icon={getMarketConditionIcon(summary.marketCondition || 'neutral')}
+                label={(summary.marketCondition || 'neutral').charAt(0).toUpperCase() + (summary.marketCondition || 'neutral').slice(1)}
+                color={getMarketConditionColor(summary.marketCondition || 'neutral') as any}
                 size="small"
               />
             </Box>
@@ -140,7 +154,7 @@ const MarketSummaryCard: React.FC<MarketSummaryCardProps> = ({
           subheader={
             <Box display="flex" alignItems="center" gap={2} mt={1}>
               <ConfidenceIndicator
-                confidence={summary.confidence}
+                confidence={summary.confidence || 0}
                 showTooltip
                 explanation="Confidence based on data quality, market stability, and prediction accuracy"
                 variant="linear"
@@ -149,7 +163,7 @@ const MarketSummaryCard: React.FC<MarketSummaryCardProps> = ({
                 showNumericalScore
               />
               <Typography variant="caption" color="textSecondary">
-                Updated {summary.timestamp.toLocaleString()}
+                Updated {summary.timestamp ? summary.timestamp.toLocaleString() : 'Unknown'}
               </Typography>
             </Box>
           }
@@ -158,135 +172,143 @@ const MarketSummaryCard: React.FC<MarketSummaryCardProps> = ({
         <CardContent>
           {/* Main Summary */}
           <Typography variant="body1" paragraph>
-            {summary.content}
+            {summary.content || 'No summary content available'}
           </Typography>
 
           {/* Key Insights */}
-          <Box mb={3}>
-            <Typography variant="h6" gutterBottom display="flex" alignItems="center" gap={1}>
-              <Lightbulb color="primary" />
-              Key Insights
-            </Typography>
-            <List dense>
-              {summary.keyInsights.map((insight, index) => (
-                <ListItem key={index} disableGutters>
-                  <ListItemIcon>
-                    <Box
-                      width={8}
-                      height={8}
-                      borderRadius="50%"
-                      bgcolor="primary.main"
-                    />
-                  </ListItemIcon>
-                  <ListItemText primary={insight} />
-                </ListItem>
-              ))}
-            </List>
-          </Box>
+          {summary.keyInsights && summary.keyInsights.length > 0 && (
+            <Box mb={3}>
+              <Typography variant="h6" gutterBottom display="flex" alignItems="center" gap={1}>
+                <Lightbulb color="primary" />
+                Key Insights
+              </Typography>
+              <List dense>
+                {summary.keyInsights.map((insight, index) => (
+                  <ListItem key={index} disableGutters>
+                    <ListItemIcon>
+                      <Box
+                        width={8}
+                        height={8}
+                        borderRadius="50%"
+                        bgcolor="primary.main"
+                      />
+                    </ListItemIcon>
+                    <ListItemText primary={insight} />
+                  </ListItem>
+                ))}
+              </List>
+            </Box>
+          )}
 
           <Divider sx={{ my: 2 }} />
 
           {/* AI Recommendations */}
-          <Box mb={3}>
-            <Typography variant="h6" gutterBottom>
-              AI Recommendations
-            </Typography>
-            {summary.recommendations.map((recommendation) => (
-              <Accordion
-                key={recommendation.id}
-                expanded={expandedRecommendation === recommendation.id}
-                onChange={handleRecommendationExpand(recommendation.id)}
-                sx={{ mb: 1 }}
-              >
-                <AccordionSummary expandIcon={<ExpandMore />}>
-                  <Box display="flex" alignItems="center" gap={2} width="100%">
-                    <Chip
-                      label={recommendation.priority}
-                      color={getPriorityColor(recommendation.priority) as any}
-                      size="small"
-                    />
-                    <Typography variant="subtitle2" flex={1}>
-                      {recommendation.title}
-                    </Typography>
-                    <ConfidenceIndicator
-                      confidence={recommendation.confidence.value}
-                      variant="circular"
-                      size="small"
-                      colorCoded
-                    />
-                  </Box>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Box>
-                    <Typography variant="body2" paragraph>
-                      {recommendation.description}
-                    </Typography>
-                    <Box display="flex" gap={2} mb={2}>
+          {summary.recommendations && summary.recommendations.length > 0 && (
+            <Box mb={3}>
+              <Typography variant="h6" gutterBottom>
+                AI Recommendations
+              </Typography>
+              {summary.recommendations.map((recommendation) => (
+                <Accordion
+                  key={recommendation.id}
+                  expanded={expandedRecommendation === recommendation.id}
+                  onChange={handleRecommendationExpand(recommendation.id)}
+                  sx={{ mb: 1 }}
+                >
+                  <AccordionSummary expandIcon={<ExpandMore />}>
+                    <Box display="flex" alignItems="center" gap={2} width="100%">
                       <Chip
-                        label={`Category: ${recommendation.category}`}
-                        variant="outlined"
+                        label={recommendation.priority || 'medium'}
+                        color={getPriorityColor(recommendation.priority || 'medium') as any}
                         size="small"
                       />
-                      <Chip
-                        label={`Timeline: ${recommendation.timeline}`}
-                        variant="outlined"
+                      <Typography variant="subtitle2" flex={1}>
+                        {recommendation.title || 'Recommendation'}
+                      </Typography>
+                      <ConfidenceIndicator
+                        confidence={recommendation.confidence?.value || 0}
+                        variant="circular"
                         size="small"
+                        colorCoded
                       />
                     </Box>
-                    <Typography variant="body2" color="textSecondary">
-                      <strong>Expected Outcome:</strong> {recommendation.expectedOutcome}
-                    </Typography>
-                  </Box>
-                </AccordionDetails>
-              </Accordion>
-            ))}
-          </Box>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Box>
+                      <Typography variant="body2" paragraph>
+                        {recommendation.description || 'No description available'}
+                      </Typography>
+                      <Box display="flex" gap={2} mb={2}>
+                        <Chip
+                          label={`Category: ${recommendation.category || 'general'}`}
+                          variant="outlined"
+                          size="small"
+                        />
+                        <Chip
+                          label={`Timeline: ${recommendation.timeline || 'unknown'}`}
+                          variant="outlined"
+                          size="small"
+                        />
+                      </Box>
+                      <Typography variant="body2" color="textSecondary">
+                        <strong>Expected Outcome:</strong> {recommendation.expectedOutcome || 'Not specified'}
+                      </Typography>
+                    </Box>
+                  </AccordionDetails>
+                </Accordion>
+              ))}
+            </Box>
+          )}
 
           <Divider sx={{ my: 2 }} />
 
           {/* Risk Factors and Opportunities */}
           <Box display="flex" gap={3}>
             {/* Risk Factors */}
-            <Box flex={1}>
-              <Typography variant="h6" gutterBottom display="flex" alignItems="center" gap={1}>
-                <Warning color="warning" />
-                Risk Factors
-              </Typography>
-              <List dense>
-                {summary.riskFactors.map((risk, index) => (
-                  <ListItem key={index} disableGutters>
-                    <ListItemIcon>
-                      <Warning color="warning" fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText 
-                      primary={risk}
-                      primaryTypographyProps={{ variant: 'body2' }}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </Box>
+            {summary.riskFactors && summary.riskFactors.length > 0 && (
+              <Box flex={1}>
+                <Typography variant="h6" gutterBottom display="flex" alignItems="center" gap={1}>
+                  <Warning color="warning" />
+                  Risk Factors
+                </Typography>
+                <List dense>
+                  {summary.riskFactors.map((risk, index) => (
+                    <ListItem key={index} disableGutters>
+                      <ListItemIcon>
+                        <Warning color="warning" fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary={risk}
+                        primaryTypographyProps={{ variant: 'body2' }}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
+            )}
 
             {/* Opportunities */}
-            <Box flex={1}>
-              <Typography variant="h6" gutterBottom display="flex" alignItems="center" gap={1}>
-                <Star color="success" />
-                Opportunities
-              </Typography>
-              <List dense>
-                {summary.opportunities.map((opportunity, index) => (
-                  <ListItem key={index} disableGutters>
-                    <ListItemIcon>
-                      <Star color="success" fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText 
-                      primary={opportunity}
-                      primaryTypographyProps={{ variant: 'body2' }}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </Box>
+            {summary.opportunities && summary.opportunities.length > 0 && (
+              <Box flex={1}>
+                <Typography variant="h6" gutterBottom display="flex" alignItems="center" gap={1}>
+                  <Star color="success" />
+                  Opportunities
+                </Typography>
+                <List dense>
+                  {summary.opportunities.map((opportunity, index) => (
+                    <ListItem key={index} disableGutters>
+                      <ListItemIcon>
+                        <Star color="success" fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary={opportunity}
+                        primaryTypographyProps={{ variant: 'body2' }}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
+            )}
           </Box>
 
           {/* Explanation Tooltip */}

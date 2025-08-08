@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/authMiddleware';
 import { generativeAIService } from '../services/generativeAI.service';
+import { User } from '@prisma/client';
 
 const router = Router();
 
@@ -172,7 +173,7 @@ router.post('/feedback', authMiddleware.protect, async (req, res) => {
       feedback,
       rating,
       submittedAt: new Date(),
-      userId: req.user?.id
+      userId: (req.user as User)?.id
     };
     
     res.json({ success: true, feedback: feedbackRecord });

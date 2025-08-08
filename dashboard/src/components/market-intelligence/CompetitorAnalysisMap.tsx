@@ -90,14 +90,22 @@ const CompetitorAnalysisMap: React.FC<CompetitorAnalysisMapProps> = ({
     return 16; // Small
   };
 
-  const filteredCompetitors = (competitors || []).filter(competitor => {
-    if (mapFilter === 'all') return true;
-    if (mapFilter === 'high-occupancy') return competitor.occupancyRate >= 90;
-    if (mapFilter === 'low-occupancy') return competitor.occupancyRate < 80;
-    if (mapFilter === 'premium') return competitor.rentRange[1] > 3000;
-    if (mapFilter === 'budget') return competitor.rentRange[1] <= 2000;
-    return true;
-  });
+  const filteredCompetitors = useMemo(() => {
+    if (!competitors || !Array.isArray(competitors)) {
+      return [];
+    }
+    
+    return competitors.filter(competitor => {
+      if (!competitor) return false; // Skip null/undefined competitors
+      
+      if (mapFilter === 'all') return true;
+      if (mapFilter === 'high-occupancy') return (competitor.occupancyRate || 0) >= 90;
+      if (mapFilter === 'low-occupancy') return (competitor.occupancyRate || 0) < 80;
+      if (mapFilter === 'premium') return (competitor.rentRange?.[1] || 0) > 3000;
+      if (mapFilter === 'budget') return (competitor.rentRange?.[1] || 0) <= 2000;
+      return true;
+    });
+  }, [competitors, mapFilter]);
 
   const handleMarkerClick = (competitor: CompetitorData) => {
     setSelectedCompetitor(competitor);
@@ -120,15 +128,21 @@ const CompetitorAnalysisMap: React.FC<CompetitorAnalysisMapProps> = ({
   };
 
   const handleRecenter = () => {
-    if (competitors && competitors.length > 0) {
-      const avgLat = competitors.reduce((sum, comp) => sum + comp.location[0], 0) / competitors.length;
-      const avgLng = competitors.reduce((sum, comp) => sum + comp.location[1], 0) / competitors.length;
-      setCenter([avgLat, avgLng]);
+    if (competitors && Array.isArray(competitors) && competitors.length > 0) {
+      const validCompetitors = competitors.filter(comp => comp && comp.location && Array.isArray(comp.location));
+      if (validCompetitors.length > 0) {
+        const avgLat = validCompetitors.reduce((sum, comp) => sum + (comp.location[0] || 0), 0) / validCompetitors.length;
+        const avgLng = validCompetitors.reduce((sum, comp) => sum + (comp.location[1] || 0), 0) / validCompetitors.length;
+        setCenter([avgLat, avgLng]);
+      }
     }
   };
 
-  const formatRentRange = (range: [number, number]) => {
-    return `$${range[0].toLocaleString()} - $${range[1].toLocaleString()}`;
+  const formatRentRange = (range: [number, number] | undefined) => {
+    if (!range || !Array.isArray(range) || range.length < 2) {
+      return 'Range not available';
+    }
+    return `$${(range[0] || 0).toLocaleString()} - $${(range[1] || 0).toLocaleString()}`;
   };
 
   if (loading) {
@@ -138,6 +152,25 @@ const CompetitorAnalysisMap: React.FC<CompetitorAnalysisMapProps> = ({
         <CardContent>
           <Box display="flex" justifyContent="center" alignItems="center" height={400}>
             <Typography color="textSecondary">Loading competitor map...</Typography>
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Add check for empty competitors data
+  if (!competitors || !Array.isArray(competitors) || competitors.length === 0) {
+    return (
+      <Card elevation={2}>
+        <CardHeader
+          title="Competitor Analysis Map"
+          subheader="No competitor data available"
+        />
+        <CardContent>
+          <Box display="flex" justifyContent="center" alignItems="center" height={400}>
+            <Typography color="textSecondary">
+              No competitor data available at this time.
+            </Typography>
           </Box>
         </CardContent>
       </Card>

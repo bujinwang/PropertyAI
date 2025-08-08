@@ -99,11 +99,13 @@ const MarketTrendsCharts: React.FC<MarketTrendsChartsProps> = ({
   // Group trends by category
   const trendsByCategory = useMemo(() => {
     // Add null check for trends
-    if (!trends || trends.length === 0) {
+    if (!trends || !Array.isArray(trends) || trends.length === 0) {
       return {};
     }
     
     return trends.reduce((acc, trend) => {
+      if (!trend || !trend.category) return acc; // Skip invalid trend objects
+      
       if (!acc[trend.category]) {
         acc[trend.category] = [];
       }
@@ -115,9 +117,16 @@ const MarketTrendsCharts: React.FC<MarketTrendsChartsProps> = ({
   // Prepare chart data for rent trends
   const rentTrendsData = useMemo(() => {
     const rentTrends = trendsByCategory.rent || [];
-    const labels = rentTrends.map(trend => trend.timeframe);
-    const currentValues = rentTrends.map(trend => trend.currentValue);
-    const previousValues = rentTrends.map(trend => trend.previousValue);
+    if (rentTrends.length === 0) {
+      return {
+        labels: [],
+        datasets: []
+      };
+    }
+
+    const labels = rentTrends.map(trend => trend.timeframe || 'Unknown');
+    const currentValues = rentTrends.map(trend => trend.currentValue || 0);
+    const previousValues = rentTrends.map(trend => trend.previousValue || 0);
 
     return {
       labels,
@@ -143,8 +152,15 @@ const MarketTrendsCharts: React.FC<MarketTrendsChartsProps> = ({
   // Prepare chart data for vacancy rates
   const vacancyRatesData = useMemo(() => {
     const vacancyTrends = trendsByCategory.vacancy || [];
-    const labels = vacancyTrends.map(trend => trend.timeframe);
-    const values = vacancyTrends.map(trend => trend.currentValue);
+    if (vacancyTrends.length === 0) {
+      return {
+        labels: [],
+        datasets: []
+      };
+    }
+
+    const labels = vacancyTrends.map(trend => trend.timeframe || 'Unknown');
+    const values = vacancyTrends.map(trend => trend.currentValue || 0);
 
     return {
       labels,
@@ -220,6 +236,25 @@ const MarketTrendsCharts: React.FC<MarketTrendsChartsProps> = ({
         <CardContent>
           <Box display="flex" justifyContent="center" p={4}>
             <Typography color="textSecondary">Loading market trends...</Typography>
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Add check for empty trends data
+  if (!trends || !Array.isArray(trends) || trends.length === 0) {
+    return (
+      <Card elevation={2}>
+        <CardHeader
+          title="Market Trends Analysis"
+          subheader="No trend data available"
+        />
+        <CardContent>
+          <Box display="flex" justifyContent="center" p={4}>
+            <Typography color="textSecondary">
+              No market trends data available at this time.
+            </Typography>
           </Box>
         </CardContent>
       </Card>

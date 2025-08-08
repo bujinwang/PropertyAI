@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
-  Box,
   Grid,
-  Alert,
   CircularProgress,
+  Alert,
+  Box,
 } from '@mui/material';
 import {
   MarketSummaryCard,
@@ -15,7 +15,7 @@ import {
   DemandForecastCharts,
   CompetitorAnalysisMap,
 } from '../components/market-intelligence';
-import marketIntelligenceService from '../services/marketIntelligenceService';
+import { marketIntelligenceService } from '../services/marketIntelligenceService';
 import type {
   AISummary,
   CompetitorData,
@@ -43,28 +43,31 @@ const MarketIntelligenceScreen: React.FC = () => {
       setLoading(true);
       setError(null);
   
-      // Load all market intelligence data with fallback values
-      const [summaryData, competitorData, opportunityData, trendsData, forecastsData] = await Promise.allSettled([
-        marketIntelligenceService.fetchMarketSummary(),
-        marketIntelligenceService.fetchCompetitorActivity(),
-        marketIntelligenceService.fetchMarketOpportunities(),
-        marketIntelligenceService.fetchMarketTrends(),
-        marketIntelligenceService.fetchDemandForecasts(),
-      ]);
-  
-      // Handle results with fallbacks
-      setMarketSummary(summaryData.status === 'fulfilled' ? summaryData.value : null);
-      setCompetitors(competitorData.status === 'fulfilled' ? competitorData.value : []);
-      setOpportunities(opportunityData.status === 'fulfilled' ? opportunityData.value : []);
-      setMarketTrends(trendsData.status === 'fulfilled' ? trendsData.value : []);
-      setDemandForecasts(forecastsData.status === 'fulfilled' ? forecastsData.value : []);
-  
-      // Check if any requests failed
-      const failedRequests = [summaryData, competitorData, opportunityData, trendsData, forecastsData]
-        .filter(result => result.status === 'rejected');
+      // Use sequential loading with delays to prevent rate limiting
+      const requests = [
+        () => marketIntelligenceService.fetchMarketSummary(),
+        () => marketIntelligenceService.fetchCompetitorActivity(),
+        () => marketIntelligenceService.fetchMarketOpportunities(),
+        () => marketIntelligenceService.fetchMarketTrends(),
+        () => marketIntelligenceService.fetchDemandForecasts(),
+      ];
+
+      const results = await apiService.batchRequests(requests);
       
-      if (failedRequests.length > 0) {
-        console.warn(`${failedRequests.length} API requests failed, using fallback data`);
+      // Handle results with proper error checking
+      const [summaryResult, competitorResult, opportunityResult, trendsResult, forecastsResult] = results;
+      
+      setMarketSummary(summaryResult.data || null);
+      setCompetitors(competitorResult.data || []);
+      setOpportunities(opportunityResult.data || []);
+      setMarketTrends(trendsResult.data || []);
+      setDemandForecasts(forecastsResult.data || []);
+  
+      // Check for errors and show warnings
+      const errors = results.filter(result => result.error);
+      if (errors.length > 0) {
+        console.warn(`${errors.length} API requests failed:`, errors);
+        setError(`Some data could not be loaded. ${errors.length} of 5 requests failed.`);
       }
     } catch (err) {
       console.error('Error loading market data:', err);
