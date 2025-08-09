@@ -1,9 +1,4 @@
-/**
- * Market Opportunity Alerts Component
- * Displays AI-identified market opportunities with actionable recommendations
- */
-
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
  Card,
  CardContent,
@@ -43,12 +38,6 @@ import {
  Bookmark,
  Share,
 } from '@mui/icons-material';
-// Remove these duplicate lines:
-// import { AIGeneratedContent } from '../../design-system/components/ai/AIGeneratedContent';
-// import { ConfidenceIndicator } from '../../design-system/components/ai/ConfidenceIndicator';
-// import { ExplanationTooltip } from '../../design-system/components/ai/ExplanationTooltip';
-
-// Keep only these imports:
 import AIGeneratedContent from '../../design-system/components/ai/AIGeneratedContent';
 import ConfidenceIndicator from '../../design-system/components/ai/ConfidenceIndicator';
 import ExplanationTooltip from '../../design-system/components/ai/ExplanationTooltip';
@@ -325,14 +314,23 @@ const MarketOpportunityAlerts: React.FC<MarketOpportunityAlertsProps> = ({
              Action Items
             </Typography>
             <List dense>
-             {opportunity.actionItems.map((item, index) => (
-              <ListItem key={index} disableGutters>
-               <ListItemIcon>
-                <CheckCircle color="primary" fontSize="small" />
-               </ListItemIcon>
-               <ListItemText primary={item} />
+             {Array.isArray(opportunity.actionItems) && opportunity.actionItems.length > 0 ? (
+              opportunity.actionItems.map((item, index) => (
+               <ListItem key={index} disableGutters>
+                <ListItemIcon>
+                 <CheckCircle color="primary" fontSize="small" />
+                </ListItemIcon>
+                <ListItemText primary={item} />
+               </ListItem>
+              ))
+             ) : (
+              <ListItem disableGutters>
+               <ListItemText 
+                primary="No specific action items defined" 
+                secondary="Contact your team for implementation guidance"
+               />
               </ListItem>
-             ))}
+             )}
             </List>
 
             {opportunity.estimatedROI && (

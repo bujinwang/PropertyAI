@@ -1,9 +1,4 @@
-/**
- * Competitor Analysis Map Component
- * Interactive map showing competitor locations with property markers
- */
-
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Card,
   CardContent,

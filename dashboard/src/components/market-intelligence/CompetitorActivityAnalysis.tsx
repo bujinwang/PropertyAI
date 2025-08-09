@@ -108,8 +108,11 @@ const CompetitorActivityAnalysis: React.FC<CompetitorActivityAnalysisProps> = ({
   setSelectedCompetitor(null);
  };
 
- const formatRentRange = (range: [number, number]) => {
-  return `$${range[0].toLocaleString()} - $${range[1].toLocaleString()}`;
+ const formatRentRange = (range: [number, number] | undefined) => {
+  if (!range || !Array.isArray(range) || range.length < 2) {
+   return 'Range not available';
+  }
+  return `$${(range[0] || 0).toLocaleString()} - $${(range[1] || 0).toLocaleString()}`;
  };
 
  const handleFeedback = (type: 'positive' | 'negative', comment?: string) => {
@@ -149,17 +152,18 @@ const CompetitorActivityAnalysis: React.FC<CompetitorActivityAnalysisProps> = ({
     />
     <CardContent>
      <Grid container spacing={3}>
-      {(competitors || []).map((competitor) => (
-       <Grid size={{ xs: 12, md: 6 }} key={competitor.id}>
-        <Card 
-         variant="outlined" 
-         sx={{ 
+      {competitors.map((competitor) => (
+       <Grid size={6} key={competitor.id}>
+        <Card
+         variant="outlined"
+         sx={{
+          height: '100%',
           cursor: 'pointer',
-          '&:hover': { 
-           boxShadow: 2,
+          transition: 'all 0.2s ease-in-out',
+          '&:hover': {
            transform: 'translateY(-2px)',
-           transition: 'all 0.2s ease-in-out'
-          }
+           boxShadow: 2,
+          },
          }}
          onClick={() => handleCompetitorClick(competitor)}
         >
@@ -223,9 +227,9 @@ const CompetitorActivityAnalysis: React.FC<CompetitorActivityAnalysisProps> = ({
           {/* Recent Activity */}
           <Box>
            <Typography variant="body2" color="textSecondary" mb={1}>
-            Recent Activity ({competitor.recentActivity.length})
+            Recent Activity ({Array.isArray(competitor.recentActivity) ? competitor.recentActivity.length : 0})
            </Typography>
-           {competitor.recentActivity.slice(0, 2).map((activity) => (
+           {Array.isArray(competitor.recentActivity) && competitor.recentActivity.slice(0, 2).map((activity) => (
             <Box key={activity.id} display="flex" alignItems="center" gap={1} mb={1}>
              {getActivityIcon(activity.type)}
              <Typography variant="body2" flex={1} noWrap>
@@ -234,7 +238,7 @@ const CompetitorActivityAnalysis: React.FC<CompetitorActivityAnalysisProps> = ({
              {getImpactIcon(activity.impact)}
             </Box>
            ))}
-           {competitor.recentActivity.length > 2 && (
+           {Array.isArray(competitor.recentActivity) && competitor.recentActivity.length > 2 && (
             <Typography variant="caption" color="primary">
              +{competitor.recentActivity.length - 2} more activities
             </Typography>
@@ -247,7 +251,7 @@ const CompetitorActivityAnalysis: React.FC<CompetitorActivityAnalysisProps> = ({
             Key Amenities
            </Typography>
            <Box display="flex" gap={0.5} flexWrap="wrap">
-            {competitor.amenities.slice(0, 3).map((amenity) => (
+            {Array.isArray(competitor.amenities) && competitor.amenities.slice(0, 3).map((amenity) => (
              <Chip
               key={amenity}
               label={amenity}
@@ -255,7 +259,7 @@ const CompetitorActivityAnalysis: React.FC<CompetitorActivityAnalysisProps> = ({
               variant="outlined"
              />
             ))}
-            {competitor.amenities.length > 3 && (
+            {Array.isArray(competitor.amenities) && competitor.amenities.length > 3 && (
              <Chip
               label={`+${competitor.amenities.length - 3}`}
               size="small"
@@ -305,7 +309,7 @@ const CompetitorActivityAnalysis: React.FC<CompetitorActivityAnalysisProps> = ({
       <DialogContent>
        {/* Detailed Metrics */}
        <Grid container spacing={3} mb={3}>
-        <Grid xs={3}>
+        <Grid size={3}>
          <Box textAlign="center">
           <Typography variant="h5" color="primary">
            {selectedCompetitor.occupancyRate}%
@@ -315,7 +319,7 @@ const CompetitorActivityAnalysis: React.FC<CompetitorActivityAnalysisProps> = ({
           </Typography>
          </Box>
         </Grid>
-        <Grid xs={3}>
+        <Grid size={3}>
          <Box textAlign="center">
           <Typography variant="h5" color="primary">
            {selectedCompetitor.units}
@@ -325,7 +329,7 @@ const CompetitorActivityAnalysis: React.FC<CompetitorActivityAnalysisProps> = ({
           </Typography>
          </Box>
         </Grid>
-        <Grid xs={3}>
+        <Grid size={3}>
          <Box textAlign="center">
           <Typography variant="h5" color="primary">
            {selectedCompetitor.marketShare}%
@@ -335,7 +339,7 @@ const CompetitorActivityAnalysis: React.FC<CompetitorActivityAnalysisProps> = ({
           </Typography>
          </Box>
         </Grid>
-        <Grid xs={3}>
+        <Grid size={3}>
          <Box textAlign="center">
           <Typography variant="h5" color="primary">
            {formatRentRange(selectedCompetitor.rentRange)}
@@ -355,7 +359,7 @@ const CompetitorActivityAnalysis: React.FC<CompetitorActivityAnalysisProps> = ({
          Amenities
         </Typography>
         <Box display="flex" gap={1} flexWrap="wrap">
-         {selectedCompetitor.amenities.map((amenity) => (
+         {Array.isArray(selectedCompetitor.amenities) && selectedCompetitor.amenities.map((amenity) => (
           <Chip
            key={amenity}
            label={amenity}
@@ -372,7 +376,7 @@ const CompetitorActivityAnalysis: React.FC<CompetitorActivityAnalysisProps> = ({
          Activity History
         </Typography>
         <List>
-         {selectedCompetitor.recentActivity.map((activity) => (
+         {Array.isArray(selectedCompetitor.recentActivity) && selectedCompetitor.recentActivity.map((activity) => (
           <ListItem key={activity.id} divider>
            <Box display="flex" alignItems="center" gap={2} width="100%">
             {getActivityIcon(activity.type)}

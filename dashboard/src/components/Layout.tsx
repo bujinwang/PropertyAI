@@ -343,7 +343,11 @@ const Layout: React.FC = () => {
           }}
           sx={{
             display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            '& .MuiDrawer-paper': { 
+              boxSizing: 'border-box', 
+              width: drawerWidth,
+              borderRight: (theme) => `1px solid ${theme.palette.divider}`,
+            },
           }}
         >
           {drawer}
@@ -354,7 +358,11 @@ const Layout: React.FC = () => {
           variant="permanent"
           sx={{
             display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            '& .MuiDrawer-paper': { 
+              boxSizing: 'border-box', 
+              width: drawerWidth,
+              borderRight: (theme) => `1px solid ${theme.palette.divider}`,
+            },
           }}
           open
         >
@@ -366,12 +374,15 @@ const Layout: React.FC = () => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+          py: 3,
+          px: { xs: 2, sm: 3 },
           width: { sm: `calc(100% - ${drawerWidth}px)` },
         }}
       >
         <Toolbar />
-        <Outlet />
+        <Box sx={{ maxWidth: 1200, mx: 'auto', width: '100%' }}>
+          <Outlet />
+        </Box>
       </Box>
     </Box>
   );

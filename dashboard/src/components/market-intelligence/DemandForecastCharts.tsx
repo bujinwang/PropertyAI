@@ -334,7 +334,7 @@ const DemandForecastCharts: React.FC<DemandForecastChartsProps> = ({
         <CardContent>
           {/* Summary Cards */}
           <Grid container spacing={2} mb={3}>
-            <Grid xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <Card variant="outlined">
                 <CardContent sx={{ textAlign: 'center' }}>
                   <Box display="flex" alignItems="center" justifyContent="center" gap={1} mb={1}>
@@ -351,7 +351,7 @@ const DemandForecastCharts: React.FC<DemandForecastChartsProps> = ({
                 </CardContent>
               </Card>
             </Grid>
-            <Grid xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <Card variant="outlined">
                 <CardContent sx={{ textAlign: 'center' }}>
                   <Typography variant="h6" gutterBottom>
@@ -367,7 +367,7 @@ const DemandForecastCharts: React.FC<DemandForecastChartsProps> = ({
                 </CardContent>
               </Card>
             </Grid>
-            <Grid xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <Card variant="outlined">
                 <CardContent sx={{ textAlign: 'center' }}>
                   <Typography variant="h6" gutterBottom>
@@ -387,7 +387,7 @@ const DemandForecastCharts: React.FC<DemandForecastChartsProps> = ({
           {/* Charts */}
           <Grid container spacing={3} mb={3}>
             {/* Demand Forecast Chart */}
-            <Grid xs={12} lg={8}>
+            <Grid size={{ xs: 12, lg: 8 }}>
               <Card variant="outlined">
                 <CardHeader
                   title="Demand Forecast with Confidence Bands"
@@ -402,7 +402,7 @@ const DemandForecastCharts: React.FC<DemandForecastChartsProps> = ({
             </Grid>
 
             {/* Confidence Chart */}
-            <Grid xs={12} lg={4}>
+            <Grid size={{ xs: 12, lg: 4 }}>
               <Card variant="outlined">
                 <CardHeader
                   title="Forecast Confidence"
@@ -424,9 +424,9 @@ const DemandForecastCharts: React.FC<DemandForecastChartsProps> = ({
               subheader="Key factors influencing demand predictions"
             />
             <CardContent>
-              {forecasts && forecasts.length > 0 && forecasts[0].factors?.map((factor) => (
+              {forecasts && forecasts.length > 0 && forecasts[0].factors?.map((factor, index) => (
                 <Accordion
-                  key={factor.name}
+                  key={`${factor.name}-${index}`}
                   expanded={expandedFactor === factor.name}
                   onChange={handleFactorExpand(factor.name)}
                   sx={{ mb: 1 }}
@@ -446,12 +446,12 @@ const DemandForecastCharts: React.FC<DemandForecastChartsProps> = ({
                         {factor.name}
                       </Typography>
                       <Chip
-                        label={`Impact: ${factor.impact > 0 ? '+' : ''}${factor.impact.toFixed(1)}%`}
+                        label={`Impact: ${(factor.impact || 0) > 0 ? '+' : ''}${(factor.impact || 0).toFixed(1)}%`}
                         size="small"
-                        color={factor.impact > 0 ? 'success' : factor.impact < 0 ? 'error' : 'default'}
+                        color={(factor.impact || 0) > 0 ? 'success' : (factor.impact || 0) < 0 ? 'error' : 'default'}
                       />
                       <Chip
-                        label={`Weight: ${(factor.weight * 100).toFixed(0)}%`}
+                        label={`Weight: ${((factor.weight || 0) * 100).toFixed(0)}%`}
                         size="small"
                         variant="outlined"
                       />

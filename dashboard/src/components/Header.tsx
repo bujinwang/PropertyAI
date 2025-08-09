@@ -55,8 +55,8 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
       position="fixed" 
       sx={{ 
         zIndex: (theme) => theme.zIndex.drawer + 1,
-        backgroundColor: 'primary.main',
       }}
+      elevation={0}
     >
       <Toolbar>
         <IconButton

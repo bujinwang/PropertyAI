@@ -53,8 +53,7 @@ const SecuritySettingsDashboard = lazy(() => import('./pages/SecuritySettingsDas
 const AccessControlManagementScreen = lazy(() => import('./pages/AccessControlManagementScreen'));
 const CommunityEngagementPortal = lazy(() => import('./pages/CommunityEngagementPortal'));
 const DigitalConciergeScreen = lazy(() => import('./pages/DigitalConciergeScreen'));
-const AIComponentsDemo = lazy(() => import('./pages/AIComponentsDemo'));
-const DocumentVerificationDemo = lazy(() => import('./pages/DocumentVerificationDemo'));
+const DocumentVerificationDemo = lazy(() => import('./pages/DocumentVerificationStatusScreen'));
 const TenantRatingPage = lazy(() => import('./pages/TenantRatingPage'));
 const UXReviewDashboard = lazy(() => import('./pages/UXReviewDashboard'));
 
@@ -183,7 +182,7 @@ function App() {
                         <Route path="access-control" element={<AccessControlManagementScreen />} />
                         <Route path="community-engagement" element={<CommunityEngagementPortal />} />
                         <Route path="digital-concierge" element={<DigitalConciergeScreen />} />
-                        <Route path="ai-components-demo" element={<AIComponentsDemo />} />
+                        <Route path="ai-components-demo" element={<AIPersonalizationDashboard />} />
                         <Route path="document-verification-demo" element={<DocumentVerificationDemo />} />
                         <Route path="tenant-ratings" element={<TenantRatingPage />} />
                         <Route path="ux-review" element={<UXReviewDashboard />} />

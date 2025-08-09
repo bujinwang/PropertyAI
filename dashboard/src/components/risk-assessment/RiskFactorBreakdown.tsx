@@ -34,11 +34,6 @@ import {
  Error as ErrorIcon,
 } from '@mui/icons-material';
 import { RiskFactorBreakdownProps, RiskFactor, RiskFactorImpact } from '../../types/risk-assessment';
-// Change from:
-import { ConfidenceIndicator } from '../../design-system/components/ai/ConfidenceIndicator';
-import { ExplanationTooltip } from '../../design-system/components/ai/ExplanationTooltip';
-
-// To:
 import ConfidenceIndicator from '../../design-system/components/ai/ConfidenceIndicator';
 import ExplanationTooltip from '../../design-system/components/ai/ExplanationTooltip';
 

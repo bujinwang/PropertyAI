@@ -1,15 +1,20 @@
 import React from 'react';
-import { Chip, Box, Typography, Tooltip } from '@mui/material';
+import {
+  Box,
+  Chip,
+  Typography,
+  Badge,
+} from '@mui/material';
 import {
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
   Error as ErrorIcon,
 } from '@mui/icons-material';
-import { RiskLevelIndicatorProps, RiskLevel } from '../../types/risk-assessment';
+import { RiskLevel, RiskLevelIndicatorProps } from '../../types/risk-assessment';
 
 /**
- * Risk level indicator component with color-coded visualization
- * Supports multiple variants and accessibility features
+ * Risk Level Indicator Component
+ * Displays risk level with appropriate colors and icons
  */
 export const RiskLevelIndicator: React.FC<RiskLevelIndicatorProps> = ({
   level,
@@ -18,136 +23,103 @@ export const RiskLevelIndicator: React.FC<RiskLevelIndicatorProps> = ({
   showLabel = true,
   variant = 'chip',
 }) => {
-  const getRiskConfig = (riskLevel: RiskLevel) => {
+  const getRiskLevelColor = (riskLevel: RiskLevel): 'success' | 'warning' | 'error' => {
     switch (riskLevel) {
       case 'low':
-        return {
-          color: 'success' as const,
-          label: 'Low Risk',
-          icon: <CheckCircleIcon />,
-          description: 'Low risk applicant - meets most criteria',
-        };
+        return 'success';
       case 'medium':
-        return {
-          color: 'warning' as const,
-          label: 'Medium Risk',
-          icon: <WarningIcon />,
-          description: 'Medium risk applicant - requires review',
-        };
+        return 'warning';
       case 'high':
-        return {
-          color: 'error' as const,
-          label: 'High Risk',
-          icon: <ErrorIcon />,
-          description: 'High risk applicant - careful consideration needed',
-        };
+        return 'error';
       default:
-        return {
-          color: 'default' as const,
-          label: 'Unknown',
-          icon: null,
-          description: 'Risk level not determined',
-        };
+        return 'success';
     }
   };
 
-  const config = getRiskConfig(level);
-  const chipSize = size === 'small' ? 'small' : 'medium';
+  const getRiskLevelIcon = (riskLevel: RiskLevel) => {
+    const iconSize = size === 'small' ? 'small' : size === 'large' ? 'large' : 'medium';
+    
+    switch (riskLevel) {
+      case 'low':
+        return <CheckCircleIcon color="success" fontSize={iconSize} />;
+      case 'medium':
+        return <WarningIcon color="warning" fontSize={iconSize} />;
+      case 'high':
+        return <ErrorIcon color="error" fontSize={iconSize} />;
+      default:
+        return <CheckCircleIcon color="success" fontSize={iconSize} />;
+    }
+  };
 
-  const renderChip = () => (
-    <Chip
-      label={showLabel ? config.label : ''}
-      color={config.color}
-      size={chipSize}
-      icon={config.icon}
-      variant="filled"
-      aria-label={`Risk level: ${config.label}${score ? ` (Score: ${score})` : ''}`}
-    />
-  );
+  const getRiskLevelLabel = (riskLevel: RiskLevel): string => {
+    switch (riskLevel) {
+      case 'low':
+        return 'Low Risk';
+      case 'medium':
+        return 'Medium Risk';
+      case 'high':
+        return 'High Risk';
+      default:
+        return 'Unknown';
+    }
+  };
 
-  const renderBadge = () => (
-    <Box
-      display="inline-flex"
-      alignItems="center"
-      gap={0.5}
-      sx={{
-        px: 1,
-        py: 0.5,
-        borderRadius: 1,
-        bgcolor: `${config.color}.light`,
-        color: `${config.color}.dark`,
-        fontSize: size === 'small' ? '0.75rem' : '0.875rem',
-      }}
-    >
-      {React.cloneElement(config.icon, { 
-        sx: { fontSize: size === 'small' ? 16 : 20 } 
-      })}
-      {showLabel && (
-        <Typography variant="caption" fontWeight="medium">
-          {config.label}
-        </Typography>
-      )}
-    </Box>
-  );
-
-  const renderDot = () => (
-    <Box
-      display="inline-flex"
-      alignItems="center"
-      gap={1}
-    >
-      <Box
-        sx={{
-          width: size === 'small' ? 8 : size === 'large' ? 16 : 12,
-          height: size === 'small' ? 8 : size === 'large' ? 16 : 12,
-          borderRadius: '50%',
-          bgcolor: `${config.color}.main`,
-        }}
-        aria-label={`${config.label} indicator`}
+  if (variant === 'chip') {
+    return (
+      <Chip
+        icon={getRiskLevelIcon(level)}
+        label={showLabel ? getRiskLevelLabel(level) : undefined}
+        color={getRiskLevelColor(level)}
+        size={size === 'large' ? 'medium' : 'small'}
+        variant="outlined"
       />
-      {showLabel && (
-        <Typography 
-          variant={size === 'small' ? 'caption' : 'body2'}
-          color="text.secondary"
-        >
-          {config.label}
-        </Typography>
-      )}
-    </Box>
-  );
+    );
+  }
 
-  const renderIndicator = () => {
-    switch (variant) {
-      case 'badge':
-        return renderBadge();
-      case 'dot':
-        return renderDot();
-      case 'chip':
-      default:
-        return renderChip();
-    }
-  };
+  if (variant === 'badge') {
+    return (
+      <Badge
+        badgeContent={score}
+        color={getRiskLevelColor(level)}
+        max={100}
+      >
+        {getRiskLevelIcon(level)}
+      </Badge>
+    );
+  }
 
-  const content = (
-    <Box display="inline-flex" alignItems="center" gap={1}>
-      {renderIndicator()}
-      {score && (
-        <Typography 
-          variant={size === 'small' ? 'caption' : 'body2'}
-          color="text.secondary"
-          fontWeight="medium"
-        >
-          ({score})
-        </Typography>
-      )}
-    </Box>
-  );
+  if (variant === 'dot') {
+    return (
+      <Box display="flex" alignItems="center" gap={1}>
+        <Box
+          sx={{
+            width: size === 'small' ? 8 : size === 'large' ? 16 : 12,
+            height: size === 'small' ? 8 : size === 'large' ? 16 : 12,
+            borderRadius: '50%',
+            backgroundColor: `${getRiskLevelColor(level)}.main`,
+          }}
+        />
+        {showLabel && (
+          <Typography
+            variant={size === 'small' ? 'caption' : size === 'large' ? 'body1' : 'body2'}
+            color="text.secondary"
+          >
+            {getRiskLevelLabel(level)}
+          </Typography>
+        )}
+        {score !== undefined && (
+          <Typography
+            variant={size === 'small' ? 'caption' : size === 'large' ? 'body1' : 'body2'}
+            fontWeight="medium"
+          >
+            ({score})
+          </Typography>
+        )}
+      </Box>
+    );
+  }
 
-  return (
-    <Tooltip title={config.description} arrow>
-      {content}
-    </Tooltip>
-  );
+  return null;
 };
 
 export default RiskLevelIndicator;
