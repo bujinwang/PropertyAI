@@ -95,6 +95,19 @@ export const apiService = {
     });
   },
 
+  // Maintenance quotes endpoints
+  generateQuotes: (analysisData: any) => {
+    return apiService.post('/maintenance/generate-quotes', analysisData);
+  },
+
+  getQuotes: (maintenanceRequestId: string) => {
+    return apiService.get(`/maintenance/${maintenanceRequestId}/quotes`);
+  },
+
+  updateQuoteStatus: (quoteId: string, status: 'approved' | 'rejected') => {
+    return apiService.put(`/maintenance/quotes/${quoteId}`, { status });
+  },
+
   // Batch request method to handle multiple API calls with rate limiting
   batchRequests: async <T>(requests: Array<() => Promise<{ data?: T; error?: any }>>) => {
     const results: Array<{ data?: T; error?: any }> = [];

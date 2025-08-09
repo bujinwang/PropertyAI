@@ -56,6 +56,7 @@ const DigitalConciergeScreen = lazy(() => import('./pages/DigitalConciergeScreen
 const DocumentVerificationDemo = lazy(() => import('./pages/DocumentVerificationStatusScreen'));
 const TenantRatingPage = lazy(() => import('./pages/TenantRatingPage'));
 const UXReviewDashboard = lazy(() => import('./pages/UXReviewDashboard'));
+const MaintenanceRequests = lazy(() => import('./pages/MaintenanceRequests'));
 
 // Component to track page views
 function PageTracker() {
@@ -163,6 +164,8 @@ function App() {
                         {/* Other Routes */}
                         <Route path="communications" element={<CommunicationHub />} />
                         <Route path="maintenance" element={<MaintenancePage />} />
+                        <Route path="maintenance-requests" element={<MaintenanceRequests />} />
+                        <Route path="maintenance-dashboard" element={<MaintenanceDashboard />} />
                         <Route path="financials" element={<FinancialPage />} />
                         <Route path="maintenance-dashboard" element={<MaintenanceDashboard />} />
                         <Route path="predictive-maintenance" element={<PredictiveMaintenanceDashboard />} />

@@ -6,7 +6,7 @@ class ManagerService {
   public async getQuotesForWorkOrder(workOrderId: string) {
     return prisma.workOrderQuote.findMany({
       where: { workOrderId },
-      include: { vendor: true },
+      include: { Vendor: true },
       orderBy: { createdAt: 'asc' },
     });
   }
@@ -14,7 +14,13 @@ class ManagerService {
   public async approveQuote(quoteId: string) {
     const quote = await prisma.workOrderQuote.findUnique({
       where: { id: quoteId },
-      include: { vendor: { include: { contactPerson: true } } },
+      include: { 
+        Vendor: { 
+          include: { 
+            User: true // Assuming vendor has a User relation for contact info
+          } 
+        } 
+      },
     });
     if (!quote) {
       throw new Error('Quote not found');
@@ -35,23 +41,25 @@ class ManagerService {
       data: { status: QuoteStatus.REJECTED },
     });
 
-    // Assign the work order to the vendor and update its status
-    await prisma.workOrder.update({
-      where: { id: quote.workOrderId },
+    // Create work order assignment and update status
+    await prisma.workOrderAssignment.create({
       data: {
-        status: WorkOrderStatus.ASSIGNED,
-        assignments: {
-          create: {
-            vendorId: quote.vendorId,
-          },
-        },
+        workOrderId: quote.workOrderId,
+        vendorId: quote.vendorId,
       },
     });
 
-    // Send push notification to the contractor
-    if (quote.vendor.contactPerson?.pushToken) {
+    // Update work order status
+    await prisma.workOrder.update({
+      where: { id: quote.workOrderId },
+      data: { status: WorkOrderStatus.ASSIGNED },
+    });
+
+    // Send push notification to the contractor (if they have push token)
+    // Note: This assumes vendor has a User relation with push token
+    if (quote.Vendor.User?.pushToken) {
       await pushNotificationService.sendAndroidNotification(
-        quote.vendor.contactPerson.pushToken,
+        quote.Vendor.User.pushToken,
         'Quote Approved!',
         `Your quote for work order "${quote.workOrderId}" has been approved.`
       );

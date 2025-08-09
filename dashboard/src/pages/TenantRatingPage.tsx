@@ -77,8 +77,9 @@ const TenantRatingPageContent: React.FC = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
+      {/* Remove this entire Authentication Debug Info section */}
       {/* Authentication Debug Info */}
-      <Alert severity="info" sx={{ mb: 3 }}>
+      {/* <Alert severity="info" sx={{ mb: 3 }}>
         <Typography variant="h6" gutterBottom>Authentication Debug Info</Typography>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
           <Chip 
@@ -117,7 +118,7 @@ const TenantRatingPageContent: React.FC = () => {
             Token: {authToken.substring(0, 50)}...
           </Typography>
         )}
-      </Alert>
+      </Alert> */}
 
       {/* Breadcrumbs */}
       <Breadcrumbs sx={{ mb: 3 }}>

@@ -42,7 +42,9 @@ const RatingsList: React.FC<RatingsListProps> = ({
 
   // Sort ratings based on selected option
   const sortedRatings = useMemo(() => {
-    const sorted = [...ratings];
+    // Filter out any undefined/null ratings first
+    const validRatings = ratings.filter(rating => rating != null);
+    const sorted = [...validRatings];
     
     switch (sortBy) {
       case 'newest':
@@ -50,9 +52,9 @@ const RatingsList: React.FC<RatingsListProps> = ({
       case 'oldest':
         return sorted.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
       case 'highest':
-        return sorted.sort((a, b) => (b.overallRating || b.rating || 0) - (a.overallRating || a.rating || 0));
+        return sorted.sort((a, b) => (b?.overallRating || b?.rating || 0) - (a?.overallRating || a?.rating || 0));
       case 'lowest':
-        return sorted.sort((a, b) => (a.overallRating || a.rating || 0) - (b.overallRating || b.rating || 0));
+        return sorted.sort((a, b) => (a?.overallRating || a?.rating || 0) - (b?.overallRating || b?.rating || 0));
       default:
         return sorted;
     }
@@ -65,15 +67,17 @@ const RatingsList: React.FC<RatingsListProps> = ({
 
   // Calculate statistics
   const averageRating = useMemo(() => {
-    if (ratings.length === 0) return 0;
-    const sum = ratings.reduce((acc, rating) => acc + (rating.overallRating || rating.rating || 0), 0);
-    return Math.round((sum / ratings.length) * 10) / 10;
+    const validRatings = ratings.filter(rating => rating != null);
+    if (validRatings.length === 0) return 0;
+    const sum = validRatings.reduce((acc, rating) => acc + (rating?.overallRating || rating?.rating || 0), 0);
+    return Math.round((sum / validRatings.length) * 10) / 10;
   }, [ratings]);
 
   const ratingTrend = useMemo(() => {
-    if (ratings.length < 2) return null;
+    const validRatings = ratings.filter(rating => rating != null);
+    if (validRatings.length < 2) return null;
     
-    const sortedByDate = [...ratings].sort((a, b) => 
+    const sortedByDate = [...validRatings].sort((a, b) => 
       new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
     
@@ -82,8 +86,8 @@ const RatingsList: React.FC<RatingsListProps> = ({
     
     if (olderRatings.length === 0) return null;
     
-    const recentAvg = recentRatings.reduce((acc, r) => acc + (r.overallRating || r.rating || 0), 0) / recentRatings.length;
-    const olderAvg = olderRatings.reduce((acc, r) => acc + (r.overallRating || r.rating || 0), 0) / olderRatings.length;
+    const recentAvg = recentRatings.reduce((acc, r) => acc + (r?.overallRating || r?.rating || 0), 0) / recentRatings.length;
+    const olderAvg = olderRatings.reduce((acc, r) => acc + (r?.overallRating || r?.rating || 0), 0) / olderRatings.length;
     
     return recentAvg > olderAvg ? 'up' : recentAvg < olderAvg ? 'down' : 'stable';
   }, [ratings]);
