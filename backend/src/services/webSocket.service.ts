@@ -78,6 +78,33 @@ export class WebSocketService {
       // Join user-specific room
       socket.join(`user:${userId}`);
 
+      // Emergency Response WebSocket events
+      socket.on('emergency:join', () => {
+        socket.join('emergency-response');
+        console.log(`User ${user.email} joined emergency response channel`);
+      });
+
+      socket.on('emergency:leave', () => {
+        socket.leave('emergency-response');
+        console.log(`User ${user.email} left emergency response channel`);
+      });
+
+      socket.on('emergency:alert-update', (data: any) => {
+        socket.to('emergency-response').emit('emergency:alert-updated', {
+          ...data,
+          updatedBy: user.userId,
+          timestamp: new Date()
+        });
+      });
+
+      socket.on('emergency:status-change', (data: any) => {
+        socket.to('emergency-response').emit('emergency:status-changed', {
+          ...data,
+          changedBy: user.userId,
+          timestamp: new Date()
+        });
+      });
+
       // UX Review real-time events
       socket.on('ux:join-review', (reviewId: string) => {
         socket.join(`review:${reviewId}`);
@@ -153,6 +180,28 @@ export class WebSocketService {
 
   public broadcastToAll(event: string, data: any) {
     this.io.emit(event, data);
+  }
+
+  // Emergency Response specific methods
+  public emitEmergencyAlert(data: any) {
+    this.io.to('emergency-response').emit('emergency:new-alert', {
+      ...data,
+      timestamp: new Date()
+    });
+  }
+
+  public emitEmergencyUpdate(data: any) {
+    this.io.to('emergency-response').emit('emergency:alert-updated', {
+      ...data,
+      timestamp: new Date()
+    });
+  }
+
+  public emitEmergencyStatusChange(data: any) {
+    this.io.to('emergency-response').emit('emergency:status-changed', {
+      ...data,
+      timestamp: new Date()
+    });
   }
 
   public getActiveUsers(): string[] {

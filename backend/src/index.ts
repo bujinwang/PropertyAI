@@ -4,6 +4,7 @@ import app from './app';
 import http from 'http';
 import { prisma, connectMongoDB, setupPostgreSQL, setupMongoDB, closeDatabaseConnections } from './config/database';
 import WebSocketService from './services/webSocket.service';
+import EmergencyWebSocketService from './services/emergencyWebSocket.service';
 import VoicemailService from './services/voicemailService';
 import { rentCollectionService } from './services/rentCollection.service';
 import { documentExpirationService } from './services/documentExpiration.service';
@@ -58,6 +59,9 @@ const startServer = async () => {
       
       // Re-initialize WebSocket service with the new server instance
       new WebSocketService(serverInstance);
+      
+      // Initialize Emergency WebSocket service
+      new EmergencyWebSocketService(serverInstance);
       
       const onError = (err: NodeJS.ErrnoException) => {
         // Remove listeners to prevent memory leaks
