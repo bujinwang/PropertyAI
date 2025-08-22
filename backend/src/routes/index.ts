@@ -18,7 +18,7 @@ import leaseRoutes from './leaseRoutes';
 import maintenanceRoutes from './maintenanceRoutes';
 import transactionRoutes from './transactionRoutes';
 import passwordResetRoutes from './passwordResetRoutes';
-import aiRoutes from './aiRoutes';
+import aiRoutes from './ai.routes'; // ✅ Changed from './aiRoutes'
 import knowledgeBaseRoutes from './knowledgeBaseRoutes';
 import suggestionRoutes from './suggestionRoutes';
 import transcriptionRoutes from './transcriptionRoutes';
@@ -51,6 +51,7 @@ import publicListingRoutes from './publicListing.routes';
 import uxReviewRoutes from './uxReview.routes';
 import marketingRoutes from './marketing.routes';
 import marketIntelligenceRoutes from './marketIntelligence.routes';
+import orderUploadRoutes from './orderUpload';
 
 const router = express.Router();
 
@@ -120,6 +121,7 @@ router.use(`${API_PREFIX}/ux-review`, uxReviewRoutes);
 router.use(`${API_PREFIX}/marketing`, marketingRoutes);
 router.use(`${API_PREFIX}/tenant-ratings`, tenantRatingRoutes);
 router.use(`${API_PREFIX}/market-intelligence`, marketIntelligenceRoutes);
+router.use(`${API_PREFIX}/order-upload`, orderUploadRoutes);
 
 router.post(`${API_PREFIX}/cache/clear`, (req, res) => {
   const { key } = req.body;

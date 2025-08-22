@@ -94,17 +94,21 @@ const VendorBiddingPlatformScreen: React.FC = () => {
  const loadData = async () => {
   try {
    const [rfqsData, bidsData, vendorsData] = await Promise.all([
-    apiService.get('/api/vendor-bidding/rfqs'),
-    apiService.get('/api/vendor-bidding/bids'),
-    apiService.get('/api/vendor-bidding/vendors'),
+    apiService.get('/vendor-bidding/rfqs'),
+    apiService.get('/vendor-bidding/bids'),
+    apiService.get('/vendor-bidding/vendors'),
    ]);
-   setRfqs(rfqsData.data);
-   setBids(bidsData.data);
-   setVendors(vendorsData.data);
+   setRfqs(rfqsData.data || []);
+   setBids(bidsData.data || []);
+   setVendors(vendorsData.data || []);
   } catch (error) {
    console.error('Error loading data:', error);
+   // Set empty arrays to prevent filter errors
+   setRfqs([]);
+   setBids([]);
+   setVendors([]);
   }
- };
+};
 
  const handleCreateRFQ = async () => {
   try {
@@ -188,7 +192,7 @@ const VendorBiddingPlatformScreen: React.FC = () => {
         Active RFQs
        </Typography>
        <Typography variant="h3">
-        {rfqs.filter(r => r.status === 'published').length}
+        {(rfqs || []).filter(r => r.status === 'published').length}
        </Typography>
       </CardContent>
      </Card>
@@ -200,7 +204,7 @@ const VendorBiddingPlatformScreen: React.FC = () => {
         Open Bids
        </Typography>
        <Typography variant="h3">
-        {bids.filter(b => b.status === 'submitted').length}
+        {(bids || []).filter(b => b.status === 'submitted').length}
        </Typography>
       </CardContent>
      </Card>
@@ -212,7 +216,7 @@ const VendorBiddingPlatformScreen: React.FC = () => {
         Verified Vendors
        </Typography>
        <Typography variant="h3">
-        {vendors.filter(v => v.verified).length}
+        {(vendors || []).filter(v => v.verified).length}
        </Typography>
       </CardContent>
      </Card>

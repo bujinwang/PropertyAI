@@ -152,21 +152,23 @@ export const analyzeImage = async (req: Request, res: Response, next: NextFuncti
 // Placeholder for AI Insights Dashboard
 export const getInsights = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Mock data for now
-    const insights = [
+    const { timeRange, searchQuery, sortBy, sortOrder } = req.query;
+
+    // Mock data for now, incorporating query parameters
+    let insights = [
       {
         id: 'insight1',
         title: 'High Vacancy in Downtown Properties',
         description: 'Properties in the downtown area are experiencing higher than average vacancy rates over the past quarter.',
         category: 'operational',
         priority: 'critical',
-        confidence: 95, // Changed from 0.95 to 95
+        confidence: 95,
         impact: 0.8,
         recommendations: [
           { id: 'rec1', text: 'Adjust rental prices for downtown units.', actions: [{ id: 'act1', text: 'Review pricing strategy', completed: false }] },
           { id: 'rec2', text: 'Increase marketing efforts in downtown area.', actions: [{ id: 'act2', text: 'Launch social media campaign', completed: false }] }
         ],
-        timestamp: new Date().toISOString(),
+        timestamp: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago
         trend: 'up',
       },
       {
@@ -175,18 +177,109 @@ export const getInsights = async (req: Request, res: Response, next: NextFunctio
         description: 'Feedback from tenants indicates a decline in satisfaction regarding maintenance request resolution times.',
         category: 'tenant_satisfaction',
         priority: 'high',
-        confidence: 88, // Changed from 0.88 to 88
+        confidence: 88,
         impact: 0.7,
         recommendations: [
           { id: 'rec3', text: 'Investigate maintenance workflow bottlenecks.', actions: [{ id: 'act3', text: 'Analyze ticket resolution times', completed: false }] }
         ],
-        timestamp: new Date().toISOString(),
+        timestamp: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days ago
         trend: 'down',
+      },
+      {
+        id: 'insight3',
+        title: 'Energy Consumption Spike in Unit 4B',
+        description: 'Automated sensors detected an unusual spike in energy consumption in Unit 4B over the last week.',
+        category: 'operational',
+        priority: 'medium',
+        confidence: 90,
+        impact: 0.6,
+        recommendations: [
+          { id: 'rec4', text: 'Inspect Unit 4B for potential appliance malfunctions.', actions: [{ id: 'act4', text: 'Schedule inspection', completed: false }] }
+        ],
+        timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+        trend: 'up',
+      },
+      {
+        id: 'insight4',
+        title: 'Positive Feedback on New Online Payment System',
+        description: 'Tenants are providing overwhelmingly positive feedback on the recently implemented online payment system.',
+        category: 'tenant_satisfaction',
+        priority: 'low',
+        confidence: 98,
+        impact: 0.3,
+        recommendations: [
+          { id: 'rec5', text: 'Promote the online payment system more widely.', actions: [{ id: 'act5', text: 'Update tenant communication', completed: false }] }
+        ],
+        timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+        trend: 'up',
       },
     ];
 
-    res.json({ status: 'success', data: { categories: [{ id: 'cat1', name: 'Operational', category: 'operational', insights: insights.filter(i => i.category === 'operational'), totalCount: insights.filter(i => i.category === 'operational').length }, { id: 'cat2', name: 'Tenant Satisfaction', category: 'tenant_satisfaction', insights: insights.filter(i => i.category === 'tenant_satisfaction'), totalCount: insights.filter(i => i.category === 'tenant_satisfaction').length }] } });
+    // Filter by timeRange
+    if (timeRange) {
+      let days = 0;
+      if (timeRange === '7d') days = 7;
+      else if (timeRange === '30d') days = 30;
+      else if (timeRange === '90d') days = 90;
+      else if (timeRange === '1y') days = 365;
+
+      if (days > 0) {
+        const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+        insights = insights.filter(insight => new Date(insight.timestamp) >= cutoffDate);
+      }
+    }
+
+    // Filter by searchQuery
+    if (searchQuery && typeof searchQuery === 'string') {
+      const query = searchQuery.toLowerCase();
+      insights = insights.filter(insight =>
+        insight.title.toLowerCase().includes(query) ||
+        insight.description.toLowerCase().includes(query) ||
+        insight.category.toLowerCase().includes(query)
+      );
+    }
+
+    // Sort insights
+    if (sortBy) {
+      insights.sort((a: any, b: any) => {
+        let valA = a[sortBy as keyof typeof a];
+        let valB = b[sortBy as keyof typeof b];
+
+        // Handle string comparison for title, description, category
+        if (typeof valA === 'string' && typeof valB === 'string') {
+          valA = valA.toLowerCase();
+          valB = valB.toLowerCase();
+          if (sortOrder === 'asc') {
+            return valA.localeCompare(valB);
+          } else {
+            return valB.localeCompare(valA);
+          }
+        }
+        // Handle numeric comparison for confidence, impact
+        else if (typeof valA === 'number' && typeof valB === 'number') {
+          if (sortOrder === 'asc') {
+            return valA - valB;
+          } else {
+            return valB - valA;
+          }
+        }
+        // Handle date comparison for timestamp
+        else if (sortBy === 'timestamp') {
+          const dateA = new Date(valA).getTime();
+          const dateB = new Date(valB).getTime();
+          if (sortOrder === 'asc') {
+            return dateA - dateB;
+          } else {
+            return dateB - dateA;
+          }
+        }
+        return 0;
+      });
+    }
+
+    res.json({ status: 'success', data: insights });
   } catch (error) {
+    console.error('Error fetching insights:', error);
     next(error);
   }
 };

@@ -94,7 +94,7 @@ router.post('/upload-multiple', authenticateToken, upload.array('files', 10), as
 router.get('/files/:key/metadata', authenticateToken, [
   param('key').isString().notEmpty(),
   validateRequest,
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const { key } = req.params;
     const metadata = await storageService.getFileMetadata(key);
@@ -117,7 +117,7 @@ router.post('/files/:key/signed-url', authenticateToken, [
   param('key').isString().notEmpty(),
   body('expiresIn').optional().isInt({ min: 60, max: 604800 }),
   validateRequest,
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const { key } = req.params;
     const { expiresIn = 3600 } = req.body;
@@ -141,7 +141,7 @@ router.post('/files/:key/signed-url', authenticateToken, [
 router.delete('/files/:key', authenticateToken, [
   param('key').isString().notEmpty(),
   validateRequest,
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const { key } = req.params;
     const userId = (req.user as User)!.id;

@@ -142,8 +142,9 @@ app.use('/api/calendar', googleCalendarRoutes);
 app.use('/api/tenant-ratings', tenantRatingRoutes);
 app.use('/api/vendor-payments', vendorPaymentRoutes);
 app.use('/api/payments', paymentRoutes);
-// app.use('/api/storage', storageRoutes);
-app.use('/api/ai', aiRoutes);
+// Remove these duplicate lines:
+// import aiRoutes from './routes/ai.routes';
+// app.use('/api/ai', aiRoutes);
 app.use('/api/market-data', marketDataRoutes);
 app.use('/api/compliance', complianceRoutes);
 

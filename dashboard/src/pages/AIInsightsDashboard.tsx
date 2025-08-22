@@ -53,12 +53,35 @@ const AIInsightsDashboard: React.FC = () => {
         setState(prev => ({ ...prev, loading: true, error: null }));
         const insightsResponse = await aiInsightsService.getInsights(state.filters);
         console.log("API Response Data:", insightsResponse);
-        setState(prev => ({
-          ...prev,
-          categories: insightsResponse.data.categories || [],
-          loading: false,
-          lastUpdated: new Date()
-        }));
+        
+        // Add null check to prevent undefined access
+        if (insightsResponse && insightsResponse.data) {
+          // Group insights by category for display
+          const groupedInsights = insightsResponse.data.reduce((acc: Record<string, Insight[]>, insight: Insight) => {
+            if (!acc[insight.category]) {
+              acc[insight.category] = [];
+            }
+            acc[insight.category].push(insight);
+            return acc;
+          }, {});
+
+          const categories: InsightCategoryGroup[] = Object.keys(groupedInsights).map(category => ({
+            id: category,
+            name: category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()), // Format category name
+            category: category as InsightCategory,
+            insights: groupedInsights[category],
+            totalCount: groupedInsights[category].length,
+          }));
+
+          setState(prev => ({
+            ...prev,
+            categories: categories,
+            loading: false,
+            lastUpdated: new Date()
+          }));
+        } else {
+          throw new Error('Invalid response format from API');
+        }
       } catch (error) {
         console.error("Error loading insights:", error);
         setState(prev => ({
@@ -191,6 +214,28 @@ const AIInsightsDashboard: React.FC = () => {
               {state.categories
                 .filter((category: InsightCategoryGroup) => activeTab > 0 && state.categories[activeTab - 1]?.id === category.id)
                 .flatMap((category: InsightCategoryGroup) => category.insights)
+                .sort((a, b) => {
+                  // Apply sorting based on state.filters.sortBy and state.filters.sortOrder
+                  const sortBy = state.filters.sortBy;
+                  const sortOrder = state.filters.sortOrder;
+
+                  let valA: any = a[sortBy as keyof Insight];
+                  let valB: any = b[sortBy as keyof Insight];
+
+                  if (sortBy === 'timestamp') {
+                    valA = new Date(valA).getTime();
+                    valB = new Date(valB).getTime();
+                  } else if (typeof valA === 'string' && typeof valB === 'string') {
+                    valA = valA.toLowerCase();
+                    valB = valB.toLowerCase();
+                  }
+
+                  if (sortOrder === 'asc') {
+                    return valA < valB ? -1 : valA > valB ? 1 : 0;
+                  } else {
+                    return valA > valB ? -1 : valA < valB ? 1 : 0;
+                  }
+                })
                 .map((insight: Insight) => {
                   console.log("Rendering InsightCard for insight:", insight);
                   if (!insight) return null; // Defensive check

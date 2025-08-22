@@ -158,25 +158,31 @@ const AccessControlManagementScreen: React.FC = () => {
   const loadData = async () => {
     try {
       const [rolesData, permissionsData, usersData, tempAccessData, logsData] = await Promise.all([
-        apiService.get('/api/access-control/roles'),
-        apiService.get('/api/access-control/permissions'),
-        apiService.get('/api/access-control/users'),
-        apiService.get('/api/access-control/temporary-access'),
-        apiService.get('/api/access-control/logs'),
+        apiService.get('/access-control/roles'),
+        apiService.get('/access-control/permissions'),
+        apiService.get('/access-control/users'),
+        apiService.get('/access-control/temporary-access'),
+        apiService.get('/access-control/logs'),
       ]);
-      setRoles(rolesData.data);
-      setPermissions(permissionsData.data);
-      setUsers(usersData.data);
-      setTempAccess(tempAccessData.data);
-      setAccessLogs(logsData.data);
+      setRoles(rolesData?.data || []);
+      setPermissions(permissionsData?.data || []);
+      setUsers(usersData?.data || []);
+      setTempAccess(tempAccessData?.data || []);
+      setAccessLogs(logsData?.data || []);
     } catch (error) {
       console.error('Error loading access control data:', error);
+      // Set empty arrays to prevent undefined errors
+      setRoles([]);
+      setPermissions([]);
+      setUsers([]);
+      setTempAccess([]);
+      setAccessLogs([]);
     }
   };
 
   const handleCreateRole = async () => {
     try {
-      await apiService.post('/api/access-control/roles', newRole);
+      await apiService.post('/access-control/roles', newRole); // Remove /api prefix
       setShowRoleForm(false);
       setNewRole({ name: '', description: '', permissions: [] });
       loadData();
@@ -187,7 +193,7 @@ const AccessControlManagementScreen: React.FC = () => {
 
   const handleCreateUser = async () => {
     try {
-      await apiService.post('/api/access-control/users', newUser);
+      await apiService.post('/access-control/users', newUser); // Remove /api prefix
       setShowUserForm(false);
       setNewUser({ email: '', firstName: '', lastName: '', roleId: '' });
       loadData();

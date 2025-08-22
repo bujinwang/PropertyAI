@@ -3,7 +3,6 @@
  * Types for the AI insights dashboard components and data models
  */
 
-import { AIExplanation, ConfidenceScore } from './ai';
 
 export type InsightCategory = 'financial' | 'operational' | 'tenant_satisfaction';
 export type InsightPriority = 'low' | 'medium' | 'high' | 'critical';
@@ -17,18 +16,15 @@ export type TimeRange = '7d' | '30d' | '90d' | '1y';
 export interface Insight {
   id: string;
   title: string;
-  summary: string;
+  description: string; // Changed from summary to description
   category: InsightCategory;
   priority: InsightPriority;
-  impact: InsightImpact;
   confidence: number;
-  explanation: AIExplanation;
+  impact: number; // Changed from InsightImpact to number
   recommendations: AIRecommendation[];
-  chartData: ChartData;
-  metrics: InsightMetric[];
-  timestamp: Date;
+  timestamp: string; // Changed from Date to string
   trend: TrendDirection;
-  tags: string[];
+  // Removed: explanation, chartData, metrics, tags
 }
 
 /**
@@ -39,11 +35,7 @@ export interface AIRecommendation {
   title: string;
   description: string;
   priority: InsightPriority;
-  confidence: number;
-  estimatedImpact: string;
-  timeline: string;
-  effort: 'low' | 'medium' | 'high';
-  category: string;
+  // Removed: confidence, estimatedImpact, timeline, effort, category
   actions: RecommendationAction[];
 }
 
@@ -75,37 +67,14 @@ export interface InsightCategoryGroup {
 /**
  * Chart data for visualizations
  */
-export interface ChartData {
-  type: 'line' | 'bar' | 'pie' | 'doughnut' | 'area';
-  labels: string[];
-  datasets: ChartDataset[];
-  options?: any;
-}
 
 /**
  * Chart dataset
  */
-export interface ChartDataset {
-  label: string;
-  data: number[];
-  backgroundColor?: string | string[];
-  borderColor?: string;
-  borderWidth?: number;
-  fill?: boolean;
-}
 
 /**
  * Insight metric
  */
-export interface InsightMetric {
-  name: string;
-  value: number | string;
-  unit?: string;
-  change?: number;
-  changeType?: TrendDirection;
-  target?: number;
-  format?: 'currency' | 'percentage' | 'number' | 'text';
-}
 
 /**
  * Filter options for insights
@@ -135,11 +104,8 @@ export interface InsightsDashboardState {
  * API response for insights
  */
 export interface InsightsResponse {
-  insights: Insight[];
-  categories: InsightCategoryGroup[];
-  totalCount: number;
-  hasMore: boolean;
-  nextCursor?: string;
+  data: Insight[]; // Changed to match backend response
+  status: string; // Added status
 }
 
 /**

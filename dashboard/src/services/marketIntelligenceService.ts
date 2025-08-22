@@ -2,38 +2,38 @@ import { apiService } from './apiService';
 
 export const marketIntelligenceService = {
   // Get market intelligence overview
-  fetchMarketIntelligence: () => apiService.get('/market-intelligence'),
+  fetchMarketIntelligence: () => apiService.get('/ai'),
 
   // Get AI-generated market summary
-  fetchMarketSummary: () => apiService.get('/market-intelligence/summary'),
+  fetchMarketSummary: () => apiService.get('/ai/summary'),
 
   // Get competitor activity data
-  fetchCompetitorActivity: () => apiService.get('/market-intelligence/competitors'),
+  fetchCompetitorActivity: () => apiService.get('/ai/competitors'),
 
   // Get market opportunities
-  fetchMarketOpportunities: () => apiService.get('/market-intelligence/opportunities'),
+  fetchMarketOpportunities: () => apiService.get('/ai/opportunities'),
 
   // Get market trends
-  fetchMarketTrends: () => apiService.get('/market-intelligence/trends'),
+  fetchMarketTrends: () => apiService.get('/ai/trends'),
 
   // Get demand forecasts
-  fetchDemandForecasts: () => apiService.get('/market-intelligence/forecasts'),
+  fetchDemandForecasts: () => apiService.get('/ai/forecasts'),
 
   // Submit feedback on market intelligence
-  submitMarketFeedback: (data: any) => apiService.post('/market-intelligence/feedback', data),
+  submitMarketFeedback: (data: any) => apiService.post('/ai/feedback', data),
 
   // Get property valuation
   getPropertyValuation: (propertyId?: string) => 
-    apiService.get(`/market-intelligence/valuation${propertyId ? `?propertyId=${propertyId}` : ''}`),
+    apiService.get(`/ai/valuation${propertyId ? `?propertyId=${propertyId}` : ''}`),
 
   // Get investment analysis
   getInvestmentAnalysis: (propertyIds: string[]) => 
-    apiService.post('/market-intelligence/investment-analysis', { propertyIds }),
+    apiService.post('/ai/investment-analysis', { propertyIds }),
 
   // Get rental market analysis
   getRentalMarketAnalysis: (location?: string) => 
-    apiService.get(`/market-intelligence/rental-analysis${location ? `?location=${location}` : ''}`),
+    apiService.get(`/ai/rental-analysis${location ? `?location=${location}` : ''}`),
 
   // Get market alerts
-  getMarketAlerts: () => apiService.get('/market-intelligence/alerts')
+  getMarketAlerts: () => apiService.get('/ai/alerts')
 };

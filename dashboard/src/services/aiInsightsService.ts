@@ -23,7 +23,7 @@ class AIInsightsService {
    */
   async getInsights(filters?: Partial<InsightFilters>): Promise<InsightsResponse> {
     try {
-      const response = await apiService.post('/ai/insights', filters || {});
+      const response = await apiService.get('/ai/insights', filters || {});
       return response.data;
     } catch (error) {
       console.error('Error fetching insights:', error);

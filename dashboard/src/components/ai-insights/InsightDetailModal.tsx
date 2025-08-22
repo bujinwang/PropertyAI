@@ -41,7 +41,7 @@ import {
 } from '@mui/icons-material';
 import { Insight, AIRecommendation, InsightPriority } from '../../types/ai-insights';
 import { aiInsightsService } from '../../services/aiInsightsService';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+// Removed recharts imports as chartData is no longer in Insight
 
 interface InsightDetailModalProps {
  open: boolean;
@@ -244,16 +244,7 @@ export const InsightDetailModal: React.FC<InsightDetailModalProps> = ({
         <Typography variant="h6" gutterBottom>
          Key Findings
         </Typography>
-        <List dense>
-         {insight.dataPoints?.map((point, index) => (
-          <ListItem key={index} sx={{ px: 0 }}>
-           <ListItemIcon sx={{ minWidth: 30 }}>
-            <CheckIcon color="success" fontSize="small" />
-           </ListItemIcon>
-           <ListItemText primary={point.label} secondary={point.value} />
-          </ListItem>
-         ))}
-        </List>
+        {/* Removed dataPoints rendering */}
        </Grid>
 
        <Grid xs={12} md={4}>
@@ -263,9 +254,7 @@ export const InsightDetailModal: React.FC<InsightDetailModalProps> = ({
            Confidence Score
           </Typography>
           {renderConfidenceScore(insight.confidence)}
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-           {insight.confidenceExplanation}
-          </Typography>
+          {/* Removed confidenceExplanation */}
          </CardContent>
         </Card>
 
@@ -278,21 +267,21 @@ export const InsightDetailModal: React.FC<InsightDetailModalProps> = ({
            {insight.impact}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-           Estimated {insight.impactType || 'business'} impact
+           Estimated business impact: {insight.impact}
           </Typography>
          </CardContent>
         </Card>
        </Grid>
       </Grid>
 
-      {insight.aiRecommendations && insight.aiRecommendations.length > 0 && (
+      {insight.recommendations && insight.recommendations.length > 0 && (
        <Box sx={{ mt: 4 }}>
         <Typography variant="h6" gutterBottom>
-         AI Recommendations
+         Recommendations
         </Typography>
         <Grid container spacing={2}>
-         {insight.aiRecommendations.slice(0, 3).map((rec) => (
-          <Grid xs={12} md={6} key={rec.id}>
+         {insight.recommendations.slice(0, 3).map((rec) => (
+          <Grid item xs={12} md={6} key={rec.id}>
            <Card variant="outlined">
             <CardContent>
              <Typography variant="subtitle1" gutterBottom>
@@ -302,14 +291,16 @@ export const InsightDetailModal: React.FC<InsightDetailModalProps> = ({
               {rec.description}
              </Typography>
              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Chip 
-               label={rec.priority} 
+              <Chip
+               label={rec.priority.toUpperCase()}
                size="small"
-               color={rec.priority === 'high' ? 'error' : rec.priority === 'medium' ? 'warning' : 'default'}
+               sx={{
+                bgcolor: priorityColors[rec.priority as InsightPriority],
+                color: 'white',
+                fontWeight: 'bold'
+               }}
               />
-              <Typography variant="caption" color="text.secondary">
-               {rec.timeline}
-              </Typography>
+              {/* Removed timeline as it's not in the new AIRecommendation interface */}
              </Box>
             </CardContent>
            </Card>
@@ -327,48 +318,9 @@ export const InsightDetailModal: React.FC<InsightDetailModalProps> = ({
        Supporting Data
       </Typography>
       
-      {insight.chartData && (
-       <Card sx={{ mb: 3 }}>
-        <CardContent>
-         <Typography variant="h6" gutterBottom>
-          {insight.chartData.title || 'Trend Analysis'}
-         </Typography>
-         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={insight.chartData.data}>
-           <CartesianGrid strokeDasharray="3 3" />
-           <XAxis dataKey="label" />
-           <YAxis />
-           <Tooltip />
-           <Line 
-            type="monotone" 
-            dataKey="value" 
-            stroke={theme.palette.primary.main} 
-            strokeWidth={2}
-            dot={{ fill: theme.palette.primary.main }}
-           />
-          </LineChart>
-         </ResponsiveContainer>
-        </CardContent>
-       </Card>
-      )}
+      {/* Removed chartData rendering */}
 
-      <Accordion>
-       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Typography>Raw Data Points</Typography>
-       </AccordionSummary>
-       <AccordionDetails>
-        <List dense>
-         {insight.dataPoints?.map((point, index) => (
-          <ListItem key={index} sx={{ px: 0 }}>
-           <ListItemText 
-            primary={point.label}
-            secondary={`${point.value} (${point.change || 'No change'})`}
-           />
-          </ListItem>
-         ))}
-        </List>
-       </AccordionDetails>
-      </Accordion>
+      {/* Removed Raw Data Points accordion */}
      </Box>
     )}
 
@@ -378,7 +330,7 @@ export const InsightDetailModal: React.FC<InsightDetailModalProps> = ({
        Detailed Recommendations
       </Typography>
       
-      {insight.aiRecommendations?.map((rec) => (
+      {insight.recommendations?.map((rec) => (
        <Card key={rec.id} sx={{ mb: 2 }}>
         <CardContent>
          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
@@ -390,46 +342,23 @@ export const InsightDetailModal: React.FC<InsightDetailModalProps> = ({
             {rec.description}
            </Typography>
           </Box>
-          <Chip 
-           label={rec.priority.toUpperCase()} 
-           color={rec.priority === 'high' ? 'error' : rec.priority === 'medium' ? 'warning' : 'info'}
-           variant="filled"
-          />
+          {/* Removed priority, timeline, expectedOutcome as they are not in the new AIRecommendation interface */}
          </Box>
-
-         <Grid container spacing={2} sx={{ mb: 2 }}>
-          <Grid xs={12} md={6}>
-           <Typography variant="subtitle2" gutterBottom>
-            Timeline
-           </Typography>
-           <Typography variant="body2" color="text.secondary">
-            {rec.timeline}
-           </Typography>
-          </Grid>
-          <Grid xs={12} md={6}>
-           <Typography variant="subtitle2" gutterBottom>
-            Expected Outcome
-           </Typography>
-           <Typography variant="body2" color="text.secondary">
-            {rec.expectedOutcome}
-           </Typography>
-          </Grid>
-         </Grid>
 
          {rec.actions?.map((action) => (
           <Box key={action.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-           <CheckIcon 
+           <CheckIcon
             color={action.completed ? 'success' : 'disabled'}
             fontSize="small"
            />
-           <Typography 
+           <Typography
             variant="body2"
-            sx={{ 
+            sx={{
              textDecoration: action.completed ? 'line-through' : 'none',
              color: action.completed ? 'text.secondary' : 'text.primary'
             }}
            >
-            {action.description}
+            {action.text} {/* Changed from description to text */}
            </Typography>
           </Box>
          ))}
@@ -446,18 +375,10 @@ export const InsightDetailModal: React.FC<InsightDetailModalProps> = ({
       </Typography>
       
       <Typography variant="body2" color="text.secondary" paragraph>
-       Generated: {new Date(insight.createdAt).toLocaleString()}
+       Generated: {new Date(insight.timestamp).toLocaleString()}
       </Typography>
       
-      {insight.updatedAt && (
-       <Typography variant="body2" color="text.secondary" paragraph>
-        Last Updated: {new Date(insight.updatedAt).toLocaleString()}
-       </Typography>
-      )}
-      
-      <Typography variant="body1" paragraph>
-       {insight.methodology || 'AI-generated insight based on historical data and predictive models.'}
-      </Typography>
+      {/* Removed updatedAt and methodology as they are not in the new Insight interface */}
      </Box>
     )}
    </DialogContent>
