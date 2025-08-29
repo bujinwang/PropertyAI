@@ -1,0 +1,88 @@
+name: Documentation Issue
+description: Report an issue with documentation
+title: "[Docs]: "
+labels: ["documentation", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve our documentation!
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/PropertyAI/PropertyAI/blob/main/CODE_OF_CONDUCT.md)
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true
+
+  - type: dropdown
+    id: doc-type
+    attributes:
+      label: Documentation Type
+      description: What type of documentation issue is this?
+      options:
+        - README
+        - API Documentation
+        - Setup/Installation Guide
+        - Architecture Documentation
+        - Contributing Guide
+        - Code Comments
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: Issue Type
+      description: What kind of documentation issue?
+      options:
+        - Missing information
+        - Incorrect information
+        - Outdated information
+        - Unclear/confusing content
+        - Broken links
+        - Typo/grammar
+        - Missing examples
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: location
+    attributes:
+      label: Documentation Location
+      description: Where is the documentation issue located?
+      placeholder: |
+        - File: README.md
+        - Section: Quick Start
+        - Line: 45
+        - URL: https://github.com/PropertyAI/PropertyAI/blob/main/README.md#quick-start
+    validations:
+      required: true
+
+  - type: textarea
+    id: issue-description
+    attributes:
+      label: Issue Description
+      description: Describe the documentation issue in detail
+      placeholder: What's wrong with the current documentation?
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggested-improvement
+    attributes:
+      label: Suggested Improvement
+      description: How do you think this should be improved?
+      placeholder: What changes would make this clearer/more accurate?
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context about the documentation issue

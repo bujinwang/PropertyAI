@@ -1,7 +1,44 @@
 {
-  "name": "@propertyai/monorepo",
+  "name": "propertyai",
   "version": "1.0.0",
-  "private": true,
+  "description": "AI-powered property management platform with intelligent automation, predictive analytics, and comprehensive rental management features",
+  "keywords": [
+    "property-management",
+    "artificial-intelligence",
+    "real-estate",
+    "rental-management",
+    "predictive-analytics",
+    "maintenance-management",
+    "tenant-portal",
+    "ai-automation",
+    "property-tech",
+    "proptech"
+  ],
+  "homepage": "https://github.com/PropertyAI/PropertyAI#readme",
+  "bugs": {
+    "url": "https://github.com/PropertyAI/PropertyAI/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PropertyAI/PropertyAI.git"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "PropertyAI Team",
+    "email": "team@propertyai.com",
+    "url": "https://github.com/PropertyAI"
+  },
+  "contributors": [
+    {
+      "name": "PropertyAI Community",
+      "url": "https://github.com/PropertyAI/PropertyAI/graphs/contributors"
+    }
+  ],
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "private": false,
   "workspaces": [
     "backend",
     "dashboard",

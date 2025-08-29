@@ -1,0 +1,199 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  NODE_VERSION: '20.x'
+
+jobs:
+  test-backend:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: propertyai_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      mongodb:
+        image: mongo:4.4
+        env:
+          MONGO_INITDB_ROOT_USERNAME: admin
+          MONGO_INITDB_ROOT_PASSWORD: admin
+        options: >-
+          --health-cmd "mongo --eval 'db.adminCommand(\"ismaster\")'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 27017:27017
+      
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd backend && npm ci
+
+    - name: Setup test environment
+      run: |
+        cd backend
+        cp .env.example .env
+        echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/propertyai_test" >> .env
+        echo "MONGODB_URI=mongodb://admin:admin@localhost:27017/propertyai_test" >> .env
+        echo "REDIS_URL=redis://localhost:6379" >> .env
+
+    - name: Run database migrations
+      run: |
+        cd backend
+        npx prisma generate
+        npx prisma migrate deploy
+
+    - name: Run backend tests
+      run: |
+        cd backend
+        npm test -- --coverage
+
+    - name: Upload backend coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./backend/coverage/lcov.info
+        flags: backend
+
+  test-dashboard:
+    name: Dashboard Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd dashboard && npm ci
+
+    - name: Run dashboard tests
+      run: |
+        cd dashboard
+        npm test -- --coverage --watchAll=false
+
+    - name: Upload dashboard coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./dashboard/coverage/lcov.info
+        flags: dashboard
+
+  test-contractor-app:
+    name: ContractorApp Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd ContractorApp && npm ci
+
+    - name: Run contractor app tests
+      run: |
+        cd ContractorApp
+        npm test -- --coverage --watchAll=false
+
+  lint-and-format:
+    name: Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run linting
+      run: npm run lint
+
+    - name: Check TypeScript compilation
+      run: |
+        cd backend && npx tsc --noEmit
+        cd ../dashboard && npx tsc --noEmit
+        cd ../ContractorApp && npx tsc --noEmit
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run npm audit
+      run: |
+        npm audit --audit-level=moderate
+        cd backend && npm audit --audit-level=moderate
+        cd ../dashboard && npm audit --audit-level=moderate
+        cd ../ContractorApp && npm audit --audit-level=moderate
+
+    - name: Run CodeQL Analysis
+      uses: github/codeql-action/init@v2
+      with:
+        languages: typescript, javascript
+
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v2
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
