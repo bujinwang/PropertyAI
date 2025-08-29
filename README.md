@@ -229,8 +229,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 💬 Community & Support
 
-- **GitHub Discussions**: [Ask questions and share ideas](https://github.com/PropertyAI/PropertyAI/discussions)
-- **Issues**: [Report bugs and request features](https://github.com/PropertyAI/PropertyAI/issues)
+- **GitHub Discussions**: [Ask questions and share ideas](https://github.com/bujinwang/PropertyAI/discussions)
+- **Issues**: [Report bugs and request features](https://github.com/bujinwang/PropertyAI/issues)
 - **Documentation**: [Comprehensive guides and API docs](./docs/)
 
 ## ⭐ Star History

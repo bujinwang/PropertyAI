@@ -14,13 +14,13 @@
     "property-tech",
     "proptech"
   ],
-  "homepage": "https://github.com/PropertyAI/PropertyAI#readme",
+  "homepage": "https://github.com/bujinwang/PropertyAI#readme",
   "bugs": {
-    "url": "https://github.com/PropertyAI/PropertyAI/issues"
+    "url": "https://github.com/bujinwang/PropertyAI/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PropertyAI/PropertyAI.git"
+    "url": "git+https://github.com/bujinwang/PropertyAI.git"
   },
   "license": "MIT",
   "author": {
