@@ -42,25 +42,30 @@
   "workspaces": [
     "backend",
     "dashboard",
-    "ContractorApp"
+    "ContractorApp",
+    "propertyapp"
   ],
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:dashboard\"",
     "dev:backend": "npm run dev --workspace=backend",
     "dev:dashboard": "npm run dev --workspace=dashboard",
     "dev:contractor": "npm run start --workspace=ContractorApp",
+    "dev:propertyapp": "npm run start --workspace=propertyapp",
     "build": "npm run build --workspaces",
     "build:backend": "npm run build --workspace=backend",
     "build:dashboard": "npm run build --workspace=dashboard",
     "build:contractor": "npm run build --workspace=ContractorApp",
+    "build:propertyapp": "npm run build --workspace=propertyapp",
     "test": "npm run test --workspaces",
     "test:backend": "npm run test --workspace=backend",
     "test:dashboard": "npm run test --workspace=dashboard",
     "test:contractor": "npm run test --workspace=ContractorApp",
+    "test:propertyapp": "npm run test --workspace=propertyapp",
     "lint": "npm run lint --workspaces",
     "lint:backend": "npm run lint --workspace=backend",
     "lint:dashboard": "npm run lint --workspace=dashboard",
     "lint:contractor": "npm run lint --workspace=ContractorApp",
+    "lint:propertyapp": "npm run lint --workspace=propertyapp",
     "clean": "npm run clean --workspaces",
     "install:all": "npm install"
   },
@@ -83,5 +88,11 @@
     "node-schedule": "^2.1.1",
     "pdfkit": "^0.17.1",
     "plaid": "^37.0.0"
+  },
+  "overrides": {
+    "ip": "^2.0.1",
+    "jsonwebtoken": "^9.0.2",
+    "node-forge": "^1.3.1",
+    "semver": "^7.6.0"
   }
 }
