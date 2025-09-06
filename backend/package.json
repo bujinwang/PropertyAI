@@ -1,7 +1,7 @@
 {
-  "name": "propertyai-backend",
+  "name": "propertymanagementai-backend",
   "version": "1.0.0",
-  "description": "Backend for PropertyAI application",
+  "description": "Backend for PropertyManagementAI application",
   "main": "dist/index.js",
   "scripts": {
     "start": "node dist/index.js",

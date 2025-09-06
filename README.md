@@ -1,4 +1,4 @@
-# 🏠 PropertyAI - Intelligent Property Management Platform
+# 🏠 PropertyManagementAI - Intelligent Property Management Platform
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-20.x-green.svg)](https://nodejs.org/)
@@ -6,7 +6,7 @@
 [![React](https://img.shields.io/badge/React-18.x-blue.svg)](https://reactjs.org/)
 [![React Native](https://img.shields.io/badge/React%20Native-0.74-blue.svg)](https://reactnative.dev/)
 
-PropertyAI is a comprehensive, open-source property management platform that leverages artificial intelligence to revolutionize property operations. Built with modern technologies and AI-powered features, it provides an integrated solution for property managers, owners, tenants, and contractors.
+PropertyManagementAI is a comprehensive, open-source property management platform that leverages artificial intelligence to revolutionize property operations. Built with modern technologies and AI-powered features, it provides an integrated solution for property managers, owners, tenants, and contractors.
 
 ## ✨ Key Features
 
@@ -87,8 +87,8 @@ PropertyAI is a comprehensive, open-source property management platform that lev
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-username/PropertyAI.git
-   cd PropertyAI
+   git clone https://github.com/your-username/PropertyManagementAI.git
+   cd PropertyManagementAI
    ```
 
 2. **Install dependencies:**
@@ -229,8 +229,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 💬 Community & Support
 
-- **GitHub Discussions**: [Ask questions and share ideas](https://github.com/bujinwang/PropertyAI/discussions)
-- **Issues**: [Report bugs and request features](https://github.com/bujinwang/PropertyAI/issues)
+- **GitHub Discussions**: [Ask questions and share ideas](https://github.com/bujinwang/PropertyManagementAI/discussions)
+- **Issues**: [Report bugs and request features](https://github.com/bujinwang/PropertyManagementAI/issues)
 - **Documentation**: [Comprehensive guides and API docs](./docs/)
 
 ## ⭐ Star History
@@ -239,6 +239,6 @@ If you find this project useful, please consider giving it a star! It helps othe
 
 ---
 
-**Built with ❤️ by the PropertyAI community**
+**Built with ❤️ by the PropertyManagementAI community**
 
 *Making property management intelligent, efficient, and accessible to everyone.*

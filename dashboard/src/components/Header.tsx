@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+const { useState } = React;
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   AppBar,
@@ -20,17 +21,18 @@ import {
   Search as SearchIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigation, useNavigationBreakpoint } from '../design-system/navigation';
 import ThemeSwitcher from './ThemeSwitcher';
 
-interface HeaderProps {
-  onMenuToggle: () => void;
-}
-
-const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
+const Header: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+  
+  // Navigation system integration
+  const { toggleDrawer } = useNavigation();
+  const { shouldShowDrawer } = useNavigationBreakpoint();
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -60,15 +62,18 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
       elevation={0}
     >
       <Toolbar>
-        <IconButton
-          color="inherit"
-          aria-label="open drawer"
-          edge="start"
-          onClick={onMenuToggle}
-          sx={{ mr: 2, display: { sm: 'none' } }}
-        >
-          <MenuIcon />
-        </IconButton>
+        {/* Menu toggle button for tablet drawer */}
+        {shouldShowDrawer && (
+          <IconButton
+            color="inherit"
+            aria-label="open navigation drawer"
+            edge="start"
+            onClick={toggleDrawer}
+            sx={{ mr: 2 }}
+          >
+            <MenuIcon />
+          </IconButton>
+        )}
         
         <Typography 
           variant="h6" 

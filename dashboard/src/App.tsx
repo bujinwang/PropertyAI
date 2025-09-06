@@ -8,7 +8,9 @@ import { AuthProvider } from './contexts/AuthContext';
 import { AppErrorBoundary } from './components/error-boundary/AppErrorBoundary';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
-import { PropertyFlowThemeProvider } from './design-system/theme';
+import { ThemeProvider } from '@mui/material/styles';
+import theme from './design-system/theme';
+import { AnnouncementProvider } from './design-system/accessibility';
 import './App.css';
 
 // Create a client
@@ -55,6 +57,8 @@ const DocumentVerificationDemo = lazy(() => import('./pages/DocumentVerification
 const TenantRatingPage = lazy(() => import('./pages/TenantRatingPage'));
 const UXReviewDashboard = lazy(() => import('./pages/UXReviewDashboard'));
 const MaintenanceRequests = lazy(() => import('./pages/MaintenanceRequests'));
+const FormsShowcase = lazy(() => import('./pages/FormsShowcase'));
+const AnalyticsDashboard = lazy(() => import('./pages/AnalyticsDashboard'));
 
 // Component to track page views
 function PageTracker() {
@@ -80,9 +84,10 @@ function LazyRoute({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <GoogleOAuthProvider clientId={(import.meta as any).env.VITE_GOOGLE_CLIENT_ID || "demo-client-id"}>
-      <PropertyFlowThemeProvider>
-        <AppErrorBoundary>
-          <AuthProvider>
+      <ThemeProvider theme={theme}>
+        <AnnouncementProvider>
+          <AppErrorBoundary>
+            <AuthProvider>
             <QueryClientProvider client={queryClient}>
               <Router>
                 <PageTracker />
@@ -186,6 +191,16 @@ function App() {
                         <Route path="document-verification-demo" element={<DocumentVerificationDemo />} />
                         <Route path="tenant-ratings" element={<TenantRatingPage />} />
                         <Route path="ux-review" element={<UXReviewDashboard />} />
+                        <Route path="forms-showcase" element={
+                          <LazyRoute>
+                            <FormsShowcase />
+                          </LazyRoute>
+                        } />
+                        <Route path="analytics-dashboard" element={
+                          <LazyRoute>
+                            <AnalyticsDashboard />
+                          </LazyRoute>
+                        } />
                       </Route>
                       
                       {/* Catch-all route for unmatched paths */}
@@ -201,9 +216,10 @@ function App() {
                 </div>
               </Router>
             </QueryClientProvider>
-          </AuthProvider>
-        </AppErrorBoundary>
-      </PropertyFlowThemeProvider>
+            </AuthProvider>
+          </AppErrorBoundary>
+        </AnnouncementProvider>
+      </ThemeProvider>
     </GoogleOAuthProvider>
   );
 }

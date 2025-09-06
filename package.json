@@ -1,5 +1,5 @@
 {
-  "name": "propertyai",
+  "name": "propertymanagementai",
   "version": "1.0.0",
   "description": "AI-powered property management platform with intelligent automation, predictive analytics, and comprehensive rental management features",
   "keywords": [
@@ -24,14 +24,14 @@
   },
   "license": "MIT",
   "author": {
-    "name": "PropertyAI Team",
-    "email": "team@propertyai.com",
-    "url": "https://github.com/PropertyAI"
+    "name": "PropertyManagementAI Team",
+    "email": "team@propertymanagementai.com",
+    "url": "https://github.com/PropertyManagementAI"
   },
   "contributors": [
     {
-      "name": "PropertyAI Community",
-      "url": "https://github.com/PropertyAI/PropertyAI/graphs/contributors"
+      "name": "PropertyManagementAI Community",
+      "url": "https://github.com/PropertyManagementAI/PropertyManagementAI/graphs/contributors"
     }
   ],
   "engines": {

@@ -18,10 +18,13 @@ import {
   BrightnessAuto as SystemIcon,
   Palette as PaletteIcon,
 } from '@mui/icons-material';
-import { usePropertyFlowTheme } from '../design-system/theme';
+import { useTheme } from '@mui/material/styles';
 
 const ThemeSwitcher: React.FC = () => {
-  const { theme, setTheme, toggleTheme, isSystemTheme, isDarkMode } = usePropertyFlowTheme();
+  const theme = useTheme();
+  // Simplified theme switcher without state management for now
+  const isDarkMode = false;
+  const isSystemTheme = false;
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -34,7 +37,7 @@ const ThemeSwitcher: React.FC = () => {
   };
 
   const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
-    setTheme(newTheme);
+    // TODO: Implement theme switching functionality
     handleClose();
   };
 
