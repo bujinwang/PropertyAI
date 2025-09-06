@@ -20,6 +20,7 @@ import {
   Search as SearchIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import ThemeSwitcher from './ThemeSwitcher';
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -88,6 +89,9 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
               <SearchIcon />
             </IconButton>
           </Tooltip>
+          
+          {/* Theme Switcher */}
+          <ThemeSwitcher />
           
           {/* Notifications */}
           <Tooltip title="Notifications">

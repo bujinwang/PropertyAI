@@ -1,7 +1,5 @@
 import React, { Suspense, useEffect, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { ThemeProvider } from '@mui/material/styles';
-import { CssBaseline } from '@mui/material';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { trackPageView } from './utils/analytics';
@@ -10,7 +8,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { AppErrorBoundary } from './components/error-boundary/AppErrorBoundary';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
-import theme from './design-system/theme';
+import { PropertyFlowThemeProvider } from './design-system/theme';
 import './App.css';
 
 // Create a client
@@ -82,8 +80,7 @@ function LazyRoute({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <GoogleOAuthProvider clientId={(import.meta as any).env.VITE_GOOGLE_CLIENT_ID || "demo-client-id"}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
+      <PropertyFlowThemeProvider>
         <AppErrorBoundary>
           <AuthProvider>
             <QueryClientProvider client={queryClient}>
@@ -206,7 +203,7 @@ function App() {
             </QueryClientProvider>
           </AuthProvider>
         </AppErrorBoundary>
-      </ThemeProvider>
+      </PropertyFlowThemeProvider>
     </GoogleOAuthProvider>
   );
 }
