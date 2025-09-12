@@ -507,6 +507,7 @@ model Rental {
   Appliances             Appliance[]
   Applications           Application[]
   BusinessHours          BusinessHours[]
+  Deliveries             Delivery[]
   Documents              Document[]
   EmergencyProtocols     EmergencyProtocol[]
   EscalationPolicies     EscalationPolicy[]
@@ -515,6 +516,7 @@ model Rental {
   OnCallSchedules        OnCallSchedule[]
   PredictiveMaintenances PredictiveMaintenance[]
   RentalImages           RentalImage[]
+  Visitors               Visitor[]
   WhiteLabelConfigs      WhiteLabelConfig[]      @relation("RentalWhiteLabelConfigs")
 
   // Relations to User
@@ -795,6 +797,7 @@ model User {
   Application                              Application[]
   AuditEntry                               AuditEntry[]
   Consent                                  Consent[]
+  deliveriesPickedUp                       Delivery[]                @relation("DeliveryPickedUpBy")
   Device                                   Device[]
   Document                                 Document[]
   EscalationPolicyRule                     EscalationPolicyRule[]
@@ -818,6 +821,8 @@ model User {
   Vendor                                   Vendor?
   VendorPayment                            VendorPayment[]
   VendorPerformanceRating                  VendorPerformanceRating[]
+  visitorsApproved                         Visitor[]                 @relation("VisitorApprovedBy")
+  visitorsRequested                        Visitor[]                 @relation("VisitorRequestedBy")
   WhiteLabelConfig                         WhiteLabelConfig[]
   Role                                     Role[]
   MaintenanceRequest                       MaintenanceRequest[]
@@ -1113,4 +1118,123 @@ enum WorkOrderStatus {
   ON_HOLD
   COMPLETED
   CANCELLED
+}
+
+enum VisitorStatus {
+  PENDING
+  APPROVED
+  DENIED
+  COMPLETED
+  CANCELLED
+}
+
+enum DeliveryStatus {
+  IN_TRANSIT
+  DELIVERED
+  PICKED_UP
+  RETURNED
+  LOST
+}
+
+model Visitor {
+  id               String        @id @default(cuid())
+  name             String
+  email            String?
+  phone            String?
+  visitDate        DateTime
+  visitTime        String?
+  purpose          String
+  status           VisitorStatus @default(PENDING)
+  accessCode       String?       @unique
+  qrCode           String?
+  notes            String?
+  photoUrl         String?
+  requestedById    String
+  rentalId         String
+  approvedById     String?
+  approvedAt       DateTime?
+  deniedAt         DateTime?
+  deniedReason     String?
+  completedAt      DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  
+  // Relations
+  requestedBy      User          @relation("VisitorRequestedBy", fields: [requestedById], references: [id])
+  approvedBy       User?         @relation("VisitorApprovedBy", fields: [approvedById], references: [id])
+  rental           Rental        @relation(fields: [rentalId], references: [id])
+  visitorAccessLog VisitorAccessLog[]
+  
+  @@index([rentalId])
+  @@index([requestedById])
+  @@index([status])
+  @@index([visitDate])
+  @@index([accessCode])
+}
+
+model Delivery {
+  id             String         @id @default(cuid())
+  trackingNumber String         @unique
+  carrier        String
+  sender         String
+  description    String
+  status         DeliveryStatus @default(IN_TRANSIT)
+  deliveryDate   DateTime?
+  pickupCode     String?        @unique
+  qrCode         String?
+  location       String?
+  recipientName  String?
+  recipientPhone String?
+  notes          String?
+  photoUrl       String?
+  rentalId       String
+  notifiedAt     DateTime?
+  pickedUpAt     DateTime?
+  pickedUpById   String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  
+  // Relations
+  rental         Rental         @relation(fields: [rentalId], references: [id])
+  pickedUpBy     User?          @relation("DeliveryPickedUpBy", fields: [pickedUpById], references: [id])
+  deliveryAccessLog DeliveryAccessLog[]
+  
+  @@index([rentalId])
+  @@index([status])
+  @@index([trackingNumber])
+  @@index([pickupCode])
+}
+
+model VisitorAccessLog {
+  id          String    @id @default(cuid())
+  visitorId   String
+  accessTime  DateTime  @default(now())
+  accessType  String    // "ENTRY" or "EXIT"
+  location    String?
+  verifiedBy  String?   // QR code, manual, etc.
+  notes       String?
+  createdAt   DateTime  @default(now())
+  
+  // Relations
+  visitor     Visitor   @relation(fields: [visitorId], references: [id])
+  
+  @@index([visitorId])
+  @@index([accessTime])
+}
+
+model DeliveryAccessLog {
+  id          String    @id @default(cuid())
+  deliveryId  String
+  accessTime  DateTime  @default(now())
+  accessType  String    // "DELIVERED" or "PICKED_UP"
+  location    String?
+  verifiedBy  String?   // QR code, manual, etc.
+  notes       String?
+  createdAt   DateTime  @default(now())
+  
+  // Relations
+  delivery    Delivery  @relation(fields: [deliveryId], references: [id])
+  
+  @@index([deliveryId])
+  @@index([accessTime])
 }

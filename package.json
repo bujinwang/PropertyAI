@@ -82,6 +82,7 @@
     "@types/node-schedule": "^2.1.7",
     "@types/pdfkit": "^0.13.9",
     "axios": "^1.11.0",
+    "codex": "^0.2.3",
     "dotenv-cli": "^9.0.0",
     "firebase-admin": "^13.4.0",
     "googleapis": "^150.0.1",

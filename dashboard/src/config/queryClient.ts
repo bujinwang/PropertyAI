@@ -145,6 +145,16 @@ export const queryKeys = {
     opportunities: (location?: string) =>
       [...queryKeys.marketIntelligence.all, 'opportunities', location] as const,
   },
+
+  // Dashboard Data
+  dashboard: {
+    all: ['dashboard'] as const,
+    vacantUnits: () => [...queryKeys.dashboard.all, 'vacant-units'] as const,
+    maintenanceRequests: () => [...queryKeys.dashboard.all, 'maintenance-requests'] as const,
+    workOrders: () => [...queryKeys.dashboard.all, 'work-orders'] as const,
+    overduePayments: (filters?: Record<string, any>) => [...queryKeys.dashboard.all, 'overdue-payments', filters] as const,
+    financialReports: (params?: Record<string, any>) => [...queryKeys.dashboard.all, 'financial-reports', params] as const,
+  },
 } as const;
 
 // Utility functions for cache management

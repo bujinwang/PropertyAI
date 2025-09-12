@@ -12,6 +12,8 @@ import {
   Settings as SettingsIcon,
   Notifications as NotificationsIcon,
   Report as ReportIcon,
+  Description as DescriptionIcon,
+  Warning as WarningIcon,
 } from '@mui/icons-material';
 import Header from './Header';
 import { 
@@ -38,8 +40,29 @@ const navigationItems: NavigationItem[] = [
     id: 'properties',
     label: 'Properties',
     icon: ApartmentIcon,
-    href: '/rentals',
+    href: '/properties',
     description: 'Property listings and management',
+  }),
+  createNavigationItem({
+    id: 'tenants',
+    label: 'Tenants',
+    icon: PeopleIcon,
+    href: '/tenants',
+    description: 'Tenant management and CRUD',
+  }),
+  createNavigationItem({
+    id: 'leases',
+    label: 'Leases',
+    icon: DescriptionIcon,
+    href: '/leases',
+    description: 'Lease management and tracking',
+  }),
+  createNavigationItem({
+    id: 'payments',
+    label: 'Payments',
+    icon: AccountBalanceIcon,
+    href: '/payments',
+    description: 'Payment records and processing',
   }),
   createNavigationItem({
     id: 'maintenance',
@@ -47,6 +70,20 @@ const navigationItems: NavigationItem[] = [
     icon: BuildIcon,
     href: '/maintenance',
     description: 'Maintenance requests and tracking',
+  }),
+  createNavigationItem({
+    id: 'maintenance-requests',
+    label: 'Maintenance Requests',
+    icon: BuildIcon,
+    href: '/maintenance-requests',
+    description: 'CRUD operations for maintenance requests',
+  }),
+  createNavigationItem({
+    id: 'work-orders',
+    label: 'Work Orders',
+    icon: BuildIcon,
+    href: '/work-orders',
+    description: 'Work order scheduling and tracking',
   }),
   createNavigationItem({
     id: 'communications',
@@ -79,11 +116,19 @@ const navigationItems: NavigationItem[] = [
     role: 'manager',
   }),
   createNavigationItem({
-    id: 'financial',
+    id: 'overdue-payments',
+    label: 'Overdue Payments',
+    icon: WarningIcon,
+    href: '/overdue-payments',
+    description: 'Track and manage overdue rent payments',
+    role: 'manager',
+  }),
+  createNavigationItem({
+    id: 'financial-reports',
     label: 'Financial Reports',
     icon: AccountBalanceIcon,
-    href: '/financials',
-    description: 'Financial tracking and reporting',
+    href: '/financial-reports',
+    description: 'Comprehensive financial analysis and reporting',
     role: 'manager',
   }),
   createNavigationItem({

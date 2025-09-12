@@ -24,6 +24,9 @@ const TenantScreening = lazy(() => import('./pages/TenantScreening'));
 const ApplicationDetail = lazy(() => import('./pages/ApplicationDetail'));
 const ApplicationForm = lazy(() => import('./pages/ApplicationForm'));
 // Rental components
+const PropertyList = lazy(() => import('./pages/PropertyList'));
+const TenantList = lazy(() => import('./pages/TenantList'));
+const LeaseList = lazy(() => import('./pages/LeaseList'));
 const RentalListings = lazy(() => import('./pages/RentalListings'));
 const RentalDetail = lazy(() => import('./pages/RentalDetail'));
 const RentalForm = lazy(() => import('./pages/RentalForm'));
@@ -56,9 +59,13 @@ const DigitalConciergeScreen = lazy(() => import('./pages/DigitalConciergeScreen
 const DocumentVerificationDemo = lazy(() => import('./pages/DocumentVerificationStatusScreen'));
 const TenantRatingPage = lazy(() => import('./pages/TenantRatingPage'));
 const UXReviewDashboard = lazy(() => import('./pages/UXReviewDashboard'));
-const MaintenanceRequests = lazy(() => import('./pages/MaintenanceRequests'));
+const MaintenanceRequestList = lazy(() => import('./pages/MaintenanceRequestList'));
+const WorkOrderList = lazy(() => import('./pages/WorkOrderList'));
+const PaymentList = lazy(() => import('./pages/PaymentList'));
 const FormsShowcase = lazy(() => import('./pages/FormsShowcase'));
 const AnalyticsDashboard = lazy(() => import('./pages/AnalyticsDashboard'));
+const OverduePaymentsList = lazy(() => import('./pages/OverduePaymentsList'));
+const FinancialReports = lazy(() => import('./pages/FinancialReports'));
 
 // Component to track page views
 function PageTracker() {
@@ -113,6 +120,21 @@ function App() {
                         <Route index element={<Dashboard />} />
                         
                         {/* Rental Management Routes */}
+                        <Route path="properties" element={
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <PropertyList />
+                          </Suspense>
+                        } />
+                        <Route path="tenants" element={
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <TenantList />
+                          </Suspense>
+                        } />
+                        <Route path="leases" element={
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <LeaseList />
+                          </Suspense>
+                        } />
                         <Route path="rentals" element={
                           <Suspense fallback={<div>Loading...</div>}>
                             <RentalListings />
@@ -166,7 +188,21 @@ function App() {
                         {/* Other Routes */}
                         <Route path="communications" element={<CommunicationHub />} />
                         <Route path="maintenance" element={<MaintenancePage />} />
-                        <Route path="maintenance-requests" element={<MaintenanceRequests />} />
+                        <Route path="maintenance-requests" element={
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <MaintenanceRequestList />
+                          </Suspense>
+                        } />
+                        <Route path="work-orders" element={
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <WorkOrderList />
+                          </Suspense>
+                        } />
+                        <Route path="payments" element={
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <PaymentList />
+                          </Suspense>
+                        } />
                         <Route path="maintenance-dashboard" element={<MaintenanceDashboard />} />
                         <Route path="financials" element={<FinancialPage />} />
                         <Route path="maintenance-dashboard" element={<MaintenanceDashboard />} />
@@ -199,6 +235,16 @@ function App() {
                         <Route path="analytics-dashboard" element={
                           <LazyRoute>
                             <AnalyticsDashboard />
+                          </LazyRoute>
+                        } />
+                        <Route path="overdue-payments" element={
+                          <LazyRoute>
+                            <OverduePaymentsList />
+                          </LazyRoute>
+                        } />
+                        <Route path="financial-reports" element={
+                          <LazyRoute>
+                            <FinancialReports />
                           </LazyRoute>
                         } />
                       </Route>

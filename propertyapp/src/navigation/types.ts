@@ -32,6 +32,7 @@ export type RootStackParamList = {
   TenantList: undefined;
   TenantDetail: { tenantId: string };
   TenantForm: { tenantId?: string };
+  TenantDashboard: undefined;
   
   // Application Management
   ApplicationList: undefined;
@@ -51,6 +52,13 @@ export type RootStackParamList = {
   // Settings
   Settings: undefined;
   Profile: undefined;
+  
+  // Visitor & Delivery Management
+  VisitorManagement: undefined;
+  VisitorDetail: { visitorId: string };
+  VisitorForm: { visitorId?: string };
+  DeliveryTracking: undefined;
+  DeliveryDetail: { deliveryId: string };
   
   // Legacy compatibility - keeping old property details route
   PropertyDetails: { propertyId: string };
@@ -73,6 +81,19 @@ declare global {
 export type RentalListNavigationProp = NativeStackNavigationProp<RootStackParamList, 'RentalList'>;
 export type RentalDetailNavigationProp = NativeStackNavigationProp<RootStackParamList, 'RentalDetail'>;
 export type RentalFormNavigationProp = NativeStackNavigationProp<RootStackParamList, 'RentalForm'>;
+
+// Tenant navigation prop types
+export type TenantDashboardNavigationProp = NativeStackNavigationProp<RootStackParamList, 'TenantDashboard'>;
+export type TenantListNavigationProp = NativeStackNavigationProp<RootStackParamList, 'TenantList'>;
+export type TenantDetailNavigationProp = NativeStackNavigationProp<RootStackParamList, 'TenantDetail'>;
+export type TenantFormNavigationProp = NativeStackNavigationProp<RootStackParamList, 'TenantForm'>;
+
+// Visitor management navigation prop types
+export type VisitorManagementNavigationProp = NativeStackNavigationProp<RootStackParamList, 'VisitorManagement'>;
+export type VisitorDetailNavigationProp = NativeStackNavigationProp<RootStackParamList, 'VisitorDetail'>;
+export type VisitorFormNavigationProp = NativeStackNavigationProp<RootStackParamList, 'VisitorForm'>;
+export type DeliveryTrackingNavigationProp = NativeStackNavigationProp<RootStackParamList, 'DeliveryTracking'>;
+export type DeliveryDetailNavigationProp = NativeStackNavigationProp<RootStackParamList, 'DeliveryDetail'>;
 
 // Legacy navigation prop types (for backward compatibility)
 export type PropertyListNavigationProp = NativeStackNavigationProp<RootStackParamList, 'PropertyList'>;
