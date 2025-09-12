@@ -131,6 +131,25 @@ const OverduePaymentsList: React.FC = () => {
   const criticalCount = filteredPayments.filter(p => p.daysOverdue >= 30).length;
   const warningCount = filteredPayments.filter(p => p.daysOverdue >= 14 && p.daysOverdue < 30).length;
 
+  const handleSendReminder = async (paymentId: string) => {
+    try {
+      await dashboardService.triggerPaymentReminder(paymentId);
+      // In a real app, you'd show a success message
+      console.log('Payment reminder sent successfully');
+    } catch (error) {
+      console.error('Failed to send payment reminder:', error);
+    }
+  };
+
+  const handleMarkAsPaid = async (paymentId: string) => {
+    try {
+      await dashboardService.markPaymentPaid(paymentId);
+      refetch(); // Refresh the data
+    } catch (error) {
+      console.error('Failed to mark payment as paid:', error);
+    }
+  };
+
   if (isLoading) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
@@ -394,12 +413,18 @@ const OverduePaymentsList: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <Tooltip title="Send reminder">
-                          <IconButton size="small">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleSendReminder(payment.id)}
+                          >
                             <WarningIcon />
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Mark as paid">
-                          <IconButton size="small">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleMarkAsPaid(payment.id)}
+                          >
                             <PaymentIcon />
                           </IconButton>
                         </Tooltip>

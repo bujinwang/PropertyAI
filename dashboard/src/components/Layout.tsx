@@ -14,6 +14,11 @@ import {
   Report as ReportIcon,
   Description as DescriptionIcon,
   Warning as WarningIcon,
+  Email as EmailIcon,
+  AdminPanelSettings as AdminPanelSettingsIcon,
+  Group as GroupIcon,
+  PersonAdd as PersonAddIcon,
+  Security as SecurityIcon,
 } from '@mui/icons-material';
 import Header from './Header';
 import { 
@@ -65,6 +70,29 @@ const navigationItems: NavigationItem[] = [
     description: 'Payment records and processing',
   }),
   createNavigationItem({
+    id: 'documents',
+    label: 'Documents',
+    icon: DescriptionIcon,
+    href: '/documents',
+    description: 'Document upload and management',
+    children: [
+      createNavigationItem({
+        id: 'documents-list',
+        label: 'All Documents',
+        icon: DescriptionIcon,
+        href: '/documents',
+        description: 'View all documents',
+      }),
+      createNavigationItem({
+        id: 'documents-search',
+        label: 'Search Documents',
+        icon: DescriptionIcon,
+        href: '/documents/search',
+        description: 'Advanced document search',
+      }),
+    ],
+  }),
+  createNavigationItem({
     id: 'maintenance',
     label: 'Maintenance',
     icon: BuildIcon,
@@ -91,6 +119,43 @@ const navigationItems: NavigationItem[] = [
     icon: CampaignIcon,
     href: '/communications',
     description: 'Message center and notifications',
+  }),
+  createNavigationItem({
+    id: 'messages',
+    label: 'Messages',
+    icon: EmailIcon,
+    href: '/messages',
+    description: 'Tenant messaging system',
+  }),
+  createNavigationItem({
+    id: 'notifications',
+    label: 'Notifications',
+    icon: NotificationsIcon,
+    href: '/notifications',
+    description: 'Notification and announcement management',
+    children: [
+      createNavigationItem({
+        id: 'notifications-list',
+        label: 'All Notifications',
+        icon: NotificationsIcon,
+        href: '/notifications',
+        description: 'View all notifications and announcements',
+      }),
+      createNavigationItem({
+        id: 'notifications-compose',
+        label: 'Create Announcement',
+        icon: NotificationsIcon,
+        href: '/notifications/compose',
+        description: 'Create new announcement',
+      }),
+      createNavigationItem({
+        id: 'notifications-templates',
+        label: 'Templates',
+        icon: NotificationsIcon,
+        href: '/notifications/templates',
+        description: 'Manage notification templates',
+      }),
+    ],
   }),
   createNavigationItem({
     id: 'analytics',
@@ -154,6 +219,48 @@ const navigationItems: NavigationItem[] = [
     href: '/security-settings',
     description: 'System settings and preferences',
     role: 'admin',
+  }),
+  createNavigationItem({
+    id: 'user-management',
+    label: 'User Management',
+    icon: AdminPanelSettingsIcon,
+    href: '/user-management',
+    description: 'User and role management',
+    role: 'admin',
+    children: [
+      createNavigationItem({
+        id: 'users',
+        label: 'Users',
+        icon: PeopleIcon,
+        href: '/users',
+        description: 'Manage system users',
+        role: 'admin',
+      }),
+      createNavigationItem({
+        id: 'roles',
+        label: 'Roles',
+        icon: GroupIcon,
+        href: '/roles',
+        description: 'Manage user roles and permissions',
+        role: 'admin',
+      }),
+      createNavigationItem({
+        id: 'permissions',
+        label: 'Permissions',
+        icon: SecurityIcon,
+        href: '/permissions',
+        description: 'View permission matrix',
+        role: 'admin',
+      }),
+    ],
+  }),
+  createNavigationItem({
+    id: 'user-invitations',
+    label: 'User Invitations',
+    icon: PersonAddIcon,
+    href: '/user-invitations',
+    description: 'Invite new users to the system',
+    role: 'manager',
   }),
 ];
 

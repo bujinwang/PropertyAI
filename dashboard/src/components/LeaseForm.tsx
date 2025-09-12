@@ -104,10 +104,26 @@ const LeaseForm: React.FC<LeaseFormProps> = ({
         startDate: values.startDate.toISOString().split('T')[0],
         endDate: values.endDate.toISOString().split('T')[0],
       } as Omit<Lease, 'id' | 'createdAt' | 'updatedAt'>;
+
+      let lease;
       if (isEdit && leaseId) {
-        await dashboardService.updateLease(leaseId, submitValues);
+        lease = await dashboardService.updateLease(leaseId, submitValues);
+        // Trigger notification for lease renewals
+        if (values.status === 'renewed') {
+          try {
+            await dashboardService.triggerLeaseNotification(leaseId, 'renewal');
+          } catch (notificationError) {
+            console.warn('Failed to trigger lease renewal notification:', notificationError);
+          }
+        }
       } else {
-        await dashboardService.createLease(submitValues);
+        lease = await dashboardService.createLease(submitValues);
+        // Trigger notification for new lease signing
+        try {
+          await dashboardService.triggerLeaseNotification(lease.id, 'signed');
+        } catch (notificationError) {
+          console.warn('Failed to trigger lease signed notification:', notificationError);
+        }
       }
       if (onSubmitSuccess) {
         onSubmitSuccess();

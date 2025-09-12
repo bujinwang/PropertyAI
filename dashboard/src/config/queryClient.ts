@@ -154,6 +154,7 @@ export const queryKeys = {
     workOrders: () => [...queryKeys.dashboard.all, 'work-orders'] as const,
     overduePayments: (filters?: Record<string, any>) => [...queryKeys.dashboard.all, 'overdue-payments', filters] as const,
     financialReports: (params?: Record<string, any>) => [...queryKeys.dashboard.all, 'financial-reports', params] as const,
+    documents: (filters?: Record<string, any>) => [...queryKeys.dashboard.all, 'documents', filters] as const,
   },
 } as const;
 

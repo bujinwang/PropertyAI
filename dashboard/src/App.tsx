@@ -62,10 +62,16 @@ const UXReviewDashboard = lazy(() => import('./pages/UXReviewDashboard'));
 const MaintenanceRequestList = lazy(() => import('./pages/MaintenanceRequestList'));
 const WorkOrderList = lazy(() => import('./pages/WorkOrderList'));
 const PaymentList = lazy(() => import('./pages/PaymentList'));
+const DocumentList = lazy(() => import('./pages/DocumentList'));
+const DocumentSearch = lazy(() => import('./pages/DocumentSearch'));
 const FormsShowcase = lazy(() => import('./pages/FormsShowcase'));
 const AnalyticsDashboard = lazy(() => import('./pages/AnalyticsDashboard'));
 const OverduePaymentsList = lazy(() => import('./pages/OverduePaymentsList'));
 const FinancialReports = lazy(() => import('./pages/FinancialReports'));
+const Messages = lazy(() => import('./pages/Messages'));
+const NotificationList = lazy(() => import('./pages/NotificationList'));
+const AnnouncementCompose = lazy(() => import('./components/AnnouncementCompose'));
+const NotificationTemplates = lazy(() => import('./components/NotificationTemplates'));
 
 // Component to track page views
 function PageTracker() {
@@ -203,6 +209,16 @@ function App() {
                             <PaymentList />
                           </Suspense>
                         } />
+                        <Route path="documents" element={
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <DocumentList />
+                          </Suspense>
+                        } />
+                        <Route path="documents/search" element={
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <DocumentSearch />
+                          </Suspense>
+                        } />
                         <Route path="maintenance-dashboard" element={<MaintenanceDashboard />} />
                         <Route path="financials" element={<FinancialPage />} />
                         <Route path="maintenance-dashboard" element={<MaintenanceDashboard />} />
@@ -245,6 +261,26 @@ function App() {
                         <Route path="financial-reports" element={
                           <LazyRoute>
                             <FinancialReports />
+                          </LazyRoute>
+                        } />
+                        <Route path="messages" element={
+                          <LazyRoute>
+                            <Messages />
+                          </LazyRoute>
+                        } />
+                        <Route path="notifications" element={
+                          <LazyRoute>
+                            <NotificationList />
+                          </LazyRoute>
+                        } />
+                        <Route path="notifications/compose" element={
+                          <LazyRoute>
+                            <AnnouncementCompose />
+                          </LazyRoute>
+                        } />
+                        <Route path="notifications/templates" element={
+                          <LazyRoute>
+                            <NotificationTemplates />
                           </LazyRoute>
                         } />
                       </Route>

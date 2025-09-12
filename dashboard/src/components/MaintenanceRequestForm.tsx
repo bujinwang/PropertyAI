@@ -98,10 +98,25 @@ const MaintenanceRequestForm: React.FC<MaintenanceRequestFormProps> = ({
         propertyId: '', // Will be determined from unit
       } as Omit<MaintenanceRequest, 'id' | 'submittedAt' | 'updatedAt'>;
 
+      let maintenanceRequest;
       if (isEdit && requestId) {
-        await dashboardService.updateMaintenanceRequest(requestId, submitValues);
+        maintenanceRequest = await dashboardService.updateMaintenanceRequest(requestId, submitValues);
+        // Trigger notification for status changes
+        if (values.status === 'closed') {
+          try {
+            await dashboardService.triggerMaintenanceNotification(requestId, 'completed');
+          } catch (notificationError) {
+            console.warn('Failed to trigger completion notification:', notificationError);
+          }
+        }
       } else {
-        await dashboardService.createMaintenanceRequest(submitValues);
+        maintenanceRequest = await dashboardService.createMaintenanceRequest(submitValues);
+        // Trigger notification for new maintenance request
+        try {
+          await dashboardService.triggerMaintenanceNotification(maintenanceRequest.id, 'created');
+        } catch (notificationError) {
+          console.warn('Failed to trigger creation notification:', notificationError);
+        }
       }
       if (onSubmitSuccess) {
         onSubmitSuccess();
