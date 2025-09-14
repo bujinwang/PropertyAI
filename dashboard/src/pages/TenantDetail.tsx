@@ -22,6 +22,7 @@ import {
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { dashboardService, Tenant, Lease } from '../services/dashboardService';
+import ChurnRiskAlerts from '../components/ChurnRiskAlerts';
 
 const TenantDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -107,6 +108,7 @@ const TenantDetail: React.FC = () => {
       <Tabs value={tabValue} onChange={handleTabChange} aria-label="tenant detail tabs">
         <Tab label="Overview" id="overview-tab" aria-controls="overview-panel" />
         <Tab label={`Leases (${leases.length})`} id="leases-tab" aria-controls="leases-panel" />
+        <Tab label="Risk Assessment" id="risk-tab" aria-controls="risk-panel" />
       </Tabs>
 
       {tabValue === 0 && (
@@ -207,6 +209,15 @@ const TenantDetail: React.FC = () => {
               </TableBody>
             </Table>
           </TableContainer>
+        </Box>
+      )}
+
+      {tabValue === 2 && (
+        <Box sx={{ mt: 3 }} aria-labelledby="risk-tab">
+          <Typography variant="h6" id="risk-panel" gutterBottom>
+            Churn Risk Assessment
+          </Typography>
+          <ChurnRiskAlerts tenantId={id} />
         </Box>
       )}
     </Container>

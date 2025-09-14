@@ -32,11 +32,14 @@ import {
   DialogTitle,
 } from '@mui/material';
 import { dashboardService, Property, Unit, Lease } from '../services/dashboardService';
+import { marketDataService, PricingRecommendation, CompetitiveAnalysis } from '../services/marketDataService';
 import UnitForm from '../components/UnitForm';
 import UnitsList from '../components/UnitsList';
 import BulkUnitForm from '../components/BulkUnitForm';
 import AssignmentModal from '../components/AssignmentModal';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 
 const PropertyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -56,6 +59,11 @@ const PropertyDetail: React.FC = () => {
   const [openAssignModal, setOpenAssignModal] = useState(false);
   const [assignMode, setAssignMode] = useState<'assign' | 'unassign'>('assign');
   const [currentUnitId, setCurrentUnitId] = useState<string | undefined>();
+
+  // For market intelligence
+  const [pricingRecommendations, setPricingRecommendations] = useState<PricingRecommendation | null>(null);
+  const [competitiveAnalysis, setCompetitiveAnalysis] = useState<CompetitiveAnalysis | null>(null);
+  const [marketLoading, setMarketLoading] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -168,6 +176,25 @@ const PropertyDetail: React.FC = () => {
     setTabValue(newValue);
   };
 
+  const fetchMarketData = async () => {
+    if (!id) return;
+
+    setMarketLoading(true);
+    try {
+      const [pricing, analysis] = await Promise.all([
+        marketDataService.getPricingRecommendations(id),
+        marketDataService.getCompetitiveAnalysis(id)
+      ]);
+
+      setPricingRecommendations(pricing);
+      setCompetitiveAnalysis(analysis);
+    } catch (err: any) {
+      console.error('Error fetching market data:', err);
+    } finally {
+      setMarketLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <Container maxWidth="md">
@@ -204,6 +231,7 @@ const PropertyDetail: React.FC = () => {
         <Tab label="Overview" id="overview-tab" aria-controls="overview-panel" />
         <Tab label={`Units (${units.length})`} id="units-tab" aria-controls="units-panel" />
         <Tab label={`Tenants (${units.filter(u => u.occupancyStatus === 'occupied').length})`} id="tenants-tab" aria-controls="tenants-panel" />
+        <Tab label="Market Intelligence" icon={<TrendingUpIcon />} iconPosition="start" id="market-tab" aria-controls="market-panel" />
       </Tabs>
 
       {tabValue === 0 && (
@@ -357,6 +385,123 @@ const PropertyDetail: React.FC = () => {
               </TableBody>
             </Table>
           </TableContainer>
+        </Box>
+      )}
+
+      {tabValue === 3 && (
+        <Box sx={{ mt: 3 }} aria-labelledby="market-tab">
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6" id="market-panel">
+              Market Intelligence
+            </Typography>
+            <Button
+              variant="contained"
+              startIcon={<AssessmentIcon />}
+              onClick={fetchMarketData}
+              disabled={marketLoading}
+            >
+              {marketLoading ? 'Analyzing...' : 'Get Market Insights'}
+            </Button>
+          </Box>
+
+          {marketLoading && (
+            <Box display="flex" justifyContent="center" sx={{ my: 4 }}>
+              <CircularProgress />
+              <Typography sx={{ ml: 2 }}>Analyzing market data...</Typography>
+            </Box>
+          )}
+
+          {pricingRecommendations && (
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                  <TrendingUpIcon sx={{ mr: 1 }} />
+                  Pricing Recommendations
+                </Typography>
+
+                {pricingRecommendations.recommendations.map((rec, index) => (
+                  <Alert
+                    key={index}
+                    severity={rec.confidence > 80 ? 'success' : rec.confidence > 60 ? 'warning' : 'info'}
+                    sx={{ mb: 2 }}
+                  >
+                    <Typography variant="subtitle2">{rec.action}</Typography>
+                    <Typography variant="body2">{rec.reasoning}</Typography>
+                    <Box mt={1}>
+                      <Typography variant="caption">
+                        Current: ${rec.currentRent} |
+                        Market: ${rec.marketAverage} |
+                        Confidence: {rec.confidence}%
+                      </Typography>
+                    </Box>
+                  </Alert>
+                ))}
+
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                  Market Trend: {pricingRecommendations.marketData.marketTrend} ({pricingRecommendations.marketData.trendPercentage > 0 ? '+' : ''}{pricingRecommendations.marketData.trendPercentage}%)
+                </Typography>
+              </CardContent>
+            </Card>
+          )}
+
+          {competitiveAnalysis && (
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                  <AssessmentIcon sx={{ mr: 1 }} />
+                  Competitive Analysis
+                </Typography>
+
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 3 }}>
+                  <Box sx={{ minWidth: 200 }}>
+                    <Typography variant="subtitle2" color="text.secondary">Market Position</Typography>
+                    <Chip
+                      label={competitiveAnalysis.marketPosition.toUpperCase()}
+                      color={
+                        competitiveAnalysis.marketPosition === 'premium' ? 'success' :
+                        competitiveAnalysis.marketPosition === 'value' ? 'warning' : 'info'
+                      }
+                      sx={{ mt: 1 }}
+                    />
+                  </Box>
+
+                  <Box sx={{ minWidth: 200 }}>
+                    <Typography variant="subtitle2" color="text.secondary">Price vs Market</Typography>
+                    <Typography variant="h6" sx={{
+                      color: competitiveAnalysis.marketDifference > 0 ? 'success.main' : 'error.main'
+                    }}>
+                      {competitiveAnalysis.marketDifference > 0 ? '+' : ''}{competitiveAnalysis.marketDifference}%
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ minWidth: 200 }}>
+                    <Typography variant="subtitle2" color="text.secondary">Comparable Properties</Typography>
+                    <Typography variant="h6">
+                      {competitiveAnalysis.comparableProperties.length}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {competitiveAnalysis.insights.map((insight, index) => (
+                  <Alert key={index} severity="info" sx={{ mb: 2 }}>
+                    {insight}
+                  </Alert>
+                ))}
+
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                  Vacancy Rate: {competitiveAnalysis.marketData.vacancyRate}% |
+                  Source: {competitiveAnalysis.marketData.source} |
+                  Updated: {new Date(competitiveAnalysis.marketData.lastUpdated).toLocaleDateString()}
+                </Typography>
+              </CardContent>
+            </Card>
+          )}
+
+          {!pricingRecommendations && !competitiveAnalysis && !marketLoading && (
+            <Alert severity="info">
+              Click "Get Market Insights" to analyze pricing recommendations and competitive positioning for this property.
+            </Alert>
+          )}
         </Box>
       )}
 

@@ -52,6 +52,8 @@ import uxReviewRoutes from './uxReview.routes';
 import marketingRoutes from './marketing.routes';
 import marketIntelligenceRoutes from './marketIntelligence.routes';
 import orderUploadRoutes from './orderUpload';
+import approvalWorkflowRoutes from './approvalWorkflow.routes';
+import workflowAutomationRoutes from './workflowAutomation.routes';
 
 const router = express.Router();
 
@@ -122,6 +124,8 @@ router.use(`${API_PREFIX}/marketing`, marketingRoutes);
 router.use(`${API_PREFIX}/tenant-ratings`, tenantRatingRoutes);
 router.use(`${API_PREFIX}/market-intelligence`, marketIntelligenceRoutes);
 router.use(`${API_PREFIX}/order-upload`, orderUploadRoutes);
+router.use(`${API_PREFIX}/workflows/approvals`, approvalWorkflowRoutes);
+router.use(`${API_PREFIX}/workflows/automation`, workflowAutomationRoutes);
 
 router.post(`${API_PREFIX}/cache/clear`, (req, res) => {
   const { key } = req.body;

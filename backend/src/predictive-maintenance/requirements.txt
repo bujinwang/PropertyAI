@@ -1,6 +1,13 @@
 pandas
 scikit-learn
+tensorflow
 joblib
 requests
 psycopg2-binary
 sqlalchemy
+numpy
+matplotlib
+seaborn
+xgboost
+lightgbm
+imbalanced-learn

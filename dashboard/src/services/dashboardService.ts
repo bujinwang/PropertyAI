@@ -400,6 +400,129 @@ export interface CreateAnnouncementData {
   expiresAt?: string;
 }
 
+// Payment-related interfaces
+export interface PaymentMethod {
+  id: string;
+  tenantId: string;
+  type: 'card' | 'bank_account' | 'paypal';
+  processor: 'stripe' | 'paypal' | 'ach';
+  last4?: string;
+  brand?: string;
+  expiryMonth?: number;
+  expiryYear?: number;
+  bankName?: string;
+  accountType?: 'checking' | 'savings';
+  isDefault: boolean;
+  status: 'active' | 'inactive' | 'expired';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PaymentTransaction {
+  id: string;
+  tenantId: string;
+  leaseId: string;
+  amount: number;
+  currency: 'USD' | 'EUR' | 'GBP' | 'CAD' | 'AUD';
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled' | 'refunded';
+  processor: 'stripe' | 'paypal' | 'ach';
+  processorTransactionId: string;
+  paymentMethodId?: string;
+  description?: string;
+  fees?: number;
+  netAmount?: number;
+  failureReason?: string;
+  metadata?: Record<string, any>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RecurringPayment {
+  id: string;
+  tenantId: string;
+  leaseId: string;
+  paymentMethodId: string;
+  amount: number;
+  currency: 'USD' | 'EUR' | 'GBP' | 'CAD' | 'AUD';
+  frequency: 'monthly' | 'quarterly' | 'annually';
+  nextPaymentDate: string;
+  endDate?: string;
+  status: 'active' | 'paused' | 'cancelled' | 'completed';
+  description?: string;
+  metadata?: Record<string, any>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PaymentPlan {
+  id: string;
+  tenantId: string;
+  leaseId: string;
+  totalAmount: number;
+  currency: 'USD' | 'EUR' | 'GBP' | 'CAD' | 'AUD';
+  installments: number;
+  frequency: 'weekly' | 'biweekly' | 'monthly';
+  startDate: string;
+  endDate: string;
+  status: 'active' | 'completed' | 'defaulted';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PaymentFilters {
+  tenantId?: string;
+  leaseId?: string;
+  status?: string;
+  processor?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  minAmount?: number;
+  maxAmount?: number;
+}
+
+export interface CreatePaymentMethodData {
+  tenantId: string;
+  type: 'card' | 'bank_account' | 'paypal';
+  processor: 'stripe' | 'paypal' | 'ach';
+  token: string; // From payment processor
+  isDefault?: boolean;
+  metadata?: Record<string, any>;
+}
+
+export interface ProcessPaymentData {
+  tenantId: string;
+  leaseId: string;
+  amount: number;
+  currency: 'USD' | 'EUR' | 'GBP' | 'CAD' | 'AUD';
+  paymentMethodId: string;
+  description?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface CreateRecurringPaymentData {
+  tenantId: string;
+  leaseId: string;
+  paymentMethodId: string;
+  amount: number;
+  currency: 'USD' | 'EUR' | 'GBP' | 'CAD' | 'AUD';
+  frequency: 'monthly' | 'quarterly' | 'annually';
+  startDate: string;
+  endDate?: string;
+  description?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface CreatePaymentPlanData {
+  tenantId: string;
+  leaseId: string;
+  totalAmount: number;
+  currency: 'USD' | 'EUR' | 'GBP' | 'CAD' | 'AUD';
+  installments: number;
+  frequency: 'weekly' | 'biweekly' | 'monthly';
+  startDate: string;
+  description?: string;
+}
+
 export interface CreateNotificationTemplateData {
   name: string;
   type: 'announcement' | 'maintenance' | 'payment' | 'lease' | 'system';
@@ -565,6 +688,142 @@ export interface BulkRoleOperation {
   roleIds: string[];
   operation: 'delete' | 'update_permissions';
   permissions?: string[]; // for update_permissions
+}
+
+// Analytics and Reporting interfaces
+export interface KPI {
+  id: string;
+  name: string;
+  value: number;
+  unit: string;
+  change: number;
+  changePercent: number;
+  trend: 'up' | 'down' | 'stable';
+  target?: number;
+  lastUpdated: string;
+}
+
+export interface AnalyticsData {
+  occupancyRate: KPI;
+  revenue: KPI;
+  maintenanceCosts: KPI;
+  tenantSatisfaction: KPI;
+  averageRent: KPI;
+  vacancyRate: KPI;
+}
+
+export interface TrendData {
+  date: string;
+  value: number;
+  label?: string;
+}
+
+export interface ChartData {
+  labels: string[];
+  datasets: {
+    label: string;
+    data: number[];
+    backgroundColor?: string | string[];
+    borderColor?: string;
+    fill?: boolean;
+  }[];
+}
+
+export interface HeatMapData {
+  x: string;
+  y: string;
+  value: number;
+}
+
+export interface AnalyticsFilters {
+  dateFrom?: string;
+  dateTo?: string;
+  propertyId?: string;
+  period?: '7d' | '30d' | '90d' | '1y' | 'custom';
+  comparison?: 'previous' | 'year-over-year' | 'custom';
+}
+
+export interface ReportTemplate {
+  id: string;
+  name: string;
+  type: 'monthly-financial' | 'occupancy' | 'maintenance' | 'tenant' | 'custom';
+  description: string;
+  fields: string[];
+  filters: AnalyticsFilters;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Report {
+  id: string;
+  name: string;
+  templateId?: string;
+  type: string;
+  status: 'generating' | 'completed' | 'failed';
+  format: 'pdf' | 'excel' | 'csv';
+  data: any;
+  generatedAt?: string;
+  expiresAt?: string;
+  downloadUrl?: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface ScheduledReport {
+  id: string;
+  name: string;
+  templateId: string;
+  schedule: {
+    frequency: 'daily' | 'weekly' | 'monthly';
+    time: string;
+    timezone: string;
+    recipients: string[];
+  };
+  isActive: boolean;
+  lastRun?: string;
+  nextRun: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReportGenerationData {
+  templateId?: string;
+  name: string;
+  type: string;
+  format: 'pdf' | 'excel' | 'csv';
+  filters: AnalyticsFilters;
+  customFields?: string[];
+  branding?: {
+    logo?: string;
+    companyName?: string;
+    colors?: {
+      primary: string;
+      secondary: string;
+    };
+  };
+}
+
+export interface DashboardTemplate {
+  id: string;
+  name: string;
+  description: string;
+  widgets: WidgetConfig[];
+  isPublic: boolean;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WidgetConfig {
+  id: string;
+  type: 'line-chart' | 'bar-chart' | 'pie-chart' | 'heat-map' | 'kpi-card' | 'table';
+  title: string;
+  position: { x: number; y: number; w: number; h: number };
+  dataSource: string;
+  filters: AnalyticsFilters;
+  settings: Record<string, any>;
 }
 
 // API Service functions
@@ -1527,6 +1786,579 @@ export const dashboardService = {
 
   resetPassword: async (token: string, newPassword: string): Promise<void> => {
     await api.post('/auth/password-reset/confirm', { token, newPassword });
+  },
+
+  // Analytics and Reporting APIs
+  getAnalyticsData: async (filters?: AnalyticsFilters): Promise<AnalyticsData> => {
+    // Add RBAC: Filter by user-accessible properties
+    const userId = localStorage.getItem('userId'); // Assume from auth context
+    if (userId) {
+      const userProperties = await authService.getUserProperties(userId);
+      filters = { ...filters, propertyId: filters?.propertyId || userProperties[0]?.id }; // Default to first accessible
+    }
+
+    const params = new URLSearchParams();
+    if (filters?.dateFrom) params.append('dateFrom', filters.dateFrom);
+    if (filters?.dateTo) params.append('dateTo', filters.dateTo);
+    if (filters?.propertyId) params.append('propertyId', filters.propertyId);
+    if (filters?.period) params.append('period', filters.period);
+    if (filters?.comparison) params.append('comparison', filters.comparison);
+
+    const queryString = params.toString();
+    const url = `/api/analytics/kpis${queryString ? `?${queryString}` : ''}`;
+    const response = await api.get<AnalyticsData>(url);
+    return response.data;
+  },
+
+  getTrendData: async (metric: string, filters?: AnalyticsFilters): Promise<TrendData[]> => {
+    // Add RBAC: Filter by user-accessible properties
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      const userProperties = await authService.getUserProperties(userId);
+      filters = { ...filters, propertyId: filters?.propertyId || userProperties[0]?.id };
+    }
+
+    const params = new URLSearchParams();
+    params.append('metric', metric);
+    if (filters?.dateFrom) params.append('dateFrom', filters.dateFrom);
+    if (filters?.dateTo) params.append('dateTo', filters.dateTo);
+    if (filters?.propertyId) params.append('propertyId', filters.propertyId);
+    if (filters?.period) params.append('period', filters.period);
+
+    const response = await api.get<TrendData[]>(`/api/analytics/trends?${params.toString()}`);
+    return response.data;
+  },
+
+  getChartData: async (chartType: string, filters?: AnalyticsFilters): Promise<ChartData> => {
+    const params = new URLSearchParams();
+    params.append('type', chartType);
+    if (filters?.dateFrom) params.append('dateFrom', filters.dateFrom);
+    if (filters?.dateTo) params.append('dateTo', filters.dateTo);
+    if (filters?.propertyId) params.append('propertyId', filters.propertyId);
+    if (filters?.period) params.append('period', filters.period);
+
+    const response = await api.get<ChartData>(`/api/analytics/charts?${params.toString()}`);
+    return response.data;
+  },
+
+  getHeatMapData: async (filters?: AnalyticsFilters): Promise<HeatMapData[]> => {
+    const params = new URLSearchParams();
+    if (filters?.dateFrom) params.append('dateFrom', filters.dateFrom);
+    if (filters?.dateTo) params.append('dateTo', filters.dateTo);
+    if (filters?.propertyId) params.append('propertyId', filters.propertyId);
+
+    const response = await api.get<HeatMapData[]>(`/api/analytics/heatmap?${params.toString()}`);
+    return response.data;
+  },
+
+  // Report Templates
+  getReportTemplates: async (): Promise<ReportTemplate[]> => {
+    const response = await api.get<ReportTemplate[]>('/api/reports/templates');
+    return response.data;
+  },
+
+  createReportTemplate: async (template: Omit<ReportTemplate, 'id' | 'createdAt' | 'updatedAt'>): Promise<ReportTemplate> => {
+    const response = await api.post<ReportTemplate>('/api/reports/templates', template);
+    return response.data;
+  },
+
+  updateReportTemplate: async (id: string, template: Partial<ReportTemplate>): Promise<ReportTemplate> => {
+    const response = await api.put<ReportTemplate>(`/api/reports/templates/${id}`, template);
+    return response.data;
+  },
+
+  deleteReportTemplate: async (id: string): Promise<void> => {
+    await api.delete(`/api/reports/templates/${id}`);
+  },
+
+  // Report Generation
+  generateReport: async (data: ReportGenerationData): Promise<Report> => {
+    const response = await api.post<Report>('/api/reports/generate', data);
+    return response.data;
+  },
+
+  getReports: async (page: number = 1, limit: number = 10): Promise<{data: Report[], total: number}> => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+    const response = await api.get<{data: Report[], total: number}>(`/api/reports?${params.toString()}`);
+    return response.data;
+  },
+
+  getReport: async (id: string): Promise<Report> => {
+    const response = await api.get<Report>(`/api/reports/${id}`);
+    return response.data;
+  },
+
+  downloadReport: async (id: string): Promise<Blob> => {
+    const response = await api.get(`/api/reports/${id}/download`, {
+      responseType: 'blob',
+    });
+    return response.data as Blob;
+  },
+
+  deleteReport: async (id: string): Promise<void> => {
+    await api.delete(`/api/reports/${id}`);
+  },
+
+  // Scheduled Reports
+  getScheduledReports: async (): Promise<ScheduledReport[]> => {
+    const response = await api.get<ScheduledReport[]>('/api/reports/scheduled');
+    return response.data;
+  },
+
+  createScheduledReport: async (schedule: Omit<ScheduledReport, 'id' | 'createdAt' | 'updatedAt'>): Promise<ScheduledReport> => {
+    const response = await api.post<ScheduledReport>('/api/reports/scheduled', schedule);
+    return response.data;
+  },
+
+  updateScheduledReport: async (id: string, schedule: Partial<ScheduledReport>): Promise<ScheduledReport> => {
+    const response = await api.put<ScheduledReport>(`/api/reports/scheduled/${id}`, schedule);
+    return response.data;
+  },
+
+  deleteScheduledReport: async (id: string): Promise<void> => {
+    await api.delete(`/api/reports/scheduled/${id}`);
+  },
+
+  // Dashboard Templates
+  getDashboardTemplates: async (): Promise<DashboardTemplate[]> => {
+    const response = await api.get<DashboardTemplate[]>('/api/dashboards/templates');
+    return response.data;
+  },
+
+  createDashboardTemplate: async (template: Omit<DashboardTemplate, 'id' | 'createdAt' | 'updatedAt'>): Promise<DashboardTemplate> => {
+    const response = await api.post<DashboardTemplate>('/api/dashboards/templates', template);
+    return response.data;
+  },
+
+  updateDashboardTemplate: async (id: string, template: Partial<DashboardTemplate>): Promise<DashboardTemplate> => {
+    const response = await api.put<DashboardTemplate>(`/api/dashboards/templates/${id}`, template);
+    return response.data;
+  },
+
+  deleteDashboardTemplate: async (id: string): Promise<void> => {
+    await api.delete(`/api/dashboards/templates/${id}`);
+  },
+
+  // Real-time updates
+  subscribeToAnalyticsUpdates: (callback: (data: AnalyticsData) => void) => {
+    // WebSocket subscription for real-time updates
+    // Implementation would depend on WebSocket setup
+    console.log('Subscribing to analytics updates');
+  },
+
+  unsubscribeFromAnalyticsUpdates: () => {
+    // WebSocket unsubscription
+    console.log('Unsubscribing from analytics updates');
+  },
+
+  // Payment Methods CRUD operations
+  getPaymentMethods: async (tenantId: string): Promise<PaymentMethod[]> => {
+    const response = await api.get<PaymentMethod[]>(`/payments/methods/${tenantId}`);
+    return response.data;
+  },
+
+  createPaymentMethod: async (data: CreatePaymentMethodData): Promise<PaymentMethod> => {
+    const response = await api.post<PaymentMethod>('/payments/methods', data);
+    return response.data;
+  },
+
+  updatePaymentMethod: async (id: string, data: Partial<PaymentMethod>): Promise<PaymentMethod> => {
+    const response = await api.put<PaymentMethod>(`/payments/methods/${id}`, data);
+    return response.data;
+  },
+
+  deletePaymentMethod: async (id: string): Promise<void> => {
+    await api.delete(`/payments/methods/${id}`);
+  },
+
+  setDefaultPaymentMethod: async (id: string): Promise<PaymentMethod> => {
+    const response = await api.patch<PaymentMethod>(`/payments/methods/${id}/default`, {});
+    return response.data;
+  },
+
+  // Payment Transactions CRUD operations
+  getPaymentTransactions: async (page: number = 1, limit: number = 10, filters?: PaymentFilters): Promise<{data: PaymentTransaction[], total: number}> => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+    if (filters?.tenantId) params.append('tenantId', filters.tenantId);
+    if (filters?.leaseId) params.append('leaseId', filters.leaseId);
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.processor) params.append('processor', filters.processor);
+    if (filters?.dateFrom) params.append('dateFrom', filters.dateFrom);
+    if (filters?.dateTo) params.append('dateTo', filters.dateTo);
+    if (filters?.minAmount) params.append('minAmount', filters.minAmount.toString());
+    if (filters?.maxAmount) params.append('maxAmount', filters.maxAmount.toString());
+
+    const response = await api.get<{data: PaymentTransaction[], total: number}>(`/payments/transactions?${params.toString()}`);
+    return response.data;
+  },
+
+  getPaymentTransaction: async (id: string): Promise<PaymentTransaction> => {
+    const response = await api.get<PaymentTransaction>(`/payments/transactions/${id}`);
+    return response.data;
+  },
+
+  processPayment: async (data: ProcessPaymentData): Promise<PaymentTransaction> => {
+    const response = await api.post<PaymentTransaction>('/payments/process', data);
+    return response.data;
+  },
+
+  refundPayment: async (transactionId: string, amount?: number, reason?: string): Promise<PaymentTransaction> => {
+    const response = await api.post<PaymentTransaction>(`/payments/refund/${transactionId}`, { amount, reason });
+    return response.data;
+  },
+
+  // Recurring Payments CRUD operations
+  getRecurringPayments: async (tenantId: string): Promise<RecurringPayment[]> => {
+    const response = await api.get<RecurringPayment[]>(`/payments/recurring/${tenantId}`);
+    return response.data;
+  },
+
+  createRecurringPayment: async (data: CreateRecurringPaymentData): Promise<RecurringPayment> => {
+    const response = await api.post<RecurringPayment>('/payments/recurring', data);
+    return response.data;
+  },
+
+  updateRecurringPayment: async (id: string, data: Partial<RecurringPayment>): Promise<RecurringPayment> => {
+    const response = await api.put<RecurringPayment>(`/payments/recurring/${id}`, data);
+    return response.data;
+  },
+
+  deleteRecurringPayment: async (id: string): Promise<void> => {
+    await api.delete(`/payments/recurring/${id}`);
+  },
+
+  pauseRecurringPayment: async (id: string): Promise<RecurringPayment> => {
+    const response = await api.patch<RecurringPayment>(`/payments/recurring/${id}/pause`, {});
+    return response.data;
+  },
+
+  resumeRecurringPayment: async (id: string): Promise<RecurringPayment> => {
+    const response = await api.patch<RecurringPayment>(`/payments/recurring/${id}/resume`, {});
+    return response.data;
+  },
+
+  // Payment Plans CRUD operations
+  getPaymentPlans: async (tenantId: string): Promise<PaymentPlan[]> => {
+    const response = await api.get<PaymentPlan[]>(`/payments/plans/${tenantId}`);
+    return response.data;
+  },
+
+  createPaymentPlan: async (data: CreatePaymentPlanData): Promise<PaymentPlan> => {
+    const response = await api.post<PaymentPlan>('/payments/plans', data);
+    return response.data;
+  },
+
+  updatePaymentPlan: async (id: string, data: Partial<PaymentPlan>): Promise<PaymentPlan> => {
+    const response = await api.put<PaymentPlan>(`/payments/plans/${id}`, data);
+    return response.data;
+  },
+
+  deletePaymentPlan: async (id: string): Promise<void> => {
+    await api.delete(`/payments/plans/${id}`);
+  },
+
+  // Payment Analytics and Reporting
+  getPaymentAnalytics: async (filters?: PaymentFilters): Promise<{
+    totalRevenue: number;
+    totalTransactions: number;
+    averageTransactionAmount: number;
+    paymentMethodBreakdown: Record<string, number>;
+    statusBreakdown: Record<string, number>;
+    monthlyTrends: Array<{month: string, revenue: number, transactions: number}>;
+  }> => {
+    const params = new URLSearchParams();
+    if (filters?.tenantId) params.append('tenantId', filters.tenantId);
+    if (filters?.dateFrom) params.append('dateFrom', filters.dateFrom);
+    if (filters?.dateTo) params.append('dateTo', filters.dateTo);
+
+    const response = await api.get<{
+      totalRevenue: number;
+      totalTransactions: number;
+      averageTransactionAmount: number;
+      paymentMethodBreakdown: Record<string, number>;
+      statusBreakdown: Record<string, number>;
+      monthlyTrends: Array<{month: string, revenue: number, transactions: number}>;
+    }>(`/payments/analytics?${params.toString()}`);
+    return response.data;
+  },
+
+  // Payment Processor Configuration
+  getPaymentProcessorConfig: async (): Promise<{
+    stripe: {enabled: boolean, publicKey?: string};
+    paypal: {enabled: boolean, clientId?: string};
+    ach: {enabled: boolean};
+  }> => {
+    const response = await api.get<{
+      stripe: {enabled: boolean, publicKey?: string};
+      paypal: {enabled: boolean, clientId?: string};
+      ach: {enabled: boolean};
+    }>('/payments/config');
+    return response.data;
+  },
+
+  updatePaymentProcessorConfig: async (config: {
+    stripe?: {enabled: boolean};
+    paypal?: {enabled: boolean};
+    ach?: {enabled: boolean};
+  }): Promise<void> => {
+    await api.put('/payments/config', config);
+  },
+
+  // Webhook handling for payment processors
+  handlePaymentWebhook: async (processor: string, payload: any): Promise<void> => {
+    await api.post(`/payments/webhooks/${processor}`, payload);
+  },
+
+  // Connector APIs
+  getConnectors: async (page: number = 1, limit: number = 10, filters?: {
+    type?: string;
+    provider?: string;
+    status?: string;
+  }): Promise<{data: any[], total: number}> => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+    if (filters?.type) params.append('type', filters.type);
+    if (filters?.provider) params.append('provider', filters.provider);
+    if (filters?.status) params.append('status', filters.status);
+
+    const response = await api.get<{data: any[], total: number}>(`/connectors?${params.toString()}`);
+    return response.data;
+  },
+
+  getConnector: async (id: string): Promise<any> => {
+    const response = await api.get<any>(`/connectors/${id}`);
+    return response.data;
+  },
+
+  createConnector: async (connector: {
+    type: string;
+    provider: string;
+    config?: Record<string, any>;
+    credentials?: {
+      apiKey?: string;
+      apiSecret?: string;
+      username?: string;
+      password?: string;
+      token?: string;
+      webhookUrl?: string;
+    };
+    syncFrequency?: string;
+  }): Promise<any> => {
+    const response = await api.post<any>('/connectors', connector);
+    return response.data;
+  },
+
+  updateConnector: async (id: string, connector: Partial<{
+    config: Record<string, any>;
+    credentials: {
+      apiKey?: string;
+      apiSecret?: string;
+      username?: string;
+      password?: string;
+      token?: string;
+      webhookUrl?: string;
+    };
+    syncFrequency: string;
+    isActive: boolean;
+  }>): Promise<any> => {
+    const response = await api.put<any>(`/connectors/${id}`, connector);
+    return response.data;
+  },
+
+  deleteConnector: async (id: string): Promise<void> => {
+    await api.delete(`/connectors/${id}`);
+  },
+
+  testConnector: async (id: string): Promise<{success: boolean, message: string}> => {
+    const response = await api.post<{success: boolean, message: string}>(`/connectors/${id}/test`);
+    return response.data;
+  },
+
+  syncConnector: async (id: string): Promise<{success: boolean, recordsProcessed: number, errors: string[]}> => {
+    const response = await api.post<{success: boolean, recordsProcessed: number, errors: string[]}>(
+      `/connectors/${id}/sync`
+    );
+    return response.data;
+  },
+
+  syncAllConnectors: async (): Promise<{success: boolean, results: Array<{
+    connectorId: string;
+    success: boolean;
+    recordsProcessed: number;
+    errors: string[];
+  }>}> => {
+    const response = await api.post<{success: boolean, results: Array<{
+      connectorId: string;
+      success: boolean;
+      recordsProcessed: number;
+      errors: string[];
+    }>}>(`/connectors/sync-all`);
+    return response.data;
+  },
+
+  getConnectorSyncLogs: async (connectorId: string, page: number = 1, limit: number = 10): Promise<{
+    data: Array<{
+      id: string;
+      success: boolean;
+      recordsProcessed: number;
+      errors: string[];
+      duration: number;
+      timestamp: string;
+    }>;
+    total: number;
+  }> => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+
+    const response = await api.get<{
+      data: Array<{
+        id: string;
+        success: boolean;
+        recordsProcessed: number;
+        errors: string[];
+        duration: number;
+        timestamp: string;
+      }>;
+      total: number;
+    }>(`/connectors/${connectorId}/sync-logs?${params.toString()}`);
+    return response.data;
+  },
+
+  getConnectorErrors: async (connectorId: string, page: number = 1, limit: number = 10): Promise<{
+    data: Array<{
+      id: string;
+      errorType: string;
+      message: string;
+      stackTrace?: string;
+      timestamp: string;
+      resolved: boolean;
+      retryCount: number;
+    }>;
+    total: number;
+  }> => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+
+    const response = await api.get<{
+      data: Array<{
+        id: string;
+        errorType: string;
+        message: string;
+        stackTrace?: string;
+        timestamp: string;
+        resolved: boolean;
+        retryCount: number;
+      }>;
+      total: number;
+    }>(`/connectors/${connectorId}/errors?${params.toString()}`);
+    return response.data;
+  },
+
+  resolveConnectorError: async (errorId: string): Promise<void> => {
+    await api.put(`/connectors/errors/${errorId}/resolve`);
+  },
+
+  // Background Check APIs
+  submitBackgroundCheck: async (data: {
+    tenantId: string;
+    tenantName: string;
+    tenantEmail: string;
+    tenantPhone?: string;
+    propertyId: string;
+    unitId: string;
+    requestType: 'standard' | 'premium' | 'express';
+  }): Promise<{requestId: string}> => {
+    const response = await api.post<{requestId: string}>('/background-checks', data);
+    return response.data;
+  },
+
+  getBackgroundCheckResults: async (requestId: string): Promise<{
+    requestId: string;
+    status: 'pending' | 'processing' | 'completed' | 'failed';
+    results?: {
+      overallScore: number;
+      riskLevel: 'low' | 'medium' | 'high';
+      criminalRecords: any[];
+      creditScore?: number;
+      employmentVerification: any[];
+      referenceChecks: any[];
+      reportUrl?: string;
+    };
+    completedAt?: string;
+  }> => {
+    const response = await api.get<{
+      requestId: string;
+      status: 'pending' | 'processing' | 'completed' | 'failed';
+      results?: {
+        overallScore: number;
+        riskLevel: 'low' | 'medium' | 'high';
+        criminalRecords: any[];
+        creditScore?: number;
+        employmentVerification: any[];
+        referenceChecks: any[];
+        reportUrl?: string;
+      };
+      completedAt?: string;
+    }>(`/background-checks/${requestId}`);
+    return response.data;
+  },
+
+  getBackgroundChecks: async (page: number = 1, limit: number = 10, filters?: {
+    tenantId?: string;
+    status?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  }): Promise<{
+    data: Array<{
+      id: string;
+      tenantId: string;
+      tenantName: string;
+      status: string;
+      requestType: string;
+      requestedAt: string;
+      completedAt?: string;
+    }>;
+    total: number;
+  }> => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+    if (filters?.tenantId) params.append('tenantId', filters.tenantId);
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.dateFrom) params.append('dateFrom', filters.dateFrom);
+    if (filters?.dateTo) params.append('dateTo', filters.dateTo);
+
+    const response = await api.get<{
+      data: Array<{
+        id: string;
+        tenantId: string;
+        tenantName: string;
+        status: string;
+        requestType: string;
+        requestedAt: string;
+        completedAt?: string;
+      }>;
+      total: number;
+    }>(`/background-checks?${params.toString()}`);
+    return response.data;
+  },
+
+  // Webhook handling for connectors
+  handleConnectorWebhook: async (connectorId: string, payload: any): Promise<void> => {
+    await api.post(`/connectors/${connectorId}/webhook`, payload);
   },
 };
 

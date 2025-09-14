@@ -9,6 +9,8 @@ import VoicemailService from './services/voicemailService';
 import { rentCollectionService } from './services/rentCollection.service';
 import { documentExpirationService } from './services/documentExpiration.service';
 import './services/pubSub.service';
+import schedulerService from './services/schedulerService';
+import cleanupSchedulerService from './services/cleanupSchedulerService';
 import path from 'path';
 
 const PORT = process.env.PORT || 3001;
@@ -43,6 +45,12 @@ const startServer = async () => {
 
     // Initialize Document Expiration service
     documentExpirationService.initialize();
+
+    // Initialize Report Scheduler service
+    schedulerService.start();
+
+    // Initialize Cleanup Scheduler service
+    cleanupSchedulerService.start();
 
     // Start the server with proper cleanup to prevent race conditions
     const startListening = (port: number) => {
@@ -107,6 +115,8 @@ process.on('SIGINT', async () => {
       console.log('Server closed.');
     });
   }
+  schedulerService.stop();
+  cleanupSchedulerService.stop();
   await closeDatabaseConnections();
   process.exit(0);
 });
@@ -118,6 +128,8 @@ process.on('SIGTERM', async () => {
       console.log('Server closed.');
     });
   }
+  schedulerService.stop();
+  cleanupSchedulerService.stop();
   await closeDatabaseConnections();
   process.exit(0);
 });

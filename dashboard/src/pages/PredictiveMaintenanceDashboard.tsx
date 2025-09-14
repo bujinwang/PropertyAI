@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { predictiveMaintenanceService } from '../services/predictiveMaintenanceService';
+import MaintenanceAlerts from '../components/MaintenanceAlerts';
 
 const PredictiveMaintenanceDashboard: React.FC = () => {
   const [selectedPrediction, setSelectedPrediction] = useState<string | null>(null);
@@ -16,9 +17,16 @@ const PredictiveMaintenanceDashboard: React.FC = () => {
     }
   };
 
+  const handleAlertClick = (prediction: any) => {
+    setSelectedPrediction(prediction.type);
+  };
+
   return (
-    <div>
+    <div className="space-y-6">
       <h1 className="text-2xl font-bold mb-4">Predictive Maintenance Dashboard</h1>
+
+      {/* Maintenance Alerts Section */}
+      <MaintenanceAlerts onAlertClick={handleAlertClick} />
 
       {/* Filtering Section */}
       <div className="mb-8 bg-white p-4 rounded-lg shadow">

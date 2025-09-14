@@ -67,7 +67,10 @@
     "lint:contractor": "npm run lint --workspace=ContractorApp",
     "lint:propertyapp": "npm run lint --workspace=propertyapp",
     "clean": "npm run clean --workspaces",
-    "install:all": "npm install"
+    "install:all": "npm install",
+    "bmad:refresh": "bmad-method install -f -i codex",
+    "bmad:list": "bmad-method list:agents",
+    "bmad:validate": "bmad-method validate"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",

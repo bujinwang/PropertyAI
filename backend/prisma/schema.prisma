@@ -84,11 +84,19 @@ model AuditEntry {
   details    Json?
   entityId   String
   entityType String
+  ipAddress  String?
+  userAgent  String?
+  sessionId  String?
+  complianceType ComplianceType?
+  severity   AuditSeverity @default(INFO)
   User       User?    @relation(fields: [userId], references: [id])
 
   @@index([entityId])
   @@index([entityType])
   @@index([userId])
+  @@index([timestamp])
+  @@index([complianceType])
+  @@index([severity])
 }
 
 model BackgroundCheck {
@@ -525,6 +533,11 @@ model Rental {
   CreatedBy        User              @relation("RentalCreatedBy", fields: [createdById], references: [id])
   WhiteLabelConfig WhiteLabelConfig? @relation(fields: [whiteLabelConfigId], references: [id])
 
+  // IoT Relations for Epic 15
+  IoTDevices       IoTDevice[]
+  DeviceGroups     DeviceGroup[]
+  AnalyticsRules   AnalyticsRule[]
+
   @@index([city])
   @@index([state])
   @@index([zipCode])
@@ -789,6 +802,22 @@ model User {
   refreshToken                             String?
   stripeCustomerId                         String?                   @unique
   pushToken                                String?
+  // Enhanced security fields for Epic 14
+  sessionTimeout                           Int?                      @default(3600000) // 1 hour in ms
+  lastActivity                             DateTime?
+  biometricEnabled                         Boolean                   @default(false)
+  biometricPublicKey                       String?
+  biometricCredentialId                    String?
+  ssoEnabled                               Boolean                   @default(false)
+  ssoProvider                              String?
+  ssoProviderId                            String?
+  passwordLastChanged                      DateTime?
+  passwordHistory                          Json? // Array of previous password hashes
+  securitySettings                         Json? // Enhanced security preferences
+  complianceRegion                         ComplianceRegion?         @default(GDPR)
+  dataRetentionPeriod                      Int?                      @default(2555) // Days (7 years)
+  accountDeletionRequested                 Boolean                   @default(false)
+  accountDeletionRequestedAt               DateTime?
   rentalsManaged                           Rental[]                  @relation("RentalManager")
   rentalsOwned                             Rental[]                  @relation("RentalOwner")
   rentalsCreated                           Rental[]                  @relation("RentalCreatedBy")
@@ -826,6 +855,13 @@ model User {
   WhiteLabelConfig                         WhiteLabelConfig[]
   Role                                     Role[]
   MaintenanceRequest                       MaintenanceRequest[]
+  // Enhanced security relations for Epic 14
+  SecuritySettings                         SecuritySettings?
+  BiometricAuth                            BiometricAuth[]
+  ComplianceReport                         ComplianceReport[]
+  SecurityIncident                         SecurityIncident[]        @relation("SecurityIncidentUser")
+  SecurityIncidentResolved                 SecurityIncident[]        @relation("SecurityIncidentResolvedBy")
+  Session                                  Session[]
 
   @@index([email])
   @@index([isActive])
@@ -1136,6 +1172,66 @@ enum DeliveryStatus {
   LOST
 }
 
+// Enhanced Security Enums for Epic 14
+
+enum ComplianceRegion {
+  GDPR
+  CCPA
+  SOX
+  HIPAA
+  PCI_DSS
+  OTHER
+}
+
+enum ComplianceType {
+  GDPR
+  CCPA
+  SOX
+  HIPAA
+  PCI_DSS
+  GENERAL
+}
+
+enum AuditSeverity {
+  INFO
+  WARNING
+  ERROR
+  CRITICAL
+}
+
+enum ReportStatus {
+  GENERATED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum IncidentType {
+  BRUTE_FORCE
+  SUSPICIOUS_LOGIN
+  UNAUTHORIZED_ACCESS
+  DATA_BREACH
+  MALWARE
+  PHISHING
+  COMPLIANCE_VIOLATION
+  OTHER
+}
+
+enum IncidentSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum IncidentStatus {
+  OPEN
+  INVESTIGATING
+  RESOLVED
+  CLOSED
+  FALSE_POSITIVE
+}
+
 model Visitor {
   id               String        @id @default(cuid())
   name             String
@@ -1231,10 +1327,606 @@ model DeliveryAccessLog {
   verifiedBy  String?   // QR code, manual, etc.
   notes       String?
   createdAt   DateTime  @default(now())
-  
+
   // Relations
   delivery    Delivery  @relation(fields: [deliveryId], references: [id])
-  
+
   @@index([deliveryId])
   @@index([accessTime])
 }
+
+// Enhanced Security Models for Epic 14
+
+model SecuritySettings {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  passwordMinLength     Int      @default(8)
+  passwordRequireUpper  Boolean  @default(true)
+  passwordRequireLower  Boolean  @default(true)
+  passwordRequireNumber Boolean  @default(true)
+  passwordRequireSpecial Boolean @default(true)
+  sessionTimeout        Int      @default(3600000) // 1 hour
+  maxLoginAttempts      Int      @default(5)
+  lockoutDuration       Int      @default(900000) // 15 minutes
+  requireMFA            Boolean  @default(false)
+  allowBiometric        Boolean  @default(true)
+  allowSSO              Boolean  @default(true)
+  ipWhitelist           String[] // Array of allowed IP addresses
+  geoBlocking           Boolean  @default(false)
+  allowedCountries      String[]
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  User User @relation(fields: [userId], references: [id])
+}
+
+model BiometricAuth {
+  id             String   @id @default(cuid())
+  userId         String
+  credentialId   String   @unique
+  publicKey      String
+  deviceType     String   // "fingerprint", "face", "touch"
+  deviceModel    String?
+  lastUsed       DateTime?
+  createdAt      DateTime @default(now())
+  isActive       Boolean  @default(true)
+
+  User User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@unique([userId, credentialId])
+}
+
+model SSOConfig {
+  id                String   @id @default(cuid())
+  provider          String   // "google", "microsoft", "saml", etc.
+  providerId        String?
+  clientId          String
+  clientSecret      String
+  redirectUri       String
+  scopes            String[]
+  isActive          Boolean  @default(true)
+  metadataUrl       String?
+  certificate       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([provider, providerId])
+}
+
+model ComplianceReport {
+  id              String   @id @default(cuid())
+  type            ComplianceType
+  reportData      Json
+  generatedAt     DateTime @default(now())
+  generatedById   String
+  validUntil      DateTime?
+  status          ReportStatus @default(GENERATED)
+  fileUrl         String?
+  checksum        String?
+
+  generatedBy User @relation(fields: [generatedById], references: [id])
+
+  @@index([type])
+  @@index([generatedAt])
+  @@index([status])
+}
+
+model SecurityIncident {
+  id            String   @id @default(cuid())
+  type          IncidentType
+  severity      IncidentSeverity
+  description   String
+  detectedAt    DateTime @default(now())
+  resolvedAt    DateTime?
+  status        IncidentStatus @default(OPEN)
+  userId        String?
+  ipAddress     String?
+  userAgent     String?
+  details       Json?
+  resolution    String?
+  resolvedById  String?
+
+  user        User? @relation("SecurityIncidentUser", fields: [userId], references: [id])
+  resolvedBy  User? @relation("SecurityIncidentResolvedBy", fields: [resolvedById], references: [id])
+
+  @@index([type])
+  @@index([severity])
+  @@index([status])
+  @@index([detectedAt])
+}
+
+model DataRetentionPolicy {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  dataType        String   // "user_data", "audit_logs", "financial_data", etc.
+  retentionPeriod Int      // Days
+  autoDelete      Boolean  @default(true)
+  complianceType  ComplianceType?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([dataType])
+  @@index([complianceType])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  sessionToken String   @unique
+  ipAddress    String?
+  userAgent    String?
+  deviceInfo   Json?
+  expiresAt    DateTime
+  lastActivity DateTime @default(now())
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  User User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([sessionToken])
+  @@index([expiresAt])
+}
+
+// IoT Integration Models for Epic 15
+
+enum DeviceType {
+  SMART_LOCK
+  SMART_THERMOSTAT
+  SMART_LIGHT
+  SECURITY_CAMERA
+  MOTION_SENSOR
+  DOOR_SENSOR
+  WINDOW_SENSOR
+  SMOKE_DETECTOR
+  CARBON_MONOXIDE_DETECTOR
+  WATER_LEAK_SENSOR
+  HVAC_CONTROLLER
+  ENERGY_METER
+  ACCESS_CONTROL
+  ENVIRONMENTAL_SENSOR
+  OTHER
+}
+
+enum ProtocolType {
+  MQTT
+  ZIGBEE
+  ZWAVE
+  WIFI
+  BLUETOOTH_LE
+  THREAD
+  MATTER
+  OTHER
+}
+
+enum SensorType {
+  TEMPERATURE
+  HUMIDITY
+  MOTION
+  DOOR_WINDOW
+  SMOKE
+  CARBON_MONOXIDE
+  WATER_LEAK
+  ENERGY_CONSUMPTION
+  VOLTAGE
+  CURRENT
+  POWER
+  AIR_QUALITY
+  NOISE_LEVEL
+  LIGHT_LEVEL
+  OCCUPANCY
+  PRESSURE
+  VIBRATION
+  OTHER
+}
+
+enum AlertSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AlertType {
+  THRESHOLD_EXCEEDED
+  DEVICE_OFFLINE
+  BATTERY_LOW
+  MALFUNCTION
+  SECURITY_BREACH
+  MAINTENANCE_REQUIRED
+  PREDICTIVE_FAILURE
+  OTHER
+}
+
+model IoTDevice {
+  id            String      @id @default(cuid())
+  name          String
+  type          DeviceType
+  protocol      ProtocolType
+  deviceId      String      @unique
+  macAddress    String?
+  ipAddress     String?
+  firmwareVersion String?
+  lastSeen      DateTime?
+  isOnline      Boolean     @default(false)
+  batteryLevel  Float?
+  signalStrength Int?
+  propertyId    String
+  unitId        String?
+  groupId       String?
+  capabilities  Json
+  metadata      Json
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  property      Rental      @relation(fields: [propertyId], references: [id])
+  group         DeviceGroup? @relation(fields: [groupId], references: [id])
+  sensors       IoTSensor[]
+  events        DeviceEvent[]
+
+  @@index([propertyId])
+  @@index([unitId])
+  @@index([deviceId])
+  @@index([isOnline])
+  @@index([type])
+  @@index([protocol])
+}
+
+model DeviceGroup {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  propertyId  String
+  devices     IoTDevice[]
+
+  @@index([propertyId])
+}
+
+model DeviceEvent {
+  id          String   @id @default(cuid())
+  deviceId    String
+  eventType   String
+  eventData   Json
+  timestamp   DateTime @default(now())
+  severity    AlertSeverity @default(LOW)
+
+  device      IoTDevice @relation(fields: [deviceId], references: [id])
+
+  @@index([deviceId])
+  @@index([eventType])
+  @@index([timestamp])
+  @@index([severity])
+}
+
+model IoTSensor {
+  id            String     @id @default(cuid())
+  deviceId      String
+  sensorType    SensorType
+  name          String
+  unit          String
+  minValue      Float?
+  maxValue      Float?
+  precision     Int       @default(2)
+  isActive      Boolean   @default(true)
+  metadata      Json
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  device        IoTDevice     @relation(fields: [deviceId], references: [id])
+  readings      SensorReading[]
+  alerts        SensorAlert[]
+
+  @@index([deviceId])
+  @@index([sensorType])
+  @@index([isActive])
+}
+
+model SensorReading {
+  id        String   @id @default(cuid())
+  sensorId  String
+  value     Float
+  timestamp DateTime @default(now())
+  quality   Int      @default(100) // 0-100 quality score
+
+  sensor    IoTSensor @relation(fields: [sensorId], references: [id])
+
+  @@index([sensorId])
+  @@index([timestamp])
+}
+
+model SensorAlert {
+  id          String        @id @default(cuid())
+  sensorId    String
+  alertType   AlertType
+  severity    AlertSeverity
+  message     String
+  threshold   Float?
+  value       Float
+  timestamp   DateTime      @default(now())
+  acknowledged Boolean      @default(false)
+  acknowledgedBy String?
+  acknowledgedAt DateTime?
+  resolved    Boolean      @default(false)
+  resolvedAt  DateTime?
+
+  sensor      IoTSensor @relation(fields: [sensorId], references: [id])
+
+  @@index([sensorId])
+  @@index([alertType])
+  @@index([severity])
+  @@index([timestamp])
+  @@index([acknowledged])
+  @@index([resolved])
+}
+
+model AnalyticsRule {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  sensorType    SensorType?
+  condition     Json     // Rule condition logic
+  threshold     Float?
+  timeWindow    Int?     // Time window in minutes
+  severity      AlertSeverity @default(MEDIUM)
+  isActive      Boolean  @default(true)
+  propertyId    String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  property      Rental   @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId])
+  @@index([sensorType])
+  @@index([isActive])
+  @@index([severity])
+}
+
+// Epic 16: Advanced Workflow Automation Models
+
+// Story 16.1: Automated Approval Workflows
+enum RequestType {
+  MAINTENANCE_REQUEST
+  LEASE_APPLICATION
+  PAYMENT_APPROVAL
+  CONTRACT_RENEWAL
+  PROPERTY_CHANGES
+  VENDOR_PAYMENT
+  TENANT_SCREENING
+  OTHER
+}
+
+enum StepType {
+  APPROVAL
+  AUTO_APPROVE
+  NOTIFICATION
+  REVIEW
+  ESCALATION
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  ESCALATED
+  EXPIRED
+  CANCELLED
+}
+
+enum ApprovalActionType {
+  APPROVE
+  REJECT
+  ESCALATE
+  DELEGATE
+  COMMENT
+}
+
+model ApprovalWorkflow {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  requestType   RequestType
+  isActive      Boolean  @default(true)
+  autoApprovalRules Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  steps         ApprovalStep[]
+  instances     ApprovalInstance[]
+
+  @@index([requestType])
+  @@index([isActive])
+}
+
+model ApprovalStep {
+  id            String   @id @default(cuid())
+  workflowId    String
+  stepNumber    Int
+  stepType      StepType // APPROVAL, AUTO_APPROVE, NOTIFICATION
+  approverRole  String?
+  approverUserId String?
+  conditions    Json?    // Conditional logic for step execution
+  timeoutHours  Int      @default(24)
+  escalationRole String?
+  isParallel    Boolean  @default(false)
+
+  workflow      ApprovalWorkflow @relation(fields: [workflowId], references: [id])
+
+  @@index([workflowId])
+  @@index([stepNumber])
+}
+
+model ApprovalInstance {
+  id            String   @id @default(cuid())
+  workflowId    String
+  requestId     String   // Reference to the original request
+  requestType   RequestType
+  status        ApprovalStatus @default(PENDING)
+  currentStep   Int     @default(1)
+  initiatedBy   String
+  initiatedAt   DateTime @default(now())
+  completedAt   DateTime?
+  metadata      Json     // Request-specific data
+
+  workflow      ApprovalWorkflow @relation(fields: [workflowId], references: [id])
+  approvals     ApprovalAction[]
+
+  @@index([workflowId])
+  @@index([requestId])
+  @@index([status])
+  @@index([initiatedBy])
+}
+
+model ApprovalAction {
+  id            String   @id @default(cuid())
+  instanceId    String
+  stepNumber    Int
+  approverId    String
+  action        ApprovalActionType
+  comments      String?
+  approvedAt    DateTime @default(now())
+  metadata      Json?
+
+  instance      ApprovalInstance @relation(fields: [instanceId], references: [id])
+
+  @@index([instanceId])
+  @@index([approverId])
+  @@index([approvedAt])
+}
+
+// Story 16.2: Process Automation Engine
+enum InstanceStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+  PAUSED
+  CANCELLED
+}
+
+enum ExecutionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  SKIPPED
+}
+
+enum IntegrationType {
+  WEBHOOK
+  API
+  EMAIL
+  SMS
+  DATABASE
+  FILE_SYSTEM
+  EXTERNAL_API
+  OTHER
+}
+
+model WorkflowDefinition {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  category      String
+  version       String   @default("1.0")
+  isActive      Boolean  @default(true)
+  isTemplate    Boolean  @default(false)
+  definition    Json     // Workflow definition in JSON format
+  metadata      Json     // Additional workflow metadata
+  createdBy     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  instances     WorkflowInstance[]
+  steps         WorkflowStep[]
+
+  @@index([category])
+  @@index([isActive])
+  @@index([isTemplate])
+  @@index([createdBy])
+}
+
+model WorkflowStep {
+  id            String   @id @default(cuid())
+  definitionId  String
+  stepId        String   // Unique identifier within workflow
+  name          String
+  type          String   // TASK, DECISION, INTEGRATION, TIMER, etc.
+  config        Json     // Step-specific configuration
+  position      Json     // Visual position in designer
+  connections   Json     // Step connections and flow logic
+
+  definition    WorkflowDefinition @relation(fields: [definitionId], references: [id])
+
+  @@index([definitionId])
+  @@index([stepId])
+}
+
+model WorkflowInstance {
+  id            String   @id @default(cuid())
+  definitionId  String
+  status        InstanceStatus @default(RUNNING)
+  currentStep   String?
+  variables     Json     // Workflow variables and data
+  context       Json     // Execution context and metadata
+  initiatedBy   String
+  initiatedAt   DateTime @default(now())
+  completedAt   DateTime?
+  duration      Int?     // Execution duration in seconds
+
+  definition    WorkflowDefinition @relation(fields: [definitionId], references: [id])
+  executions    WorkflowExecution[]
+  events        WorkflowEvent[]
+
+  @@index([definitionId])
+  @@index([status])
+  @@index([initiatedBy])
+  @@index([initiatedAt])
+}
+
+model WorkflowExecution {
+  id            String   @id @default(cuid())
+  instanceId    String
+  stepId        String
+  status        ExecutionStatus
+  input         Json?
+  output        Json?
+  error         String?
+  startedAt     DateTime @default(now())
+  completedAt   DateTime?
+
+  instance      WorkflowInstance @relation(fields: [instanceId], references: [id])
+
+  @@index([instanceId])
+  @@index([stepId])
+  @@index([status])
+}
+
+model WorkflowEvent {
+  id            String   @id @default(cuid())
+  instanceId    String
+  eventType     String
+  eventData     Json
+  timestamp     DateTime @default(now())
+
+  instance      WorkflowInstance @relation(fields: [instanceId], references: [id])
+
+  @@index([instanceId])
+  @@index([eventType])
+  @@index([timestamp])
+}
+
+model WorkflowIntegration {
+  id            String   @id @default(cuid())
+  name          String
+  type          IntegrationType // WEBHOOK, API, EMAIL, SMS, etc.
+  config        Json     // Integration-specific configuration
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([type])
+  @@index([isActive])
+}
+

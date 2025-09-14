@@ -1,0 +1,65 @@
+# Expo
+.expo
+.expo-shared
+
+# Metro
+.metro-health-check*
+
+# Build
+dist/
+web-build/
+build/
+
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+.nyc_output
+
+# Temporary files
+*.tmp
+*.temp
+
+# Android
+android/app/build/
+android/build/
+
+# iOS
+ios/build/
+ios/Pods/
+
+# EAS Build
+eas-build-env.sh
+
+# Firebase
+google-services.json
+GoogleService-Info.plist
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3

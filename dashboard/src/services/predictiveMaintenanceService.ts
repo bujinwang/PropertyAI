@@ -1,10 +1,10 @@
 import { apiService } from './apiService';
 
 export const predictiveMaintenanceService = {
-  // Fetches predicted maintenance data
-  getPredictions: async (filters: any) => {
+  // Fetches predicted maintenance data for a specific property
+  getPredictions: async (propertyId: string) => {
     try {
-      const response = await apiService.get('/predictive-maintenance', { params: filters });
+      const response = await apiService.post('/analytics/predict-maintenance', { propertyId });
       return response.data;
     } catch (error) {
       console.error('Error fetching predictive maintenance data:', error);

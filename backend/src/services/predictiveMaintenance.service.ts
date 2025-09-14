@@ -63,23 +63,32 @@ class PredictiveMaintenanceService {
 
   private extractFeatures(appliance: any): any {
     const features: any = {};
-    
-    features.age = (new Date().getTime() - new Date(appliance.purchaseDate).getTime()) / (1000 * 60 * 60 * 24 * 365);
-    features.maintenance_count = appliance.Rental.MaintenanceRequests.length;
-    features.time_since_last_maintenance = appliance.lastMaintenanceDate 
-      ? (new Date().getTime() - new Date(appliance.lastMaintenanceDate).getTime()) / (1000 * 60 * 60 * 24)
-      : 0;
 
-    const typeFeatures: any = {
-      'REFRIGERATOR': { 'type_REFRIGERATOR': 1, 'type_OVEN': 0, 'type_DISHWASHER': 0 },
-      'OVEN': { 'type_REFRIGERATOR': 0, 'type_OVEN': 1, 'type_DISHWASHER': 0 },
-      'DISHWASHER': { 'type_REFRIGERATOR': 0, 'type_OVEN': 0, 'type_DISHWASHER': 1 },
-    };
+    // Basic features
+    const purchaseDate = appliance.purchaseDate ? new Date(appliance.purchaseDate) : new Date();
+    const currentDate = new Date();
 
-    const applianceType = appliance.type.toUpperCase();
-    if (typeFeatures[applianceType]) {
-      Object.assign(features, typeFeatures[applianceType]);
-    }
+    features.purchaseDate = appliance.purchaseDate;
+    features.lastMaintenanceDate = appliance.lastMaintenanceDate;
+    features.last_maintenance_completion = appliance.Rental?.MaintenanceRequests?.[0]?.completionDate;
+    features.warrantyEndDate = appliance.warrantyEndDate;
+    features.brand = appliance.brand || 'Unknown';
+    features.model = appliance.model || 'Unknown';
+    features.type = appliance.type;
+
+    // Maintenance-related features
+    const maintenanceRequests = appliance.Rental?.MaintenanceRequests || [];
+    features.maintenance_count = maintenanceRequests.length;
+    features.completed_maintenance_count = maintenanceRequests.filter((mr: any) => mr.status === 'COMPLETED').length;
+    features.high_priority_maintenance_count = maintenanceRequests.filter((mr: any) =>
+      mr.priority === 'HIGH' || mr.priority === 'CRITICAL'
+    ).length;
+
+    // Cost features
+    const costs = maintenanceRequests
+      .map((mr: any) => mr.estimatedCost)
+      .filter((cost: any) => cost && cost > 0);
+    features.avg_maintenance_cost = costs.length > 0 ? costs.reduce((a: number, b: number) => a + b, 0) / costs.length : 0;
 
     return features;
   }
