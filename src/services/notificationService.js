@@ -199,6 +199,61 @@ class NotificationService {
         You can manually generate a report from the dashboard: {{dashboardUrl}}
       `
     });
+
+    this.templates.set('scheduled-export-delivery', {
+      subject: 'Scheduled Export Ready: {{exportName}}',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #1976d2;">Scheduled Export Ready</h2>
+          <p>Dear {{recipientName}},</p>
+          <p>Your scheduled export "{{exportName}}" has been generated and is ready for download.</p>
+
+          <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3>Export Details:</h3>
+            <ul>
+              <li><strong>Template:</strong> {{templateName}}</li>
+              <li><strong>Format:</strong> {{format}}</li>
+              <li><strong>Generated:</strong> {{generatedAt}}</li>
+              <li><strong>Frequency:</strong> {{frequency}}</li>
+              <li><strong>Next Export:</strong> {{nextExport}}</li>
+            </ul>
+          </div>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="{{downloadUrl}}" style="background-color: #1976d2; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
+              Download Export
+            </a>
+          </div>
+
+          <p>This export was generated automatically according to your schedule. If you need to modify your export settings, please visit the analytics dashboard.</p>
+
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+          <p style="color: #666; font-size: 12px;">
+            This is an automated export from your Property Management Analytics system.
+            For questions about the data or export process, please contact support.
+          </p>
+        </div>
+      `,
+      text: `
+        Scheduled Export Ready: {{exportName}}
+
+        Dear {{recipientName}},
+
+        Your scheduled export "{{exportName}}" has been generated and is ready for download.
+
+        Export Details:
+        - Template: {{templateName}}
+        - Format: {{format}}
+        - Generated: {{generatedAt}}
+        - Frequency: {{frequency}}
+        - Next Export: {{nextExport}}
+
+        Download your export: {{downloadUrl}}
+
+        This export was generated automatically according to your schedule.
+        For questions about the data or export process, please contact support.
+      `
+    });
   }
 
   /**
@@ -422,6 +477,99 @@ class NotificationService {
       }
     } catch (error) {
       console.error('Error sending failure notification:', error);
+    }
+  }
+
+  /**
+   * Send scheduled export delivery email
+   */
+  async sendScheduledExportEmail(exportData, recipientEmail, options = {}) {
+    try {
+      if (!this.transporter) {
+        console.warn('Email transporter not initialized, skipping scheduled export email');
+        return { success: false, error: 'Email service not configured' };
+      }
+
+      const template = this.templates.get('scheduled-export-delivery');
+      if (!template) {
+        throw new Error('Scheduled export delivery email template not found');
+      }
+
+      // Get recipient user info
+      const recipient = await User.findOne({
+        where: { email: recipientEmail },
+        attributes: ['firstName', 'lastName']
+      });
+
+      const recipientName = recipient ?
+        `${recipient.firstName} ${recipient.lastName}` :
+        recipientEmail.split('@')[0];
+
+      // Prepare template data
+      const templateData = {
+        recipientName,
+        exportName: exportData.templateName || 'Analytics Export',
+        templateName: exportData.templateName || 'Analytics Export',
+        format: exportData.format?.toUpperCase() || 'PDF',
+        generatedAt: new Date(exportData.generatedAt || new Date()).toLocaleString(),
+        frequency: exportData.frequency || 'One-time',
+        nextExport: exportData.nextExport ? new Date(exportData.nextExport).toLocaleString() : 'N/A',
+        downloadUrl: exportData.downloadUrl || `${process.env.FRONTEND_URL || 'http://localhost:3000'}/exports/${exportData.id || 'download'}`
+      };
+
+      // Render email content
+      const subject = this.renderTemplate(template.subject, templateData);
+      const html = this.renderTemplate(template.html, templateData);
+      const text = this.renderTemplate(template.text, templateData);
+
+      // Send email
+      const mailOptions = {
+        from: process.env.SMTP_FROM || 'exports@propertymgmt.com',
+        to: recipientEmail,
+        subject,
+        html,
+        text,
+        attachments: options.includeAttachment ? [{
+          filename: `${exportData.templateName || 'export'}.${exportData.format || 'pdf'}`,
+          content: options.attachmentData,
+          encoding: 'base64'
+        }] : []
+      };
+
+      const result = await this.transporter.sendMail(mailOptions);
+
+      // Log notification
+      await this.logNotification({
+        type: 'email',
+        recipientId: recipient?.id,
+        recipientEmail,
+        subject,
+        content: html,
+        status: 'sent',
+        metadata: {
+          exportId: exportData.id,
+          templateId: exportData.templateId,
+          format: exportData.format,
+          frequency: exportData.frequency
+        }
+      });
+
+      return { success: true, messageId: result.messageId };
+    } catch (error) {
+      console.error('Error sending scheduled export email:', error);
+
+      // Log failed notification
+      await this.logNotification({
+        type: 'email',
+        recipientEmail,
+        subject: `Export: ${exportData.templateName || 'Analytics Export'}`,
+        content: 'Failed to send scheduled export email',
+        status: 'failed',
+        error: error.message,
+        metadata: { exportId: exportData.id }
+      });
+
+      return { success: false, error: error.message };
     }
   }
 

@@ -352,9 +352,102 @@ const predictMaintenance = async (propertyId) => {
   }
 };
 
+const generateExport = async (format, template, filters, userId, userRole, userProperties) => {
+  try {
+    const exportService = require('../utils/exportService');
+
+    // Validate export parameters
+    exportService.validateExportParams(format, template, filters);
+
+    // Get date range
+    const dateFrom = filters.dateFrom ? new Date(filters.dateFrom) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const dateTo = filters.dateTo ? new Date(filters.dateTo) : new Date();
+    const propertyIdsArray = filters.propertyIds ? filters.propertyIds.split(',').map(id => id.trim()) : [];
+
+    // Get analytics data
+    const analyticsData = await getMetrics(dateFrom, dateTo, propertyIdsArray, userRole, userProperties);
+
+    // Add additional data based on template
+    let exportData = { ...analyticsData };
+
+    if (template === 'audit') {
+      // Get audit trail data (mock for now - would come from audit service)
+      exportData.auditTrail = [
+        {
+          createdAt: new Date().toISOString(),
+          action: 'EXPORT_GENERATED',
+          entityType: 'ANALYTICS',
+          entityId: 'export_' + Date.now(),
+          user: userId,
+          details: `Generated ${format.toUpperCase()} export for ${template} template`
+        }
+      ];
+    }
+
+    // Generate export file
+    let fileContent;
+    let contentType;
+    let filename;
+
+    if (format === 'pdf') {
+      fileContent = await exportService.generatePDF(exportData, template, filters);
+      contentType = 'application/pdf';
+      filename = `${template}-report-${new Date().toISOString().split('T')[0]}.pdf`;
+    } else if (format === 'csv') {
+      fileContent = await exportService.generateCSV(exportData, template, filters);
+      contentType = 'text/csv';
+      filename = `${template}-report-${new Date().toISOString().split('T')[0]}.csv`;
+    }
+
+    // For small files, return base64 content
+    if (Buffer.isBuffer(fileContent) && fileContent.length < 5 * 1024 * 1024) { // < 5MB
+      const base64Content = fileContent.toString('base64');
+      return {
+        success: true,
+        exportId: `export_${Date.now()}_${userId}`,
+        format,
+        template,
+        filename,
+        contentType,
+        data: base64Content,
+        size: fileContent.length
+      };
+    } else {
+      // For larger files, save to temp location and return signed URL
+      const fs = require('fs').promises;
+      const path = require('path');
+      const tempPath = path.join('/tmp', `export_${Date.now()}_${filename}`);
+      await fs.writeFile(tempPath, fileContent);
+
+      // Mock signed URL for development
+      const signedUrl = `http://localhost:3000/temp-exports/${filename}`;
+
+      return {
+        success: true,
+        exportId: `export_${Date.now()}_${userId}`,
+        format,
+        template,
+        filename,
+        contentType,
+        signedUrl,
+        expiresIn: 3600, // 1 hour
+        attachmentData: fileContent // For email attachments
+      };
+    }
+
+  } catch (error) {
+    console.error('Error generating export:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+};
+
 module.exports = {
   getMetrics,
   getAdvancedMetrics,
   predictMaintenance,
-  predictChurn
+  predictChurn,
+  generateExport
 };

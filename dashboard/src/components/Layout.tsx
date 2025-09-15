@@ -31,6 +31,7 @@ import {
   type NavigationItem 
 } from '../design-system/navigation';
 import { Landmark } from '../design-system/accessibility';
+import OfflineIndicator from './OfflineIndicator';
 
 // PropertyFlow AI navigation structure based on UX specification
 const navigationItems: NavigationItem[] = [
@@ -262,6 +263,14 @@ const navigationItems: NavigationItem[] = [
     description: 'Invite new users to the system',
     role: 'manager',
   }),
+  createNavigationItem({
+    id: 'mobile-audit',
+    label: 'Mobile Audit',
+    icon: SettingsIcon,
+    href: '/mobile-audit',
+    description: 'Mobile compatibility and performance audit',
+    role: 'admin',
+  }),
 ];
 
 // Internal Layout component that uses navigation hooks
@@ -273,19 +282,23 @@ const LayoutContent: React.FC = () => {
   } = useNavigationBreakpoint();
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+    <Box sx={{
+      display: 'flex',
+      minHeight: '100vh',
+      flexDirection: 'column'
+    }}>
       {/* Header - always shown */}
       <Header />
-      
+
+      {/* Offline Indicator - always shown */}
+      <OfflineIndicator />
+
       {/* Desktop Sidebar */}
       {shouldShowSidebar && <DesktopSidebar />}
-      
+
       {/* Tablet Drawer */}
       {shouldShowDrawer && <TabletDrawer />}
-      
-      {/* Mobile Bottom Tabs */}
-      {shouldShowBottomTabs && <MobileBottomTabs />}
-      
+
       {/* Main Content Area */}
       <Landmark role="main" aria-label="Main content">
         <Box
@@ -297,25 +310,50 @@ const LayoutContent: React.FC = () => {
             width: '100%',
             // Dynamic padding based on navigation type
             paddingLeft: shouldShowSidebar ? '280px' : 0,
-            paddingBottom: shouldShowBottomTabs ? '64px' : 0,
+            paddingBottom: shouldShowBottomTabs ? '80px' : 0, // Increased for better mobile nav
             paddingTop: '64px', // Header height
             minHeight: '100vh',
           }}
         >
           <Box
+            className="container-mobile"
             sx={{
               flexGrow: 1,
-              py: 3,
-              px: { xs: 2, sm: 3 },
-              maxWidth: 1200,
-              mx: 'auto',
+              py: { xs: 2, sm: 3 },
               width: '100%',
+              maxWidth: '100%',
             }}
           >
             <Outlet />
           </Box>
         </Box>
       </Landmark>
+
+      {/* Enhanced Mobile Bottom Navigation */}
+      {shouldShowBottomTabs && (
+        <Box
+          className="mobile-nav"
+          sx={{
+            display: { xs: 'flex', md: 'none' },
+            justifyContent: 'space-around',
+            alignItems: 'center',
+            py: 1,
+            px: 2,
+            backgroundColor: 'background.paper',
+            borderTop: 1,
+            borderColor: 'divider',
+            boxShadow: '0 -2px 10px rgba(0,0,0,0.1)',
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 1100,
+            minHeight: '80px',
+          }}
+        >
+          <MobileBottomTabs />
+        </Box>
+      )}
     </Box>
   );
 };

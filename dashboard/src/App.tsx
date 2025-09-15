@@ -12,6 +12,13 @@ import { ThemeProvider } from '@mui/material/styles';
 import theme from './design-system/theme';
 import { AnnouncementProvider } from './design-system/accessibility';
 import './App.css';
+import './styles/mobile-responsive.css';
+
+// Service Worker Registration
+import { registerSW } from './utils/serviceWorker';
+
+// Offline Manager
+import offlineManager from './utils/offlineManager';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -72,6 +79,7 @@ const Messages = lazy(() => import('./pages/Messages'));
 const NotificationList = lazy(() => import('./pages/NotificationList'));
 const AnnouncementCompose = lazy(() => import('./components/AnnouncementCompose'));
 const NotificationTemplates = lazy(() => import('./components/NotificationTemplates'));
+const MobileAuditDashboard = lazy(() => import('./components/MobileAuditDashboard'));
 
 // Component to track page views
 function PageTracker() {
@@ -95,6 +103,14 @@ function LazyRoute({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
+  // Register service worker and initialize offline manager on app start
+  React.useEffect(() => {
+    registerSW();
+
+    // Initialize offline manager (it will auto-initialize when imported)
+    console.log('[App] Offline manager initialized');
+  }, []);
+
   return (
     <GoogleOAuthProvider clientId={(import.meta as any).env.VITE_GOOGLE_CLIENT_ID || "demo-client-id"}>
       <ThemeProvider theme={theme}>
@@ -281,6 +297,11 @@ function App() {
                         <Route path="notifications/templates" element={
                           <LazyRoute>
                             <NotificationTemplates />
+                          </LazyRoute>
+                        } />
+                        <Route path="mobile-audit" element={
+                          <LazyRoute>
+                            <MobileAuditDashboard />
                           </LazyRoute>
                         } />
                       </Route>

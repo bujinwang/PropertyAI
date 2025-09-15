@@ -1,0 +1,468 @@
+/**
+ * Property Check-In Component Styles
+ * Mobile-optimized property check-in interface
+ * Epic 21.5.2 - Mobile Experience Enhancement
+ */
+
+.property-checkin {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  max-width: 400px;
+  width: 100%;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.checkin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #f8f9fa;
+}
+
+.checkin-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  padding: 4px;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+/* Current Location */
+.current-location {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background-color: #e3f2fd;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.location-icon {
+  font-size: 16px;
+  color: #1976d2;
+}
+
+.location-text {
+  font-size: 14px;
+  color: #1976d2;
+  font-weight: 500;
+}
+
+/* Check-in Success */
+.checkin-success {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background-color: #e8f5e8;
+  border-bottom: 1px solid #4caf50;
+  margin: 0 20px;
+  border-radius: 8px;
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+.success-icon {
+  font-size: 24px;
+  color: #4caf50;
+}
+
+.success-content h4 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2e7d32;
+}
+
+.success-content p {
+  margin: 0 0 2px 0;
+  font-size: 14px;
+  color: #2e7d32;
+}
+
+.success-content small {
+  font-size: 12px;
+  color: #4caf50;
+}
+
+/* Error Message */
+.checkin-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background-color: #ffebee;
+  border-bottom: 1px solid #f44336;
+  margin: 0 20px;
+  border-radius: 8px;
+  margin-top: 16px;
+}
+
+.error-icon {
+  font-size: 16px;
+  color: #f44336;
+}
+
+.error-text {
+  font-size: 14px;
+  color: #c62828;
+  flex: 1;
+}
+
+/* Properties List */
+.properties-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 20px 20px 20px;
+}
+
+.property-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+}
+
+.property-item:hover {
+  border-color: #1976d2;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.1);
+}
+
+.property-item.available {
+  border-color: #4caf50;
+  background-color: #f1f8e9;
+}
+
+.property-item.too_far {
+  border-color: #ff9800;
+  background-color: #fff3e0;
+}
+
+.property-item.checked_in {
+  border-color: #2196f3;
+  background-color: #e3f2fd;
+}
+
+.property-info {
+  flex: 1;
+}
+
+.property-info h4 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.property-info p {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.property-info small {
+  font-size: 12px;
+  color: #999;
+}
+
+.property-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkin-button {
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 80px;
+}
+
+.checkin-button:hover:not(:disabled) {
+  background-color: #1976d2;
+  transform: translateY(-1px);
+}
+
+.checkin-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.checked-in-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #1976d2;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.checked-in-badge span:first-child {
+  font-size: 16px;
+}
+
+/* No Properties State */
+.no-properties {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.no-properties p {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.no-properties small {
+  font-size: 14px;
+  color: #999;
+}
+
+/* Permission Denied State */
+.permission-denied {
+  background-color: #ffebee;
+}
+
+.permission-content {
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.permission-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.permission-content p {
+  margin: 0 0 24px 0;
+  font-size: 16px;
+  color: #666;
+  line-height: 1.5;
+}
+
+.permission-button {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.permission-button:hover {
+  background-color: #d32f2f;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e0e0e0;
+  border-top: 4px solid #2196f3;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-overlay p {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 768px) {
+  .property-checkin {
+    max-width: none;
+    width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .checkin-header {
+    padding: 12px 16px;
+  }
+
+  .checkin-header h3 {
+    font-size: 16px;
+  }
+
+  .current-location {
+    padding: 10px 16px;
+  }
+
+  .properties-list {
+    padding: 0 16px 16px 16px;
+  }
+
+  .property-item {
+    padding: 12px;
+  }
+
+  .property-info h4 {
+    font-size: 15px;
+  }
+
+  .property-info p {
+    font-size: 13px;
+  }
+
+  .checkin-button {
+    padding: 6px 12px;
+    font-size: 13px;
+    min-width: 70px;
+  }
+}
+
+@media (max-width: 480px) {
+  .checkin-header {
+    padding: 10px 12px;
+  }
+
+  .checkin-header h3 {
+    font-size: 15px;
+  }
+
+  .current-location {
+    padding: 8px 12px;
+  }
+
+  .location-text {
+    font-size: 13px;
+  }
+
+  .properties-list {
+    padding: 0 12px 12px 12px;
+  }
+
+  .property-item {
+    padding: 10px;
+    margin-bottom: 8px;
+  }
+
+  .property-info h4 {
+    font-size: 14px;
+  }
+
+  .property-info p {
+    font-size: 12px;
+  }
+
+  .property-info small {
+    font-size: 11px;
+  }
+
+  .checkin-button {
+    padding: 5px 10px;
+    font-size: 12px;
+    min-width: 65px;
+  }
+
+  .checked-in-badge {
+    font-size: 12px;
+  }
+
+  .checked-in-badge span:first-child {
+    font-size: 14px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .property-item {
+    border-width: 2px;
+  }
+
+  .checkin-success {
+    border-width: 2px;
+  }
+
+  .checkin-error {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .property-item,
+  .checkin-button,
+  .close-button {
+    transition: none;
+  }
+
+  .loading-spinner {
+    animation: none;
+  }
+}
+
+/* Safe area support for notched devices */
+@supports (padding: max(0px)) {
+  .checkin-header {
+    padding-top: max(16px, env(safe-area-inset-top));
+  }
+
+  .properties-list {
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+}

@@ -1,25 +1,83 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "name": "PropertyAI Dashboard",
+  "short_name": "PropertyAI",
+  "description": "AI-powered property management platform with predictive maintenance, tenant insights, and market intelligence",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en-US",
+  "categories": ["business", "productivity", "utilities"],
   "icons": [
     {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "src": "/logo192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "logo192.png",
+      "src": "/logo512.png",
+      "sizes": "512x512",
       "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "logo512.png",
-      "type": "image/png",
-      "sizes": "512x512"
+      "purpose": "any maskable"
     }
   ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "View main dashboard",
+      "url": "/",
+      "icons": [
+        {
+          "src": "/logo192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Properties",
+      "short_name": "Properties",
+      "description": "Manage properties",
+      "url": "/properties",
+      "icons": [
+        {
+          "src": "/logo192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Maintenance",
+      "short_name": "Maintenance",
+      "description": "View maintenance requests",
+      "url": "/maintenance",
+      "icons": [
+        {
+          "src": "/logo192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "screenshots": [
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "PropertyAI Dashboard on mobile"
+    },
+    {
+      "src": "/screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "PropertyAI Dashboard on desktop"
+    }
+  ]
 }

@@ -1,0 +1,240 @@
+# Production Monitoring and Alerting Configuration for Epic 21
+# Advanced Analytics and AI Insights Features
+
+apiVersion: monitoring.cnrm.cloud.google.com/v1beta1
+kind: MonitoringAlertPolicy
+metadata:
+  name: epic21-production-alerts
+  namespace: production
+spec:
+  displayName: "Epic 21 Production Health Alerts"
+  conditions:
+    # Error Rate Alert
+    - displayName: "High Error Rate - Epic 21 Services"
+      conditionThreshold:
+        filter: |
+          resource.type = "k8s_container"
+          resource.labels.namespace_name = "production"
+          resource.labels.pod_name =~ "epic21-.*"
+          metric.type = "logging.googleapis.com/log_entry_count"
+          metric.labels.severity = "ERROR"
+        aggregations:
+          - alignmentPeriod: "300s"
+            crossSeriesReducer: REDUCE_SUM
+            perSeriesAligner: ALIGN_RATE
+        comparison: COMPARISON_GT
+        duration: "300s"
+        thresholdValue: 0.05
+        trigger:
+          count: 1
+
+    # Response Time Alert
+    - displayName: "Slow Response Time - Epic 21 APIs"
+      conditionThreshold:
+        filter: |
+          resource.type = "k8s_service"
+          resource.labels.namespace_name = "production"
+          resource.labels.service_name =~ "epic21-.*"
+          metric.type = "loadbalancing.googleapis.com/https/request_latencies"
+        aggregations:
+          - alignmentPeriod: "300s"
+            crossSeriesReducer: REDUCE_PERCENTILE_95
+            perSeriesAligner: ALIGN_PERCENTILE_95
+        comparison: COMPARISON_GT
+        duration: "300s"
+        thresholdValue: 2000
+        trigger:
+          count: 1
+
+    # CPU Usage Alert
+    - displayName: "High CPU Usage - Epic 21 Services"
+      conditionThreshold:
+        filter: |
+          resource.type = "k8s_container"
+          resource.labels.namespace_name = "production"
+          resource.labels.pod_name =~ "epic21-.*"
+          metric.type = "kubernetes.io/container/cpu/core_usage_time"
+        aggregations:
+          - alignmentPeriod: "300s"
+            crossSeriesReducer: REDUCE_MAX
+            perSeriesAligner: ALIGN_RATE
+        comparison: COMPARISON_GT
+        duration: "300s"
+        thresholdValue: 0.8
+        trigger:
+          count: 1
+
+    # Memory Usage Alert
+    - displayName: "High Memory Usage - Epic 21 Services"
+      conditionThreshold:
+        filter: |
+          resource.type = "k8s_container"
+          resource.labels.namespace_name = "production"
+          resource.labels.pod_name =~ "epic21-.*"
+          metric.type = "kubernetes.io/container/memory/used_bytes"
+        aggregations:
+          - alignmentPeriod: "300s"
+            crossSeriesReducer: REDUCE_MAX
+            perSeriesAligner: ALIGN_MAX
+        comparison: COMPARISON_GT
+        duration: "300s"
+        thresholdValue: 0.85
+        trigger:
+          count: 1
+
+  # Notification Channels
+  notificationChannels:
+    - name: "projects/your-gcp-project-id/notificationChannels/email-channel"
+    - name: "projects/your-gcp-project-id/notificationChannels/slack-channel"
+
+  # Alert Documentation
+  documentation:
+    content: |
+      # Epic 21 Production Alert
+
+      One or more Epic 21 services are experiencing issues:
+
+      ## Possible Causes:
+      - High traffic load
+      - Database performance issues
+      - Memory leaks in AI processing
+      - External API failures (market data, etc.)
+
+      ## Immediate Actions:
+      1. Check service logs in Cloud Logging
+      2. Monitor resource usage in Kubernetes dashboard
+      3. Review recent deployments for issues
+      4. Consider scaling up resources if needed
+      5. Prepare rollback if issues persist
+
+      ## Escalation:
+      - If error rate > 10%, initiate rollback procedure
+      - Contact DevOps team for immediate assistance
+      - Notify stakeholders of potential service impact
+
+---
+apiVersion: monitoring.cnrm.cloud.google.com/v1beta1
+kind: MonitoringDashboard
+metadata:
+  name: epic21-production-dashboard
+  namespace: production
+spec:
+  displayName: "Epic 21 Production Monitoring Dashboard"
+  dashboardFilters:
+    - filterType: RESOURCE_LABEL
+      labelKey: namespace_name
+      stringValue: production
+    - filterType: RESOURCE_LABEL
+      labelKey: pod_name
+      stringValue: "epic21-*"
+
+  # Dashboard Layout
+  gridLayout:
+    columns: "2"
+    widgets:
+      # Service Health Overview
+      - title: "Service Health Status"
+        xyChart:
+          dataSets:
+            - timeSeriesQuery:
+                timeSeriesFilter:
+                  filter: |
+                    resource.type = "k8s_service"
+                    resource.labels.namespace_name = "production"
+                    resource.labels.service_name =~ "epic21-.*"
+                    metric.type = "loadbalancing.googleapis.com/https/request_count"
+                  aggregations:
+                    - alignmentPeriod: "60s"
+                    - crossSeriesReducer: REDUCE_SUM
+                    - perSeriesAligner: ALIGN_RATE
+
+      # Error Rate Monitoring
+      - title: "Error Rate by Service"
+        xyChart:
+          dataSets:
+            - timeSeriesQuery:
+                timeSeriesFilter:
+                  filter: |
+                    resource.type = "k8s_container"
+                    resource.labels.namespace_name = "production"
+                    resource.labels.pod_name =~ "epic21-.*"
+                    metric.type = "logging.googleapis.com/log_entry_count"
+                    metric.labels.severity = "ERROR"
+                  aggregations:
+                    - alignmentPeriod: "300s"
+                    - crossSeriesReducer: REDUCE_SUM
+                    - perSeriesAligner: ALIGN_RATE
+
+      # Response Time Distribution
+      - title: "API Response Times"
+        xyChart:
+          dataSets:
+            - timeSeriesQuery:
+                timeSeriesFilter:
+                  filter: |
+                    resource.type = "k8s_service"
+                    resource.labels.namespace_name = "production"
+                    resource.labels.service_name =~ "epic21-.*"
+                    metric.type = "loadbalancing.googleapis.com/https/request_latencies"
+                  aggregations:
+                    - alignmentPeriod: "300s"
+                    - crossSeriesReducer: REDUCE_PERCENTILE_95
+                    - perSeriesAligner: ALIGN_PERCENTILE_95
+
+      # Resource Usage
+      - title: "CPU and Memory Usage"
+        xyChart:
+          dataSets:
+            - timeSeriesQuery:
+                timeSeriesFilter:
+                  filter: |
+                    resource.type = "k8s_container"
+                    resource.labels.namespace_name = "production"
+                    resource.labels.pod_name =~ "epic21-.*"
+                    metric.type = "kubernetes.io/container/cpu/core_usage_time"
+                  aggregations:
+                    - alignmentPeriod: "300s"
+                    - crossSeriesReducer: REDUCE_MAX
+                    - perSeriesAligner: ALIGN_RATE
+            - timeSeriesQuery:
+                timeSeriesFilter:
+                  filter: |
+                    resource.type = "k8s_container"
+                    resource.labels.namespace_name = "production"
+                    resource.labels.pod_name =~ "epic21-.*"
+                    metric.type = "kubernetes.io/container/memory/used_bytes"
+                  aggregations:
+                    - alignmentPeriod: "300s"
+                    - crossSeriesReducer: REDUCE_MAX
+                    - perSeriesAligner: ALIGN_MAX
+
+      # Feature Usage Tracking
+      - title: "Epic 21 Feature Usage"
+        xyChart:
+          dataSets:
+            - timeSeriesQuery:
+                timeSeriesFilter:
+                  filter: |
+                    resource.type = "k8s_container"
+                    resource.labels.namespace_name = "production"
+                    resource.labels.pod_name =~ "epic21-.*"
+                    metric.type = "custom.googleapis.com/epic21_feature_usage"
+                  aggregations:
+                    - alignmentPeriod: "3600s"
+                    - crossSeriesReducer: REDUCE_SUM
+                    - perSeriesAligner: ALIGN_SUM
+
+      # Database Performance
+      - title: "Database Query Performance"
+        xyChart:
+          dataSets:
+            - timeSeriesQuery:
+                timeSeriesFilter:
+                  filter: |
+                    resource.type = "cloudsql_database"
+                    resource.labels.database_id =~ "propertyai-prod"
+                    metric.type = "cloudsql.googleapis.com/database/mysql/innodb/buffer_pool_pages_dirty"
+                  aggregations:
+                    - alignmentPeriod: "300s"
+                    - crossSeriesReducer: REDUCE_MAX
+                    - perSeriesAligner: ALIGN_MAX

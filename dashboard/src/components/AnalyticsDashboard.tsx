@@ -8,13 +8,18 @@ import {
   TextField,
   Box,
   CircularProgress,
-  Alert
+  Alert,
+  Button,
+  Fab
 } from '@mui/material';
+import { Download } from '@mui/icons-material';
+import ExportModal from './ExportModal';
 
 const AnalyticsDashboard = () => {
   const [dateFrom, setDateFrom] = useState(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
   const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
   const [propertyIds, setPropertyIds] = useState('');
+  const [exportModalOpen, setExportModalOpen] = useState(false);
 
   const { data, isLoading, error } = useQuery(
     ['analytics', dateFrom, dateTo, propertyIds],
@@ -35,7 +40,17 @@ const AnalyticsDashboard = () => {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>Analytics Dashboard</Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+        <Typography variant="h4">Analytics Dashboard</Typography>
+        <Button
+          variant="contained"
+          startIcon={<Download />}
+          onClick={() => setExportModalOpen(true)}
+          disabled={isLoading}
+        >
+          Export Report
+        </Button>
+      </Box>
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={12} md={4}>
@@ -125,6 +140,16 @@ const AnalyticsDashboard = () => {
           </Grid>
         </Grid>
       )}
+
+      <ExportModal
+        open={exportModalOpen}
+        onClose={() => setExportModalOpen(false)}
+        currentFilters={{
+          dateFrom,
+          dateTo,
+          propertyIds
+        }}
+      />
     </Box>
   );
 };

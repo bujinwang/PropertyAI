@@ -1,0 +1,204 @@
+# Feature Flags Configuration for Epic 21 Production Rollout
+# Advanced Analytics and AI Insights Features
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epic21-feature-flags
+  namespace: production
+  labels:
+    app: propertyai
+    epic: "21"
+    component: feature-flags
+data:
+  # Feature Flag Definitions
+  features.json: |
+    {
+      "epic21_predictive_maintenance": {
+        "enabled": false,
+        "description": "Predictive Maintenance AI alerts and recommendations",
+        "rollout_percentage": 0,
+        "target_rollout_percentage": 25,
+        "user_segments": ["property_managers", "maintenance_teams"],
+        "dependencies": ["analytics_service", "maintenance_history"],
+        "monitoring_metrics": ["prediction_accuracy", "alert_response_time"],
+        "rollback_ready": true
+      },
+      "epic21_tenant_churn": {
+        "enabled": false,
+        "description": "Tenant Churn Prediction and retention insights",
+        "rollout_percentage": 0,
+        "target_rollout_percentage": 25,
+        "user_segments": ["property_managers", "leasing_teams"],
+        "dependencies": ["tenant_analytics", "market_data"],
+        "monitoring_metrics": ["prediction_accuracy", "retention_actions"],
+        "rollback_ready": true
+      },
+      "epic21_market_trends": {
+        "enabled": false,
+        "description": "Real-time market trend integration and analysis",
+        "rollout_percentage": 0,
+        "target_rollout_percentage": 25,
+        "user_segments": ["property_managers", "investors"],
+        "dependencies": ["market_data_api", "analytics_service"],
+        "monitoring_metrics": ["data_freshness", "trend_accuracy"],
+        "rollback_ready": true
+      },
+      "epic21_ai_reporting": {
+        "enabled": false,
+        "description": "AI-powered automated reporting and insights",
+        "rollout_percentage": 0,
+        "target_rollout_percentage": 25,
+        "user_segments": ["executives", "property_managers"],
+        "dependencies": ["analytics_service", "reporting_engine"],
+        "monitoring_metrics": ["report_generation_time", "insight_accuracy"],
+        "rollback_ready": true
+      },
+      "epic21_risk_dashboard": {
+        "enabled": false,
+        "description": "Comprehensive risk assessment dashboard",
+        "rollout_percentage": 0,
+        "target_rollout_percentage": 25,
+        "user_segments": ["risk_managers", "executives"],
+        "dependencies": ["risk_analytics", "market_data"],
+        "monitoring_metrics": ["risk_accuracy", "dashboard_load_time"],
+        "rollback_ready": true
+      }
+    }
+
+  # Rollout Strategy Configuration
+  rollout_strategy.json: |
+    {
+      "strategy": "gradual_percentage",
+      "phases": [
+        {
+          "phase": "initial_25_percent",
+          "percentage": 25,
+          "duration_minutes": 30,
+          "success_criteria": {
+            "error_rate_threshold": 0.05,
+            "response_time_threshold_ms": 2000,
+            "user_feedback_required": true
+          }
+        },
+        {
+          "phase": "scale_to_50_percent",
+          "percentage": 50,
+          "duration_minutes": 60,
+          "success_criteria": {
+            "error_rate_threshold": 0.03,
+            "response_time_threshold_ms": 1500,
+            "performance_baseline_met": true
+          }
+        },
+        {
+          "phase": "full_rollout",
+          "percentage": 100,
+          "duration_minutes": 120,
+          "success_criteria": {
+            "error_rate_threshold": 0.02,
+            "response_time_threshold_ms": 1000,
+            "all_monitoring_alerts_clear": true
+          }
+        }
+      ],
+      "rollback_triggers": {
+        "error_rate_above": 0.10,
+        "response_time_above_ms": 5000,
+        "memory_usage_above_percent": 95,
+        "manual_rollback_request": true
+      }
+    }
+
+  # User Segmentation for Rollout
+  user_segments.json: |
+    {
+      "property_managers": {
+        "description": "Property management staff",
+        "user_count": 150,
+        "priority": "high",
+        "feedback_channels": ["in_app_feedback", "email_surveys"]
+      },
+      "maintenance_teams": {
+        "description": "Maintenance and facilities staff",
+        "user_count": 75,
+        "priority": "high",
+        "feedback_channels": ["in_app_feedback", "direct_support"]
+      },
+      "leasing_teams": {
+        "description": "Leasing and tenant relations staff",
+        "user_count": 50,
+        "priority": "medium",
+        "feedback_channels": ["in_app_feedback", "email_surveys"]
+      },
+      "investors": {
+        "description": "Property investors and stakeholders",
+        "user_count": 25,
+        "priority": "medium",
+        "feedback_channels": ["email_surveys", "quarterly_reviews"]
+      },
+      "executives": {
+        "description": "Executive leadership team",
+        "user_count": 10,
+        "priority": "low",
+        "feedback_channels": ["direct_feedback", "executive_briefings"]
+      },
+      "risk_managers": {
+        "description": "Risk management and compliance staff",
+        "user_count": 15,
+        "priority": "medium",
+        "feedback_channels": ["in_app_feedback", "compliance_reports"]
+      }
+    }
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: feature-flag-service
+  namespace: production
+  labels:
+    app: feature-flag-service
+    epic: "21"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: feature-flag-service
+  template:
+    metadata:
+      labels:
+        app: feature-flag-service
+        epic: "21"
+    spec:
+      containers:
+      - name: feature-flag-service
+        image: propertyai/feature-flag-service:v1.0.0
+        ports:
+        - containerPort: 8080
+        env:
+        - name: CONFIG_MAP_NAME
+          value: "epic21-feature-flags"
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5

@@ -1,0 +1,77 @@
+# Production Deployment Configuration for Epic 21
+# Advanced Analytics and AI Insights Features
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epic21-deployment-config
+  namespace: production
+data:
+  # Deployment Metadata
+  epic: "21"
+  features: |
+    - predictive-maintenance
+    - tenant-churn-prediction
+    - market-trend-integration
+    - ai-powered-reporting
+    - risk-assessment-dashboard
+
+  # Rollout Strategy
+  rollout_strategy: "gradual"
+  rollout_percentages: "25,50,100"
+  monitoring_window_minutes: "30"
+
+  # Feature Flags Configuration
+  feature_flags: |
+    epic21_predictive_maintenance: "false"
+    epic21_tenant_churn: "false"
+    epic21_market_trends: "false"
+    epic21_ai_reporting: "false"
+    epic21_risk_dashboard: "false"
+
+  # Database Configuration
+  database_backup_required: "true"
+  database_migration_timeout: "300"
+
+  # Monitoring Configuration
+  monitoring_endpoints: |
+    - /health
+    - /api/v1/analytics/health
+    - /api/v1/market/health
+    - /api/v1/maintenance/health
+
+  # Alert Thresholds
+  alert_thresholds: |
+    error_rate_threshold: "0.05"
+    response_time_threshold_ms: "2000"
+    cpu_usage_threshold: "80"
+    memory_usage_threshold: "85"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: epic21-rollback-config
+  namespace: production
+data:
+  # Rollback Configuration
+  rollback_enabled: "true"
+  rollback_timeout_minutes: "15"
+  backup_retention_days: "30"
+
+  # Rollback Procedures
+  rollback_steps: |
+    1. Disable feature flags
+    2. Scale down new pods
+    3. Restore database backup if needed
+    4. Scale up previous version
+    5. Verify system health
+    6. Notify stakeholders
+
+  # Rollback Triggers
+  rollback_triggers: |
+    - error_rate > 10%
+    - response_time > 5000ms
+    - database_connection_failures > 5
+    - memory_usage > 95%
+    - manual_trigger_required: true

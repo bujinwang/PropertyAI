@@ -1,3 +1,8 @@
+/**
+ * Risk Assessment Model
+ * Tracks comprehensive risk assessments for properties and tenants
+ */
+
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
@@ -7,166 +12,264 @@ const RiskAssessment = sequelize.define('RiskAssessment', {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true
   },
+
+  // Entity being assessed
   entityType: {
     type: DataTypes.ENUM('property', 'tenant', 'portfolio'),
-    allowNull: false,
-    comment: 'Type of entity being assessed'
+    allowNull: false
   },
+
   entityId: {
     type: DataTypes.UUID,
     allowNull: false,
-    comment: 'ID of the property, tenant, or portfolio'
+    comment: 'ID of the property, tenant, or portfolio being assessed'
   },
-  assessmentType: {
-    type: DataTypes.ENUM('comprehensive', 'maintenance', 'churn', 'market', 'financial', 'operational', 'compliance'),
-    allowNull: false,
-    comment: 'Type of risk assessment performed'
-  },
-  overallRiskScore: {
-    type: DataTypes.DECIMAL(3, 2),
-    allowNull: false,
-    validate: {
-      min: 0.0,
-      max: 5.0
-    },
-    comment: 'Overall risk score (0.0-5.0 scale)'
-  },
-  riskLevel: {
-    type: DataTypes.ENUM('minimal', 'low', 'medium', 'high', 'critical'),
-    allowNull: false,
-    comment: 'Risk severity level'
-  },
-  confidence: {
-    type: DataTypes.DECIMAL(3, 2),
-    allowNull: false,
-    validate: {
-      min: 0.0,
-      max: 1.0
-    },
-    comment: 'Confidence level in the assessment (0.0-1.0)'
-  },
-  riskFactors: {
-    type: DataTypes.JSONB,
-    allowNull: false,
-    defaultValue: {},
-    comment: 'Detailed risk factors with scores and weights'
-  },
-  mitigationStrategies: {
-    type: DataTypes.JSONB,
-    allowNull: false,
-    defaultValue: [],
-    comment: 'Recommended mitigation strategies'
-  },
-  trendData: {
-    type: DataTypes.JSONB,
-    allowNull: true,
-    comment: 'Historical risk trend data for forecasting'
-  },
-  alertsTriggered: {
-    type: DataTypes.JSONB,
-    allowNull: false,
-    defaultValue: [],
-    comment: 'List of alerts triggered by this assessment'
-  },
+
+  // Assessment metadata
   assessmentDate: {
     type: DataTypes.DATE,
-    allowNull: false,
     defaultValue: DataTypes.NOW,
-    comment: 'Date when assessment was performed'
+    allowNull: false
   },
-  nextAssessmentDate: {
-    type: DataTypes.DATE,
-    allowNull: true,
-    comment: 'Scheduled date for next assessment'
+
+  assessedBy: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    comment: 'User ID who performed the assessment'
   },
-  dataQuality: {
-    type: DataTypes.DECIMAL(3, 2),
+
+  // Overall risk score
+  overallRiskScore: {
+    type: DataTypes.DECIMAL(5, 2),
     allowNull: false,
     validate: {
-      min: 0.0,
-      max: 1.0
-    },
-    comment: 'Quality score of input data used for assessment'
+      min: 0,
+      max: 5
+    }
   },
-  metadata: {
-    type: DataTypes.JSONB,
+
+  riskLevel: {
+    type: DataTypes.ENUM('minimal', 'low', 'medium', 'high', 'critical'),
+    allowNull: false
+  },
+
+  confidence: {
+    type: DataTypes.DECIMAL(5, 2),
+    allowNull: false,
+    defaultValue: 0.0,
+    validate: {
+      min: 0,
+      max: 1
+    },
+    comment: 'Confidence level in the assessment (0-1)'
+  },
+
+  // Risk category scores
+  maintenanceRisk: {
+    type: DataTypes.DECIMAL(5, 2),
+    allowNull: false,
+    defaultValue: 0.0,
+    validate: {
+      min: 0,
+      max: 5
+    }
+  },
+
+  marketRisk: {
+    type: DataTypes.DECIMAL(5, 2),
+    allowNull: false,
+    defaultValue: 0.0,
+    validate: {
+      min: 0,
+      max: 5
+    }
+  },
+
+  financialRisk: {
+    type: DataTypes.DECIMAL(5, 2),
+    allowNull: false,
+    defaultValue: 0.0,
+    validate: {
+      min: 0,
+      max: 5
+    }
+  },
+
+  operationalRisk: {
+    type: DataTypes.DECIMAL(5, 2),
+    allowNull: false,
+    defaultValue: 0.0,
+    validate: {
+      min: 0,
+      max: 5
+    }
+  },
+
+  churnRisk: {
+    type: DataTypes.DECIMAL(5, 2),
+    allowNull: false,
+    defaultValue: 0.0,
+    validate: {
+      min: 0,
+      max: 5
+    }
+  },
+
+  complianceRisk: {
+    type: DataTypes.DECIMAL(5, 2),
+    allowNull: false,
+    defaultValue: 0.0,
+    validate: {
+      min: 0,
+      max: 5
+    }
+  },
+
+  // Assessment details
+  assessmentPeriod: {
+    type: DataTypes.ENUM('daily', 'weekly', 'monthly', 'quarterly'),
+    defaultValue: 'monthly'
+  },
+
+  dataSources: {
+    type: DataTypes.JSON,
+    allowNull: false,
+    defaultValue: [],
+    comment: 'Array of data sources used for assessment'
+  },
+
+  keyFindings: {
+    type: DataTypes.JSON,
+    allowNull: false,
+    defaultValue: [],
+    comment: 'Key findings from the assessment'
+  },
+
+  recommendations: {
+    type: DataTypes.JSON,
+    allowNull: false,
+    defaultValue: [],
+    comment: 'Recommended actions to mitigate risks'
+  },
+
+  // Trend analysis
+  previousRiskScore: {
+    type: DataTypes.DECIMAL(5, 2),
     allowNull: true,
-    comment: 'Additional metadata about the assessment'
+    comment: 'Previous assessment score for trend analysis'
+  },
+
+  riskTrend: {
+    type: DataTypes.ENUM('improving', 'stable', 'deteriorating'),
+    allowNull: true
+  },
+
+  // Alert settings
+  alertThreshold: {
+    type: DataTypes.DECIMAL(5, 2),
+    defaultValue: 3.0,
+    comment: 'Risk score threshold for alerts'
+  },
+
+  lastAlertSent: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+
+  // Audit trail
+  createdAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
+  },
+
+  updatedAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
   }
 }, {
   tableName: 'risk_assessments',
   indexes: [
     {
-      fields: ['entityType', 'entityId'],
-      name: 'idx_risk_assessment_entity'
+      fields: ['entityType', 'entityId']
     },
     {
-      fields: ['assessmentType'],
-      name: 'idx_risk_assessment_type'
+      fields: ['assessmentDate']
     },
     {
-      fields: ['riskLevel'],
-      name: 'idx_risk_assessment_level'
+      fields: ['riskLevel']
     },
     {
-      fields: ['assessmentDate'],
-      name: 'idx_risk_assessment_date'
+      fields: ['overallRiskScore']
     },
     {
-      fields: ['overallRiskScore'],
-      name: 'idx_risk_assessment_score'
+      fields: ['assessedBy']
     }
-  ],
-  timestamps: true,
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  ]
 });
 
 // Instance methods
-RiskAssessment.prototype.getRiskFactorsByCategory = function(category) {
-  const factors = this.riskFactors || {};
-  return factors[category] || [];
-};
-
-RiskAssessment.prototype.getTopRiskFactors = function(limit = 5) {
-  const allFactors = [];
-  const factors = this.riskFactors || {};
-
-  Object.keys(factors).forEach(category => {
-    factors[category].forEach(factor => {
-      allFactors.push({
-        ...factor,
-        category
-      });
-    });
+RiskAssessment.prototype.getRiskFactors = async function() {
+  return await this.sequelize.models.RiskFactor.findAll({
+    where: { assessmentId: this.id }
   });
-
-  return allFactors
-    .sort((a, b) => (b.score * b.weight) - (a.score * a.weight))
-    .slice(0, limit);
 };
 
-RiskAssessment.prototype.getMitigationPriority = function() {
-  const score = parseFloat(this.overallRiskScore);
+RiskAssessment.prototype.calculateOverallRisk = function() {
+  const categories = [
+    this.maintenanceRisk,
+    this.marketRisk,
+    this.financialRisk,
+    this.operationalRisk,
+    this.churnRisk,
+    this.complianceRisk
+  ];
 
-  if (score >= 4.0) return 'immediate';
-  if (score >= 3.0) return 'urgent';
-  if (score >= 2.0) return 'high';
-  if (score >= 1.0) return 'medium';
-  return 'low';
+  // Weighted average with different weights for different risk types
+  const weights = [0.2, 0.15, 0.2, 0.15, 0.15, 0.15]; // Total = 1.0
+  let weightedSum = 0;
+
+  for (let i = 0; i < categories.length; i++) {
+    weightedSum += categories[i] * weights[i];
+  }
+
+  this.overallRiskScore = Math.round(weightedSum * 100) / 100;
+
+  // Determine risk level
+  if (this.overallRiskScore >= 4.0) {
+    this.riskLevel = 'critical';
+  } else if (this.overallRiskScore >= 3.0) {
+    this.riskLevel = 'high';
+  } else if (this.overallRiskScore >= 2.0) {
+    this.riskLevel = 'medium';
+  } else if (this.overallRiskScore >= 1.0) {
+    this.riskLevel = 'low';
+  } else {
+    this.riskLevel = 'minimal';
+  }
+
+  return this.overallRiskScore;
 };
 
-RiskAssessment.prototype.isExpired = function() {
-  if (!this.nextAssessmentDate) return false;
-  return new Date() > new Date(this.nextAssessmentDate);
+RiskAssessment.prototype.shouldTriggerAlert = function() {
+  return this.overallRiskScore >= this.alertThreshold &&
+         (!this.lastAlertSent || Date.now() - this.lastAlertSent > 24 * 60 * 60 * 1000); // 24 hours
 };
 
-RiskAssessment.prototype.getDaysUntilExpiry = function() {
-  if (!this.nextAssessmentDate) return null;
-  const now = new Date();
-  const expiry = new Date(this.nextAssessmentDate);
-  const diffTime = expiry - now;
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+RiskAssessment.prototype.updateTrend = function() {
+  if (!this.previousRiskScore) {
+    this.riskTrend = 'stable';
+    return;
+  }
+
+  const change = this.overallRiskScore - this.previousRiskScore;
+
+  if (Math.abs(change) < 0.2) {
+    this.riskTrend = 'stable';
+  } else if (change > 0) {
+    this.riskTrend = 'deteriorating';
+  } else {
+    this.riskTrend = 'improving';
+  }
 };
 
 module.exports = RiskAssessment;

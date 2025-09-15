@@ -3,6 +3,7 @@ const router = express.Router();
 const analyticsService = require('../services/analyticsService');
 const marketDataService = require('../services/marketDataService');
 const authMiddleware = require('../middleware/authMiddleware');
+const exportService = require('../utils/exportService');
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -56,6 +57,229 @@ router.get('/load-layout', authMiddleware, async (req, res) => {
     res.json(JSON.parse(layout));
   } catch (error) {
     res.json([]); // Default empty layout
+router.post('/export', authMiddleware, async (req, res) => {
+  try {
+    const { format, template, filters = {} } = req.body;
+
+    // Validate required parameters
+    if (!format || !template) {
+      return res.status(400).json({
+        error: 'Missing required parameters',
+        message: 'Both format and template are required'
+      });
+    }
+
+    // Validate export parameters
+    exportService.validateExportParams(format, template, filters);
+
+    // Role-based access control
+    const userRole = req.user.role;
+    const userProperties = req.user.properties || [];
+
+    // Managers can only export their assigned properties
+    if (userRole === 'PROPERTY_MANAGER' && filters.propertyIds) {
+      const requestedProperties = filters.propertyIds.split(',').map(id => id.trim());
+      const unauthorized = requestedProperties.some(propId => !userProperties.includes(propId));
+
+      if (unauthorized) {
+        return res.status(403).json({
+          error: 'Access denied',
+          message: 'You can only export data for your assigned properties'
+        });
+      }
+    }
+
+    // Get analytics data based on user role and filters
+    const dateFrom = filters.dateFrom ? new Date(filters.dateFrom) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const dateTo = filters.dateTo ? new Date(filters.dateTo) : new Date();
+    const propertyIdsArray = filters.propertyIds ? filters.propertyIds.split(',').map(id => id.trim()) : [];
+
+    const analyticsData = await analyticsService.getMetrics(dateFrom, dateTo, propertyIdsArray, userRole, userProperties);
+
+    // Add additional data based on template
+    let exportData = { ...analyticsData };
+
+    if (template === 'audit') {
+      // Get audit trail data (mock for now - would come from audit service)
+      exportData.auditTrail = [
+        {
+          createdAt: new Date().toISOString(),
+          action: 'EXPORT_GENERATED',
+          entityType: 'ANALYTICS',
+          entityId: 'export_' + Date.now(),
+          user: req.user.email,
+          details: `Generated ${format.toUpperCase()} export for ${template} template`
+        }
+      ];
+    }
+
+    // Generate export file
+    let fileContent;
+    let contentType;
+    let filename;
+
+    if (format === 'pdf') {
+      fileContent = await exportService.generatePDF(exportData, template, filters);
+      contentType = 'application/pdf';
+      filename = `${template}-report-${new Date().toISOString().split('T')[0]}.pdf`;
+    } else if (format === 'csv') {
+      fileContent = await exportService.generateCSV(exportData, template, filters);
+      contentType = 'text/csv';
+      filename = `${template}-report-${new Date().toISOString().split('T')[0]}.csv`;
+    }
+
+    // For small files, return base64 content directly
+    if (Buffer.isBuffer(fileContent) && fileContent.length < 5 * 1024 * 1024) { // < 5MB
+      const base64Content = fileContent.toString('base64');
+      res.json({
+        success: true,
+        format,
+        template,
+        filename,
+        contentType,
+        data: base64Content,
+        size: fileContent.length
+      });
+    } else {
+      // For larger files, save to temp location and return signed URL
+      // (In production, this would upload to S3 and return signed URL)
+      const tempPath = path.join('/tmp', `export_${Date.now()}_${filename}`);
+      await fs.writeFile(tempPath, fileContent);
+
+      // Mock signed URL for development
+      const signedUrl = `http://localhost:3000/temp-exports/${filename}`;
+
+      res.json({
+        success: true,
+        format,
+        template,
+        filename,
+        contentType,
+        signedUrl,
+        expiresIn: 3600 // 1 hour
+      });
+    }
+
+  } catch (error) {
+    console.error('Export error:', error);
+
+    if (error.message.includes('Invalid format') ||
+        error.message.includes('Invalid template') ||
+        error.message.includes('Date from cannot be after date to') ||
+        error.message.includes('Date range cannot exceed')) {
+      return res.status(400).json({
+        error: 'Invalid parameters',
+        message: error.message
+      });
+    }
+
+    res.status(500).json({
+      error: 'Export failed',
+      message: 'An internal error occurred while generating the export'
+    });
+  }
+});
+  }
+});
+
+// Schedule recurring exports
+router.post('/schedule-export', authMiddleware, async (req, res) => {
+  try {
+    const { format, template, frequency, email, filters = {} } = req.body;
+
+    // Validate required parameters
+    if (!format || !template || !frequency || !email) {
+      return res.status(400).json({
+        error: 'Missing required parameters',
+        message: 'Format, template, frequency, and email are all required'
+      });
+    }
+
+    // Validate frequency
+    if (!['weekly', 'monthly'].includes(frequency)) {
+      return res.status(400).json({
+        error: 'Invalid frequency',
+        message: 'Frequency must be either "weekly" or "monthly"'
+      });
+    }
+
+    // Validate email format (basic check)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        error: 'Invalid email',
+        message: 'Please provide a valid email address'
+      });
+    }
+
+    // Validate export parameters
+    exportService.validateExportParams(format, template, filters);
+
+    // Role-based access control
+    const userRole = req.user.role;
+    const userProperties = req.user.properties || [];
+
+    // Managers can only schedule exports for their assigned properties
+    if (userRole === 'PROPERTY_MANAGER' && filters.propertyIds) {
+      const requestedProperties = filters.propertyIds.split(',').map(id => id.trim());
+      const unauthorized = requestedProperties.some(propId => !userProperties.includes(propId));
+
+      if (unauthorized) {
+        return res.status(403).json({
+          error: 'Access denied',
+          message: 'You can only schedule exports for your assigned properties'
+        });
+      }
+    }
+
+    // For now, simulate scheduling success (in production, this would call backend API)
+    // TODO: Replace with actual backend API call when backend scheduler is available
+    const scheduleId = `schedule_${Date.now()}_${req.user.id}`;
+
+    // Mock schedule creation
+    const scheduleData = {
+      id: scheduleId,
+      userId: req.user.id,
+      userEmail: req.user.email,
+      format,
+      template,
+      frequency,
+      email,
+      filters,
+      createdAt: new Date().toISOString(),
+      nextRun: frequency === 'weekly'
+        ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      status: 'active'
+    };
+
+    // In production, this would save to backend database via API call
+    console.log('Scheduled export created (frontend):', scheduleData);
+
+    res.json({
+      success: true,
+      message: `Export scheduled successfully! You will receive ${frequency} reports at ${email}`,
+      scheduleId,
+      nextRun: scheduleData.nextRun
+    });
+
+  } catch (error) {
+    console.error('Schedule export error:', error);
+
+    if (error.message.includes('Invalid format') ||
+        error.message.includes('Invalid template') ||
+        error.message.includes('Date from cannot be after date to') ||
+        error.message.includes('Date range cannot exceed')) {
+      return res.status(400).json({
+        error: 'Invalid parameters',
+        message: error.message
+      });
+    }
+
+    res.status(500).json({
+      error: 'Scheduling failed',
+      message: 'An internal error occurred while scheduling the export'
+    });
   }
 });
 

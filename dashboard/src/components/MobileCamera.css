@@ -1,0 +1,398 @@
+/**
+ * Mobile Camera Component Styles
+ * Mobile-optimized camera interface for property inspections
+ * Epic 21.5.2 - Mobile Experience Enhancement
+ */
+
+.mobile-camera {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #000;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.camera-container {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.camera-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.1s ease;
+}
+
+.camera-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+
+/* Top Bar */
+.camera-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  pointer-events: auto;
+}
+
+.location-indicator {
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  backdrop-filter: blur(8px);
+  max-width: 70%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.close-button {
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+}
+
+.close-button:hover {
+  background-color: rgba(0, 0, 0, 0.9);
+  transform: scale(1.1);
+}
+
+/* Camera Controls */
+.camera-controls {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.capture-button {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, 0.8);
+  background-color: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  position: relative;
+  backdrop-filter: blur(8px);
+}
+
+.capture-button:not(:disabled):hover {
+  transform: scale(1.1);
+  border-color: white;
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.capture-button:not(:disabled):active {
+  transform: scale(0.95);
+}
+
+.capture-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.capture-ring {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.6);
+  position: absolute;
+  animation: none;
+}
+
+.capture-button.capturing .capture-ring {
+  animation: capture-pulse 0.5s ease-out;
+}
+
+@keyframes capture-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
+}
+
+/* Bottom Controls */
+.camera-bottom-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  pointer-events: auto;
+}
+
+.control-button {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+}
+
+.control-button:hover {
+  background-color: rgba(0, 0, 0, 0.9);
+  transform: scale(1.1);
+}
+
+.control-button.active {
+  background-color: rgba(255, 193, 7, 0.9);
+  color: #000;
+}
+
+.photo-counter {
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  backdrop-filter: blur(8px);
+}
+
+/* Instructions */
+.camera-instructions {
+  position: absolute;
+  bottom: 80px;
+  left: 16px;
+  right: 16px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+  line-height: 1.4;
+  pointer-events: none;
+}
+
+.camera-instructions p {
+  margin: 2px 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* No Camera State */
+.no-camera {
+  background-color: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.camera-error {
+  text-align: center;
+  max-width: 300px;
+}
+
+.error-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.camera-error h3 {
+  color: #333;
+  margin-bottom: 8px;
+  font-size: 18px;
+}
+
+.camera-error p {
+  color: #666;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.camera-error .close-button {
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.camera-error .close-button:hover {
+  background-color: #1976d2;
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 768px) {
+  .camera-top-bar {
+    padding: 12px;
+  }
+
+  .location-indicator {
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+
+  .close-button {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .capture-button {
+    width: 70px;
+    height: 70px;
+  }
+
+  .capture-ring {
+    width: 50px;
+    height: 50px;
+  }
+
+  .camera-bottom-controls {
+    padding: 12px;
+  }
+
+  .control-button {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+
+  .camera-instructions {
+    bottom: 70px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .camera-top-bar {
+    padding: 8px;
+  }
+
+  .location-indicator {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+
+  .close-button {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .capture-button {
+    width: 60px;
+    height: 60px;
+  }
+
+  .capture-ring {
+    width: 40px;
+    height: 40px;
+  }
+
+  .camera-bottom-controls {
+    padding: 8px;
+  }
+
+  .control-button {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+
+  .photo-counter {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .camera-instructions {
+    bottom: 60px;
+    left: 12px;
+    right: 12px;
+    font-size: 10px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .location-indicator,
+  .close-button,
+  .control-button,
+  .capture-button {
+    border: 2px solid;
+  }
+
+  .photo-counter {
+    border: 1px solid;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .capture-button,
+  .close-button,
+  .control-button {
+    transition: none;
+  }
+
+  .capture-button.capturing .capture-ring {
+    animation: none;
+  }
+
+  .camera-video {
+    transition: none;
+  }
+}
+
+/* Safe area support for notched devices */
+@supports (padding: max(0px)) {
+  .camera-top-bar {
+    padding-top: max(16px, env(safe-area-inset-top));
+  }
+
+  .camera-bottom-controls {
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  .camera-instructions {
+    bottom: max(80px, calc(80px + env(safe-area-inset-bottom)));
+  }
+}
