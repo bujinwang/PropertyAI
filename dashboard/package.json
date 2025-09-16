@@ -90,6 +90,7 @@
     "@vitejs/plugin-react": "^4.6.0",
     "babel-jest": "^30.0.4",
     "brotli-webpack-plugin": "^1.1.0",
+    "canvas": "^3.2.0",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^30.0.4",
     "jest-axe": "^10.0.0",

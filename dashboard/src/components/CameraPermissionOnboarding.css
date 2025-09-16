@@ -1,0 +1,482 @@
+/**
+ * Camera Permission Onboarding Component Styles
+ * User-friendly camera permission flow with step-by-step guidance
+ * Epic 21.5.2 - Mobile Experience Enhancement
+ */
+
+.camera-onboarding {
+  background-color: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  max-width: 400px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  position: relative;
+}
+
+/* Header */
+.onboarding-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e0e0e0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.camera-icon,
+.success-icon,
+.error-icon {
+  font-size: 32px;
+  margin-right: 12px;
+}
+
+.onboarding-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  flex: 1;
+}
+
+.close-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: white;
+}
+
+.close-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+/* Content */
+.onboarding-content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Welcome Step */
+.feature-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.preview-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 16px;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  transition: transform 0.2s ease;
+}
+
+.preview-item:hover {
+  transform: translateY(-2px);
+}
+
+.preview-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.preview-item span:last-child {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.welcome-text {
+  text-align: center;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+/* Explain Step */
+.permission-explanation {
+  margin-bottom: 24px;
+}
+
+.explanation-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+}
+
+.explanation-item:hover {
+  background-color: #e3f2fd;
+  transform: translateX(4px);
+}
+
+.explanation-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.explanation-text h3 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.explanation-text p {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+  line-height: 1.5;
+}
+
+.privacy-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background-color: #e8f5e8;
+  border-radius: 12px;
+  border-left: 4px solid #4caf50;
+  margin-bottom: 24px;
+}
+
+.privacy-icon {
+  font-size: 20px;
+  color: #4caf50;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.privacy-notice p {
+  margin: 0;
+  font-size: 14px;
+  color: #2e7d32;
+  line-height: 1.5;
+}
+
+/* Request Step */
+.permission-request {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.permission-request .request-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.permission-request h3 {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.permission-request p {
+  margin: 0 0 20px 0;
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+}
+
+.browser-permission-notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background-color: #fff3e0;
+  border-radius: 12px;
+  border-left: 4px solid #ff9800;
+}
+
+.browser-icon {
+  font-size: 24px;
+  color: #ff9800;
+  flex-shrink: 0;
+}
+
+.browser-permission-notice p {
+  margin: 0;
+  font-size: 14px;
+  color: #e65100;
+  line-height: 1.5;
+}
+
+/* Success Step */
+.camera-onboarding.success {
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  color: white;
+}
+
+.camera-onboarding.success .onboarding-header {
+  background: transparent;
+  border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+
+.success-message p {
+  text-align: center;
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.success-features {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  font-size: 14px;
+  backdrop-filter: blur(4px);
+}
+
+/* Error Step */
+.camera-onboarding.error {
+  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+  color: white;
+}
+
+.camera-onboarding.error .onboarding-header {
+  background: transparent;
+  border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+
+.error-message p {
+  text-align: center;
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.error-help {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
+  backdrop-filter: blur(4px);
+}
+
+.error-help h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+}
+
+.error-help ol {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.error-help li {
+  margin-bottom: 6px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Actions */
+.onboarding-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: auto;
+  padding-top: 24px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.onboarding-actions button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+
+.skip-button,
+.back-button {
+  background-color: #f5f5f5;
+  color: #666;
+  border: 1px solid #e0e0e0;
+}
+
+.skip-button:hover,
+.back-button:hover {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.next-button,
+.done-button {
+  background-color: #2196f3;
+  color: white;
+}
+
+.next-button:hover,
+.done-button:hover {
+  background-color: #1976d2;
+  transform: translateY(-1px);
+}
+
+.request-button {
+  background-color: #4caf50;
+  color: white;
+  flex: 1;
+  position: relative;
+}
+
+.request-button:hover:not(:disabled) {
+  background-color: #45a049;
+  transform: translateY(-1px);
+}
+
+.request-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.request-button.requesting {
+  color: transparent;
+}
+
+.request-button.requesting::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  top: 50%;
+  left: 50%;
+  margin-left: -10px;
+  margin-top: -10px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.retry-button {
+  background-color: #ff9800;
+  color: white;
+}
+
+.retry-button:hover {
+  background-color: #f57c00;
+  transform: translateY(-1px);
+}
+
+/* Animations */
+@keyframes spin {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+  .camera-onboarding {
+    max-width: none;
+    width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .onboarding-header {
+    padding: 16px 20px;
+  }
+
+  .onboarding-content {
+    padding: 20px;
+  }
+
+  .feature-preview {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .success-features {
+    grid-template-columns: 1fr;
+  }
+
+  .onboarding-actions {
+    flex-direction: column;
+  }
+
+  .onboarding-actions button {
+    width: 100%;
+  }
+}
+
+/* High Contrast */
+@media (prefers-contrast: high) {
+  .camera-onboarding {
+    border: 2px solid;
+  }
+
+  .explanation-item,
+  .preview-item {
+    border: 1px solid;
+  }
+
+  .privacy-notice,
+  .browser-permission-notice {
+    border-width: 2px;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .preview-item,
+  .explanation-item,
+  .next-button,
+  .done-button,
+  .retry-button,
+  .close-button {
+    transition: none;
+  }
+
+  .request-button.requesting::after {
+    animation: none;
+  }
+}
+
+/* Safe Area */
+@supports (padding: max(0px)) {
+  .onboarding-header {
+    padding-top: max(20px, env(safe-area-inset-top) + 16px);
+  }
+
+  .onboarding-content {
+    padding-bottom: max(24px, env(safe-area-inset-bottom) + 16px);
+  }
+}

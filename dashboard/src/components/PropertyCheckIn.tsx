@@ -12,6 +12,27 @@ import locationService, {
 } from '../utils/locationService';
 import './PropertyCheckIn.css';
 
+// Enhanced types for better UX
+interface LoadingState {
+  initializing: boolean;
+  requestingPermissions: boolean;
+  checkingIn: boolean;
+  refreshingLocation: boolean;
+}
+
+interface RetryState {
+  attempts: number;
+  lastError: string | null;
+  canRetry: boolean;
+  operation: 'permissions' | 'checkin' | 'location' | null;
+}
+
+interface ProgressState {
+  stage: 'idle' | 'initializing' | 'permissions' | 'location' | 'ready' | 'checking_in' | 'complete';
+  progress: number;
+  message: string;
+}
+
 interface PropertyCheckInProps {
   properties: PropertyLocation[];
   onCheckIn?: (result: CheckInResult) => void;
@@ -41,14 +62,69 @@ const PropertyCheckIn: React.FC<PropertyCheckInProps> = ({
   const [checkInResult, setCheckInResult] = useState<CheckInResult | null>(null);
   const [error, setError] = useState<string>('');
 
-  // Request location permissions on mount
+  // Enhanced UX states
+  const [loading, setLoading] = useState<LoadingState>({
+    initializing: false,
+    requestingPermissions: false,
+    checkingIn: false,
+    refreshingLocation: false
+  });
+
+  const [retry, setRetry] = useState<RetryState>({
+    attempts: 0,
+    lastError: null,
+    canRetry: false,
+    operation: null
+  });
+
+  const [progress, setProgress] = useState<ProgressState>({
+    stage: 'idle',
+    progress: 0,
+    message: ''
+  });
+
+  const [showRetry, setShowRetry] = useState(false);
+  const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
+
+  // Enhanced permission request with progress tracking
   useEffect(() => {
     const requestPermissions = async () => {
-      const result = await locationService.requestPermissions();
-      setPermissions(result.permissions);
+      try {
+        setProgress({ stage: 'permissions', progress: 10, message: 'Requesting location permissions...' });
+        setLoading(prev => ({ ...prev, requestingPermissions: true }));
+        setError('');
 
-      if (result.permissions.granted) {
-        startLocationTracking();
+        const result = await locationService.requestPermissions();
+        setPermissions(result.permissions);
+        setProgress({ stage: 'permissions', progress: 50, message: 'Permissions granted!' });
+
+        if (result.permissions.granted) {
+          setProgress({ stage: 'location', progress: 70, message: 'Starting location tracking...' });
+          startLocationTracking();
+        } else {
+          setProgress({ stage: 'idle', progress: 0, message: '' });
+          setRetry({
+            attempts: 1,
+            lastError: 'Location permission denied',
+            canRetry: true,
+            operation: 'permissions'
+          });
+          setShowRetry(true);
+        }
+      } catch (error) {
+        console.error('Permission request error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Failed to request permissions';
+        setError(errorMessage);
+        setRetry(prev => ({
+          attempts: prev.attempts + 1,
+          lastError: errorMessage,
+          canRetry: prev.attempts < 2,
+          operation: 'permissions'
+        }));
+        setShowRetry(true);
+        setProgress({ stage: 'idle', progress: 0, message: '' });
+      } finally {
+        setLoading(prev => ({ ...prev, requestingPermissions: false }));
       }
     };
 
@@ -87,20 +163,33 @@ const PropertyCheckIn: React.FC<PropertyCheckInProps> = ({
     };
   }, [properties, autoCheckIn, checkInResult]);
 
-  // Handle manual check-in
+  // Enhanced check-in with progress tracking and retry
   const handleCheckIn = useCallback(async (property: PropertyLocation) => {
     if (!permissions.granted) {
       setError('Location permission required for check-in');
+      setRetry({
+        attempts: 1,
+        lastError: 'Location permission required',
+        canRetry: true,
+        operation: 'permissions'
+      });
+      setShowRetry(true);
       return;
     }
 
-    setIsLoading(true);
+    setLoading(prev => ({ ...prev, checkingIn: true }));
+    setProgress({ stage: 'checking_in', progress: 10, message: 'Verifying location...' });
     setError('');
+    setShowRetry(false);
 
     try {
+      setProgress({ stage: 'checking_in', progress: 30, message: 'Checking distance...' });
+
       const result = locationService.checkInToProperty(property);
+      setProgress({ stage: 'checking_in', progress: 70, message: 'Processing check-in...' });
 
       if (result.withinRange) {
+        setProgress({ stage: 'complete', progress: 100, message: 'Check-in successful!' });
         setCheckInResult(result);
         setSelectedProperty(property);
 
@@ -108,30 +197,103 @@ const PropertyCheckIn: React.FC<PropertyCheckInProps> = ({
           onCheckIn(result);
         }
 
-        // Provide haptic feedback
+        // Enhanced haptic feedback
         if (navigator.vibrate) {
-          navigator.vibrate([50, 50, 50]);
+          navigator.vibrate([100, 50, 100]); // Success pattern
         }
+
+        // Reset progress after success
+        setTimeout(() => {
+          setProgress({ stage: 'ready', progress: 100, message: '' });
+        }, 2000);
+
+        // Reset retry state on success
+        setRetry({ attempts: 0, lastError: null, canRetry: false, operation: null });
       } else {
-        setError(`You're ${Math.round(result.distance)}m away from ${property.name}. Please get closer to check in.`);
+        const distance = Math.round(result.distance);
+        const errorMessage = `You're ${distance}m away from ${property.name}. Please get closer to check in.`;
+        setError(errorMessage);
+        setRetry(prev => ({
+          attempts: prev.attempts + 1,
+          lastError: errorMessage,
+          canRetry: prev.attempts < 2,
+          operation: 'checkin'
+        }));
+        setShowRetry(true);
+        setProgress({ stage: 'ready', progress: 100, message: '' });
       }
     } catch (error) {
       console.error('Check-in error:', error);
-      setError('Failed to check in. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to check in. Please try again.';
+      setError(errorMessage);
+      setRetry(prev => ({
+        attempts: prev.attempts + 1,
+        lastError: errorMessage,
+        canRetry: prev.attempts < 2,
+        operation: 'checkin'
+      }));
+      setShowRetry(true);
+      setProgress({ stage: 'ready', progress: 100, message: '' });
     } finally {
-      setIsLoading(false);
+      setLoading(prev => ({ ...prev, checkingIn: false }));
     }
   }, [permissions.granted, onCheckIn]);
 
-  // Request permissions
+  // Enhanced permission request with retry
   const handleRequestPermissions = useCallback(async () => {
-    const result = await locationService.requestPermissions();
-    setPermissions(result.permissions);
+    setLoading(prev => ({ ...prev, requestingPermissions: true }));
+    setProgress({ stage: 'permissions', progress: 10, message: 'Requesting permissions...' });
+    setError('');
+    setShowRetry(false);
 
-    if (result.permissions.granted) {
-      startLocationTracking();
+    try {
+      const result = await locationService.requestPermissions();
+      setPermissions(result.permissions);
+      setProgress({ stage: 'permissions', progress: 50, message: 'Permissions granted!' });
+
+      if (result.permissions.granted) {
+        setProgress({ stage: 'location', progress: 70, message: 'Starting location tracking...' });
+        startLocationTracking();
+        setRetry({ attempts: 0, lastError: null, canRetry: false, operation: null });
+      } else {
+        setProgress({ stage: 'idle', progress: 0, message: '' });
+        setRetry(prev => ({
+          attempts: prev.attempts + 1,
+          lastError: 'Location permission denied',
+          canRetry: prev.attempts < 2,
+          operation: 'permissions'
+        }));
+        setShowRetry(true);
+      }
+    } catch (error) {
+      console.error('Permission request error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to request permissions';
+      setError(errorMessage);
+      setRetry(prev => ({
+        attempts: prev.attempts + 1,
+        lastError: errorMessage,
+        canRetry: prev.attempts < 2,
+        operation: 'permissions'
+      }));
+      setShowRetry(true);
+      setProgress({ stage: 'idle', progress: 0, message: '' });
+    } finally {
+      setLoading(prev => ({ ...prev, requestingPermissions: false }));
     }
   }, [startLocationTracking]);
+
+  // Handle retry
+  const handleRetry = useCallback(() => {
+    setShowRetry(false);
+    setError('');
+    setRetry(prev => ({ ...prev, attempts: 0, lastError: null, canRetry: false, operation: null }));
+
+    if (retry.operation === 'permissions') {
+      handleRequestPermissions();
+    } else if (retry.operation === 'checkin' && selectedProperty) {
+      handleCheckIn(selectedProperty);
+    }
+  }, [retry.operation, selectedProperty, handleRequestPermissions, handleCheckIn]);
 
   // Get distance text
   const getDistanceText = (property: PropertyLocation): string => {
@@ -191,26 +353,89 @@ const PropertyCheckIn: React.FC<PropertyCheckInProps> = ({
 
   return (
     <div className={`property-checkin ${className}`}>
+      {/* Enhanced Loading Overlay */}
+      {(loading.requestingPermissions || loading.checkingIn) && (
+        <div className="loading-overlay">
+          <div className="loading-spinner"></div>
+          <div className="progress-container">
+            <div className="progress-bar">
+              <div
+                className="progress-fill"
+                style={{ width: `${progress.progress}%` }}
+              ></div>
+            </div>
+            <p className="progress-message">{progress.message}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Enhanced Error Overlay */}
+      {error && showRetry && (
+        <div className="error-overlay">
+          <div className="error-content">
+            <div className="error-icon">⚠️</div>
+            <h3>Check-In Error</h3>
+            <p>{error}</p>
+            {retry.canRetry && (
+              <div className="retry-options">
+                <button className="retry-button" onClick={handleRetry}>
+                  🔄 Retry ({retry.attempts}/3)
+                </button>
+                <button className="retry-init-button" onClick={handleRequestPermissions}>
+                  🔧 Reinitialize Location
+                </button>
+              </div>
+            )}
+            <button className="close-error-button" onClick={() => setError('')}>
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="checkin-header">
         <h3>Property Check-In</h3>
-        <button className="close-button" onClick={onClose}>
+        <button
+          className="close-button"
+          onClick={onClose}
+          aria-label="Close check-in"
+          disabled={loading.checkingIn || loading.requestingPermissions}
+        >
           ✕
         </button>
       </div>
 
-      {/* Current Location */}
+      {/* Current Location with Accuracy */}
       {currentLocation && (
-        <div className="current-location">
-          <span className="location-icon">📍</span>
+        <div className="current-location" aria-label={`Current location: ${currentLocation}`}>
+          <span className="location-icon" aria-hidden="true">📍</span>
           <span className="location-text">{currentLocation}</span>
+          {locationAccuracy && (
+            <span className="location-accuracy" aria-label={`Location accuracy: ${locationAccuracy} meters`}>
+              ±{Math.round(locationAccuracy)}m
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Progress Indicator */}
+      {(progress.stage === 'checking_in' || progress.stage === 'complete') && (
+        <div className="checkin-progress">
+          <div className="progress-bar">
+            <div
+              className="progress-fill"
+              style={{ width: `${progress.progress}%` }}
+            ></div>
+          </div>
+          <p className="progress-message">{progress.message}</p>
         </div>
       )}
 
       {/* Check-in Result */}
       {checkInResult && selectedProperty && (
-        <div className="checkin-success">
-          <div className="success-icon">✅</div>
+        <div className="checkin-success" role="alert" aria-live="polite">
+          <div className="success-icon" aria-hidden="true">✅</div>
           <div className="success-content">
             <h4>Checked In!</h4>
             <p>{selectedProperty.name}</p>
@@ -220,17 +445,17 @@ const PropertyCheckIn: React.FC<PropertyCheckInProps> = ({
       )}
 
       {/* Error Message */}
-      {error && (
-        <div className="checkin-error">
-          <span className="error-icon">⚠️</span>
+      {error && !showRetry && (
+        <div className="checkin-error" role="alert" aria-live="assertive">
+          <span className="error-icon" aria-hidden="true">⚠️</span>
           <span className="error-text">{error}</span>
         </div>
       )}
 
       {/* Properties List */}
-      <div className="properties-list">
+      <div className="properties-list" role="list" aria-label="Nearby properties">
         {nearbyProperties.length === 0 ? (
-          <div className="no-properties">
+          <div className="no-properties" role="status" aria-live="polite">
             <p>No properties nearby</p>
             <small>Get closer to a property to check in</small>
           </div>
@@ -240,26 +465,41 @@ const PropertyCheckIn: React.FC<PropertyCheckInProps> = ({
             const distance = getDistanceText(property);
 
             return (
-              <div key={property.id} className={`property-item ${status}`}>
+              <div
+                key={property.id}
+                className={`property-item ${status}`}
+                role="listitem"
+                aria-label={`${property.name} - ${distance} away - ${status === 'available' ? 'Available for check-in' : status === 'too_far' ? 'Too far away' : 'Already checked in'}`}
+              >
                 <div className="property-info">
                   <h4>{property.name}</h4>
                   <p>{property.address}</p>
-                  <small>{distance} away</small>
+                  <small aria-label={`Distance: ${distance}`}>{distance} away</small>
                 </div>
 
                 <div className="property-actions">
                   {status === 'checked_in' ? (
-                    <div className="checked-in-badge">
-                      <span>✅</span>
+                    <div className="checked-in-badge" aria-label="Successfully checked in">
+                      <span aria-hidden="true">✅</span>
                       <span>Checked In</span>
                     </div>
                   ) : (
                     <button
-                      className="checkin-button"
+                      className={`checkin-button ${loading.checkingIn ? 'loading' : ''}`}
                       onClick={() => handleCheckIn(property)}
-                      disabled={isLoading || status === 'too_far'}
+                      disabled={loading.checkingIn || loading.requestingPermissions || status === 'too_far'}
+                      aria-label={status === 'too_far' ? `Check in to ${property.name} - Too far away (${distance})` : `Check in to ${property.name}`}
                     >
-                      {isLoading ? 'Checking...' : 'Check In'}
+                      {loading.checkingIn ? (
+                        <>
+                          <span className="button-spinner" aria-hidden="true"></span>
+                          Checking...
+                        </>
+                      ) : status === 'too_far' ? (
+                        'Too Far'
+                      ) : (
+                        'Check In'
+                      )}
                     </button>
                   )}
                 </div>
@@ -269,8 +509,8 @@ const PropertyCheckIn: React.FC<PropertyCheckInProps> = ({
         )}
       </div>
 
-      {/* Loading State */}
-      {isLoading && (
+      {/* Legacy Loading State (kept for backward compatibility) */}
+      {isLoading && !loading.checkingIn && !loading.requestingPermissions && (
         <div className="loading-overlay">
           <div className="loading-spinner"></div>
           <p>Checking location...</p>

@@ -4,6 +4,8 @@
  * Epic 21.5.2 - Mobile Experience Enhancement
  */
 
+import { cameraPerformanceOptimizer } from './cameraPerformance';
+
 export interface CameraOptions {
   facingMode?: 'user' | 'environment';
   width?: number;
@@ -70,7 +72,7 @@ class CameraService {
     try {
       // Check for camera availability
       const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter(device => device.kind === 'videoinput');
+      const videoDevices = devices ? devices.filter(device => device.kind === 'videoinput') : [];
 
       capabilities.hasCamera = videoDevices.length > 0;
       capabilities.hasFrontCamera = videoDevices.some(device =>
@@ -186,7 +188,7 @@ class CameraService {
            window.location.hostname === '127.0.0.1';
   }
 
-  // Start camera stream
+  // Start camera stream with performance optimizations
   async startCamera(
     videoElement: HTMLVideoElement,
     options: CameraOptions = {}
@@ -196,11 +198,14 @@ class CameraService {
       return false;
     }
 
+    const startTime = performance.now();
+
     try {
       // Stop any existing stream
       await this.stopCamera();
 
-      const constraints: MediaStreamConstraints = {
+      // Create base constraints
+      const baseConstraints: any = {
         video: {
           facingMode: options.facingMode || 'environment',
           width: { ideal: options.width || 1920 },
@@ -209,21 +214,37 @@ class CameraService {
         audio: false
       };
 
-      this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+      // Optimize constraints using performance optimizer
+      const optimizedConstraints = cameraPerformanceOptimizer.optimizeConstraints(baseConstraints) as MediaStreamConstraints;
+
+      // Record performance metric
+      cameraPerformanceOptimizer.recordMetric('camera-constraints-optimization', 10);
+
+      this.stream = await navigator.mediaDevices.getUserMedia(optimizedConstraints);
       this.videoElement = videoElement;
 
       videoElement.srcObject = this.stream;
-      videoElement.play();
 
-      console.log('[Camera] Camera started successfully');
+      // Start performance monitoring
+      cameraPerformanceOptimizer.startFrameRateMonitoring(videoElement);
+
+      await videoElement.play();
+
+      const initializationTime = performance.now() - startTime;
+      console.log(`[Camera] Camera started successfully in ${initializationTime.toFixed(2)}ms`);
+
+      // Record initialization performance
+      cameraPerformanceOptimizer.recordMetric('camera-initialization', initializationTime);
+
       return true;
     } catch (error) {
       console.error('[Camera] Error starting camera:', error);
+      cameraPerformanceOptimizer.recordMetric('camera-start-failure', performance.now() - startTime);
       return false;
     }
   }
 
-  // Stop camera stream
+  // Stop camera stream with performance cleanup
   async stopCamera(): Promise<void> {
     if (this.stream) {
       this.stream.getTracks().forEach(track => track.stop());
@@ -234,6 +255,9 @@ class CameraService {
       this.videoElement.srcObject = null;
       this.videoElement = null;
     }
+
+    // Stop performance monitoring
+    cameraPerformanceOptimizer.stopFrameRateMonitoring();
 
     console.log('[Camera] Camera stopped');
   }
@@ -393,11 +417,15 @@ class CameraService {
     );
   }
 
-  // Clean up resources
+  // Clean up resources with performance cleanup
   destroy(): void {
     this.stopCamera();
     this.capabilities = null;
     this.canvasElement = null;
+
+    // Clean up performance optimizer
+    cameraPerformanceOptimizer.destroy();
+
     console.log('[Camera] Camera service destroyed');
   }
 }

@@ -23,7 +23,8 @@ describe('LocationService', () => {
       // Test secure context
       Object.defineProperty(window, 'location', {
         value: { protocol: 'https:', hostname: 'example.com' },
-        writable: true
+        writable: true,
+        configurable: true
       });
 
       // Access private method through type assertion
@@ -35,7 +36,8 @@ describe('LocationService', () => {
       // Test insecure context
       Object.defineProperty(window, 'location', {
         value: { protocol: 'http:', hostname: 'example.com' },
-        writable: true
+        writable: true,
+        configurable: true
       });
 
       const isSecure = (locationServiceInstance as any).isSecureContext();
@@ -45,7 +47,8 @@ describe('LocationService', () => {
     it('should allow localhost as secure context', () => {
       Object.defineProperty(window, 'location', {
         value: { protocol: 'http:', hostname: 'localhost' },
-        writable: true
+        writable: true,
+        configurable: true
       });
 
       const isSecure = (locationServiceInstance as any).isSecureContext();
@@ -58,7 +61,8 @@ describe('LocationService', () => {
       // Mock secure context
       Object.defineProperty(window, 'location', {
         value: { protocol: 'https:', hostname: 'example.com' },
-        writable: true
+        writable: true,
+        configurable: true
       });
     });
 
@@ -67,7 +71,8 @@ describe('LocationService', () => {
       const originalGeolocation = navigator.geolocation;
       Object.defineProperty(navigator, 'geolocation', {
         value: undefined,
-        writable: true
+        writable: true,
+        configurable: true
       });
 
       const result = await locationServiceInstance.requestPermissions();
@@ -81,7 +86,8 @@ describe('LocationService', () => {
       // Restore original geolocation
       Object.defineProperty(navigator, 'geolocation', {
         value: originalGeolocation,
-        writable: true
+        writable: true,
+        configurable: true
       });
     });
 
@@ -92,7 +98,8 @@ describe('LocationService', () => {
       };
       Object.defineProperty(navigator, 'permissions', {
         value: mockPermissions,
-        writable: true
+        writable: true,
+        configurable: true
       });
 
       const result = await locationServiceInstance.requestPermissions();
@@ -109,7 +116,8 @@ describe('LocationService', () => {
       };
       Object.defineProperty(navigator, 'permissions', {
         value: mockPermissions,
-        writable: true
+        writable: true,
+        configurable: true
       });
 
       const result = await locationServiceInstance.requestPermissions();
@@ -127,7 +135,8 @@ describe('LocationService', () => {
       };
       Object.defineProperty(navigator, 'permissions', {
         value: mockPermissions,
-        writable: true
+        writable: true,
+        configurable: true
       });
 
       // Mock successful geolocation test
@@ -149,7 +158,8 @@ describe('LocationService', () => {
       };
       Object.defineProperty(navigator, 'geolocation', {
         value: mockGeolocation,
-        writable: true
+        writable: true,
+        configurable: true
       });
 
       const result = await locationServiceInstance.requestPermissions();
@@ -166,7 +176,8 @@ describe('LocationService', () => {
       };
       Object.defineProperty(navigator, 'permissions', {
         value: mockPermissions,
-        writable: true
+        writable: true,
+        configurable: true
       });
 
       // Mock geolocation error
@@ -177,7 +188,8 @@ describe('LocationService', () => {
       };
       Object.defineProperty(navigator, 'geolocation', {
         value: mockGeolocation,
-        writable: true
+        writable: true,
+        configurable: true
       });
 
       const result = await locationServiceInstance.requestPermissions();
@@ -211,7 +223,8 @@ describe('LocationService', () => {
       };
       Object.defineProperty(navigator, 'geolocation', {
         value: mockGeolocation,
-        writable: true
+        writable: true,
+        configurable: true
       });
     });
 
@@ -249,7 +262,8 @@ describe('LocationService', () => {
       };
       Object.defineProperty(navigator, 'geolocation', {
         value: mockGeolocation,
-        writable: true
+        writable: true,
+        configurable: true
       });
 
       await expect(locationServiceInstance.getCurrentPosition()).rejects.toThrow();
@@ -263,7 +277,8 @@ describe('LocationService', () => {
       };
       Object.defineProperty(navigator, 'geolocation', {
         value: mockGeolocation,
-        writable: true
+        writable: true,
+        configurable: true
       });
 
       locationServiceInstance.startWatchingPosition();
@@ -279,7 +294,8 @@ describe('LocationService', () => {
       };
       Object.defineProperty(navigator, 'geolocation', {
         value: mockGeolocation,
-        writable: true
+        writable: true,
+        configurable: true
       });
 
       locationServiceInstance.startWatchingPosition();
@@ -297,7 +313,8 @@ describe('LocationService', () => {
       };
       Object.defineProperty(navigator, 'geolocation', {
         value: mockGeolocation,
-        writable: true
+        writable: true,
+        configurable: true
       });
 
       // Should not throw, just log error
@@ -508,7 +525,8 @@ describe('LocationService', () => {
       const originalGeolocation = navigator.geolocation;
       Object.defineProperty(navigator, 'geolocation', {
         value: undefined,
-        writable: true
+        writable: true,
+        configurable: true
       });
 
       expect(locationServiceInstance.isAvailable()).toBe(false);
@@ -516,7 +534,8 @@ describe('LocationService', () => {
       // Restore
       Object.defineProperty(navigator, 'geolocation', {
         value: originalGeolocation,
-        writable: true
+        writable: true,
+        configurable: true
       });
     });
   });
@@ -529,7 +548,8 @@ describe('LocationService', () => {
       };
       Object.defineProperty(navigator, 'geolocation', {
         value: mockGeolocation,
-        writable: true
+        writable: true,
+        configurable: true
       });
 
       locationServiceInstance.startWatchingPosition();
