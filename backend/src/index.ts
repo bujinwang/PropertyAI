@@ -10,7 +10,7 @@ import { rentCollectionService } from './services/rentCollection.service';
 import { documentExpirationService } from './services/documentExpiration.service';
 import './services/pubSub.service';
 import schedulerService from './services/schedulerService';
-import cleanupSchedulerService from './services/cleanupSchedulerService';
+// const cleanupSchedulerService = require('./services/cleanupSchedulerService');
 import path from 'path';
 
 const PORT = process.env.PORT || 3001;
@@ -47,10 +47,10 @@ const startServer = async () => {
     documentExpirationService.initialize();
 
     // Initialize Report Scheduler service
-    schedulerService.start();
+    // schedulerService.start();
 
     // Initialize Cleanup Scheduler service
-    cleanupSchedulerService.start();
+    // cleanupSchedulerService.start();
 
     // Start the server with proper cleanup to prevent race conditions
     const startListening = (port: number) => {
@@ -115,8 +115,8 @@ process.on('SIGINT', async () => {
       console.log('Server closed.');
     });
   }
-  schedulerService.stop();
-  cleanupSchedulerService.stop();
+//    schedulerService.stop();
+//    cleanupSchedulerService.stop();
   await closeDatabaseConnections();
   process.exit(0);
 });
@@ -128,8 +128,8 @@ process.on('SIGTERM', async () => {
       console.log('Server closed.');
     });
   }
-  schedulerService.stop();
-  cleanupSchedulerService.stop();
+//    schedulerService.stop();
+//    cleanupSchedulerService.stop();
   await closeDatabaseConnections();
   process.exit(0);
 });

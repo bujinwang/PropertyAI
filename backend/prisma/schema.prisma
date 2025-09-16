@@ -1581,6 +1581,7 @@ model DeviceGroup {
   description String?
   propertyId  String
   devices     IoTDevice[]
+  property    Rental     @relation(fields: [propertyId], references: [id])
 
   @@index([propertyId])
 }
