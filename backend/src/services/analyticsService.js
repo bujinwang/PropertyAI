@@ -1,9 +1,9 @@
 const { Sequelize, Op } = require('sequelize');
-const Tenant = require('../models/Tenant');
-const Property = require('../models/Property');
-const Invoice = require('../models/Invoice');
-const Payment = require('../models/Payment');
-const MaintenanceHistory = require('../models/MaintenanceHistory');
+const Tenant = require('./models/Tenant');
+const Property = require('./models/Property');
+const Invoice = require('./models/Invoice');
+const Payment = require('./models/Payment');
+const MaintenanceHistory = require('./models/MaintenanceHistory');
 
 const getMetrics = async (dateFrom, dateTo, propertyIds, userRole, userProperties) => {
   // Role-based filtering
@@ -354,7 +354,7 @@ const predictMaintenance = async (propertyId) => {
 
 const generateExport = async (format, template, filters, userId, userRole, userProperties) => {
   try {
-    const exportService = require('../utils/exportService');
+    const exportService = require('./utils/exportService');
 
     // Validate export parameters
     exportService.validateExportParams(format, template, filters);
