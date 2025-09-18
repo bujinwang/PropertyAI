@@ -138,4 +138,100 @@ export const deprecationWarning = (req: Request, res: Response, next: NextFuncti
 `;
 
     // Write middleware to file
-    const middlewarePath = path.join(__dirname
+    const middlewarePath = path.join(__dirname, '../middleware/deprecationWarning.ts');
+    fs.writeFileSync(middlewarePath, middlewareCode);
+    console.log(`✅ Deprecation middleware created at: ${middlewarePath}`);
+  }
+
+  async generateMigrationGuide() {
+    console.log('\n📖 Generating migration guide');
+    console.log('-'.repeat(50));
+
+    const guideContent = `
+# Legacy Route Migration Guide
+
+## Overview
+This document provides guidance for migrating from deprecated routes to the new API structure.
+
+## Migration Mapping
+
+| Old Route | Method | New Route | Status | Removal Date |
+|-----------|--------|-----------|--------|--------------|
+| /api/properties | GET | /api/rentals | Deprecated | 2024-05-01 |
+| /api/properties/:id | GET | /api/rentals/:id | Deprecated | 2024-05-01 |
+| /api/units | GET | /api/rentals | Deprecated | 2024-05-01 |
+| /api/units/:id | GET | /api/rentals/:id | Deprecated | 2024-05-01 |
+| /api/listings | GET | /api/rentals | Deprecated | 2024-05-01 |
+
+## Code Changes Required
+
+### 1. Update Import Statements
+\`\`\`javascript
+// Old
+import properties from './api/properties';
+
+// New
+import rentals from './api/rentals';
+\`\`\`
+
+### 2. Update Route Calls
+\`\`\`javascript
+// Old
+const properties = await api.get('/api/properties');
+
+// New
+const rentals = await api.get('/api/rentals');
+\`\`\`
+
+## Testing Your Migration
+
+1. Run your test suite with both old and new routes
+2. Verify response formats are consistent
+3. Check for any data differences
+4. Update any hardcoded route paths in your code
+
+## Deprecation Headers
+
+Legacy routes return these headers:
+
+- \`Deprecation: true\`
+- \`Sunset: YYYY-MM-DD\`
+- \`Link: <new-route>; rel="successor-version"\`
+- \`Warning: 299 - "message"\`
+
+## Support
+
+For migration assistance, contact the development team.
+
+Last Updated: ${new Date().toISOString()}
+    `;
+
+    const guidePath = path.join(__dirname, '../docs/migration-guide.md');
+    fs.writeFileSync(guidePath, guideContent);
+    console.log(`✅ Migration guide created at: ${guidePath}`);
+  }
+
+  async execute() {
+    await this.analyzeUsage();
+    await this.createDeprecationWarnings();
+    await this.generateMigrationGuide();
+    
+    console.log('\n🎉 Legacy route phase-out preparation complete!');
+    console.log('Next steps:');
+    console.log('1. Implement deprecation middleware in your routes');
+    console.log('2. Update client code to use new routes');
+    console.log('3. Monitor usage analytics');
+    console.log('4. Remove legacy routes after sunset date');
+  }
+}
+
+(async () => {
+  try {
+    const service = new LegacyRoutePhaseOutService();
+    await service.execute();
+    await prisma.$disconnect();
+  } catch (error) {
+    console.error('Error during legacy route phase-out:', error);
+    process.exit(1);
+  }
+})();

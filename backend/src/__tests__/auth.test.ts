@@ -12,7 +12,7 @@ describe('Authentication Endpoints', () => {
   beforeAll(async () => {
     const user = await prisma.user.create({
       data: {
-        email: 'auth@example.com',
+        email: 'auth-test@example.com',
         password: await bcrypt.hash('password123', 10),
         firstName: 'Auth',
         lastName: 'User',

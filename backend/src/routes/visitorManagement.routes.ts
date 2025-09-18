@@ -130,4 +130,39 @@ router.delete('/deliveries/:id', authenticateToken, (req, res) => deliveryContro
 
 // Access Control Routes
 /**
- * @
+* @route   GET /api/access-logs/visitors/:visitorId
+* @desc    Get visitor access logs
+* @access  Private
+*/
+router.get('/access-logs/visitors/:visitorId', authenticateToken, (req, res) => visitorAccessController.getVisitorAccessLogs(req, res));
+
+/**
+* @route   POST /api/access-logs/visitors
+* @desc    Log visitor access
+* @access  Private
+*/
+router.post('/access-logs/visitors',
+ authenticateToken,
+ validateRequest(accessLogValidation),
+ (req, res) => visitorAccessController.logVisitorAccess(req, res)
+);
+
+/**
+* @route   GET /api/access-logs/deliveries/:deliveryId
+* @desc    Get delivery access logs
+* @access  Private
+*/
+router.get('/access-logs/deliveries/:deliveryId', authenticateToken, (req, res) => visitorAccessController.getDeliveryAccessLogs(req, res));
+
+/**
+* @route   POST /api/access-logs/deliveries
+* @desc    Log delivery access
+* @access  Private
+*/
+router.post('/access-logs/deliveries',
+ authenticateToken,
+ validateRequest(deliveryAccessLogValidation),
+ (req, res) => visitorAccessController.logDeliveryAccess(req, res)
+);
+
+export default router;

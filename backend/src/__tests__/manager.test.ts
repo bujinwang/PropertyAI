@@ -12,7 +12,7 @@ describe('Manager API', () => {
     // Create a manager user for testing
     managerUser = await prisma.user.create({
       data: {
-        email: 'manager@test.com',
+        email: 'manager-test@example.com',
         password: 'password',
         role: 'PROPERTY_MANAGER',
         firstName: 'Test',
@@ -56,6 +56,7 @@ describe('Manager API', () => {
             createdById: managerUser.id,
             status: 'ACTIVE',
             isAvailable: false,
+            slug: 'test-rental-slug',
         }
     });
     
@@ -86,6 +87,7 @@ describe('Manager API', () => {
         title: 'Broken Heater',
         description: 'The heater is not working.',
         maintenanceRequestId: maintenanceRequest.id,
+        priority: 'LOW',
       },
     });
     
@@ -100,12 +102,12 @@ describe('Manager API', () => {
   });
 
   afterAll(async () => {
-    await prisma.user.deleteMany({});
-    await prisma.rental.deleteMany({});
-    await prisma.maintenanceRequest.deleteMany({});
-    await prisma.workOrder.deleteMany({});
-    await prisma.vendor.deleteMany({});
     await prisma.workOrderQuote.deleteMany({});
+    await prisma.workOrder.deleteMany({});
+    await prisma.maintenanceRequest.deleteMany({});
+    await prisma.rental.deleteMany({});
+    await prisma.vendor.deleteMany({});
+    await prisma.user.deleteMany({});
   });
 
   describe('GET /api/manager/work-orders/:id/quotes', () => {

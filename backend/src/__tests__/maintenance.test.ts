@@ -42,6 +42,7 @@ describe('Maintenance Endpoints', () => {
         createdById: userId,
         status: 'ACTIVE',
         isAvailable: true,
+        slug: 'test-maintenance-slug',
       }
     });
     rentalId = rental.id;

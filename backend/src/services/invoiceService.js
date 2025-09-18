@@ -1,10 +1,10 @@
-const Invoice = require('../models/Invoice');
-const Unit = require('../models/Unit');
-const Tenant = require('./Tenant'); // Wait, tenantService
+const { PrismaClient } = require('@prisma/client');
 const pdfLib = require('pdf-lib'); // Assume installed
 const fs = require('fs').promises;
 const path = require('path');
 const logger = require('../utils/logger'); // Assume Winston
+
+const prisma = new PrismaClient();
 
 const generateMonthlyInvoices = async () => {
   try {
@@ -12,27 +12,33 @@ const generateMonthlyInvoices = async () => {
     const dueDate = new Date(today.getFullYear(), today.getMonth() + 1, 1); // First of next month
 
     // Query units with tenants
-    const unitsWithTenants = await Unit.findAll({
-      include: [{
-        model: Tenant,
-        where: { isActive: true },
-      }],
+    const unitsWithTenants = await prisma.unit.findMany({
+      include: {
+        tenants: {
+          where: { isActive: true },
+        },
+      },
     });
 
     const invoices = [];
     for (const unit of unitsWithTenants) {
-      for (const tenant of unit.Tenants) {
-        const invoice = await Invoice.create({
-          unitId: unit.id,
-          tenantId: tenant.id,
-          dueDate,
-          amount: unit.rentAmount || 0, // Assume unit has rentAmount
-          status: 'pending',
+      for (const tenant of unit.tenants) {
+        const invoice = await prisma.invoice.create({
+          data: {
+            unitId: unit.id,
+            tenantId: tenant.id,
+            dueDate,
+            amount: unit.rentAmount || 0, // Assume unit has rentAmount
+            status: 'pending',
+          },
         });
 
         // Generate PDF
         const pdfUrl = await generateInvoicePDF(invoice);
-        await invoice.update({ pdfUrl });
+        await prisma.invoice.update({
+          where: { id: invoice.id },
+          data: { pdfUrl }
+        });
 
         invoices.push(invoice);
         logger.info('Invoice generated', { invoiceId: invoice.id, tenantId: tenant.id });

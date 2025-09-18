@@ -1,0 +1,974 @@
+{
+  "models": {
+    "AIImageAnalysis": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "AIUsageLog": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "ApiKey": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "Appliance": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "Application": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "AuditEntry": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "BackgroundCheck": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "BusinessHours": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "Consent": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "CostEstimation": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "Device": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "Document": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "EmergencyProtocol": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "EmergencyRoutingRule": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "EscalationPolicy": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "EscalationPolicyRule": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "FollowUp": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "KnowledgeBaseEntry": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "Language": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "Lease": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "MaintenanceRequest": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "MaintenanceRequestCategory": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "MaintenanceResponseTime": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "MarketData": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "Message": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "Notification": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "OAuthAccessToken": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "OAuthConnection": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "OnCallRotation": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "OnCallSchedule": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "PasswordResetToken": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "Permission": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "PhotoAnalysis": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "PredictiveMaintenance": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "Rental": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "RentalImage": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "RiskAssessment": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "Role": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "ScheduledEvent": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "Screening": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "TenantIssuePrediction": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "TenantRating": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "Transaction": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "UXReview": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "UXReviewAssignment": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "UXReviewComment": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "UXSurvey": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "UXSurveyAnswer": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "UXSurveyQuestion": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "UXSurveyResponse": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "User": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "Vendor": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "VendorPayment": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "VendorPerformanceRating": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "WhiteLabelConfig": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "WorkOrder": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "WorkOrderAssignment": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "WorkOrderQuote": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "Visitor": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "Delivery": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "VisitorAccessLog": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "DeliveryAccessLog": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "SecuritySettings": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "BiometricAuth": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "SSOConfig": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "ComplianceReport": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "SecurityIncident": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "DataRetentionPolicy": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "Session": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "IoTDevice": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "DeviceGroup": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "DeviceEvent": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "IoTSensor": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "SensorReading": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "SensorAlert": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "AnalyticsRule": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "ApprovalWorkflow": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "ApprovalStep": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "ApprovalInstance": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "ApprovalAction": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "WorkflowDefinition": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "WorkflowStep": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "WorkflowInstance": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "WorkflowExecution": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "WorkflowEvent": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    },
+    "WorkflowIntegration": {
+      "existsInSequelize": false,
+      "existsInPrisma": true,
+      "differences": []
+    }
+  },
+  "differences": [
+    {
+      "type": "missing_sequelize",
+      "model": "AIImageAnalysis",
+      "description": "Model AIImageAnalysis exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "AIUsageLog",
+      "description": "Model AIUsageLog exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "ApiKey",
+      "description": "Model ApiKey exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "Appliance",
+      "description": "Model Appliance exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "Application",
+      "description": "Model Application exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "AuditEntry",
+      "description": "Model AuditEntry exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "BackgroundCheck",
+      "description": "Model BackgroundCheck exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "BusinessHours",
+      "description": "Model BusinessHours exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "Consent",
+      "description": "Model Consent exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "CostEstimation",
+      "description": "Model CostEstimation exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "Device",
+      "description": "Model Device exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "Document",
+      "description": "Model Document exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "EmergencyProtocol",
+      "description": "Model EmergencyProtocol exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "EmergencyRoutingRule",
+      "description": "Model EmergencyRoutingRule exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "EscalationPolicy",
+      "description": "Model EscalationPolicy exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "EscalationPolicyRule",
+      "description": "Model EscalationPolicyRule exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "FollowUp",
+      "description": "Model FollowUp exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "KnowledgeBaseEntry",
+      "description": "Model KnowledgeBaseEntry exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "Language",
+      "description": "Model Language exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "Lease",
+      "description": "Model Lease exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "MaintenanceRequest",
+      "description": "Model MaintenanceRequest exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "MaintenanceRequestCategory",
+      "description": "Model MaintenanceRequestCategory exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "MaintenanceResponseTime",
+      "description": "Model MaintenanceResponseTime exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "MarketData",
+      "description": "Model MarketData exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "Message",
+      "description": "Model Message exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "Notification",
+      "description": "Model Notification exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "OAuthAccessToken",
+      "description": "Model OAuthAccessToken exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "OAuthConnection",
+      "description": "Model OAuthConnection exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "OnCallRotation",
+      "description": "Model OnCallRotation exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "OnCallSchedule",
+      "description": "Model OnCallSchedule exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "PasswordResetToken",
+      "description": "Model PasswordResetToken exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "Permission",
+      "description": "Model Permission exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "PhotoAnalysis",
+      "description": "Model PhotoAnalysis exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "PredictiveMaintenance",
+      "description": "Model PredictiveMaintenance exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "Rental",
+      "description": "Model Rental exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "RentalImage",
+      "description": "Model RentalImage exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "RiskAssessment",
+      "description": "Model RiskAssessment exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "Role",
+      "description": "Model Role exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "ScheduledEvent",
+      "description": "Model ScheduledEvent exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "Screening",
+      "description": "Model Screening exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "TenantIssuePrediction",
+      "description": "Model TenantIssuePrediction exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "TenantRating",
+      "description": "Model TenantRating exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "Transaction",
+      "description": "Model Transaction exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "UXReview",
+      "description": "Model UXReview exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "UXReviewAssignment",
+      "description": "Model UXReviewAssignment exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "UXReviewComment",
+      "description": "Model UXReviewComment exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "UXSurvey",
+      "description": "Model UXSurvey exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "UXSurveyAnswer",
+      "description": "Model UXSurveyAnswer exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "UXSurveyQuestion",
+      "description": "Model UXSurveyQuestion exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "UXSurveyResponse",
+      "description": "Model UXSurveyResponse exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "User",
+      "description": "Model User exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "Vendor",
+      "description": "Model Vendor exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "VendorPayment",
+      "description": "Model VendorPayment exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "VendorPerformanceRating",
+      "description": "Model VendorPerformanceRating exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "WhiteLabelConfig",
+      "description": "Model WhiteLabelConfig exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "WorkOrder",
+      "description": "Model WorkOrder exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "WorkOrderAssignment",
+      "description": "Model WorkOrderAssignment exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "WorkOrderQuote",
+      "description": "Model WorkOrderQuote exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "Visitor",
+      "description": "Model Visitor exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "Delivery",
+      "description": "Model Delivery exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "VisitorAccessLog",
+      "description": "Model VisitorAccessLog exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "DeliveryAccessLog",
+      "description": "Model DeliveryAccessLog exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "SecuritySettings",
+      "description": "Model SecuritySettings exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "BiometricAuth",
+      "description": "Model BiometricAuth exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "SSOConfig",
+      "description": "Model SSOConfig exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "ComplianceReport",
+      "description": "Model ComplianceReport exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "SecurityIncident",
+      "description": "Model SecurityIncident exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "DataRetentionPolicy",
+      "description": "Model DataRetentionPolicy exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "Session",
+      "description": "Model Session exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "IoTDevice",
+      "description": "Model IoTDevice exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "DeviceGroup",
+      "description": "Model DeviceGroup exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "DeviceEvent",
+      "description": "Model DeviceEvent exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "IoTSensor",
+      "description": "Model IoTSensor exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "SensorReading",
+      "description": "Model SensorReading exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "SensorAlert",
+      "description": "Model SensorAlert exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "AnalyticsRule",
+      "description": "Model AnalyticsRule exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "ApprovalWorkflow",
+      "description": "Model ApprovalWorkflow exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "ApprovalStep",
+      "description": "Model ApprovalStep exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "ApprovalInstance",
+      "description": "Model ApprovalInstance exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "ApprovalAction",
+      "description": "Model ApprovalAction exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "WorkflowDefinition",
+      "description": "Model WorkflowDefinition exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "WorkflowStep",
+      "description": "Model WorkflowStep exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "WorkflowInstance",
+      "description": "Model WorkflowInstance exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "WorkflowExecution",
+      "description": "Model WorkflowExecution exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "WorkflowEvent",
+      "description": "Model WorkflowEvent exists in Prisma but not in Sequelize"
+    },
+    {
+      "type": "missing_sequelize",
+      "model": "WorkflowIntegration",
+      "description": "Model WorkflowIntegration exists in Prisma but not in Sequelize"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "high",
+      "action": "create_sequelize_models",
+      "description": "Create 86 missing Sequelize models",
+      "items": [
+        "AIImageAnalysis",
+        "AIUsageLog",
+        "ApiKey",
+        "Appliance",
+        "Application",
+        "AuditEntry",
+        "BackgroundCheck",
+        "BusinessHours",
+        "Consent",
+        "CostEstimation",
+        "Device",
+        "Document",
+        "EmergencyProtocol",
+        "EmergencyRoutingRule",
+        "EscalationPolicy",
+        "EscalationPolicyRule",
+        "FollowUp",
+        "KnowledgeBaseEntry",
+        "Language",
+        "Lease",
+        "MaintenanceRequest",
+        "MaintenanceRequestCategory",
+        "MaintenanceResponseTime",
+        "MarketData",
+        "Message",
+        "Notification",
+        "OAuthAccessToken",
+        "OAuthConnection",
+        "OnCallRotation",
+        "OnCallSchedule",
+        "PasswordResetToken",
+        "Permission",
+        "PhotoAnalysis",
+        "PredictiveMaintenance",
+        "Rental",
+        "RentalImage",
+        "RiskAssessment",
+        "Role",
+        "ScheduledEvent",
+        "Screening",
+        "TenantIssuePrediction",
+        "TenantRating",
+        "Transaction",
+        "UXReview",
+        "UXReviewAssignment",
+        "UXReviewComment",
+        "UXSurvey",
+        "UXSurveyAnswer",
+        "UXSurveyQuestion",
+        "UXSurveyResponse",
+        "User",
+        "Vendor",
+        "VendorPayment",
+        "VendorPerformanceRating",
+        "WhiteLabelConfig",
+        "WorkOrder",
+        "WorkOrderAssignment",
+        "WorkOrderQuote",
+        "Visitor",
+        "Delivery",
+        "VisitorAccessLog",
+        "DeliveryAccessLog",
+        "SecuritySettings",
+        "BiometricAuth",
+        "SSOConfig",
+        "ComplianceReport",
+        "SecurityIncident",
+        "DataRetentionPolicy",
+        "Session",
+        "IoTDevice",
+        "DeviceGroup",
+        "DeviceEvent",
+        "IoTSensor",
+        "SensorReading",
+        "SensorAlert",
+        "AnalyticsRule",
+        "ApprovalWorkflow",
+        "ApprovalStep",
+        "ApprovalInstance",
+        "ApprovalAction",
+        "WorkflowDefinition",
+        "WorkflowStep",
+        "WorkflowInstance",
+        "WorkflowExecution",
+        "WorkflowEvent",
+        "WorkflowIntegration"
+      ]
+    },
+    {
+      "priority": "low",
+      "action": "migration_order",
+      "description": "Suggested migration order: User, Property, Rental, then supporting models",
+      "items": [
+        "User",
+        "Property",
+        "Rental",
+        "Lease",
+        "Transaction",
+        "MaintenanceRequest"
+      ]
+    }
+  ]
+}

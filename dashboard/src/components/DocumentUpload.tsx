@@ -440,3 +440,9 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
 };
 
 export default DocumentUpload;
+    </Dialog>
+    </LocalizationProvider>
+  );
+};
+
+export default DocumentUpload;

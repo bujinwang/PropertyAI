@@ -8,18 +8,18 @@ import reportWebVitals from './reportWebVitals';
 import { config, isProduction } from './config/environment';
 import { reportPerformance } from './utils/monitoring';
 
-// Service worker disabled for development debugging
-// if (isProduction && 'serviceWorker' in navigator) {
-//   window.addEventListener('load', () => {
-//     navigator.serviceWorker.register('/service-worker.js')
-//       .then((registration) => {
-//         console.log('SW registered: ', registration);
-//       })
-//       .catch((registrationError) => {
-//         console.log('SW registration failed: ', registrationError);
-//       });
-//   });
-// }
+// Service worker registration for mobile optimization
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then((registration) => {
+        console.log('SW registered: ', registration);
+      })
+      .catch((registrationError) => {
+        console.log('SW registration failed: ', registrationError);
+      });
+  });
+}
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement

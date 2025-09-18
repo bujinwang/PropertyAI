@@ -66,12 +66,18 @@ PropertyFlow AI follows a **microservices architecture** with three main applica
 ### Backend Technologies
 - **Runtime**: Node.js 20.x with TypeScript
 - **Framework**: Express.js with middleware ecosystem
-- **ORM**: Prisma for PostgreSQL, Mongoose for MongoDB
+- **ORM**: Prisma for PostgreSQL (Primary), Mongoose for MongoDB
 - **Authentication**: JWT tokens with refresh token rotation
 - **Validation**: Express-validator and Joi for input validation
 - **Security**: Helmet, CORS, rate limiting, and input sanitization
 - **Queue Processing**: BullMQ with Redis backend
 - **API Documentation**: OpenAPI 3.0 with Swagger UI
+
+### Backend Architecture (Post-Refactoring)
+- **Primary Backend**: `backend/` directory using Prisma ORM
+- **Legacy Backend**: `_src_legacy/` directory (Sequelize-based, archived)
+- **Migration Status**: Completed migration from Sequelize to Prisma
+- **Database**: PostgreSQL with comprehensive Prisma schema
 
 ### Frontend Technologies
 - **Dashboard**: React 18.2 + TypeScript + Vite

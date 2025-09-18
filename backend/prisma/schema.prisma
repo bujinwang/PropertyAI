@@ -475,6 +475,41 @@ model PredictiveMaintenance {
   @@index([rentalId])
 }
 
+model AlertGroup {
+  id         String        @id @default(cuid())
+  groupType  AlertGroupType
+  priority   AlertPriority
+  propertyId String
+  alertCount Int           @default(0)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  // Relations
+  property   Rental        @relation(fields: [propertyId], references: [id])
+
+  @@unique([groupType, priority, propertyId])
+  @@index([propertyId])
+}
+
+model UserTemplate {
+  id           String   @id @default(cuid())
+  userId       String
+  templateName String
+  layout       Json
+  role         String
+  isShared     Boolean  @default(false)
+  sharedWith   Json     @default("[]")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  user         User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, templateName])
+  @@index([role])
+  @@index([isShared])
+}
+
 model Rental {
   id                 String        @id @default(cuid())
   title              String
@@ -537,6 +572,9 @@ model Rental {
   IoTDevices       IoTDevice[]
   DeviceGroups     DeviceGroup[]
   AnalyticsRules   AnalyticsRule[]
+
+  // Alert Groups for Epic 23
+  AlertGroups      AlertGroup[]
 
   @@index([city])
   @@index([state])
@@ -862,6 +900,9 @@ model User {
   SecurityIncident                         SecurityIncident[]        @relation("SecurityIncidentUser")
   SecurityIncidentResolved                 SecurityIncident[]        @relation("SecurityIncidentResolvedBy")
   Session                                  Session[]
+
+  // User Templates for Epic 23
+  UserTemplates                            UserTemplate[]
 
   @@index([email])
   @@index([isActive])
@@ -1541,6 +1582,19 @@ enum AlertType {
   OTHER
 }
 
+enum AlertGroupType {
+  MAINTENANCE
+  CHURN
+  MARKET
+}
+
+enum AlertPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
 model IoTDevice {
   id            String      @id @default(cuid())
   name          String
@@ -1930,4 +1984,3 @@ model WorkflowIntegration {
   @@index([type])
   @@index([isActive])
 }
-

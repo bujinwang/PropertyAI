@@ -1,7 +1,22 @@
 const paymentService = require('../src/services/paymentService');
 const nock = require('nock');
 const stripe = require('stripe')('sk_test_mock');
-const Tenant = require('../src/models/Tenant'); // Mock if needed
+
+// Mock Prisma client
+jest.mock('../src/config/database', () => ({
+  prisma: {
+    tenant: {
+      findUnique: jest.fn(),
+      update: jest.fn(),
+    },
+    payment: {
+      create: jest.fn(),
+      findMany: jest.fn(),
+    },
+  },
+}));
+
+const { prisma } = require('../src/config/database');
 
 describe('Payment Service', () => {
   beforeEach(() => {
@@ -15,14 +30,25 @@ describe('Payment Service', () => {
         .post('/v1/payment_methods')
         .reply(200, mockMethod);
 
-      const tenant = { id: 't_123', paymentMethods: { cards: [] }, save: jest.fn() };
-      Tenant.findByPk = jest.fn().mockResolvedValue(tenant);
+      const tenant = {
+        id: 't_123',
+        paymentMethods: { cards: [] }
+      };
+      prisma.tenant.findUnique.mockResolvedValue(tenant);
+      prisma.tenant.update.mockResolvedValue({
+        ...tenant,
+        paymentMethods: { cards: ['pm_123'] }
+      });
 
       const result = await paymentService.setupPaymentMethod('card', { token: 'tok_456' }, 't_123');
 
       expect(result).toEqual({ success: true, methodId: 'pm_123' });
-      expect(tenant.paymentMethods.cards).toContain('pm_123');
-      expect(tenant.save).toHaveBeenCalled();
+      expect(prisma.tenant.update).toHaveBeenCalledWith({
+        where: { id: 't_123' },
+        data: {
+          paymentMethods: { cards: ['pm_123'] }
+        }
+      });
     });
 
     it('should create ACH payment method and update tenant', async () => {
@@ -31,14 +57,25 @@ describe('Payment Service', () => {
         .post('/v1/payment_methods')
         .reply(200, mockMethod);
 
-      const tenant = { id: 't_123', paymentMethods: { ach: null }, save: jest.fn() };
-      Tenant.findByPk = jest.fn().mockResolvedValue(tenant);
+      const tenant = {
+        id: 't_123',
+        paymentMethods: { ach: null }
+      };
+      prisma.tenant.findUnique.mockResolvedValue(tenant);
+      prisma.tenant.update.mockResolvedValue({
+        ...tenant,
+        paymentMethods: { ach: 'pm_789' }
+      });
 
       const result = await paymentService.setupPaymentMethod('ach', { routingNumber: '110000000', accountNumber: '000123456789' }, 't_123');
 
       expect(result).toEqual({ success: true, methodId: 'pm_789' });
-      expect(tenant.paymentMethods.ach).toBe('pm_789');
-      expect(tenant.save).toHaveBeenCalled();
+      expect(prisma.tenant.update).toHaveBeenCalledWith({
+        where: { id: 't_123' },
+        data: {
+          paymentMethods: { ach: 'pm_789' }
+        }
+      });
     });
 
     it('should handle invalid type error', async () => {
@@ -51,13 +88,13 @@ describe('Payment Service', () => {
         .reply(400, {}, { error: { type: 'StripeCardError', message: 'Card declined' } });
 
       const tenant = { id: 't_123' };
-      Tenant.findByPk = jest.fn().mockResolvedValue(tenant);
+      prisma.tenant.findUnique.mockResolvedValue(tenant);
 
       await expect(paymentService.setupPaymentMethod('card', { token: 'tok_bad' }, 't_123')).rejects.toThrow('Payment setup failed: Card declined');
     });
 
     it('should handle tenant not found', async () => {
-      Tenant.findByPk = jest.fn().mockResolvedValue(null);
+      prisma.tenant.findUnique.mockResolvedValue(null);
 
       await expect(paymentService.setupPaymentMethod('card', { token: 'tok_456' }, 't_unknown')).rejects.toThrow('Tenant not found');
     });
@@ -68,8 +105,15 @@ describe('Payment Service', () => {
         .post('/v1/payment_methods')
         .reply(200, mockMethod);
 
-      const tenant = { id: 't_log', paymentMethods: { cards: [] }, save: jest.fn() };
-      Tenant.findByPk = jest.fn().mockResolvedValue(tenant);
+      const tenant = {
+        id: 't_log',
+        paymentMethods: { cards: [] }
+      };
+      prisma.tenant.findUnique.mockResolvedValue(tenant);
+      prisma.tenant.update.mockResolvedValue({
+        ...tenant,
+        paymentMethods: { cards: ['pm_log'] }
+      });
 
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
 

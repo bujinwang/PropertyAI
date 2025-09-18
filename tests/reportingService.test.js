@@ -1,24 +1,34 @@
 const { reportingService } = require('../src/services/reportingService');
-const ReportAuditLog = require('../src/models/ReportAuditLog');
-const ReportVersion = require('../src/models/ReportVersion');
-const ComplianceCheck = require('../src/models/ComplianceCheck');
-const GeneratedReport = require('../src/models/GeneratedReport');
-const ReportTemplate = require('../src/models/ReportTemplate');
+
+// Mock Prisma client
+jest.mock('../src/config/database', () => ({
+  prisma: {
+    reportTemplate: {
+      findUnique: jest.fn(),
+    },
+    generatedReport: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+    },
+    reportAuditLog: {
+      create: jest.fn(),
+    },
+    complianceCheck: {
+      create: jest.fn(),
+    },
+  },
+}));
 
 // Mock dependencies
 jest.mock('../src/services/auditService');
-jest.mock('../src/models/ReportAuditLog');
-jest.mock('../src/models/ReportVersion');
-jest.mock('../src/models/ComplianceCheck');
-jest.mock('../src/models/GeneratedReport');
-jest.mock('../src/models/ReportTemplate');
-
-// Mock AI service for insight generation
 jest.mock('../src/services/aiService', () => ({
   generateInsights: jest.fn(),
   analyzeData: jest.fn(),
   createSummary: jest.fn()
 }));
+
+const { prisma } = require('../src/config/database');
+const mockAIService = require('../src/services/aiService');
 
 describe('ReportingService - AI Enhanced', () => {
   beforeEach(() => {
@@ -65,13 +75,12 @@ describe('ReportingService - AI Enhanced', () => {
         ]
       };
 
-      const mockAIService = require('../src/services/aiService');
       mockAIService.generateInsights.mockResolvedValue(mockAIInsights);
       mockAIService.analyzeData.mockResolvedValue({ trends: [], anomalies: [] });
       mockAIService.createSummary.mockResolvedValue(mockAIInsights.summary);
 
-      ReportTemplate.findByPk.mockResolvedValue(mockTemplate);
-      GeneratedReport.create.mockResolvedValue({
+      prisma.reportTemplate.findUnique.mockResolvedValue(mockTemplate);
+      prisma.generatedReport.create.mockResolvedValue({
         id: 'report-1',
         templateId: 'template-1',
         status: 'generated',
@@ -105,11 +114,10 @@ describe('ReportingService - AI Enhanced', () => {
         sections: [{ type: 'insights', dataSource: 'ai', visualization: 'text' }]
       };
 
-      const mockAIService = require('../src/services/aiService');
       mockAIService.generateInsights.mockRejectedValue(new Error('AI service unavailable'));
 
-      ReportTemplate.findByPk.mockResolvedValue(mockTemplate);
-      GeneratedReport.create.mockResolvedValue({
+      prisma.reportTemplate.findUnique.mockResolvedValue(mockTemplate);
+      prisma.generatedReport.create.mockResolvedValue({
         id: 'report-1',
         templateId: 'template-1',
         status: 'generated',
@@ -154,11 +162,10 @@ describe('ReportingService - AI Enhanced', () => {
         recommendations: []
       };
 
-      const mockAIService = require('../src/services/aiService');
       mockAIService.generateInsights.mockResolvedValue(mockAIInsights);
 
-      ReportTemplate.findByPk.mockResolvedValue(mockTemplate);
-      GeneratedReport.create.mockResolvedValue({
+      prisma.reportTemplate.findUnique.mockResolvedValue(mockTemplate);
+      prisma.generatedReport.create.mockResolvedValue({
         id: 'report-1',
         templateId: 'template-1',
         status: 'generated',
@@ -213,8 +220,8 @@ describe('ReportingService - AI Enhanced', () => {
         getChurnPredictions: jest.fn().mockResolvedValue(mockPredictiveData)
       }));
 
-      ReportTemplate.findByPk.mockResolvedValue(mockTemplate);
-      GeneratedReport.create.mockResolvedValue({
+      prisma.reportTemplate.findUnique.mockResolvedValue(mockTemplate);
+      prisma.generatedReport.create.mockResolvedValue({
         id: 'report-1',
         templateId: 'template-1',
         status: 'generated',
@@ -271,8 +278,8 @@ describe('ReportingService - AI Enhanced', () => {
         getMaintenanceForecasts: jest.fn().mockResolvedValue(mockMaintenanceData)
       }));
 
-      ReportTemplate.findByPk.mockResolvedValue(mockTemplate);
-      GeneratedReport.create.mockResolvedValue({
+      prisma.reportTemplate.findUnique.mockResolvedValue(mockTemplate);
+      prisma.generatedReport.create.mockResolvedValue({
         id: 'report-1',
         templateId: 'template-1',
         status: 'generated',
@@ -320,7 +327,7 @@ describe('ReportingService - AI Enhanced', () => {
         sendReportEmail: jest.fn().mockResolvedValue({ success: true, messageId: 'msg-123' })
       }));
 
-      GeneratedReport.findByPk.mockResolvedValue(mockReport);
+      prisma.generatedReport.findUnique.mockResolvedValue(mockReport);
 
       const result = await reportingService.sendReportEmail('report-1', mockEmailData);
 
@@ -364,7 +371,7 @@ describe('ReportingService - AI Enhanced', () => {
         dataSensitivity: 'internal'
       };
 
-      ReportAuditLog.create.mockResolvedValue(mockAuditEntry);
+      prisma.reportAuditLog.create.mockResolvedValue(mockAuditEntry);
 
       const auditData = {
         action: 'ai_insight_generated',
@@ -381,7 +388,7 @@ describe('ReportingService - AI Enhanced', () => {
 
       const result = await reportingService.createAuditEntry(auditData);
 
-      expect(ReportAuditLog.create).toHaveBeenCalledWith(
+      expect(prisma.reportAuditLog.create).toHaveBeenCalledWith(
         expect.objectContaining({
           action: 'ai_insight_generated',
           resourceType: 'report',
@@ -412,7 +419,7 @@ describe('ReportingService - AI Enhanced', () => {
         dataSensitivity: 'confidential'
       };
 
-      ReportAuditLog.create.mockResolvedValue(mockAuditEntry);
+      prisma.reportAuditLog.create.mockResolvedValue(mockAuditEntry);
 
       const auditData = {
         action: 'ai_recommendation_accepted',
@@ -455,13 +462,13 @@ describe('ReportingService - AI Enhanced', () => {
         }
       ];
 
-      ComplianceCheck.create
+      prisma.complianceCheck.create
         .mockResolvedValueOnce(mockComplianceChecks[0])
         .mockResolvedValueOnce(mockComplianceChecks[1]);
 
       const result = await reportingService.runComplianceCheck('report-1', ['gdpr', 'ai_bias']);
 
-      expect(ComplianceCheck.create).toHaveBeenCalledTimes(2);
+      expect(prisma.complianceCheck.create).toHaveBeenCalledTimes(2);
       expect(result.complianceChecks).toHaveLength(2);
       expect(result.complianceChecks[0].checkType).toBe('gdpr');
       expect(result.complianceChecks[1].checkType).toBe('ai_bias');
@@ -483,7 +490,7 @@ describe('ReportingService - AI Enhanced', () => {
         violations: ['ai_bias_detected']
       };
 
-      ComplianceCheck.create.mockResolvedValue(mockComplianceCheck);
+      prisma.complianceCheck.create.mockResolvedValue(mockComplianceCheck);
 
       const result = await reportingService.runComplianceCheck('report-1', ['ai_bias']);
 

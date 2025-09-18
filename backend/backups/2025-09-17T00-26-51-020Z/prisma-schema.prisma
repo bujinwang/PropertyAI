@@ -1,0 +1,1933 @@
+// This is the updated schema file that should replace the current schema.prisma
+// after the migration is complete
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AIImageAnalysis {
+  id             String   @id @default(cuid())
+  analysisResult Json?
+  createdAt      DateTime @default(now())
+  imageId        String   @unique
+  updatedAt      DateTime @updatedAt
+}
+
+model AIUsageLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  toolName  String
+  input     Json?
+  output    Json?
+  cost      Float?
+  timestamp DateTime @default(now())
+  User      User?    @relation(fields: [userId], references: [id])
+
+  @@index([toolName])
+  @@index([userId])
+}
+
+model ApiKey {
+  id        String    @id @default(cuid())
+  key       String    @unique
+  userId    String
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  isActive  Boolean   @default(true)
+  name      String?
+  User      User      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model Appliance {
+  id        String   @id @default(cuid())
+  rentalId  String
+  name      String
+  createdAt DateTime @default(now())
+  type      String
+  updatedAt DateTime @updatedAt
+  Rental    Rental   @relation(fields: [rentalId], references: [id])
+
+  @@index([rentalId])
+}
+
+model Application {
+  id              String            @id @default(cuid())
+  rentalId        String
+  applicantId     String
+  status          ApplicationStatus @default(PENDING)
+  notes           String?
+  appliedDate     DateTime          @default(now())
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime @updatedAt
+  User            User              @relation(fields: [applicantId], references: [id])
+  Rental          Rental            @relation(fields: [rentalId], references: [id])
+  BackgroundCheck BackgroundCheck?
+  RiskAssessment  RiskAssessment?
+  Screening       Screening?
+
+  @@unique([rentalId, applicantId])
+  @@index([status])
+}
+
+model AuditEntry {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  timestamp  DateTime @default(now())
+  details    Json?
+  entityId   String
+  entityType String
+  ipAddress  String?
+  userAgent  String?
+  sessionId  String?
+  complianceType ComplianceType?
+  severity   AuditSeverity @default(INFO)
+  User       User?    @relation(fields: [userId], references: [id])
+
+  @@index([entityId])
+  @@index([entityType])
+  @@index([userId])
+  @@index([timestamp])
+  @@index([complianceType])
+  @@index([severity])
+}
+
+model BackgroundCheck {
+  id          String      @id @default(cuid())
+  status      String
+  reportUrl   String?
+  applicantId String      @unique
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime @updatedAt
+  Application Application @relation(fields: [applicantId], references: [id])
+
+  @@index([applicantId])
+}
+
+model BusinessHours {
+  id        String   @id @default(cuid())
+  rentalId  String
+  openTime  String
+  closeTime String
+  createdAt DateTime @default(now())
+  isClosed  Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+  dayOfWeek Int
+  Rental    Rental   @relation(fields: [rentalId], references: [id])
+
+  @@unique([rentalId, dayOfWeek])
+}
+
+model Consent {
+  id        String   @id @default(cuid())
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  agreedAt  DateTime @default(now())
+  type      String
+  User      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, type])
+  @@index([userId])
+}
+
+model CostEstimation {
+  id            String    @id @default(cuid())
+  workOrderId   String    @unique
+  estimatedCost Float
+  createdAt     DateTime  @default(now())
+  details       String?
+  updatedAt     DateTime @updatedAt
+  WorkOrder     WorkOrder @relation(fields: [workOrderId], references: [id])
+}
+
+model Device {
+  id         String   @id @default(cuid())
+  userId     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deviceType String
+  lastLogin  DateTime @default(now())
+  model      String?
+  os         String?
+  pushToken  String?
+  User       User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model Document {
+  id                   String              @id @default(cuid())
+  name                 String
+  type                 DocumentType
+  url                  String
+  uploadedAt           DateTime            @default(now())
+  updatedAt            DateTime @updatedAt
+  description          String?
+  rentalId             String?
+  leaseId              String?
+  uploadedById         String
+  maintenanceRequestId String?
+  size                 Int?
+  mimeType             String?
+  isArchived           Boolean             @default(false)
+  cdnUrl               String?
+  key                  String?
+  thumbnailCdnUrl      String?
+  thumbnailUrl         String?
+  Lease                Lease?              @relation(fields: [leaseId], references: [id])
+  MaintenanceRequest   MaintenanceRequest? @relation(fields: [maintenanceRequestId], references: [id])
+  Rental               Rental?             @relation(fields: [rentalId], references: [id])
+  User                 User                @relation(fields: [uploadedById], references: [id])
+}
+
+model EmergencyProtocol {
+  id           String   @id @default(cuid())
+  rentalId     String
+  description  String
+  name         String
+  createdAt    DateTime @default(now())
+  instructions Json?
+  updatedAt    DateTime @updatedAt
+  Rental       Rental   @relation(fields: [rentalId], references: [id])
+}
+
+model EmergencyRoutingRule {
+  id        String   @id @default(cuid())
+  vendorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  priority  Priority @unique
+  Vendor    Vendor   @relation(fields: [vendorId], references: [id])
+
+  @@index([vendorId])
+}
+
+model EscalationPolicy {
+  id                   String                 @id @default(cuid())
+  name                 String
+  description          String?
+  rentalId             String
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime @updatedAt
+  Rental               Rental                 @relation(fields: [rentalId], references: [id])
+  EscalationPolicyRule EscalationPolicyRule[]
+}
+
+model EscalationPolicyRule {
+  id               String           @id @default(cuid())
+  policyId         String
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime @updatedAt
+  order            Int
+  action           String
+  assignedToUserId String?
+  threshold        String
+  User             User?            @relation(fields: [assignedToUserId], references: [id])
+  EscalationPolicy EscalationPolicy @relation(fields: [policyId], references: [id])
+
+  @@unique([policyId, order])
+}
+
+model FollowUp {
+  id         String   @id @default(cuid())
+  messageId  String   @unique
+  status     String
+  followUpAt DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  Message    Message  @relation(fields: [messageId], references: [id])
+}
+
+model KnowledgeBaseEntry {
+  id        String   @id @default(cuid())
+  category  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  answer    String
+  question  String
+  keywords  String[]
+
+  @@index([category])
+}
+
+model Language {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Lease {
+  id              String         @id @default(cuid())
+  startDate       DateTime
+  endDate         DateTime
+  rentAmount      Float
+  securityDeposit Float
+  leaseTerms      String?
+  status          LeaseStatus    @default(ACTIVE)
+  signedDate      DateTime       @default(now())
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime @updatedAt
+  rentalId        String         @unique
+  renewalDate     DateTime?
+  tenantId        String
+  Document        Document[]
+  Rental          Rental         @relation(fields: [rentalId], references: [id])
+  User            User           @relation(fields: [tenantId], references: [id])
+  TenantRating    TenantRating[]
+  Transaction     Transaction[]
+}
+
+model MaintenanceRequest {
+  id                         String                      @id @default(cuid())
+  title                      String
+  description                String
+  status                     MaintenanceStatus           @default(OPEN)
+  priority                   Priority                    @default(MEDIUM)
+  createdAt                  DateTime                    @default(now())
+  updatedAt                  DateTime @updatedAt
+  scheduledDate              DateTime?
+  completedDate              DateTime?
+  notes                      String?
+  rentalId                   String
+  requestedById              String
+  estimatedCost              Float?
+  actualCost                 Float?
+  categoryId                 String?
+  Document                   Document[]
+  MaintenanceRequestCategory MaintenanceRequestCategory? @relation(fields: [categoryId], references: [id])
+  Rental                     Rental                      @relation(fields: [rentalId], references: [id])
+  User                       User                        @relation(fields: [requestedById], references: [id])
+  MaintenanceResponseTime    MaintenanceResponseTime?
+  Message                    Message[]
+  PhotoAnalysis              PhotoAnalysis?
+  WorkOrder                  WorkOrder?
+
+  @@index([priority])
+  @@index([rentalId])
+  @@index([status])
+}
+
+model MaintenanceRequestCategory {
+  id                 String               @id @default(cuid())
+  name               String               @unique
+  description        String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime @updatedAt
+  MaintenanceRequest MaintenanceRequest[]
+}
+
+model MaintenanceResponseTime {
+  id                   String             @id @default(cuid())
+  maintenanceRequestId String             @unique
+  createdAt            DateTime           @default(now())
+  responseTime         Int
+  updatedAt            DateTime @updatedAt
+  MaintenanceRequest   MaintenanceRequest @relation(fields: [maintenanceRequestId], references: [id])
+}
+
+model MarketData {
+  id           String        @id @default(cuid())
+  averageRent  Float
+  location     String
+  vacancyRate  Float
+  bedrooms     Int?
+  dataDate     DateTime      @default(now())
+  propertyType PropertyType?
+
+  @@unique([location, dataDate, propertyType, bedrooms])
+  @@index([dataDate])
+  @@index([location])
+}
+
+model Message {
+  id                            String              @id @default(cuid())
+  content                       String
+  senderId                      String
+  maintenanceRequestId          String?
+  conversationId                String?
+  readAt                        DateTime?
+  receiverId                    String
+  sentAt                        DateTime            @default(now())
+  sentiment                     Sentiment?          @default(NEUTRAL)
+  sentimentScore                Float?              // -1.0 to 1.0 sentiment score
+  category                      String?             // Issue category for analytics
+  isEarlyWarning                Boolean             @default(false)
+  FollowUp                      FollowUp?
+  MaintenanceRequest            MaintenanceRequest? @relation(fields: [maintenanceRequestId], references: [id])
+  User_Message_receiverIdToUser User                @relation("Message_receiverIdToUser", fields: [receiverId], references: [id])
+  User_Message_senderIdToUser   User                @relation("Message_senderIdToUser", fields: [senderId], references: [id])
+
+  @@index([conversationId])
+  @@index([receiverId])
+  @@index([senderId])
+  @@index([sentiment])
+  @@index([category])
+  @@index([isEarlyWarning])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  userId    String
+  link      String?
+  type      String
+  User      User     @relation(fields: [userId], references: [id])
+
+  @@index([isRead])
+  @@index([userId])
+}
+
+model OAuthAccessToken {
+  id          String   @id @default(cuid())
+  accessToken String   @unique
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  userId      String
+  User        User     @relation(fields: [userId], references: [id])
+}
+
+model OAuthConnection {
+  id           String    @id @default(cuid())
+  accessToken  String
+  refreshToken String?
+  userId       String
+  providerId   String
+  provider     String
+  createdAt    DateTime  @default(now())
+  expiresAt    DateTime?
+  updatedAt    DateTime @updatedAt
+  User         User      @relation(fields: [userId], references: [id])
+
+  @@unique([provider, providerId])
+  @@index([userId])
+}
+
+model OnCallRotation {
+  id             String         @id @default(cuid())
+  scheduleId     String
+  userId         String
+  startDate      DateTime
+  endDate        DateTime
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime @updatedAt
+  OnCallSchedule OnCallSchedule @relation(fields: [scheduleId], references: [id])
+  User           User           @relation(fields: [userId], references: [id])
+}
+
+model OnCallSchedule {
+  id             String           @id @default(cuid())
+  name           String
+  description    String?
+  rentalId       String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime @updatedAt
+  OnCallRotation OnCallRotation[]
+  Rental         Rental           @relation(fields: [rentalId], references: [id])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id])
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  description String?
+  Role        Role[]
+}
+
+model PhotoAnalysis {
+  id                   String             @id @default(cuid())
+  maintenanceRequestId String             @unique
+  analysisResult       Json?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime @updatedAt
+  MaintenanceRequest   MaintenanceRequest @relation(fields: [maintenanceRequestId], references: [id])
+}
+
+model PredictiveMaintenance {
+  id         String   @id @default(cuid())
+  rentalId   String
+  createdAt  DateTime @default(now())
+  prediction Json?
+  updatedAt  DateTime @updatedAt
+  Rental     Rental   @relation(fields: [rentalId], references: [id])
+
+  @@index([rentalId])
+}
+
+model Rental {
+  id                 String        @id @default(cuid())
+  title              String
+  description        String?
+  address            String
+  city               String
+  state              String
+  zipCode            String
+  country            String        @default("USA")
+  latitude           Float?
+  longitude          Float?
+  propertyType       PropertyType
+  yearBuilt          Int?
+  totalUnits         Int           @default(1)
+  amenities          Json?
+  unitNumber         String?
+  floorNumber        Int?
+  size               Float?
+  bedrooms           Int?
+  bathrooms          Float?
+  rent               Float
+  deposit            Float?
+  availableDate      DateTime?
+  isAvailable        Boolean       @default(true)
+  leaseTerms         String?
+  slug               String        @unique
+  viewCount          Int           @default(0)
+  isActive           Boolean       @default(true)
+  status             ListingStatus @default(ACTIVE)
+  managerId          String
+  ownerId            String
+  createdById        String
+  whiteLabelConfigId String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  // Relations
+  Appliances             Appliance[]
+  Applications           Application[]
+  BusinessHours          BusinessHours[]
+  Deliveries             Delivery[]
+  Documents              Document[]
+  EmergencyProtocols     EmergencyProtocol[]
+  EscalationPolicies     EscalationPolicy[]
+  Leases                 Lease[]
+  MaintenanceRequests    MaintenanceRequest[]
+  OnCallSchedules        OnCallSchedule[]
+  PredictiveMaintenances PredictiveMaintenance[]
+  RentalImages           RentalImage[]
+  Visitors               Visitor[]
+  WhiteLabelConfigs      WhiteLabelConfig[]      @relation("RentalWhiteLabelConfigs")
+
+  // Relations to User
+  Manager          User              @relation("RentalManager", fields: [managerId], references: [id])
+  Owner            User              @relation("RentalOwner", fields: [ownerId], references: [id])
+  CreatedBy        User              @relation("RentalCreatedBy", fields: [createdById], references: [id])
+  WhiteLabelConfig WhiteLabelConfig? @relation(fields: [whiteLabelConfigId], references: [id])
+
+  // IoT Relations for Epic 15
+  IoTDevices       IoTDevice[]
+  DeviceGroups     DeviceGroup[]
+  AnalyticsRules   AnalyticsRule[]
+
+  @@index([city])
+  @@index([state])
+  @@index([zipCode])
+  @@index([propertyType])
+  @@index([rent])
+  @@index([isAvailable])
+  @@index([status])
+  @@index([managerId])
+  @@index([ownerId])
+}
+
+model RentalImage {
+  id               Int      @id @default(autoincrement())
+  rentalId         String
+  filename         String
+  originalFilename String
+  mimetype         String
+  size             Int
+  url              String
+  cdnUrl           String?
+  isFeatured       Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  Rental Rental @relation(fields: [rentalId], references: [id])
+
+  @@index([rentalId])
+  @@index([isFeatured])
+}
+
+model RiskAssessment {
+  id            String      @id @default(cuid())
+  applicationId String      @unique
+  score         Float
+  details       Json?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime @updatedAt
+  Application   Application @relation(fields: [applicationId], references: [id])
+
+  @@index([applicationId])
+}
+
+model Role {
+  id         String       @id @default(cuid())
+  name       String       @unique
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime @updatedAt
+  Permission Permission[]
+  User       User[]
+}
+
+model ScheduledEvent {
+  id          String    @id @default(cuid())
+  workOrderId String    @unique
+  startTime   DateTime
+  endTime     DateTime
+  description String?
+  title       String
+  createdAt   DateTime  @default(now())
+  location    String?
+  updatedAt   DateTime @updatedAt
+  WorkOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+}
+
+model Screening {
+  id            String      @id @default(cuid())
+  applicationId String      @unique
+  createdAt     DateTime    @default(now())
+  reportUrl     String?
+  status        String
+  updatedAt     DateTime @updatedAt
+  Application   Application @relation(fields: [applicationId], references: [id])
+
+  @@index([applicationId])
+}
+
+model TenantIssuePrediction {
+  id          String    @id @default(cuid())
+  tenantId    String
+  predictedAt DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  issueType   String
+  likelihood  Float
+  resolvedAt  DateTime?
+  updatedAt   DateTime @updatedAt
+  User        User      @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+}
+
+model TenantRating {
+  id                               String   @id @default(cuid())
+  leaseId                          String
+  tenantId                         String
+  raterId                          String
+  rating                           Int
+  categories                       Json?
+  overallRating                    Decimal?
+  tags                             String[]
+  attachments                      String[]
+  comment                          String?
+  createdAt                        DateTime @default(now())
+  updatedAt                        DateTime @updatedAt
+  Lease                            Lease    @relation(fields: [leaseId], references: [id])
+  User_TenantRating_raterIdToUser  User     @relation("TenantRating_raterIdToUser", fields: [raterId], references: [id])
+  User_TenantRating_tenantIdToUser User     @relation("TenantRating_tenantIdToUser", fields: [tenantId], references: [id])
+
+  @@index([leaseId])
+  @@index([raterId])
+  @@index([tenantId])
+  @@index([overallRating])
+}
+
+model Transaction {
+  id              String            @id @default(cuid())
+  amount          Float
+  type            TransactionType
+  status          TransactionStatus @default(PENDING)
+  description     String?
+  createdAt       DateTime          @default(now())
+  leaseId         String
+  approvedById    String?
+  transactionDate DateTime          @default(now())
+  updatedAt       DateTime @updatedAt
+  User            User?             @relation(fields: [approvedById], references: [id])
+  Lease           Lease             @relation(fields: [leaseId], references: [id])
+
+  @@index([leaseId])
+  @@index([status])
+  @@index([type])
+}
+
+model UXReview {
+  id                 String               @id @default(cuid())
+  title              String
+  description        String?
+  status             UXReviewStatus       @default(PENDING)
+  priority           UXReviewPriority     @default(MEDIUM)
+  componentType      UXComponentType
+  reviewerId         String
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime @updatedAt
+  User               User                 @relation(fields: [reviewerId], references: [id])
+  UXReviewAssignment UXReviewAssignment[]
+  UXReviewComment    UXReviewComment[]
+
+  @@index([componentType])
+  @@index([priority])
+  @@index([reviewerId])
+  @@index([status])
+}
+
+model UXReviewAssignment {
+  id         String                   @id @default(cuid())
+  reviewId   String
+  assigneeId String
+  status     UXReviewAssignmentStatus @default(PENDING)
+  createdAt  DateTime                 @default(now())
+  updatedAt  DateTime @updatedAt
+  User       User                     @relation(fields: [assigneeId], references: [id])
+  UXReview   UXReview                 @relation(fields: [reviewId], references: [id])
+
+  @@index([assigneeId])
+  @@index([reviewId])
+  @@index([status])
+}
+
+model UXReviewComment {
+  id        String   @id @default(cuid())
+  reviewId  String
+  content   String
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      User     @relation(fields: [authorId], references: [id])
+  UXReview  UXReview @relation(fields: [reviewId], references: [id])
+
+  @@index([authorId])
+  @@index([reviewId])
+}
+
+model UXSurvey {
+  id               String             @id @default(cuid())
+  title            String
+  description      String?
+  status           SurveyStatus       @default(DRAFT)
+  createdById      String
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime @updatedAt
+  User             User               @relation(fields: [createdById], references: [id])
+  UXSurveyQuestion UXSurveyQuestion[]
+  UXSurveyResponse UXSurveyResponse[]
+
+  @@index([createdById])
+  @@index([status])
+}
+
+model UXSurveyAnswer {
+  id               String           @id @default(cuid())
+  responseId       String
+  questionId       String
+  value            String
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime @updatedAt
+  UXSurveyQuestion UXSurveyQuestion @relation(fields: [questionId], references: [id])
+  UXSurveyResponse UXSurveyResponse @relation(fields: [responseId], references: [id])
+
+  @@unique([responseId, questionId])
+}
+
+model UXSurveyQuestion {
+  id             String           @id @default(cuid())
+  surveyId       String
+  question       String
+  type           QuestionType
+  options        Json?
+  order          Int
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime @updatedAt
+  UXSurveyAnswer UXSurveyAnswer[]
+  UXSurvey       UXSurvey         @relation(fields: [surveyId], references: [id])
+
+  @@index([surveyId])
+}
+
+model UXSurveyResponse {
+  id             String           @id @default(cuid())
+  surveyId       String
+  respondentId   String
+  submittedAt    DateTime         @default(now())
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime @updatedAt
+  UXSurveyAnswer UXSurveyAnswer[]
+  User           User             @relation(fields: [respondentId], references: [id])
+  UXSurvey       UXSurvey         @relation(fields: [surveyId], references: [id])
+
+  @@index([respondentId])
+  @@index([surveyId])
+}
+
+model User {
+  id                                       String                    @id @default(cuid())
+  email                                    String                    @unique
+  password                                 String
+  firstName                                String
+  lastName                                 String
+  phone                                    String?
+  role                                     UserRole                  @default(TENANT)
+  createdAt                                DateTime                  @default(now())
+  updatedAt                                DateTime                  @updatedAt
+  isActive                                 Boolean                   @default(true)
+  mfaEnabled                               Boolean                   @default(false)
+  mfaSecret                                String?
+  passwordResetExpires                     DateTime?
+  passwordResetToken                       String?
+  failedLoginAttempts                      Int                       @default(0)
+  isLocked                                 Boolean                   @default(false)
+  lockedUntil                              DateTime?
+  lastLockedAt                             DateTime?
+  settings                                 Json?
+  lastLogin                                DateTime?
+  refreshToken                             String?
+  stripeCustomerId                         String?                   @unique
+  pushToken                                String?
+  // Enhanced security fields for Epic 14
+  sessionTimeout                           Int?                      @default(3600000) // 1 hour in ms
+  lastActivity                             DateTime?
+  biometricEnabled                         Boolean                   @default(false)
+  biometricPublicKey                       String?
+  biometricCredentialId                    String?
+  ssoEnabled                               Boolean                   @default(false)
+  ssoProvider                              String?
+  ssoProviderId                            String?
+  passwordLastChanged                      DateTime?
+  passwordHistory                          Json? // Array of previous password hashes
+  securitySettings                         Json? // Enhanced security preferences
+  complianceRegion                         ComplianceRegion?         @default(GDPR)
+  dataRetentionPeriod                      Int?                      @default(2555) // Days (7 years)
+  accountDeletionRequested                 Boolean                   @default(false)
+  accountDeletionRequestedAt               DateTime?
+  rentalsManaged                           Rental[]                  @relation("RentalManager")
+  rentalsOwned                             Rental[]                  @relation("RentalOwner")
+  rentalsCreated                           Rental[]                  @relation("RentalCreatedBy")
+  AIUsageLog                               AIUsageLog[]
+  ApiKey                                   ApiKey[]
+  Application                              Application[]
+  AuditEntry                               AuditEntry[]
+  Consent                                  Consent[]
+  deliveriesPickedUp                       Delivery[]                @relation("DeliveryPickedUpBy")
+  Device                                   Device[]
+  Document                                 Document[]
+  EscalationPolicyRule                     EscalationPolicyRule[]
+  Lease                                    Lease[]
+  Message_Message_receiverIdToUser         Message[]                 @relation("Message_receiverIdToUser")
+  Message_Message_senderIdToUser           Message[]                 @relation("Message_senderIdToUser")
+  Notification                             Notification[]
+  OAuthAccessToken                         OAuthAccessToken[]
+  OAuthConnection                          OAuthConnection[]
+  OnCallRotation                           OnCallRotation[]
+  PasswordResetToken                       PasswordResetToken[]
+  TenantIssuePrediction                    TenantIssuePrediction[]
+  TenantRating_TenantRating_raterIdToUser  TenantRating[]            @relation("TenantRating_raterIdToUser")
+  TenantRating_TenantRating_tenantIdToUser TenantRating[]            @relation("TenantRating_tenantIdToUser")
+  Transaction                              Transaction[]
+  UXReview                                 UXReview[]
+  UXReviewAssignment                       UXReviewAssignment[]
+  UXReviewComment                          UXReviewComment[]
+  UXSurvey                                 UXSurvey[]
+  UXSurveyResponse                         UXSurveyResponse[]
+  Vendor                                   Vendor?
+  VendorPayment                            VendorPayment[]
+  VendorPerformanceRating                  VendorPerformanceRating[]
+  visitorsApproved                         Visitor[]                 @relation("VisitorApprovedBy")
+  visitorsRequested                        Visitor[]                 @relation("VisitorRequestedBy")
+  WhiteLabelConfig                         WhiteLabelConfig[]
+  Role                                     Role[]
+  MaintenanceRequest                       MaintenanceRequest[]
+  // Enhanced security relations for Epic 14
+  SecuritySettings                         SecuritySettings?
+  BiometricAuth                            BiometricAuth[]
+  ComplianceReport                         ComplianceReport[]
+  SecurityIncident                         SecurityIncident[]        @relation("SecurityIncidentUser")
+  SecurityIncidentResolved                 SecurityIncident[]        @relation("SecurityIncidentResolvedBy")
+  Session                                  Session[]
+
+  @@index([email])
+  @@index([isActive])
+  @@index([role])
+}
+
+model Vendor {
+  id                      String                    @id @default(cuid())
+  name                    String
+  contactPersonId         String?                   @unique
+  phone                   String
+  email                   String                    @unique
+  address                 String
+  specialty               String
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime @updatedAt
+  certifications          String[]
+  hourlyRate              Float?
+  serviceAreas            String[]
+  workload                Int                       @default(0)
+  latitude                Float?
+  longitude               Float?
+  standardRate            Float?
+  availability            String
+  stripeAccountId         String?                   @unique
+  EmergencyRoutingRule    EmergencyRoutingRule[]
+  User                    User?                     @relation(fields: [contactPersonId], references: [id])
+  VendorPayment           VendorPayment[]
+  VendorPerformanceRating VendorPerformanceRating[]
+  WorkOrderAssignment     WorkOrderAssignment[]
+  WorkOrderQuote          WorkOrderQuote[]
+}
+
+model VendorPayment {
+  id            String        @id @default(cuid())
+  amount        Float
+  status        PaymentStatus @default(PENDING)
+  workOrderId   String
+  vendorId      String
+  transactionId String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime @updatedAt
+  approvedById  String?
+  paymentDate   DateTime      @default(now())
+  User          User?         @relation(fields: [approvedById], references: [id])
+  Vendor        Vendor        @relation(fields: [vendorId], references: [id])
+  WorkOrder     WorkOrder     @relation(fields: [workOrderId], references: [id])
+
+  @@index([status])
+  @@index([vendorId])
+  @@index([workOrderId])
+}
+
+model VendorPerformanceRating {
+  id          String    @id @default(cuid())
+  vendorId    String
+  workOrderId String
+  ratedById   String
+  comment     String?
+  createdAt   DateTime  @default(now())
+  rating      Int
+  updatedAt   DateTime @updatedAt
+  User        User      @relation(fields: [ratedById], references: [id])
+  Vendor      Vendor    @relation(fields: [vendorId], references: [id])
+  WorkOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+
+  @@unique([vendorId, workOrderId])
+  @@index([ratedById])
+  @@index([vendorId])
+}
+
+model WhiteLabelConfig {
+  id             String   @id @default(cuid())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  platform       String
+  token          String   @unique
+  userId         String
+  appName        String?
+  logoUrl        String?
+  primaryColor   String?
+  secondaryColor String?
+  rentals        Rental[] @relation("RentalWhiteLabelConfigs")
+  User           User     @relation(fields: [userId], references: [id])
+  Rental         Rental[]
+
+  @@index([userId])
+}
+
+model WorkOrder {
+  id                      String                    @id @default(cuid())
+  title                   String
+  description             String
+  status                  WorkOrderStatus           @default(OPEN)
+  priority                Priority
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime @updatedAt
+  completedAt             DateTime?
+  maintenanceRequestId    String                    @unique
+  CostEstimation          CostEstimation?
+  ScheduledEvent          ScheduledEvent?
+  VendorPayment           VendorPayment[]
+  VendorPerformanceRating VendorPerformanceRating[]
+  MaintenanceRequest      MaintenanceRequest        @relation(fields: [maintenanceRequestId], references: [id])
+  WorkOrderAssignment     WorkOrderAssignment[]
+  WorkOrderQuote          WorkOrderQuote[]
+}
+
+model WorkOrderAssignment {
+  id          String    @id @default(cuid())
+  workOrderId String
+  vendorId    String
+  assignedAt  DateTime  @default(now())
+  notes       String?
+  Vendor      Vendor    @relation(fields: [vendorId], references: [id])
+  WorkOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+}
+
+model WorkOrderQuote {
+  id          String      @id @default(cuid())
+  workOrderId String
+  vendorId    String
+  amount      Float
+  details     String?
+  status      QuoteStatus @default(PENDING)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime @updatedAt
+  Vendor      Vendor      @relation(fields: [vendorId], references: [id])
+  WorkOrder   WorkOrder   @relation(fields: [workOrderId], references: [id])
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+enum DocumentType {
+  LEASE
+  INVOICE
+  RECEIPT
+  MAINTENANCE_REPORT
+  PROPERTY_PHOTO
+  CONTRACT
+  OTHER
+}
+
+enum LeaseStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  TERMINATED
+}
+
+enum ListingStatus {
+  ACTIVE
+  PENDING
+  DRAFT
+  ARCHIVED
+}
+
+enum MaintenanceStatus {
+  OPEN
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  EMERGENCY
+}
+
+enum PropertyType {
+  APARTMENT
+  HOUSE
+  CONDO
+  TOWNHOUSE
+  COMMERCIAL
+  INDUSTRIAL
+  OTHER
+}
+
+enum QuestionType {
+  TEXT
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  RATING
+}
+
+enum QuoteStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum Sentiment {
+  POSITIVE
+  NEGATIVE
+  NEUTRAL
+}
+
+enum SurveyStatus {
+  DRAFT
+  ACTIVE
+  CLOSED
+  ARCHIVED
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum TransactionType {
+  RENT_PAYMENT
+  SECURITY_DEPOSIT
+  MAINTENANCE_FEE
+  REFUND
+  OTHER
+}
+
+enum UXComponentType {
+  DASHBOARD
+  PROPERTY_PAGE
+  UNIT_PAGE
+  MAINTENANCE_FLOW
+  LEASING_FLOW
+  ONBOARDING
+  SETTINGS
+  OTHER
+}
+
+enum UXReviewAssignmentStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  BLOCKED
+}
+
+enum UXReviewPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum UXReviewStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  NEEDS_REVISION
+  APPROVED
+  REJECTED
+}
+
+enum UserRole {
+  ADMIN
+  PROPERTY_MANAGER
+  TENANT
+  USER
+  VENDOR
+  OWNER
+}
+
+enum VendorAvailability {
+  AVAILABLE
+  UNAVAILABLE
+  ON_VACATION
+}
+
+enum WorkOrderStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum VisitorStatus {
+  PENDING
+  APPROVED
+  DENIED
+  COMPLETED
+  CANCELLED
+}
+
+enum DeliveryStatus {
+  IN_TRANSIT
+  DELIVERED
+  PICKED_UP
+  RETURNED
+  LOST
+}
+
+// Enhanced Security Enums for Epic 14
+
+enum ComplianceRegion {
+  GDPR
+  CCPA
+  SOX
+  HIPAA
+  PCI_DSS
+  OTHER
+}
+
+enum ComplianceType {
+  GDPR
+  CCPA
+  SOX
+  HIPAA
+  PCI_DSS
+  GENERAL
+}
+
+enum AuditSeverity {
+  INFO
+  WARNING
+  ERROR
+  CRITICAL
+}
+
+enum ReportStatus {
+  GENERATED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum IncidentType {
+  BRUTE_FORCE
+  SUSPICIOUS_LOGIN
+  UNAUTHORIZED_ACCESS
+  DATA_BREACH
+  MALWARE
+  PHISHING
+  COMPLIANCE_VIOLATION
+  OTHER
+}
+
+enum IncidentSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum IncidentStatus {
+  OPEN
+  INVESTIGATING
+  RESOLVED
+  CLOSED
+  FALSE_POSITIVE
+}
+
+model Visitor {
+  id               String        @id @default(cuid())
+  name             String
+  email            String?
+  phone            String?
+  visitDate        DateTime
+  visitTime        String?
+  purpose          String
+  status           VisitorStatus @default(PENDING)
+  accessCode       String?       @unique
+  qrCode           String?
+  notes            String?
+  photoUrl         String?
+  requestedById    String
+  rentalId         String
+  approvedById     String?
+  approvedAt       DateTime?
+  deniedAt         DateTime?
+  deniedReason     String?
+  completedAt      DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  
+  // Relations
+  requestedBy      User          @relation("VisitorRequestedBy", fields: [requestedById], references: [id])
+  approvedBy       User?         @relation("VisitorApprovedBy", fields: [approvedById], references: [id])
+  rental           Rental        @relation(fields: [rentalId], references: [id])
+  visitorAccessLog VisitorAccessLog[]
+  
+  @@index([rentalId])
+  @@index([requestedById])
+  @@index([status])
+  @@index([visitDate])
+  @@index([accessCode])
+}
+
+model Delivery {
+  id             String         @id @default(cuid())
+  trackingNumber String         @unique
+  carrier        String
+  sender         String
+  description    String
+  status         DeliveryStatus @default(IN_TRANSIT)
+  deliveryDate   DateTime?
+  pickupCode     String?        @unique
+  qrCode         String?
+  location       String?
+  recipientName  String?
+  recipientPhone String?
+  notes          String?
+  photoUrl       String?
+  rentalId       String
+  notifiedAt     DateTime?
+  pickedUpAt     DateTime?
+  pickedUpById   String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  
+  // Relations
+  rental         Rental         @relation(fields: [rentalId], references: [id])
+  pickedUpBy     User?          @relation("DeliveryPickedUpBy", fields: [pickedUpById], references: [id])
+  deliveryAccessLog DeliveryAccessLog[]
+  
+  @@index([rentalId])
+  @@index([status])
+  @@index([trackingNumber])
+  @@index([pickupCode])
+}
+
+model VisitorAccessLog {
+  id          String    @id @default(cuid())
+  visitorId   String
+  accessTime  DateTime  @default(now())
+  accessType  String    // "ENTRY" or "EXIT"
+  location    String?
+  verifiedBy  String?   // QR code, manual, etc.
+  notes       String?
+  createdAt   DateTime  @default(now())
+  
+  // Relations
+  visitor     Visitor   @relation(fields: [visitorId], references: [id])
+  
+  @@index([visitorId])
+  @@index([accessTime])
+}
+
+model DeliveryAccessLog {
+  id          String    @id @default(cuid())
+  deliveryId  String
+  accessTime  DateTime  @default(now())
+  accessType  String    // "DELIVERED" or "PICKED_UP"
+  location    String?
+  verifiedBy  String?   // QR code, manual, etc.
+  notes       String?
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  delivery    Delivery  @relation(fields: [deliveryId], references: [id])
+
+  @@index([deliveryId])
+  @@index([accessTime])
+}
+
+// Enhanced Security Models for Epic 14
+
+model SecuritySettings {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  passwordMinLength     Int      @default(8)
+  passwordRequireUpper  Boolean  @default(true)
+  passwordRequireLower  Boolean  @default(true)
+  passwordRequireNumber Boolean  @default(true)
+  passwordRequireSpecial Boolean @default(true)
+  sessionTimeout        Int      @default(3600000) // 1 hour
+  maxLoginAttempts      Int      @default(5)
+  lockoutDuration       Int      @default(900000) // 15 minutes
+  requireMFA            Boolean  @default(false)
+  allowBiometric        Boolean  @default(true)
+  allowSSO              Boolean  @default(true)
+  ipWhitelist           String[] // Array of allowed IP addresses
+  geoBlocking           Boolean  @default(false)
+  allowedCountries      String[]
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  User User @relation(fields: [userId], references: [id])
+}
+
+model BiometricAuth {
+  id             String   @id @default(cuid())
+  userId         String
+  credentialId   String   @unique
+  publicKey      String
+  deviceType     String   // "fingerprint", "face", "touch"
+  deviceModel    String?
+  lastUsed       DateTime?
+  createdAt      DateTime @default(now())
+  isActive       Boolean  @default(true)
+
+  User User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@unique([userId, credentialId])
+}
+
+model SSOConfig {
+  id                String   @id @default(cuid())
+  provider          String   // "google", "microsoft", "saml", etc.
+  providerId        String?
+  clientId          String
+  clientSecret      String
+  redirectUri       String
+  scopes            String[]
+  isActive          Boolean  @default(true)
+  metadataUrl       String?
+  certificate       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([provider, providerId])
+}
+
+model ComplianceReport {
+  id              String   @id @default(cuid())
+  type            ComplianceType
+  reportData      Json
+  generatedAt     DateTime @default(now())
+  generatedById   String
+  validUntil      DateTime?
+  status          ReportStatus @default(GENERATED)
+  fileUrl         String?
+  checksum        String?
+
+  generatedBy User @relation(fields: [generatedById], references: [id])
+
+  @@index([type])
+  @@index([generatedAt])
+  @@index([status])
+}
+
+model SecurityIncident {
+  id            String   @id @default(cuid())
+  type          IncidentType
+  severity      IncidentSeverity
+  description   String
+  detectedAt    DateTime @default(now())
+  resolvedAt    DateTime?
+  status        IncidentStatus @default(OPEN)
+  userId        String?
+  ipAddress     String?
+  userAgent     String?
+  details       Json?
+  resolution    String?
+  resolvedById  String?
+
+  user        User? @relation("SecurityIncidentUser", fields: [userId], references: [id])
+  resolvedBy  User? @relation("SecurityIncidentResolvedBy", fields: [resolvedById], references: [id])
+
+  @@index([type])
+  @@index([severity])
+  @@index([status])
+  @@index([detectedAt])
+}
+
+model DataRetentionPolicy {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  dataType        String   // "user_data", "audit_logs", "financial_data", etc.
+  retentionPeriod Int      // Days
+  autoDelete      Boolean  @default(true)
+  complianceType  ComplianceType?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([dataType])
+  @@index([complianceType])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  sessionToken String   @unique
+  ipAddress    String?
+  userAgent    String?
+  deviceInfo   Json?
+  expiresAt    DateTime
+  lastActivity DateTime @default(now())
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  User User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([sessionToken])
+  @@index([expiresAt])
+}
+
+// IoT Integration Models for Epic 15
+
+enum DeviceType {
+  SMART_LOCK
+  SMART_THERMOSTAT
+  SMART_LIGHT
+  SECURITY_CAMERA
+  MOTION_SENSOR
+  DOOR_SENSOR
+  WINDOW_SENSOR
+  SMOKE_DETECTOR
+  CARBON_MONOXIDE_DETECTOR
+  WATER_LEAK_SENSOR
+  HVAC_CONTROLLER
+  ENERGY_METER
+  ACCESS_CONTROL
+  ENVIRONMENTAL_SENSOR
+  OTHER
+}
+
+enum ProtocolType {
+  MQTT
+  ZIGBEE
+  ZWAVE
+  WIFI
+  BLUETOOTH_LE
+  THREAD
+  MATTER
+  OTHER
+}
+
+enum SensorType {
+  TEMPERATURE
+  HUMIDITY
+  MOTION
+  DOOR_WINDOW
+  SMOKE
+  CARBON_MONOXIDE
+  WATER_LEAK
+  ENERGY_CONSUMPTION
+  VOLTAGE
+  CURRENT
+  POWER
+  AIR_QUALITY
+  NOISE_LEVEL
+  LIGHT_LEVEL
+  OCCUPANCY
+  PRESSURE
+  VIBRATION
+  OTHER
+}
+
+enum AlertSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AlertType {
+  THRESHOLD_EXCEEDED
+  DEVICE_OFFLINE
+  BATTERY_LOW
+  MALFUNCTION
+  SECURITY_BREACH
+  MAINTENANCE_REQUIRED
+  PREDICTIVE_FAILURE
+  OTHER
+}
+
+model IoTDevice {
+  id            String      @id @default(cuid())
+  name          String
+  type          DeviceType
+  protocol      ProtocolType
+  deviceId      String      @unique
+  macAddress    String?
+  ipAddress     String?
+  firmwareVersion String?
+  lastSeen      DateTime?
+  isOnline      Boolean     @default(false)
+  batteryLevel  Float?
+  signalStrength Int?
+  propertyId    String
+  unitId        String?
+  groupId       String?
+  capabilities  Json
+  metadata      Json
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  property      Rental      @relation(fields: [propertyId], references: [id])
+  group         DeviceGroup? @relation(fields: [groupId], references: [id])
+  sensors       IoTSensor[]
+  events        DeviceEvent[]
+
+  @@index([propertyId])
+  @@index([unitId])
+  @@index([deviceId])
+  @@index([isOnline])
+  @@index([type])
+  @@index([protocol])
+}
+
+model DeviceGroup {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  propertyId  String
+  devices     IoTDevice[]
+  property    Rental     @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId])
+}
+
+model DeviceEvent {
+  id          String   @id @default(cuid())
+  deviceId    String
+  eventType   String
+  eventData   Json
+  timestamp   DateTime @default(now())
+  severity    AlertSeverity @default(LOW)
+
+  device      IoTDevice @relation(fields: [deviceId], references: [id])
+
+  @@index([deviceId])
+  @@index([eventType])
+  @@index([timestamp])
+  @@index([severity])
+}
+
+model IoTSensor {
+  id            String     @id @default(cuid())
+  deviceId      String
+  sensorType    SensorType
+  name          String
+  unit          String
+  minValue      Float?
+  maxValue      Float?
+  precision     Int       @default(2)
+  isActive      Boolean   @default(true)
+  metadata      Json
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  device        IoTDevice     @relation(fields: [deviceId], references: [id])
+  readings      SensorReading[]
+  alerts        SensorAlert[]
+
+  @@index([deviceId])
+  @@index([sensorType])
+  @@index([isActive])
+}
+
+model SensorReading {
+  id        String   @id @default(cuid())
+  sensorId  String
+  value     Float
+  timestamp DateTime @default(now())
+  quality   Int      @default(100) // 0-100 quality score
+
+  sensor    IoTSensor @relation(fields: [sensorId], references: [id])
+
+  @@index([sensorId])
+  @@index([timestamp])
+}
+
+model SensorAlert {
+  id          String        @id @default(cuid())
+  sensorId    String
+  alertType   AlertType
+  severity    AlertSeverity
+  message     String
+  threshold   Float?
+  value       Float
+  timestamp   DateTime      @default(now())
+  acknowledged Boolean      @default(false)
+  acknowledgedBy String?
+  acknowledgedAt DateTime?
+  resolved    Boolean      @default(false)
+  resolvedAt  DateTime?
+
+  sensor      IoTSensor @relation(fields: [sensorId], references: [id])
+
+  @@index([sensorId])
+  @@index([alertType])
+  @@index([severity])
+  @@index([timestamp])
+  @@index([acknowledged])
+  @@index([resolved])
+}
+
+model AnalyticsRule {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  sensorType    SensorType?
+  condition     Json     // Rule condition logic
+  threshold     Float?
+  timeWindow    Int?     // Time window in minutes
+  severity      AlertSeverity @default(MEDIUM)
+  isActive      Boolean  @default(true)
+  propertyId    String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  property      Rental   @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId])
+  @@index([sensorType])
+  @@index([isActive])
+  @@index([severity])
+}
+
+// Epic 16: Advanced Workflow Automation Models
+
+// Story 16.1: Automated Approval Workflows
+enum RequestType {
+  MAINTENANCE_REQUEST
+  LEASE_APPLICATION
+  PAYMENT_APPROVAL
+  CONTRACT_RENEWAL
+  PROPERTY_CHANGES
+  VENDOR_PAYMENT
+  TENANT_SCREENING
+  OTHER
+}
+
+enum StepType {
+  APPROVAL
+  AUTO_APPROVE
+  NOTIFICATION
+  REVIEW
+  ESCALATION
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  ESCALATED
+  EXPIRED
+  CANCELLED
+}
+
+enum ApprovalActionType {
+  APPROVE
+  REJECT
+  ESCALATE
+  DELEGATE
+  COMMENT
+}
+
+model ApprovalWorkflow {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  requestType   RequestType
+  isActive      Boolean  @default(true)
+  autoApprovalRules Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  steps         ApprovalStep[]
+  instances     ApprovalInstance[]
+
+  @@index([requestType])
+  @@index([isActive])
+}
+
+model ApprovalStep {
+  id            String   @id @default(cuid())
+  workflowId    String
+  stepNumber    Int
+  stepType      StepType // APPROVAL, AUTO_APPROVE, NOTIFICATION
+  approverRole  String?
+  approverUserId String?
+  conditions    Json?    // Conditional logic for step execution
+  timeoutHours  Int      @default(24)
+  escalationRole String?
+  isParallel    Boolean  @default(false)
+
+  workflow      ApprovalWorkflow @relation(fields: [workflowId], references: [id])
+
+  @@index([workflowId])
+  @@index([stepNumber])
+}
+
+model ApprovalInstance {
+  id            String   @id @default(cuid())
+  workflowId    String
+  requestId     String   // Reference to the original request
+  requestType   RequestType
+  status        ApprovalStatus @default(PENDING)
+  currentStep   Int     @default(1)
+  initiatedBy   String
+  initiatedAt   DateTime @default(now())
+  completedAt   DateTime?
+  metadata      Json     // Request-specific data
+
+  workflow      ApprovalWorkflow @relation(fields: [workflowId], references: [id])
+  approvals     ApprovalAction[]
+
+  @@index([workflowId])
+  @@index([requestId])
+  @@index([status])
+  @@index([initiatedBy])
+}
+
+model ApprovalAction {
+  id            String   @id @default(cuid())
+  instanceId    String
+  stepNumber    Int
+  approverId    String
+  action        ApprovalActionType
+  comments      String?
+  approvedAt    DateTime @default(now())
+  metadata      Json?
+
+  instance      ApprovalInstance @relation(fields: [instanceId], references: [id])
+
+  @@index([instanceId])
+  @@index([approverId])
+  @@index([approvedAt])
+}
+
+// Story 16.2: Process Automation Engine
+enum InstanceStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+  PAUSED
+  CANCELLED
+}
+
+enum ExecutionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  SKIPPED
+}
+
+enum IntegrationType {
+  WEBHOOK
+  API
+  EMAIL
+  SMS
+  DATABASE
+  FILE_SYSTEM
+  EXTERNAL_API
+  OTHER
+}
+
+model WorkflowDefinition {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  category      String
+  version       String   @default("1.0")
+  isActive      Boolean  @default(true)
+  isTemplate    Boolean  @default(false)
+  definition    Json     // Workflow definition in JSON format
+  metadata      Json     // Additional workflow metadata
+  createdBy     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  instances     WorkflowInstance[]
+  steps         WorkflowStep[]
+
+  @@index([category])
+  @@index([isActive])
+  @@index([isTemplate])
+  @@index([createdBy])
+}
+
+model WorkflowStep {
+  id            String   @id @default(cuid())
+  definitionId  String
+  stepId        String   // Unique identifier within workflow
+  name          String
+  type          String   // TASK, DECISION, INTEGRATION, TIMER, etc.
+  config        Json     // Step-specific configuration
+  position      Json     // Visual position in designer
+  connections   Json     // Step connections and flow logic
+
+  definition    WorkflowDefinition @relation(fields: [definitionId], references: [id])
+
+  @@index([definitionId])
+  @@index([stepId])
+}
+
+model WorkflowInstance {
+  id            String   @id @default(cuid())
+  definitionId  String
+  status        InstanceStatus @default(RUNNING)
+  currentStep   String?
+  variables     Json     // Workflow variables and data
+  context       Json     // Execution context and metadata
+  initiatedBy   String
+  initiatedAt   DateTime @default(now())
+  completedAt   DateTime?
+  duration      Int?     // Execution duration in seconds
+
+  definition    WorkflowDefinition @relation(fields: [definitionId], references: [id])
+  executions    WorkflowExecution[]
+  events        WorkflowEvent[]
+
+  @@index([definitionId])
+  @@index([status])
+  @@index([initiatedBy])
+  @@index([initiatedAt])
+}
+
+model WorkflowExecution {
+  id            String   @id @default(cuid())
+  instanceId    String
+  stepId        String
+  status        ExecutionStatus
+  input         Json?
+  output        Json?
+  error         String?
+  startedAt     DateTime @default(now())
+  completedAt   DateTime?
+
+  instance      WorkflowInstance @relation(fields: [instanceId], references: [id])
+
+  @@index([instanceId])
+  @@index([stepId])
+  @@index([status])
+}
+
+model WorkflowEvent {
+  id            String   @id @default(cuid())
+  instanceId    String
+  eventType     String
+  eventData     Json
+  timestamp     DateTime @default(now())
+
+  instance      WorkflowInstance @relation(fields: [instanceId], references: [id])
+
+  @@index([instanceId])
+  @@index([eventType])
+  @@index([timestamp])
+}
+
+model WorkflowIntegration {
+  id            String   @id @default(cuid())
+  name          String
+  type          IntegrationType // WEBHOOK, API, EMAIL, SMS, etc.
+  config        Json     // Integration-specific configuration
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([type])
+  @@index([isActive])
+}
+

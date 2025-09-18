@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import AlertGroupView from './epic23/AlertGroupView';
 import { apiService } from '../services/apiService';
+import { AlertGroupingService } from '../../../src/services/epic23/AlertGroupingService';
 
 interface ChurnPrediction {
   tenantId: string;
@@ -32,23 +34,28 @@ const ChurnRiskAlerts: React.FC<ChurnRiskAlertsProps> = ({
   onAlertClick,
   compact = false
 }) => {
-  const [prediction, setPrediction] = useState<ChurnPrediction | null>(null);
+  const [groups, setGroups] = useState([]);
+  const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedTenantId, setSelectedTenantId] = useState(tenantId || '');
 
-  const fetchChurnPrediction = async () => {
+  const fetchAlerts = async () => {
     if (!selectedTenantId) return;
 
     setLoading(true);
     setError(null);
 
     try {
+      // Fetch raw alerts (adapt to churn API)
       const response: any = await apiService.post('/analytics/predict-churn', { tenantId: selectedTenantId });
-      setPrediction(response.data);
+      const rawAlerts = response.data.predictions || []; // Adapt to array of alerts
+      const grouped = await AlertGroupingService.getGroupedAlerts(selectedTenantId, { type: 'churn' }); // Adapt for tenant
+      setGroups(grouped.groups);
+      setAlerts(rawAlerts);
     } catch (err: any) {
-      setError('Failed to load churn prediction');
-      console.error('Error fetching churn prediction:', err);
+      setError('Failed to load churn alerts');
+      console.error('Error fetching churn alerts:', err);
     } finally {
       setLoading(false);
     }
@@ -56,34 +63,13 @@ const ChurnRiskAlerts: React.FC<ChurnRiskAlertsProps> = ({
 
   useEffect(() => {
     if (selectedTenantId) {
-      fetchChurnPrediction();
+      fetchAlerts();
     }
   }, [selectedTenantId]);
 
-  const getRiskColor = (riskLevel: string) => {
-    switch (riskLevel.toLowerCase()) {
-      case 'high': return 'bg-red-100 border-red-500 text-red-800';
-      case 'medium': return 'bg-yellow-100 border-yellow-500 text-yellow-800';
-      case 'low': return 'bg-green-100 border-green-500 text-green-800';
-      default: return 'bg-gray-100 border-gray-500 text-gray-800';
-    }
-  };
-
-  const getRiskIcon = (riskLevel: string) => {
-    switch (riskLevel.toLowerCase()) {
-      case 'high': return '🚨';
-      case 'medium': return '⚠️';
-      case 'low': return '✅';
-      default: return '❓';
-    }
-  };
-
-  if (compact && prediction) {
+  if (compact) {
     return (
-      <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getRiskColor(prediction.riskLevel)}`}>
-        <span className="mr-2">{getRiskIcon(prediction.riskLevel)}</span>
-        {prediction.churnProbability}% churn risk
-      </div>
+      <AlertGroupView compact groups={groups} alerts={alerts} />
     );
   }
 
@@ -92,7 +78,7 @@ const ChurnRiskAlerts: React.FC<ChurnRiskAlertsProps> = ({
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-gray-800">Churn Risk Assessment</h2>
         <button
-          onClick={fetchChurnPrediction}
+          onClick={fetchAlerts}
           disabled={loading || !selectedTenantId}
           className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white px-4 py-2 rounded-md text-sm"
         >
@@ -130,85 +116,29 @@ const ChurnRiskAlerts: React.FC<ChurnRiskAlertsProps> = ({
         </div>
       )}
 
-      {/* Prediction Results */}
-      {!loading && prediction && (
-        <div className="space-y-6">
-          {/* Risk Summary */}
-          <div className={`p-4 rounded-lg border-2 ${getRiskColor(prediction.riskLevel)}`}>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center">
-                <span className="text-2xl mr-3">{getRiskIcon(prediction.riskLevel)}</span>
-                <div>
-                  <h3 className="font-semibold text-lg capitalize">{prediction.riskLevel} Risk</h3>
-                  <p className="text-sm opacity-75">{prediction.churnProbability}% churn probability</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-sm text-gray-600">Confidence</div>
-                <div className="font-semibold">{prediction.confidence}%</div>
-              </div>
-            </div>
+      {/* Groups */}
+      {!loading && groups.length > 0 && (
+        <AlertGroupView
+          groups={groups}
+          alerts={alerts}
+          onFilterChange={(filters) => {
+            // Filter churn alerts by filters
+            fetchAlerts(); // Re-fetch with filters if needed, or client-side
+          }}
+        />
+      )}
 
-            {prediction.churnProbability >= 70 && (
-              <div className="mt-3 bg-red-200 border border-red-300 rounded p-3">
-                <p className="text-red-800 font-medium">⚠️ Immediate Action Required</p>
-                <p className="text-red-700 text-sm mt-1">
-                  This tenant has a high probability of churning. Consider immediate retention strategies.
-                </p>
-              </div>
-            )}
+      {!loading && groups.length === 0 && selectedTenantId && (
+        <div className="text-center py-8">
+          <div className="text-gray-400 mb-2">
+            <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           </div>
-
-          {/* Risk Factors */}
-          <div>
-            <h4 className="font-semibold text-gray-800 mb-3">Risk Factors</h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <div className="bg-gray-50 p-3 rounded">
-                <div className="text-sm text-gray-600">Late Payments</div>
-                <div className="font-semibold">{prediction.riskFactors.latePayments}</div>
-              </div>
-              <div className="bg-gray-50 p-3 rounded">
-                <div className="text-sm text-gray-600">Failed Payments</div>
-                <div className="font-semibold">{prediction.riskFactors.failedPayments}</div>
-              </div>
-              <div className="bg-gray-50 p-3 rounded">
-                <div className="text-sm text-gray-600">Overdue Invoices</div>
-                <div className="font-semibold">{prediction.riskFactors.overdueInvoices}</div>
-              </div>
-              <div className="bg-gray-50 p-3 rounded">
-                <div className="text-sm text-gray-600">Lease Duration</div>
-                <div className="font-semibold">{prediction.riskFactors.leaseDuration} months</div>
-              </div>
-              <div className="bg-gray-50 p-3 rounded">
-                <div className="text-sm text-gray-600">Total Payments</div>
-                <div className="font-semibold">{prediction.riskFactors.totalPayments}</div>
-              </div>
-              <div className="bg-gray-50 p-3 rounded">
-                <div className="text-sm text-gray-600">Screening Risk</div>
-                <div className="font-semibold">{prediction.riskFactors.screeningRisk ? 'High' : 'Low'}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Recommendations */}
-          {prediction.recommendations.length > 0 && (
-            <div>
-              <h4 className="font-semibold text-gray-800 mb-3">Retention Recommendations</h4>
-              <ul className="space-y-2">
-                {prediction.recommendations.map((rec, index) => (
-                  <li key={index} className="flex items-start">
-                    <span className="text-blue-500 mr-2">•</span>
-                    <span className="text-gray-700">{rec}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Last Updated */}
-          <div className="text-xs text-gray-500 pt-4 border-t">
-            Last updated: {new Date(prediction.lastUpdated).toLocaleString()}
-          </div>
+          <p className="text-gray-600">No churn alerts available</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Either no tenant data or insufficient patterns detected
+          </p>
         </div>
       )}
 

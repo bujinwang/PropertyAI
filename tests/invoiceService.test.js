@@ -2,18 +2,24 @@ const invoiceService = require('../src/services/invoiceService');
 const nock = require('nock'); // Not used here, but for completeness
 const fs = require('fs').promises;
 const path = require('path');
-const Unit = require('../src/models/Unit'); // Mock
-const Tenant = require('../src/models/Tenant'); // Mock
-const Invoice = require('../src/models/Invoice'); // Mock
 
-jest.mock('../src/models/Unit', () => ({
-  findAll: jest.fn(),
+// Mock Prisma client
+jest.mock('../src/config/database', () => ({
+  prisma: {
+    unit: {
+      findMany: jest.fn(),
+    },
+    invoice: {
+      create: jest.fn(),
+      update: jest.fn(),
+    },
+    tenant: {
+      findMany: jest.fn(),
+    },
+  },
 }));
 
-jest.mock('../src/models/Invoice', () => ({
-  create: jest.fn(),
-  update: jest.fn(),
-}));
+const { prisma } = require('../src/config/database');
 
 jest.mock('fs', () => ({
   promises: {
@@ -35,38 +41,45 @@ describe('Invoice Service', () => {
       const mockUnits = [{
         id: 'u_123',
         rentAmount: 1500,
-        Tenants: [{ id: 't_123' }],
+        tenants: [{ id: 't_123', isActive: true }],
       }];
-      Unit.findAll.mockResolvedValue(mockUnits);
+      prisma.unit.findMany.mockResolvedValue(mockUnits);
 
-      const mockInvoice = { id: 'i_123', update: jest.fn() };
-      Invoice.create.mockResolvedValue(mockInvoice);
+      const mockInvoice = { id: 'i_123' };
+      prisma.invoice.create.mockResolvedValue(mockInvoice);
+      prisma.invoice.update.mockResolvedValue({ ...mockInvoice, pdfUrl: '/invoices/i_123.pdf' });
 
       const mockPdfUrl = '/invoices/i_123.pdf';
       fs.writeFile.mockResolvedValue();
 
       const result = await invoiceService.generateMonthlyInvoices();
 
-      expect(Unit.findAll).toHaveBeenCalledWith({
-        include: [{
-          model: require('../src/models/Tenant'), // Tenant mock
-          where: { isActive: true },
-        }],
+      expect(prisma.unit.findMany).toHaveBeenCalledWith({
+        include: {
+          tenants: {
+            where: { isActive: true },
+          },
+        },
       });
-      expect(Invoice.create).toHaveBeenCalledTimes(1);
-      expect(Invoice.create).toHaveBeenCalledWith({
-        unitId: 'u_123',
-        tenantId: 't_123',
-        dueDate: expect.any(Date),
-        amount: 1500,
-        status: 'pending',
+      expect(prisma.invoice.create).toHaveBeenCalledTimes(1);
+      expect(prisma.invoice.create).toHaveBeenCalledWith({
+        data: {
+          unitId: 'u_123',
+          tenantId: 't_123',
+          dueDate: expect.any(Date),
+          amount: 1500,
+          status: 'pending',
+        },
       });
-      expect(mockInvoice.update).toHaveBeenCalledWith({ pdfUrl: mockPdfUrl });
+      expect(prisma.invoice.update).toHaveBeenCalledWith({
+        where: { id: 'i_123' },
+        data: { pdfUrl: mockPdfUrl }
+      });
       expect(result).toHaveLength(1);
     });
 
     it('should handle no units with tenants', async () => {
-      Unit.findAll.mockResolvedValue([]);
+      prisma.unit.findMany.mockResolvedValue([]);
 
       const result = await invoiceService.generateMonthlyInvoices();
 
@@ -74,8 +87,8 @@ describe('Invoice Service', () => {
     });
 
     it('should throw error if invoice creation fails', async () => {
-      Unit.findAll.mockResolvedValue([{ id: 'u_123', Tenants: [{ id: 't_123' }] }]);
-      Invoice.create.mockRejectedValue(new Error('DB error'));
+      prisma.unit.findMany.mockResolvedValue([{ id: 'u_123', tenants: [{ id: 't_123', isActive: true }] }]);
+      prisma.invoice.create.mockRejectedValue(new Error('DB error'));
 
       await expect(invoiceService.generateMonthlyInvoices()).rejects.toThrow('DB error');
     });
@@ -84,7 +97,13 @@ describe('Invoice Service', () => {
   describe('generateInvoicePDF', () => {
     it('should generate PDF and return URL', async () => {
       const mockInvoice = { id: 'i_456', dueDate: new Date('2025-10-01'), amount: 1500 };
-      const mockPdfDoc = { addPage: jest.fn().mockReturnValue({ drawText: jest.fn(), getSize: jest.fn().mockReturnValue({ width: 595, height: 842 }) }), save: jest.fn().mockResolvedValue(Buffer.from('pdf')) };
+      const mockPdfDoc = {
+        addPage: jest.fn().mockReturnValue({
+          drawText: jest.fn(),
+          getSize: jest.fn().mockReturnValue({ width: 595, height: 842 })
+        }),
+        save: jest.fn().mockResolvedValue(Buffer.from('pdf'))
+      };
       require('pdf-lib').PDFDocument.create = jest.fn().mockResolvedValue(mockPdfDoc);
 
       const result = await invoiceService.generateInvoicePDF(mockInvoice);

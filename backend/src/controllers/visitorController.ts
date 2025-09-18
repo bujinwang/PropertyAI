@@ -153,4 +153,119 @@ export class VisitorController {
   }
 
   /**
-   * Ap
+   * Approve a visitor request
+   */
+  async approveVisitor(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
+      // Generate access code
+      const accessCode = crypto.randomBytes(3).toString('hex').toUpperCase();
+
+      const visitor = await (prisma as any).visitor.update({
+        where: { id },
+        data: {
+          status: 'APPROVED',
+          approvedById: userId,
+          accessCode,
+          approvedAt: new Date()
+        },
+        include: {
+          requestedBy: {
+            select: { id: true, firstName: true, lastName: true, email: true }
+          },
+          rental: {
+            select: { id: true, title: true, address: true }
+          }
+        }
+      });
+
+      res.json({ visitor });
+    } catch (error) {
+      console.error('Error approving visitor:', error);
+      res.status(500).json({ error: 'Failed to approve visitor' });
+    }
+  }
+
+  /**
+   * Deny a visitor request
+   */
+  async denyVisitor(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const userId = req.user?.id;
+      const { denialReason } = req.body;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
+      const visitor = await (prisma as any).visitor.update({
+        where: { id },
+        data: {
+          status: 'DENIED',
+          approvedById: userId,
+          denialReason,
+          approvedAt: new Date()
+        },
+        include: {
+          requestedBy: {
+            select: { id: true, firstName: true, lastName: true, email: true }
+          },
+          rental: {
+            select: { id: true, title: true, address: true }
+          }
+        }
+      });
+
+      res.json({ visitor });
+    } catch (error) {
+      console.error('Error denying visitor:', error);
+      res.status(500).json({ error: 'Failed to deny visitor' });
+    }
+  }
+
+  /**
+   * Delete a visitor request
+   */
+  async deleteVisitor(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
+      const visitor = await (prisma as any).visitor.findFirst({
+        where: {
+          id,
+          OR: [
+            { requestedById: userId },
+            { rental: { managerId: userId } },
+            { rental: { ownerId: userId } }
+          ]
+        },
+        include: { rental: true }
+      });
+
+      if (!visitor) {
+        return res.status(404).json({ error: 'Visitor not found or access denied' });
+      }
+
+      await (prisma as any).visitor.delete({
+        where: { id }
+      });
+
+      res.json({ message: 'Visitor request deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting visitor:', error);
+      res.status(500).json({ error: 'Failed to delete visitor' });
+    }
+  }
+}

@@ -158,3 +158,6 @@ describe('marketplaceService', () => {
       // Mock log checked via console
     });
   });
+
+  });
+});

@@ -1,0 +1,37 @@
+{
+  "timestamp": "2025-09-17T00-26-51-020Z",
+  "backupDirectory": "/Users/bujin/Documents/Projects/PropertyAI/backend/backups/2025-09-17T00-26-51-020Z",
+  "database": {
+    "host": "localhost",
+    "port": "5432",
+    "name": "propertyai",
+    "user": "postgres"
+  },
+  "files": {
+    "schema": "schema.sql",
+    "data": "data.sql",
+    "full": "full-backup.sql",
+    "prismaSchema": "prisma-schema.prisma",
+    "tableSizes": "table-sizes.json",
+    "rowCounts": "row-counts.json"
+  },
+  "logs": [
+    "[2025-09-17T00:26:51.023Z] 🚀 Starting database backup for Sequelize to Prisma migration...",
+    "[2025-09-17T00:26:51.024Z] Creating backup directory...",
+    "[2025-09-17T00:26:51.024Z] ✅ Backup directory created: /Users/bujin/Documents/Projects/PropertyAI/backend/backups/2025-09-17T00-26-51-020Z",
+    "[2025-09-17T00:26:51.025Z] Backing up database schema...",
+    "[2025-09-17T00:26:52.390Z] ✅ Database schema backed up",
+    "[2025-09-17T00:26:52.390Z] Backing up database data...",
+    "[2025-09-17T00:26:52.625Z] ✅ Database data backed up",
+    "[2025-09-17T00:26:52.626Z] Creating full database backup...",
+    "[2025-09-17T00:26:52.882Z] ✅ Full database backup created",
+    "[2025-09-17T00:26:52.882Z] Analyzing table sizes...",
+    "[2025-09-17T00:26:53.155Z] ❌ Table analysis failed: relation \"public._rentalwhitelabelconfigs\" does not exist",
+    "[2025-09-17T00:26:53.156Z] Analyzing row counts...",
+    "[2025-09-17T00:26:53.371Z] ❌ Row count analysis failed: column \"tablename\" does not exist",
+    "[2025-09-17T00:26:53.371Z] Backing up current Prisma schema...",
+    "[2025-09-17T00:26:53.372Z] ✅ Prisma schema backed up",
+    "[2025-09-17T00:26:53.373Z] Creating backup manifest..."
+  ],
+  "status": "completed"
+}

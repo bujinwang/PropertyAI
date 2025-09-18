@@ -12,7 +12,7 @@ describe('Units Endpoints', () => {
   beforeAll(async () => {
     const user = await prisma.user.create({
       data: {
-        email: 'units@example.com',
+        email: 'units-unique@example.com',
         password: 'password123',
         firstName: 'Units',
         lastName: 'Manager',
@@ -68,7 +68,7 @@ describe('Units Endpoints', () => {
   describe('GET /api/units/:id', () => {
     it('should get a specific rental unit', async () => {
         const rental = await prisma.rental.create({ 
-          data: { 
+          data: {
             title: 'Test Property Unit A301',
             address: '123 Unit Test St',
             city: 'Test City',
@@ -86,7 +86,8 @@ describe('Units Endpoints', () => {
             createdById: userId,
             status: 'ACTIVE',
             isAvailable: true,
-          } 
+            slug: 'test-unit-slug-301',
+          }
         });
         const response = await request(app)
             .get(`/api/units/${rental.id}`)
@@ -107,10 +108,11 @@ describe('Units Endpoints', () => {
 
   describe('PUT /api/units/:id', () => {
     it('should update an existing rental unit', async () => {
-        const rental = await prisma.rental.create({ 
-          data: { 
+        const rental = await prisma.rental.create({
+          data: {
             title: 'Test Property Unit A401',
             address: '123 Unit Test St',
+            slug: 'test-unit-slug-401',
             city: 'Test City',
             state: 'TS',
             zipCode: '12345',
@@ -126,7 +128,7 @@ describe('Units Endpoints', () => {
             createdById: userId,
             status: 'ACTIVE',
             isAvailable: true,
-          } 
+        }
         });
         const response = await request(app)
             .put(`/api/units/${rental.id}`)
@@ -144,7 +146,7 @@ describe('Units Endpoints', () => {
   describe('DELETE /api/units/:id', () => {
     it('should delete an existing rental unit', async () => {
         const rental = await prisma.rental.create({ 
-          data: { 
+          data: {
             title: 'Test Property Unit A501',
             address: '123 Unit Test St',
             city: 'Test City',
@@ -162,7 +164,8 @@ describe('Units Endpoints', () => {
             createdById: userId,
             status: 'ACTIVE',
             isAvailable: true,
-          } 
+            slug: 'test-unit-slug-501',
+          }
         });
         const response = await request(app)
             .delete(`/api/units/${rental.id}`)

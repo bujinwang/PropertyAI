@@ -141,7 +141,7 @@ export class VisitorAccessController {
 
       // Verify the visitor exists and user has access
       const visitor = await (prisma as any).visitor.findFirst({
-        where: { 
+        where: {
           id: visitorId,
           OR: [
             { requestedById: userId },
@@ -155,4 +155,66 @@ export class VisitorAccessController {
         return res.status(404).json({ error: 'Visitor not found or access denied' });
       }
 
-      const accessLogs = await (prisma as any).visitorAccess
+      const accessLogs = await (prisma as any).visitorAccessLog.findMany({
+        where: { visitorId },
+        orderBy: { accessTime: 'desc' },
+        take: 50,
+        include: {
+          verifiedBy: {
+            select: { id: true, firstName: true, lastName: true }
+          }
+        }
+      });
+
+      res.json({ accessLogs });
+    } catch (error) {
+      console.error('Error fetching visitor access logs:', error);
+      res.status(500).json({ error: 'Failed to fetch access logs' });
+    }
+  }
+
+  /**
+   * Get delivery access logs
+   */
+  async getDeliveryAccessLogs(req: Request, res: Response) {
+    try {
+      const userId = req.user?.id;
+      const { deliveryId } = req.params;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
+      // Verify the delivery exists and user has access
+      const delivery = await (prisma as any).delivery.findFirst({
+        where: {
+          id: deliveryId,
+          OR: [
+            { rental: { managerId: userId } },
+            { rental: { ownerId: userId } },
+            { rental: { leases: { some: { tenantId: userId, status: 'ACTIVE' } } } }
+          ]
+        }
+      });
+
+      if (!delivery) {
+        return res.status(404).json({ error: 'Delivery not found or access denied' });
+      }
+
+      const accessLogs = await (prisma as any).deliveryAccessLog.findMany({
+        where: { deliveryId },
+        orderBy: { accessTime: 'desc' },
+        take: 50,
+        include: {
+          verifiedBy: {
+            select: { id: true, firstName: true, lastName: true }
+          }
+        }
+      });
+
+      res.json({ accessLogs });
+    } catch (error) {
+      console.error('Error fetching delivery access logs:', error);
+      res.status(500).json({ error: 'Failed to fetch access logs' });
+    }
+  }

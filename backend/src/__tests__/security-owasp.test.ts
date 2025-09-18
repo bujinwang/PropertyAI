@@ -8,6 +8,10 @@ describe('OWASP Top 10 Security Tests', () => {
   beforeEach(async () => {
     // Clear test data
     await prisma.auditEntry.deleteMany();
+    await prisma.biometricAuth.deleteMany({});
+    await prisma.lease.deleteMany({});
+    await prisma.maintenanceRequest.deleteMany({});
+    await prisma.rental.deleteMany({});
     await prisma.user.deleteMany();
   });
 

@@ -56,7 +56,7 @@ export const generateMatches = async (tenantId: string, propertyIds?: string[]) 
     // Simple cosine similarity for preferences (mock vectors)
     const preferenceVector = tenant.preferences ? tensor([tenant.preferences.location, tenant.preferences.price, tenant.preferences.amenities?.length || 0]) : tensor([0, 0, 0]);
     const propertyVector = tensor([property.matchingCriteria.locationScore, property.rent / 1000, property.amenities?.length || 0]);
-    const similarity = tidy(() => preferenceVector.dot(propertyVector).div(preferenceVector.square().sum().sqrt().mul(propertyVector.square().sum().sqrt())).dataSync()[0];
+    const similarity = tidy(() => preferenceVector.dot(propertyVector).div(preferenceVector.square().sum().sqrt().mul(propertyVector.square().sum().sqrt()))).dataSync()[0];
 
     const matchScore = (tenantScore.overallScore * 0.5 + propertyScore.overallScore * 0.3 + similarity * 0.2).toFixed(2);
     const confidence = Math.min(tenantScore.confidence * 0.8 + propertyScore.overallScore * 0.9, 1) * 100; // Mock

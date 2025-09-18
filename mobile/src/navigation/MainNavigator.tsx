@@ -3,16 +3,18 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTheme } from 'react-native-paper';
 
 import { MainTabParamList } from '@/types';
-import { DashboardScreen } from '@/screens/main/DashboardScreen';
+import { RealtimeDashboard } from '@/components/RealtimeDashboard';
 import { PropertiesScreen } from '@/screens/main/PropertiesScreen';
 import { MaintenanceScreen } from '@/screens/main/MaintenanceScreen';
 import { PaymentsScreen } from '@/screens/main/PaymentsScreen';
 import { ProfileScreen } from '@/screens/main/ProfileScreen';
+import { usePushNotifications } from '@/services/pushNotificationService';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 export function MainNavigator() {
   const theme = useTheme();
+  const { unreadCount } = usePushNotifications();
 
   return (
     <Tab.Navigator
@@ -28,12 +30,17 @@ export function MainNavigator() {
     >
       <Tab.Screen
         name="Dashboard"
-        component={DashboardScreen}
+        component={RealtimeDashboard}
         options={{
           tabBarLabel: 'Dashboard',
           tabBarIcon: ({ color, size }) => (
             <TabBarIcon name="view-dashboard" color={color} size={size} />
           ),
+          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
+          tabBarBadgeStyle: {
+            backgroundColor: theme.colors.error,
+            color: theme.colors.onError,
+          },
         }}
       />
       <Tab.Screen

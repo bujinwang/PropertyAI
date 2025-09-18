@@ -38,6 +38,13 @@ A modern, rental-focused dashboard built with React, TypeScript, and Material-UI
 - **Digital Concierge**: Automated tenant assistance
 - **Community Engagement**: Foster tenant community building
 
+### Mobile Optimization (Epic 23)
+- **Responsive Design**: Mobile-first layouts with Tailwind breakpoints (320px+, 768px, 1024px+)
+- **Touch Interactions**: Swipe gestures for navigation (≥48px targets), optimized forms
+- **Offline Support**: Service worker caching for API responses (e.g., predictive-maintenance), IndexedDB for data
+- **Performance**: <3s load times (Lighthouse verified), progressive enhancement
+- **Accessibility**: WCAG 2.1 AA compliant (ARIA labels, contrast 4.5:1), voice-over support
+
 ## 🚀 Getting Started
 
 ### Prerequisites

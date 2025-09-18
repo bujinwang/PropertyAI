@@ -3,7 +3,7 @@
  * Monitors database queries, cache performance, and system metrics
  */
 
-const { sequelize, cacheService } = require('../config/database');
+const { sequelize, cacheService } = require('../config/database-legacy');
 
 class PerformanceMonitor {
   constructor() {

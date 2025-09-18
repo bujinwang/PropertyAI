@@ -1,15 +1,32 @@
 const analyticsService = require('../src/services/analyticsService');
-const Tenant = require('../src/models/Tenant');
-const Property = require('../src/models/Property');
-const Invoice = require('../src/models/Invoice');
-const Payment = require('../src/models/Payment');
-const MaintenanceHistory = require('../src/models/MaintenanceHistory');
 
-jest.mock('../src/models/Tenant');
-jest.mock('../src/models/Property');
-jest.mock('../src/models/Invoice');
-jest.mock('../src/models/Payment');
-jest.mock('../src/models/MaintenanceHistory');
+// Mock Prisma client
+jest.mock('../src/config/database', () => ({
+  prisma: {
+    property: {
+      findMany: jest.fn(),
+      count: jest.fn(),
+      aggregate: jest.fn(),
+    },
+    tenant: {
+      count: jest.fn(),
+      findMany: jest.fn(),
+    },
+    payment: {
+      aggregate: jest.fn(),
+      findMany: jest.fn(),
+    },
+    invoice: {
+      findMany: jest.fn(),
+      aggregate: jest.fn(),
+    },
+    maintenanceHistory: {
+      findMany: jest.fn(),
+    },
+  },
+}));
+
+const { prisma } = require('../src/config/database');
 
 describe('analyticsService', () => {
   beforeEach(() => {
@@ -18,12 +35,15 @@ describe('analyticsService', () => {
 
   describe('getMetrics', () => {
     it('should calculate metrics correctly for owner role', async () => {
-      // Mock data
-      Property.findAll.mockResolvedValue([{ id: 'prop1' }, { id: 'prop2' }]);
-      Property.sum.mockResolvedValue(10); // totalUnits
-      Tenant.count.mockResolvedValue(8); // activeTenants
-      Payment.sum.mockResolvedValue(5000); // totalRevenue
-      Invoice.findAll.mockResolvedValue([{ avgRent: 1200 }]);
+      // Mock Prisma responses
+      prisma.property.findMany.mockResolvedValue([
+        { id: 'prop1', totalUnits: 5 },
+        { id: 'prop2', totalUnits: 5 }
+      ]);
+
+      prisma.tenant.count.mockResolvedValue(8); // activeTenants
+      prisma.payment.aggregate.mockResolvedValue({ _sum: { amount: 5000 } }); // totalRevenue
+      prisma.invoice.aggregate.mockResolvedValue({ _avg: { amount: 1200 } }); // avgRent
 
       const result = await analyticsService.getMetrics(
         '2023-01-01',
@@ -40,23 +60,22 @@ describe('analyticsService', () => {
         activeTenants: 8
       });
 
-      expect(Property.findAll).toHaveBeenCalled();
-      expect(Property.sum).toHaveBeenCalledWith('totalUnits', {
-        where: { id: { [require('sequelize').Op.in]: ['prop1', 'prop2'] } }
-      });
-      expect(Tenant.count).toHaveBeenCalledWith({
+      expect(prisma.property.findMany).toHaveBeenCalled();
+      expect(prisma.tenant.count).toHaveBeenCalledWith({
         where: {
           isActive: true,
-          propertyId: { [require('sequelize').Op.in]: ['prop1', 'prop2'] }
+          propertyId: { in: ['prop1', 'prop2'] }
         }
       });
     });
 
     it('should filter properties for manager role', async () => {
-      Property.sum.mockResolvedValue(5);
-      Tenant.count.mockResolvedValue(4);
-      Payment.sum.mockResolvedValue(2500);
-      Invoice.findAll.mockResolvedValue([{ avgRent: 1000 }]);
+      prisma.property.findMany.mockResolvedValue([
+        { id: 'prop1', totalUnits: 5 }
+      ]);
+      prisma.tenant.count.mockResolvedValue(4);
+      prisma.payment.aggregate.mockResolvedValue({ _sum: { amount: 2500 } });
+      prisma.invoice.aggregate.mockResolvedValue({ _avg: { amount: 1000 } });
 
       const result = await analyticsService.getMetrics(
         '2023-01-01',
@@ -67,19 +86,19 @@ describe('analyticsService', () => {
       );
 
       expect(result.activeTenants).toBe(4);
-      expect(Tenant.count).toHaveBeenCalledWith({
+      expect(prisma.tenant.count).toHaveBeenCalledWith({
         where: {
           isActive: true,
-          propertyId: { [require('sequelize').Op.in]: ['prop1'] }
+          propertyId: { in: ['prop1'] }
         }
       });
     });
 
     it('should handle zero total units', async () => {
-      Property.sum.mockResolvedValue(0);
-      Tenant.count.mockResolvedValue(0);
-      Payment.sum.mockResolvedValue(0);
-      Invoice.findAll.mockResolvedValue([{ avgRent: 0 }]);
+      prisma.property.findMany.mockResolvedValue([]);
+      prisma.tenant.count.mockResolvedValue(0);
+      prisma.payment.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
+      prisma.invoice.aggregate.mockResolvedValue({ _avg: { amount: 0 } });
 
       const result = await analyticsService.getMetrics(
         '2023-01-01',
@@ -99,30 +118,30 @@ describe('analyticsService', () => {
         {
           type: 'plumbing',
           date: new Date('2023-01-01'),
-          cost: '500.00',
+          cost: 500.00,
           priority: 'medium',
         },
         {
           type: 'plumbing',
           date: new Date('2023-07-01'),
-          cost: '600.00',
+          cost: 600.00,
           priority: 'high',
         },
         {
           type: 'electrical',
           date: new Date('2023-03-01'),
-          cost: '800.00',
+          cost: 800.00,
           priority: 'medium',
         },
         {
           type: 'electrical',
           date: new Date('2023-09-01'),
-          cost: '750.00',
+          cost: 750.00,
           priority: 'medium',
         },
       ];
 
-      MaintenanceHistory.findAll.mockResolvedValue(mockHistory);
+      prisma.maintenanceHistory.findMany.mockResolvedValue(mockHistory);
 
       const result = await analyticsService.predictMaintenance('prop1');
 
@@ -136,8 +155,8 @@ describe('analyticsService', () => {
     });
 
     it('should return message when insufficient historical data', async () => {
-      MaintenanceHistory.findAll.mockResolvedValue([
-        { type: 'plumbing', date: new Date('2023-01-01'), cost: '500.00' }
+      prisma.maintenanceHistory.findMany.mockResolvedValue([
+        { type: 'plumbing', date: new Date('2023-01-01'), cost: 500.00 }
       ]);
 
       const result = await analyticsService.predictMaintenance('prop1');
@@ -151,18 +170,18 @@ describe('analyticsService', () => {
         {
           type: 'plumbing',
           date: new Date('2023-01-01'),
-          cost: '500.00',
+          cost: 500.00,
           priority: 'medium',
         },
         {
           type: 'plumbing',
           date: new Date('2024-01-01'), // Very long interval, low confidence
-          cost: '600.00',
+          cost: 600.00,
           priority: 'medium',
         },
       ];
 
-      MaintenanceHistory.findAll.mockResolvedValue(mockHistory);
+      prisma.maintenanceHistory.findMany.mockResolvedValue(mockHistory);
 
       const result = await analyticsService.predictMaintenance('prop1');
 
@@ -171,7 +190,7 @@ describe('analyticsService', () => {
     });
 
     it('should handle database errors gracefully', async () => {
-      MaintenanceHistory.findAll.mockRejectedValue(new Error('Database error'));
+      prisma.maintenanceHistory.findMany.mockRejectedValue(new Error('Database error'));
 
       const result = await analyticsService.predictMaintenance('prop1');
 
@@ -184,24 +203,24 @@ describe('analyticsService', () => {
         {
           type: 'plumbing',
           date: new Date('2023-01-01'),
-          cost: '500.00',
+          cost: 500.00,
           priority: 'medium',
         },
         {
           type: 'plumbing',
           date: new Date('2023-07-01'), // 6 months interval
-          cost: '600.00',
+          cost: 600.00,
           priority: 'medium',
         },
         {
           type: 'plumbing',
           date: new Date('2024-01-01'), // 6 months interval (consistent)
-          cost: '550.00',
+          cost: 550.00,
           priority: 'medium',
         },
       ];
 
-      MaintenanceHistory.findAll.mockResolvedValue(mockHistory);
+      prisma.maintenanceHistory.findMany.mockResolvedValue(mockHistory);
 
       const result = await analyticsService.predictMaintenance('prop1');
 
@@ -240,14 +259,14 @@ describe('analyticsService', () => {
 
       for (const testCase of testData) {
         // Mock tenant data
-        Tenant.findByPk.mockResolvedValue({
+        prisma.tenant.findMany.mockResolvedValue([{
           id: testCase.tenantId,
           createdAt: new Date('2022-01-01'), // 24 months ago
           screeningStatus: { riskLevel: 'low' },
-        });
+        }]);
 
         // Mock payment history
-        Payment.findAll.mockResolvedValue(
+        prisma.payment.findMany.mockResolvedValue(
           testCase.history.map((h, index) => ({
             id: `payment-${index}`,
             status: h.status,
@@ -256,7 +275,7 @@ describe('analyticsService', () => {
         );
 
         // Mock invoice history
-        Invoice.findAll.mockResolvedValue([]);
+        prisma.invoice.findMany.mockResolvedValue([]);
 
         const result = await analyticsService.predictChurn(testCase.tenantId);
 

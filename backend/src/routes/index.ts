@@ -52,6 +52,8 @@ import uxReviewRoutes from './uxReview.routes';
 import marketingRoutes from './marketing.routes';
 import marketIntelligenceRoutes from './marketIntelligence.routes';
 import orderUploadRoutes from './orderUpload';
+import alertGroupsRoutes from './alertGroups.routes';
+import templatesRoutes from './templates.routes';
 // import approvalWorkflowRoutes from './approvalWorkflow.routes';
 // import workflowAutomationRoutes from './workflowAutomation.routes';
 
@@ -124,6 +126,11 @@ router.use(`${API_PREFIX}/marketing`, marketingRoutes);
 router.use(`${API_PREFIX}/tenant-ratings`, tenantRatingRoutes);
 router.use(`${API_PREFIX}/market-intelligence`, marketIntelligenceRoutes);
 router.use(`${API_PREFIX}/order-upload`, orderUploadRoutes);
+
+// Epic 23: Alert Groups and User Templates API routes
+router.use(`${API_PREFIX}/alert-groups`, alertGroupsRoutes);
+router.use(`${API_PREFIX}/templates`, templatesRoutes);
+
 // router.use(`${API_PREFIX}/workflows/automation`, workflowAutomationRoutes);
 
 router.post(`${API_PREFIX}/cache/clear`, (req, res) => {

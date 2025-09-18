@@ -58,6 +58,7 @@ describe('Payment Service', () => {
         createdById: owner.id,
         status: 'ACTIVE',
         isAvailable: false,
+        slug: 'test-payment-slug',
       },
     });
 

@@ -145,3 +145,6 @@ describe('screeningWorkflow', () => {
       expect(result).toContain('AI Assessment: Low risk tenant.');
     });
   });
+
+  });
+});

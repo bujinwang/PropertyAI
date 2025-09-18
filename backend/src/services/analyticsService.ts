@@ -1,0 +1,5 @@
+        Lease: {
+          include: {
+            Rental: true
+          }
+        }

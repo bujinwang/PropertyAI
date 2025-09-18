@@ -867,6 +867,42 @@ class PredictiveMaintenanceService {
   }
 }
 
+// Create work order from prediction
+async createWorkOrderFromPrediction(predictionId: string): Promise<any> {
+  try {
+    // Call API to create work order
+    const response = await fetch(`${this.API_ENDPOINT}/workorders`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ predictionId }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to create work order: ${response.statusText}`);
+    }
+
+    const workOrder = await response.json();
+    console.log('[Predictive Maintenance] Work order created:', workOrder);
+
+    // Update alert status if associated
+    const alerts = this.alertsCache.get(workOrder.propertyId) || [];
+    const alertIndex = alerts.findIndex(alert => alert.predictionId === predictionId);
+    if (alertIndex !== -1) {
+      alerts[alertIndex].resolved = true;
+      alerts[alertIndex].resolvedAt = Date.now();
+      this.alertsCache.set(workOrder.propertyId, alerts);
+      await this.persistAlerts(workOrder.propertyId, alerts);
+    }
+
+    return workOrder;
+  } catch (error) {
+    console.error('[Predictive Maintenance] Failed to create work order:', error);
+    throw error;
+  }
+}
+
 // Export singleton instance
 export const predictiveMaintenanceService = new PredictiveMaintenanceService();
 export default predictiveMaintenanceService;

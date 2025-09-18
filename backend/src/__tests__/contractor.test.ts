@@ -11,12 +11,12 @@ describe('Contractor API', () => {
     // Create a vendor user for testing
     vendorUser = await prisma.user.create({
       data: {
-        email: 'vendor@test.com',
+        email: 'contractor-test@example.com',
         password: 'password',
         role: 'VENDOR',
         firstName: 'Test',
         lastName: 'Vendor',
-        vendor: {
+        Vendor: {
           create: {
             name: 'Test Vendor Inc.',
             phone: '1234567890',
@@ -49,9 +49,10 @@ describe('Contractor API', () => {
     });
     
     const rental = await prisma.rental.create({
-        data: {
-            title: 'Test Property Unit 101',
-            address: '123 Test St',
+      data: {
+        title: 'Test Property Unit 101',
+        address: '123 Test St',
+        slug: 'test-rental-slug',
             city: 'Test City',
             state: 'TS',
             zipCode: '12345',
@@ -86,7 +87,7 @@ describe('Contractor API', () => {
         maintenanceRequestId: maintenanceRequest.id,
         assignments: {
           create: {
-            vendorId: vendorUser.vendor.id,
+            vendorId: vendorUser.Vendor.id,
           },
         },
       },
@@ -94,10 +95,11 @@ describe('Contractor API', () => {
   });
 
   afterAll(async () => {
-    await prisma.user.deleteMany({});
-    await prisma.rental.deleteMany({});
-    await prisma.maintenanceRequest.deleteMany({});
     await prisma.workOrder.deleteMany({});
+    await prisma.maintenanceRequest.deleteMany({});
+    await prisma.rental.deleteMany({});
+    await prisma.user.deleteMany({});
+    await prisma.vendor.deleteMany({});
   });
 
   describe('GET /api/contractor/work-orders', () => {
