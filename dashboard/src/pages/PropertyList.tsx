@@ -21,7 +21,6 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Link } from 'react-router-dom';
 import PropertyForm from '../components/PropertyForm';
-import { Link } from 'react-router-dom';
 import { dashboardService, Property } from '../services/dashboardService';
 
 const columns = [

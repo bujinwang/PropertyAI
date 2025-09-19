@@ -435,14 +435,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
         )}
       </Formik>
     </Dialog>
-    </LocalizationProvider>
-  );
-};
-
-export default DocumentUpload;
-    </Dialog>
-    </LocalizationProvider>
-  );
-};
+  </LocalizationProvider>
+);
 
 export default DocumentUpload;

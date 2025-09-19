@@ -174,23 +174,9 @@ class PerformanceMonitor {
 
   public startInteractionMonitoring() {
     // Monitor user interactions for responsiveness
-    const originalAddEventListener = document.addEventListener;
-    document.addEventListener = function(type: string, listener: any) {
-      if (type.startsWith('touch') || type.startsWith('click')) {
-        const startTime = Date.now();
-        const originalListener = listener;
-
-        listener = function(event: any) {
-          const interactionTime = Date.now() - startTime;
-          if (interactionTime > 100) {
-            console.warn(`Slow interaction (${type}): ${interactionTime}ms`);
-          }
-          return originalListener.call(this, event);
-        };
-      }
-
-      return originalAddEventListener.call(this, type, listener);
-    };
+    // Note: In React Native, we can't override document.addEventListener
+    // This method is kept for compatibility but doesn't monitor interactions
+    console.log('📱 Interaction monitoring started (limited in React Native)');
   }
 }
 
@@ -202,14 +188,14 @@ export const measurePerformance = <T>(
   name: string,
   operation: () => T | Promise<T>
 ): T | Promise<T> => {
-  const startTime = performance.now();
+  const startTime = Date.now();
 
   try {
     const result = operation();
 
     if (result instanceof Promise) {
       return result.finally(() => {
-        const duration = performance.now() - startTime;
+        const duration = Date.now() - startTime;
         console.log(`⏱️ ${name}: ${duration.toFixed(2)}ms`);
 
         if (duration > 100) {
@@ -217,7 +203,7 @@ export const measurePerformance = <T>(
         }
       });
     } else {
-      const duration = performance.now() - startTime;
+      const duration = Date.now() - startTime;
       console.log(`⏱️ ${name}: ${duration.toFixed(2)}ms`);
 
       if (duration > 100) {
@@ -227,7 +213,7 @@ export const measurePerformance = <T>(
       return result;
     }
   } catch (error) {
-    const duration = performance.now() - startTime;
+    const duration = Date.now() - startTime;
     console.error(`❌ ${name} failed after ${duration.toFixed(2)}ms:`, error);
     throw error;
   }

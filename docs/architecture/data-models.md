@@ -115,32 +115,34 @@ This document captures the current Sequelize models in the PropertyAI applicatio
 **Extensions for Reporting (21.4):**
 - Add predictedPaymentRisk: DECIMAL(3,2) - AI score for payment reliability
 
-### MaintenanceHistory Model (`src/models/MaintenanceHistory.js`)
+### MaintenanceHistory Model (`backend/src/models/MaintenanceHistory.js`)
 **Purpose:** Tracks maintenance requests and history.
 
 **Fields:**
-- id: UUID (Primary Key)
-- propertyId: UUID (Foreign Key)
-- unitId: UUID (Foreign Key, optional)
-- tenantId: UUID (Foreign Key, optional)
-- contractorId: UUID (Foreign Key, optional)
-- description: TEXT (Required)
-- status: ENUM ('pending', 'in-progress', 'completed', 'cancelled')
-- priority: ENUM ('low', 'medium', 'high', 'emergency')
-- estimatedCost: DECIMAL(10,2)
-- actualCost: DECIMAL(10,2)
-- createdAt: DATE
-- completedAt: DATE
-- predictedNextMaintenance: DATE [Added in 21.1 for predictive]
+- id: UUID (Primary Key, default UUIDV4)
+- propertyId: UUID (Foreign Key to properties.id, required)
+- type: ENUM ('plumbing', 'electrical', 'hvac', 'roofing', 'appliance', 'structural', 'painting', 'flooring', 'pest_control', 'landscaping', 'security', 'other') (required)
+- description: TEXT (required)
+- date: DATE (required)
+- cost: DECIMAL(10,2) (required, default 0.00)
+- priority: ENUM ('low', 'medium', 'high', 'critical') (required, default 'medium')
+- status: ENUM ('scheduled', 'in_progress', 'completed', 'cancelled') (required, default 'completed')
+- contractor: STRING (optional)
+- notes: TEXT (optional)
+- predictedFailure: BOOLEAN (required, default false)
+- createdAt: DATE (timestamp)
+- updatedAt: DATE (timestamp)
 
 **Relationships:**
-- BelongsTo: Property
-- BelongsTo: Unit
-- BelongsTo: Tenant (User)
-- BelongsTo: Contractor (User)
+- BelongsTo: Property (foreignKey: 'propertyId')
+
+**Indexes:**
+- Composite: propertyId + date
+- Composite: type + date
+- Single: status
 
 **Extensions for Reporting (21.4):**
-- Add maintenancePredictiveScore: DECIMAL(3,2) [From 21.1 integration]
+- predictiveFailure flag supports maintenance prediction integration [From 21.1]
 
 ## New Models for Reporting (21.4)
 

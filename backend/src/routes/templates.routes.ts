@@ -1,5 +1,6 @@
-import { Router } from 'express';
-import { TemplateService } from '../services/templateService';
+import { Router, Request, Response } from 'express';
+import { User } from '@prisma/client';
+import TemplateService from '../services/templateService';
 import { authenticateToken } from '../middleware/auth';
 import { validateRequest } from '../middleware/validation';
 import { body, param, query } from 'express-validator';
@@ -24,7 +25,7 @@ router.post('/',
     body('sharedWith').optional().isArray().withMessage('sharedWith must be an array'),
     validateRequest
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const templateData = req.body;
 
@@ -40,7 +41,7 @@ router.post('/',
       res.status(500).json({
         success: false,
         message: 'Failed to create template',
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
@@ -56,7 +57,7 @@ router.get('/:id',
     param('id').isString().notEmpty().withMessage('Template ID is required'),
     validateRequest
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
 
@@ -78,7 +79,7 @@ router.get('/:id',
       res.status(500).json({
         success: false,
         message: 'Failed to fetch template',
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
@@ -95,7 +96,7 @@ router.get('/user/:userId',
     query('role').optional().isString().withMessage('Role must be a string'),
     validateRequest
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { userId } = req.params;
       const { role } = req.query;
@@ -112,7 +113,7 @@ router.get('/user/:userId',
       res.status(500).json({
         success: false,
         message: 'Failed to fetch templates',
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
@@ -128,9 +129,9 @@ router.get('/shared',
     query('role').optional().isString().withMessage('Role must be a string'),
     validateRequest
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id; // Assuming user is set by auth middleware
+      const userId = (req.user as User)?.id; // Assuming user is set by auth middleware
       const { role } = req.query;
 
       if (!userId) {
@@ -152,7 +153,7 @@ router.get('/shared',
       res.status(500).json({
         success: false,
         message: 'Failed to fetch shared templates',
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
@@ -168,9 +169,9 @@ router.get('/accessible',
     query('role').optional().isString().withMessage('Role must be a string'),
     validateRequest
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id; // Assuming user is set by auth middleware
+      const userId = (req.user as User)?.id; // Assuming user is set by auth middleware
       const { role } = req.query;
 
       if (!userId) {
@@ -192,7 +193,7 @@ router.get('/accessible',
       res.status(500).json({
         success: false,
         message: 'Failed to fetch accessible templates',
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
@@ -213,7 +214,7 @@ router.put('/:id',
     body('sharedWith').optional().isArray().withMessage('sharedWith must be an array'),
     validateRequest
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const updateData = req.body;
@@ -230,7 +231,7 @@ router.put('/:id',
       res.status(500).json({
         success: false,
         message: 'Failed to update template',
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
@@ -249,7 +250,7 @@ router.post('/save',
     body('role').isString().notEmpty().withMessage('Role is required'),
     validateRequest
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { userId, templateName, layout, role } = req.body;
 
@@ -265,7 +266,7 @@ router.post('/save',
       res.status(500).json({
         success: false,
         message: 'Failed to save template',
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
@@ -282,7 +283,7 @@ router.post('/:id/share',
     body('sharedWith').isArray().withMessage('sharedWith must be an array of user IDs'),
     validateRequest
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { sharedWith } = req.body;
@@ -299,7 +300,7 @@ router.post('/:id/share',
       res.status(500).json({
         success: false,
         message: 'Failed to share template',
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
@@ -315,7 +316,7 @@ router.post('/:id/unshare',
     param('id').isString().notEmpty().withMessage('Template ID is required'),
     validateRequest
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
 
@@ -331,7 +332,7 @@ router.post('/:id/unshare',
       res.status(500).json({
         success: false,
         message: 'Failed to unshare template',
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
@@ -347,7 +348,7 @@ router.delete('/:id',
     param('id').isString().notEmpty().withMessage('Template ID is required'),
     validateRequest
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
 
@@ -362,7 +363,7 @@ router.delete('/:id',
       res.status(500).json({
         success: false,
         message: 'Failed to delete template',
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
@@ -378,7 +379,7 @@ router.get('/role/:role',
     param('role').isString().notEmpty().withMessage('Role is required'),
     validateRequest
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { role } = req.params;
 
@@ -394,7 +395,7 @@ router.get('/role/:role',
       res.status(500).json({
         success: false,
         message: 'Failed to fetch templates by role',
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
@@ -411,7 +412,7 @@ router.post('/:id/validate',
     body('availableComponents').isArray().withMessage('availableComponents must be an array'),
     validateRequest
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { availableComponents } = req.body;
@@ -441,7 +442,7 @@ router.post('/:id/validate',
       res.status(500).json({
         success: false,
         message: 'Failed to validate template',
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
@@ -458,7 +459,7 @@ router.post('/apply',
     body('availableComponents').isArray().withMessage('availableComponents must be an array'),
     validateRequest
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { layout, availableComponents } = req.body;
 
@@ -473,7 +474,7 @@ router.post('/apply',
       console.error('Error applying template layout:', error);
       res.status(400).json({
         success: false,
-        message: error.message
+        message: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
@@ -490,7 +491,7 @@ router.get('/search',
     query('userId').optional().isString().withMessage('User ID must be a string'),
     validateRequest
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { q: query, userId } = req.query;
 
@@ -506,7 +507,7 @@ router.get('/search',
       res.status(500).json({
         success: false,
         message: 'Failed to search templates',
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
@@ -518,7 +519,7 @@ router.get('/search',
  * @access Private
  */
 router.get('/stats/overview',
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const stats = await TemplateService.getTemplateStats();
 
@@ -531,7 +532,7 @@ router.get('/stats/overview',
       res.status(500).json({
         success: false,
         message: 'Failed to fetch template statistics',
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }

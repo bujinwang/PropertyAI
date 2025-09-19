@@ -4,7 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { NavigationContainer } from '@react-navigation/native';
 
-import { AuthProvider } from '@/contexts/AuthContext';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { NetworkProvider } from '@/contexts/NetworkContext';
 import { AppNavigator } from '@/navigation/AppNavigator';
@@ -13,8 +13,12 @@ import { performanceMonitor } from '@/utils/performanceMonitor';
 import { realtimeService } from '@/services/realtimeService';
 import { pushNotificationService } from '@/services/pushNotificationService';
 
-export default function App() {
+function AppContent() {
+  const { isAuthenticated, tokens, user } = useAuth();
+
   useEffect(() => {
+    console.log('🔄 AppContent useEffect triggered:', { isAuthenticated, hasToken: !!tokens?.accessToken, userId: user?.id });
+
     // Initialize performance monitoring
     performanceMonitor.recordMetric('firstPaintTime', Date.now());
 
@@ -31,8 +35,13 @@ export default function App() {
     // Start interaction monitoring
     performanceMonitor.startInteractionMonitoring();
 
-    // Initialize real-time services
-    initializeRealtimeServices();
+    // Initialize real-time services only if authenticated
+    if (isAuthenticated && tokens?.accessToken) {
+      console.log('🔗 Attempting WebSocket connection with token...');
+      initializeRealtimeServices(tokens.accessToken, user?.id);
+    } else {
+      console.log('⏳ Skipping WebSocket connection - not authenticated yet');
+    }
 
     return () => {
       clearInterval(saveMetricsInterval);
@@ -42,14 +51,19 @@ export default function App() {
       realtimeService.disconnect();
       pushNotificationService.cleanup();
     };
-  }, []);
+  }, [isAuthenticated, tokens?.accessToken, user?.id]);
 
-  const initializeRealtimeServices = async () => {
+  const initializeRealtimeServices = async (authToken: string, userId?: string) => {
     try {
-      // Initialize WebSocket connection
-      const connected = await realtimeService.connect();
+      // Initialize WebSocket connection with authentication
+      const connected = await realtimeService.connect(authToken);
       if (connected) {
         console.log('🔗 Real-time services connected successfully');
+
+        // Update user ID for WebSocket service
+        if (userId) {
+          realtimeService.updateUserId(userId);
+        }
 
         // Subscribe to global events
         realtimeService.subscribeToNotifications((notification) => {
@@ -84,11 +98,26 @@ export default function App() {
       <PaperProvider theme={theme}>
         <ThemeProvider>
           <NetworkProvider>
+            <NavigationContainer>
+              <AppNavigator />
+              <StatusBar style="auto" />
+            </NavigationContainer>
+          </NetworkProvider>
+        </ThemeProvider>
+      </PaperProvider>
+    </SafeAreaProvider>
+  );
+}
+
+export default function App() {
+
+  return (
+    <SafeAreaProvider>
+      <PaperProvider theme={theme}>
+        <ThemeProvider>
+          <NetworkProvider>
             <AuthProvider>
-              <NavigationContainer>
-                <AppNavigator />
-                <StatusBar style="auto" />
-              </NavigationContainer>
+              <AppContent />
             </AuthProvider>
           </NetworkProvider>
         </ThemeProvider>

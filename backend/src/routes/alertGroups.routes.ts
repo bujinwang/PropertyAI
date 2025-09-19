@@ -1,5 +1,5 @@
-import { Router } from 'express';
-import { AlertGroupingService } from '../services/alertGroupingService';
+import { Router, Request, Response } from 'express';
+import AlertGroupingService from '../services/alertGroupingService';
 import { authenticateToken } from '../middleware/auth';
 import { validateRequest } from '../middleware/validation';
 import { body, param, query } from 'express-validator';
@@ -22,7 +22,7 @@ router.post('/',
     body('alertCount').optional().isInt({ min: 0 }).withMessage('Alert count must be a non-negative integer'),
     validateRequest
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { groupType, priority, propertyId, alertCount } = req.body;
 
@@ -43,7 +43,7 @@ router.post('/',
       res.status(500).json({
         success: false,
         message: 'Failed to create alert group',
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
@@ -59,7 +59,7 @@ router.get('/:id',
     param('id').isString().notEmpty().withMessage('Alert group ID is required'),
     validateRequest
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
 
@@ -81,7 +81,7 @@ router.get('/:id',
       res.status(500).json({
         success: false,
         message: 'Failed to fetch alert group',
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
@@ -97,7 +97,7 @@ router.get('/property/:propertyId',
     param('propertyId').isString().notEmpty().withMessage('Property ID is required'),
     validateRequest
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { propertyId } = req.params;
 
@@ -113,7 +113,7 @@ router.get('/property/:propertyId',
       res.status(500).json({
         success: false,
         message: 'Failed to fetch alert groups',
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
@@ -132,7 +132,7 @@ router.put('/:id',
     body('alertCount').optional().isInt({ min: 0 }).withMessage('Alert count must be a non-negative integer'),
     validateRequest
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const updateData = req.body;
@@ -149,7 +149,7 @@ router.put('/:id',
       res.status(500).json({
         success: false,
         message: 'Failed to update alert group',
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
@@ -166,7 +166,7 @@ router.patch('/:id/increment',
     body('incrementBy').optional().isInt({ min: 1 }).withMessage('Increment value must be a positive integer'),
     validateRequest
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { incrementBy = 1 } = req.body;
@@ -183,7 +183,7 @@ router.patch('/:id/increment',
       res.status(500).json({
         success: false,
         message: 'Failed to increment alert count',
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
@@ -200,7 +200,7 @@ router.patch('/:id/decrement',
     body('decrementBy').optional().isInt({ min: 1 }).withMessage('Decrement value must be a positive integer'),
     validateRequest
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { decrementBy = 1 } = req.body;
@@ -217,7 +217,7 @@ router.patch('/:id/decrement',
       res.status(500).json({
         success: false,
         message: 'Failed to decrement alert count',
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
@@ -233,7 +233,7 @@ router.delete('/:id',
     param('id').isString().notEmpty().withMessage('Alert group ID is required'),
     validateRequest
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
 
@@ -248,7 +248,7 @@ router.delete('/:id',
       res.status(500).json({
         success: false,
         message: 'Failed to delete alert group',
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
@@ -260,7 +260,7 @@ router.delete('/:id',
  * @access Private
  */
 router.get('/stats/overview',
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const stats = await AlertGroupingService.getAlertGroupsStats();
 
@@ -273,7 +273,7 @@ router.get('/stats/overview',
       res.status(500).json({
         success: false,
         message: 'Failed to fetch alert groups statistics',
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
@@ -289,7 +289,7 @@ router.get('/high-priority',
     query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
     validateRequest
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
 
@@ -305,7 +305,7 @@ router.get('/high-priority',
       res.status(500).json({
         success: false,
         message: 'Failed to fetch high priority alert groups',
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
@@ -317,7 +317,7 @@ router.get('/high-priority',
  * @access Private (Admin only)
  */
 router.post('/cleanup',
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       // TODO: Add admin role check middleware
       const result = await AlertGroupingService.cleanupEmptyAlertGroups();
@@ -332,7 +332,7 @@ router.post('/cleanup',
       res.status(500).json({
         success: false,
         message: 'Failed to cleanup empty alert groups',
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }

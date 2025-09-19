@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { DataGrid, GridColDef, GridToolbar } from '@mui/x-data-grid';
 import { Chip } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
-import { api } from '../services/api'; // Assume existing api instance
+import api from '../services/api'; // Assume existing api instance
 
 const columns = [
   { 

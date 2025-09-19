@@ -1,9 +1,11 @@
 import { Server } from 'socket.io';
 import { Server as HttpServer } from 'http';
-import { RedisAdapter } from '@socket.io/redis-adapter';
-import { createClient } from 'redis';
+// import { RedisAdapter } from '@socket.io/redis-adapter'; // Commented out - dependency not installed
+// import { createClient } from 'redis'; // Commented out - dependency not installed
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 interface AuthenticatedSocket {
   userId: string;
@@ -37,7 +39,7 @@ export class WebSocketService {
 
   constructor(server: HttpServer) {
     // Initialize Redis clients for scaling (optional)
-    this.initializeRedis();
+    // this.initializeRedis(); // Commented out - Redis dependencies not installed
 
     this.io = new Server(server, {
       cors: {
@@ -56,58 +58,58 @@ export class WebSocketService {
     });
 
     // Set up Redis adapter if Redis is available
-    if (this.redisEnabled && this.pubClient && this.subClient) {
-      this.io.adapter(new RedisAdapter(this.pubClient, this.subClient));
-      console.log('🔴 Redis adapter enabled for horizontal scaling');
-    }
+    // if (this.redisEnabled && this.pubClient && this.subClient) {
+    //   this.io.adapter(new RedisAdapter(this.pubClient, this.subClient));
+    //   console.log('🔴 Redis adapter enabled for horizontal scaling');
+    // }
 
     this.setupMiddleware();
     this.setupEventHandlers();
     this.setupRealtimeEventHandlers();
   }
 
-  private async initializeRedis() {
-    try {
-      const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+  // private async initializeRedis() {
+  //   try {
+  //     const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 
-      if (process.env.REDIS_URL || process.env.NODE_ENV === 'production') {
-        this.pubClient = createClient({ url: redisUrl });
-        this.subClient = this.pubClient.duplicate();
+  //     if (process.env.REDIS_URL || process.env.NODE_ENV === 'production') {
+  //       this.pubClient = createClient({ url: redisUrl });
+  //       this.subClient = this.pubClient.duplicate();
 
-        // Handle Redis connection events
-        this.pubClient.on('error', (err: any) => {
-          console.warn('Redis Pub Client Error:', err.message);
-          this.redisEnabled = false;
-        });
+  //       // Handle Redis connection events
+  //       this.pubClient.on('error', (err: any) => {
+  //         console.warn('Redis Pub Client Error:', err.message);
+  //         this.redisEnabled = false;
+  //       });
 
-        this.subClient.on('error', (err: any) => {
-          console.warn('Redis Sub Client Error:', err.message);
-          this.redisEnabled = false;
-        });
+  //       this.subClient.on('error', (err: any) => {
+  //         console.warn('Redis Sub Client Error:', err.message);
+  //         this.redisEnabled = false;
+  //       });
 
-        this.pubClient.on('connect', () => {
-          console.log('✅ Redis Pub Client Connected');
-          this.redisEnabled = true;
-        });
+  //       this.pubClient.on('connect', () => {
+  //         console.log('✅ Redis Pub Client Connected');
+  //         this.redisEnabled = true;
+  //       });
 
-        this.subClient.on('connect', () => {
-          console.log('✅ Redis Sub Client Connected');
-        });
+  //       this.subClient.on('connect', () => {
+  //         console.log('✅ Redis Sub Client Connected');
+  //       });
 
-        // Connect to Redis
-        await Promise.all([
-          this.pubClient.connect(),
-          this.subClient.connect()
-        ]);
+  //       // Connect to Redis
+  //       await Promise.all([
+  //         this.pubClient.connect(),
+  //         this.subClient.connect()
+  //       ]);
 
-      } else {
-        console.log('ℹ️ Redis not configured, running in single-server mode');
-      }
-    } catch (error) {
-      console.warn('Failed to initialize Redis:', error);
-      this.redisEnabled = false;
-    }
-  }
+  //     } else {
+  //       console.log('ℹ️ Redis not configured, running in single-server mode');
+  //     }
+  //   } catch (error) {
+  //     console.warn('Failed to initialize Redis:', error);
+  //     this.redisEnabled = false;
+  //   }
+  // }
 
   private setupMiddleware() {
     this.io.use(async (socket, next) => {

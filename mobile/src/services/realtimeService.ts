@@ -1,3 +1,4 @@
+import React from 'react';
 import { io, Socket } from 'socket.io-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
@@ -57,6 +58,12 @@ class RealtimeService {
       try {
         if (authToken) {
           this.config.authToken = authToken;
+        }
+
+        // Ensure we have an auth token before attempting connection
+        if (!this.config.authToken) {
+          console.warn('No authentication token available, cannot connect to WebSocket');
+          return false;
         }
 
         // Check network connectivity
@@ -260,8 +267,13 @@ class RealtimeService {
   private initializeNetworkMonitoring(): void {
     NetInfo.addEventListener((state) => {
       if (state.isConnected && !this.isConnected && this.config.autoReconnect) {
-        console.log('Network restored, attempting to reconnect...');
-        this.connect();
+        // Only attempt reconnection if we have an auth token
+        if (this.config.authToken) {
+          console.log('Network restored, attempting to reconnect...');
+          this.connect();
+        } else {
+          console.log('Network restored but no auth token available, skipping reconnection');
+        }
       } else if (!state.isConnected && this.isConnected) {
         console.log('Network lost, disconnecting...');
         this.disconnect();
