@@ -217,6 +217,37 @@ class AuthService {
     }
   }
 
+  async requestPasswordReset(email: string): Promise<ApiResponse<void>> {
+    try {
+      await this.api.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD || '/auth/forgot-password', {
+        email,
+      });
+
+      return {
+        data: undefined,
+        success: true,
+      };
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<ApiResponse<void>> {
+    try {
+      await this.api.post(API_ENDPOINTS.AUTH.RESET_PASSWORD || '/auth/reset-password', {
+        token,
+        newPassword,
+      });
+
+      return {
+        data: undefined,
+        success: true,
+      };
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
   private async storeTokens(tokens: AuthTokens): Promise<void> {
     await SecureStore.setItemAsync('auth_tokens', JSON.stringify(tokens));
   }

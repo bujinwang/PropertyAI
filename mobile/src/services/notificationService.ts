@@ -1,5 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
+import axios from 'axios';
 
 class NotificationService {
   private isInitialized = false;
@@ -195,12 +197,49 @@ class NotificationService {
     try {
       const token = await this.getDeviceToken();
       if (token) {
-        // Send token to server for push notifications
-        console.log('Device token:', token);
-        // TODO: Send token to backend API
+        // Send token to backend API
+        await this.sendTokenToBackend(token);
+        console.log('Push token registered and sent to backend:', token);
       }
     } catch (error) {
       console.error('Failed to register for push notifications:', error);
+    }
+  }
+
+  private async sendTokenToBackend(token: string): Promise<void> {
+    try {
+      const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
+      const authToken = await SecureStore.getItemAsync('auth_tokens');
+      
+      if (!authToken) {
+        console.warn('No auth token available, skipping push token registration');
+        return;
+      }
+
+      const tokens = JSON.parse(authToken);
+      
+      await axios.post(
+        `${API_URL}/api/notifications/register-device`,
+        {
+          pushToken: token,
+          platform: Platform.OS,
+          deviceInfo: {
+            os: Platform.OS,
+            osVersion: Platform.Version,
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${tokens.accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      console.log('Push token successfully sent to backend');
+    } catch (error) {
+      console.error('Failed to send push token to backend:', error);
+      // Don't throw - this is a non-critical operation
     }
   }
 

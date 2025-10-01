@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 import { AuthStackParamList } from '@/types';
+import { authService } from '@/services/authService';
 
 type ForgotPasswordScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'ForgotPassword'>;
 
@@ -21,13 +22,34 @@ export function ForgotPasswordScreen() {
       return;
     }
 
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // TODO: Implement password reset API call
-      Alert.alert('Success', 'Password reset instructions sent to your email');
-      navigation.navigate('Login');
-    } catch (error) {
-      Alert.alert('Error', 'Failed to send reset instructions. Please try again.');
+      // Call password reset API
+      await authService.requestPasswordReset(email);
+
+      Alert.alert(
+        'Success',
+        'If an account exists with this email, you will receive password reset instructions shortly.',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.navigate('Login'),
+          },
+        ]
+      );
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      Alert.alert(
+        'Error',
+        error.message || 'Failed to send reset instructions. Please try again.'
+      );
     } finally {
       setIsLoading(false);
     }
