@@ -1,58 +1,10 @@
-import axios, { AxiosResponse } from 'axios';
-import * as SecureStore from 'expo-secure-store';
+import { AxiosResponse } from 'axios';
 import { Property, Unit, ApiResponse, PaginatedResponse } from '@/types';
-import { API_CONFIG, API_ENDPOINTS } from '@/constants/api';
+import { API_ENDPOINTS } from '@/constants/api';
+import httpClient from './httpClient';
 
 class PropertyService {
-  private api = axios.create({
-    baseURL: API_CONFIG.BASE_URL,
-    timeout: API_CONFIG.TIMEOUT,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  constructor() {
-    // Add request interceptor to include auth token
-    this.api.interceptors.request.use(
-      (config) => {
-        const token = this.getStoredToken();
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-      },
-      (error) => Promise.reject(error)
-    );
-
-    // Add response interceptor for token refresh
-    this.api.interceptors.response.use(
-      (response) => response,
-      async (error) => {
-        const originalRequest = error.config;
-
-        if (error.response?.status === 401 && !originalRequest._retry) {
-          originalRequest._retry = true;
-
-          try {
-            const refreshToken = await this.getStoredRefreshToken();
-            if (refreshToken) {
-              // TODO: Implement token refresh
-              // const response = await authService.refreshToken(refreshToken);
-              // const newTokens = response.data;
-              // await this.storeTokens(newTokens);
-              // originalRequest.headers.Authorization = `Bearer ${newTokens.accessToken}`;
-              // return this.api(originalRequest);
-            }
-          } catch (refreshError) {
-            throw refreshError;
-          }
-        }
-
-        return Promise.reject(error);
-      }
-    );
-  }
+  private api = httpClient;
 
   async getProperties(params?: {
     page?: number;
