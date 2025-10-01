@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaintenanceRequest } from '@/types';
 import { maintenanceService } from '@/services/maintenanceService';
 import { offlineStorageService } from '@/services/offlineStorageService';
+import { syncQueueService } from '@/services/syncQueueService';
 import { useNetwork } from '@/contexts/NetworkContext';
 
 export function MaintenanceScreen() {
@@ -28,6 +29,15 @@ export function MaintenanceScreen() {
   useEffect(() => {
     filterRequests();
   }, [requests, searchQuery, selectedStatus, selectedPriority]);
+
+  // Process sync queue when network comes back online
+  useEffect(() => {
+    if (isConnected) {
+      syncQueueService.processQueue().catch(error => {
+        console.error('Error processing sync queue:', error);
+      });
+    }
+  }, [isConnected]);
 
   const loadMaintenanceRequests = async () => {
     try {
@@ -114,7 +124,19 @@ export function MaintenanceScreen() {
           await maintenanceService.updateMaintenanceStatus(requestId, newStatus);
         } catch (error) {
           console.error('Error updating status on API:', error);
-          // TODO: Add to sync queue for later
+          // Add to sync queue for later
+          await syncQueueService.addToQueue(
+            `/maintenance/${requestId}`,
+            'PATCH',
+            { status: newStatus },
+            {
+              metadata: {
+                entityType: 'MAINTENANCE',
+                entityId: requestId,
+                description: `Update status to ${newStatus}`
+              }
+            }
+          );
         }
       }
 
