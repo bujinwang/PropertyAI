@@ -1984,3 +1984,156 @@ model WorkflowIntegration {
   @@index([type])
   @@index([isActive])
 }
+
+// Marketing Models
+
+enum CampaignType {
+  GOOGLE_ADS
+  FACEBOOK
+  INSTAGRAM
+  ZILLOW
+  APARTMENTS_COM
+  EMAIL
+  OTHER
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum PromotionType {
+  DISCOUNT
+  FREE_MONTH
+  REDUCED_DEPOSIT
+  REFERRAL
+  EARLY_BIRD
+  OTHER
+}
+
+enum PromotionStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+  EXPIRED
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+enum SyndicationStatus {
+  CONNECTED
+  DISCONNECTED
+  ERROR
+  SYNCING
+}
+
+model MarketingCampaign {
+  id          String         @id @default(cuid())
+  name        String
+  type        CampaignType
+  status      CampaignStatus @default(DRAFT)
+  budget      Float
+  spent       Float         @default(0)
+  impressions Int           @default(0)
+  clicks      Int           @default(0)
+  leads       Int           @default(0)
+  startDate   DateTime
+  endDate     DateTime
+  description String?
+  targetAudience Json?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([status])
+  @@index([type])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+model Promotion {
+  id            String         @id @default(cuid())
+  name          String
+  type          PromotionType
+  status        PromotionStatus @default(DRAFT)
+  code          String         @unique
+  discountType  DiscountType
+  discountValue Float
+  description   String?
+  startDate     DateTime
+  endDate       DateTime
+  usageLimit    Int?
+  usageCount    Int           @default(0)
+  terms         String?
+  applicableProperties Json?  // Array of property IDs
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([status])
+  @@index([code])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+model SyndicationPlatform {
+  id              String            @id @default(cuid())
+  name            String            @unique
+  enabled         Boolean           @default(true)
+  status          SyndicationStatus @default(DISCONNECTED)
+  lastSync        DateTime?
+  totalListings   Int              @default(0)
+  activeListings  Int              @default(0)
+  monthlyFee      Float?
+  apiKey          String?
+  apiSecret       String?
+  config          Json?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  
+  syncActivity    SyncActivity[]
+
+  @@index([status])
+  @@index([enabled])
+}
+
+model SyncActivity {
+  id         String              @id @default(cuid())
+  platformId String
+  action     String
+  status     String
+  details    String?
+  timestamp  DateTime            @default(now())
+  
+  platform   SyndicationPlatform @relation(fields: [platformId], references: [id])
+
+  @@index([platformId])
+  @@index([timestamp])
+  @@index([status])
+}
+
+model WebsiteTraffic {
+  id         String   @id @default(cuid())
+  date       DateTime @unique
+  visitors   Int      @default(0)
+  pageViews  Int      @default(0)
+  bounceRate Float    @default(0)
+  createdAt  DateTime @default(now())
+
+  @@index([date])
+}
+
+model LeadSource {
+  id         String   @id @default(cuid())
+  source     String   @unique
+  leads      Int      @default(0)
+  cost       Float    @default(0)
+  conversion Float    @default(0)
+  updatedAt  DateTime @updatedAt
+
+  @@index([source])
+}
