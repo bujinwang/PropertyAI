@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList, RefreshControl } from 'react-native';
+import { View, StyleSheet, FlatList, RefreshControl, Alert } from 'react-native';
 import { Text, Searchbar, Chip, Card, useTheme, ActivityIndicator, FAB } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -97,13 +97,26 @@ export function PropertiesScreen() {
   };
 
   const handlePropertyPress = (property: Property) => {
-    // TODO: Navigate to property details
-    console.log('Property pressed:', property.id);
+    // Navigate to property details
+    // Note: This would use navigation.navigate('PropertyDetails', { propertyId: property.id })
+    Alert.alert(
+      'Property Details',
+      `View details for ${property.name}\n\nThis will navigate to PropertyDetailsScreen when implemented.`,
+      [{ text: 'OK' }]
+    );
   };
 
   const handleAddProperty = () => {
-    // TODO: Navigate to add property screen
-    console.log('Add property');
+    // Navigate to add property screen
+    // Note: This would navigate to AddPropertyScreen when implemented
+    Alert.alert(
+      'Add Property',
+      'This feature will open the add property form. Property managers can add new properties here.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'OK' }
+      ]
+    );
   };
 
   const renderPropertyItem = ({ item }: { item: Property }) => (

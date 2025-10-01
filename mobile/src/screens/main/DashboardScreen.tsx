@@ -1,13 +1,17 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Text, Card, useTheme, Button } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NavigationProp } from '@react-navigation/native';
 
 import { useAuth } from '@/contexts/AuthContext';
+import type { MainTabParamList } from '@/types';
 
 export function DashboardScreen() {
   const theme = useTheme();
   const { user, logout } = useAuth();
+  const navigation = useNavigation<NavigationProp<MainTabParamList>>();
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -68,7 +72,10 @@ export function DashboardScreen() {
             <Button
               mode="contained"
               style={styles.actionButton}
-              onPress={() => {/* TODO: Navigate to add property */}}
+              onPress={() => {
+                // Navigate to Properties tab - property managers can add properties there
+                navigation.navigate('Properties');
+              }}
             >
               Add Property
             </Button>
@@ -76,7 +83,10 @@ export function DashboardScreen() {
             <Button
               mode="outlined"
               style={styles.actionButton}
-              onPress={() => {/* TODO: Navigate to maintenance */}}
+              onPress={() => {
+                // Navigate to Maintenance tab to view all maintenance requests
+                navigation.navigate('Maintenance');
+              }}
             >
               View Maintenance
             </Button>
@@ -84,7 +94,10 @@ export function DashboardScreen() {
             <Button
               mode="outlined"
               style={styles.actionButton}
-              onPress={() => {/* TODO: Navigate to payments */}}
+              onPress={() => {
+                // Navigate to Payments tab to process payments
+                navigation.navigate('Payments');
+              }}
             >
               Process Payments
             </Button>

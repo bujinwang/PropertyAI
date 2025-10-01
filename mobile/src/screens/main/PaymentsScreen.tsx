@@ -159,13 +159,29 @@ export function PaymentsScreen() {
   };
 
   const handleAddPaymentMethod = () => {
-    // TODO: Navigate to add payment method screen
-    console.log('Add payment method');
+    // Navigate to add payment method screen
+    // Note: This would navigate to AddPaymentMethodScreen when implemented
+    Alert.alert(
+      'Add Payment Method',
+      'This feature will open a secure form to add a new payment method (credit card or bank account).',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'OK' }
+      ]
+    );
   };
 
   const handleProcessPayment = () => {
-    // TODO: Navigate to process payment screen
-    console.log('Process payment');
+    // Navigate to process payment screen
+    // Note: This would navigate to ProcessPaymentScreen when implemented
+    Alert.alert(
+      'Process Payment',
+      'This feature will allow you to make a payment for rent or other charges.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'OK' }
+      ]
+    );
   };
 
   const getStatusColor = (status: string) => {

@@ -126,8 +126,16 @@ export function MaintenanceScreen() {
   };
 
   const handleCreateRequest = () => {
-    // TODO: Navigate to create maintenance request screen
-    console.log('Create maintenance request');
+    // Navigate to create maintenance request screen
+    // Note: This would navigate to a CreateMaintenanceRequestScreen when implemented
+    Alert.alert(
+      'Create Maintenance Request',
+      'This feature will open the maintenance request form. Implement CreateMaintenanceRequestScreen for full functionality.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'OK' }
+      ]
+    );
   };
 
   const getStatusColor = (status: string) => {
