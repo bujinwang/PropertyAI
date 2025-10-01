@@ -9,12 +9,19 @@ import {
   Breadcrumbs,
   Link,
   Divider,
-  Chip
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField
 } from '@mui/material';
 import { Home, Star } from '@mui/icons-material';
-import { TenantSearchResult } from '../types/enhancedTenantRating';
+import { TenantSearchResult, EnhancedTenantRating, RatingCategory } from '../types/enhancedTenantRating';
 import { useTenantRatings } from '../hooks/useTenantRatings';
 import { useAuth } from '../contexts/AuthContext';
+import CategoryRating from '../components/tenant-ratings/CategoryRating';
 
 // Import components
 import TenantAutocomplete from '../components/tenant-ratings/TenantAutocomplete';
@@ -27,6 +34,16 @@ import TenantRatingErrorBoundary from '../components/tenant-ratings/TenantRating
 const TenantRatingPageContent: React.FC = () => {
   const [selectedTenant, setSelectedTenant] = useState<TenantSearchResult | null>(null);
   const [submitLoading, setSubmitLoading] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingRating, setEditingRating] = useState<EnhancedTenantRating | null>(null);
+  const [editCategories, setEditCategories] = useState({
+    cleanliness: 0,
+    communication: 0,
+    paymentHistory: 0,
+    propertyCare: 0
+  });
+  const [editComment, setEditComment] = useState('');
+  const [updateLoading, setUpdateLoading] = useState(false);
   
   // Get authentication state for debugging
   const { user, token, isAuthenticated } = useAuth();
@@ -58,9 +75,41 @@ const TenantRatingPageContent: React.FC = () => {
     }
   };
 
-  const handleRatingEdit = (rating: any) => {
-    // TODO: Implement edit functionality with a modal or form
-    console.log('Edit rating:', rating);
+  const handleRatingEdit = (rating: EnhancedTenantRating) => {
+    setEditingRating(rating);
+    setEditCategories(rating.categories);
+    setEditComment(rating.comment || '');
+    setEditDialogOpen(true);
+  };
+
+  const handleEditCategoryChange = (category: RatingCategory, value: number) => {
+    setEditCategories(prev => ({
+      ...prev,
+      [category]: value
+    }));
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingRating) return;
+
+    try {
+      setUpdateLoading(true);
+      await updateRating(editingRating.id, {
+        categories: editCategories,
+        comment: editComment
+      });
+      setEditDialogOpen(false);
+      setEditingRating(null);
+    } catch (error) {
+      console.error('Failed to update rating:', error);
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditDialogOpen(false);
+    setEditingRating(null);
   };
 
   const handleRatingDelete = async (ratingId: string) => {
@@ -274,6 +323,84 @@ const TenantRatingPageContent: React.FC = () => {
           </Grid>
         </Grid>
       </Box>
+
+      {/* Edit Rating Dialog */}
+      <Dialog
+        open={editDialogOpen}
+        onClose={!updateLoading ? handleCancelEdit : undefined}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          Edit Rating
+          {editingRating && (
+            <Typography variant="body2" color="text.secondary">
+              Tenant: {selectedTenant?.name || 'Unknown'}
+            </Typography>
+          )}
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                <CategoryRating
+                  category="cleanliness"
+                  label="Cleanliness"
+                  value={editCategories.cleanliness}
+                  onChange={handleEditCategoryChange}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <CategoryRating
+                  category="communication"
+                  label="Communication"
+                  value={editCategories.communication}
+                  onChange={handleEditCategoryChange}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <CategoryRating
+                  category="paymentHistory"
+                  label="Payment History"
+                  value={editCategories.paymentHistory}
+                  onChange={handleEditCategoryChange}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <CategoryRating
+                  category="propertyCare"
+                  label="Property Care"
+                  value={editCategories.propertyCare}
+                  onChange={handleEditCategoryChange}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={4}
+                  label="Comment (Optional)"
+                  value={editComment}
+                  onChange={(e) => setEditComment(e.target.value)}
+                  placeholder="Add any additional notes or feedback..."
+                />
+              </Grid>
+            </Grid>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelEdit} disabled={updateLoading}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSaveEdit}
+            variant="contained"
+            disabled={updateLoading}
+          >
+            {updateLoading ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

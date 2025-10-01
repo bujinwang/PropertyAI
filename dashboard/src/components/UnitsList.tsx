@@ -23,9 +23,10 @@ interface UnitsListProps {
   propertyId: string;
   onEdit: (unit: Unit) => void;
   onDelete: (unitId: string) => void;
+  onAssignmentChange?: () => void; // Callback for parent to refetch data
 }
 
-const UnitsList: React.FC<UnitsListProps> = ({ units, propertyId, onEdit, onDelete }) => {
+const UnitsList: React.FC<UnitsListProps> = ({ units, propertyId, onEdit, onDelete, onAssignmentChange }) => {
   const [openAssignModal, setOpenAssignModal] = useState(false);
   const [assignMode, setAssignMode] = useState<'assign' | 'unassign'>('assign');
   const [currentUnitId, setCurrentUnitId] = useState<string | undefined>();
@@ -44,7 +45,11 @@ const UnitsList: React.FC<UnitsListProps> = ({ units, propertyId, onEdit, onDele
     console.log('Assignment data:', data); // Placeholder until service implemented
     setOpenAssignModal(false);
     setCurrentUnitId(undefined);
-    // TODO: Invalidate queries or call parent callback
+    
+    // Trigger parent callback to refetch data / invalidate queries
+    if (onAssignmentChange) {
+      onAssignmentChange();
+    }
   };
 
   return (
