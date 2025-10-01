@@ -1,7 +1,7 @@
 
 import { Request, Response } from 'express';
 import { prisma } from '../config/database';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 
 export class DeliveryController {
   /**
@@ -63,7 +63,7 @@ export class DeliveryController {
           OR: [
             { rental: { managerId: userId } },
             { rental: { ownerId: userId } },
-            { rental: { leases: { some: { tenantId: userId, status: 'ACTIVE' } } } }
+            { rental: { Leases: { some: { tenantId: userId, status: 'ACTIVE' } } } }
           ]
         },
         include: {
@@ -215,7 +215,7 @@ export class DeliveryController {
           OR: [
             { managerId: userId },
             { ownerId: userId },
-            { leases: { some: { tenantId: userId, status: 'ACTIVE' } } }
+            { Leases: { some: { tenantId: userId, status: 'ACTIVE' } } }
           ]
         }
       });

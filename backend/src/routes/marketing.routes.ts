@@ -4,8 +4,8 @@ import { authMiddleware } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
-// Apply authentication middleware to all routes (commented out for testing)
-// router.use(authMiddleware.protect);
+// Apply authentication middleware to all routes
+router.use(authMiddleware.protect);
 
 // Campaign routes
 router.get('/campaigns', marketingController.getCampaigns);

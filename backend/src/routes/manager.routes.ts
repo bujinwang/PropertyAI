@@ -1,16 +1,15 @@
 import { Router } from 'express';
 import { managerController } from '../controllers/manager.controller';
-// import { authMiddleware } from '../middleware/authMiddleware';
-// import { rbacMiddleware } from '../middleware/rbacMiddleware';
+import { authMiddleware } from '../middleware/authMiddleware';
+import { rbacMiddleware } from '../middleware/rbacMiddleware';
 
 const router = Router();
 
 // Add logging to see if routes are being registered
 console.log('Manager routes module loaded');
 
-// Temporarily disable authentication for testing
-// TODO: Re-enable authentication after testing
-// router.use(authMiddleware.protect, rbacMiddleware(['PROPERTY_MANAGER', 'ADMIN']));
+// Apply authentication and authorization middleware
+router.use(authMiddleware.protect, rbacMiddleware(['PROPERTY_MANAGER', 'ADMIN']));
 
 // Test endpoint to verify routes are working
 router.get('/test', (req, res) => {
