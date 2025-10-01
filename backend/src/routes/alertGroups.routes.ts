@@ -317,9 +317,9 @@ router.get('/high-priority',
  * @access Private (Admin only)
  */
 router.post('/cleanup',
+  authMiddleware.checkRole(['ADMIN']), // Admin only access
   async (req: Request, res: Response) => {
     try {
-      // TODO: Add admin role check middleware
       const result = await AlertGroupingService.cleanupEmptyAlertGroups();
 
       res.json({
