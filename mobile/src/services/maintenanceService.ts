@@ -112,6 +112,23 @@ class MaintenanceService {
     }
   }
 
+  async uploadPhotos(id: string, formData: FormData): Promise<ApiResponse<void>> {
+    try {
+      await this.api.post(API_ENDPOINTS.MAINTENANCE.UPLOAD_PHOTOS(id), formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      return {
+        data: undefined,
+        success: true,
+      };
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
   async getMaintenanceStats(): Promise<ApiResponse<{
     total: number;
     pending: number;
