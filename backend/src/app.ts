@@ -40,7 +40,6 @@ import sentimentRoutes from './routes/sentiment.routes';
 import conversationRoutes from './routes/conversation.routes';
 import googleCalendarRoutes from './routes/googleCalendar.routes';
 import tenantRatingRoutes from './routes/tenantRating.routes';
-import vendorPaymentRoutes from './routes/vendorPayment.routes';
 import paymentRoutes from './routes/payment.routes';
 // import storageRoutes from './routes/storage.routes';
 import aiRoutes from './routes/ai.routes';
@@ -140,7 +139,6 @@ app.use('/api/conversations', conversationRoutes);
 
 app.use('/api/calendar', googleCalendarRoutes);
 app.use('/api/tenant-ratings', tenantRatingRoutes);
-app.use('/api/vendor-payments', vendorPaymentRoutes);
 app.use('/api/payments', paymentRoutes);
 // Remove these duplicate lines:
 // import aiRoutes from './routes/ai.routes';

@@ -96,8 +96,6 @@ propertyapp/ios/
 .qwen/
 
 # BMAD framework (local only)
-.bmad-core/
-.bmad-*/
 
 # GitHub workflows
 .github/workflows/

@@ -54,10 +54,15 @@ const PaymentHistory = () => {
       if (filters.startDate) params.append('startDate', filters.startDate);
       if (filters.endDate) params.append('endDate', filters.endDate);
       if (role === 'owner') params.append('role', 'owner');
-      const response = await api.get(`/payments/history?${params}`);
-      return response.data.payments;
+
+      // Get vendorId from user context - this might need to be adjusted based on your user model
+      const vendorId = localStorage.getItem('vendorId') || userId;
+
+      const response = await api.get(`/vendor-payments/history/${vendorId}?${params}`);
+      return response.data;
     },
-    refetchInterval: 30000 // Poll every 30s
+    refetchInterval: 30000, // Poll every 30s
+    enabled: !!userId // Only run query if userId exists
   });
 
   if (isLoading) return <div>Loading payment history...</div>;

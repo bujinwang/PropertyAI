@@ -13,7 +13,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "lint": "eslint . --ext .ts",
-    "test": "jest",
+    "test": "jest --watchman=false --runInBand",
     "db:seed": "ts-node prisma/seed.ts",
     "db:reset": "prisma migrate reset --force && npm run db:seed",
     "migrate:rental": "npx prisma generate && npx ts-node scripts/migrate-to-rental.ts",

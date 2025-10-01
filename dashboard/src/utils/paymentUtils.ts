@@ -368,7 +368,7 @@ export class PaymentUtils {
     if (filters?.limit) params.append('limit', filters.limit.toString());
     if (filters?.offset) params.append('offset', filters.offset.toString());
 
-    const response = await fetch(`/api/payments/history/${tenantId}?${params}`);
+    const response = await fetch(`/api/vendor-payments/history/${tenantId}?${params}`);
 
     if (!response.ok) {
       throw new Error('Failed to fetch payment history');

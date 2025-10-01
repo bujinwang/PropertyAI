@@ -274,7 +274,7 @@ describe('PaymentUtils', () => {
       });
 
       expect(global.fetch).toHaveBeenCalledWith(
-        '/api/payments/history/tenant_123?status=completed&limit=10&offset=0',
+        '/api/vendor-payments/history/tenant_123?status=completed&limit=10&offset=0',
         undefined
       );
 

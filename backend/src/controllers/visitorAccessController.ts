@@ -218,3 +218,6 @@ export class VisitorAccessController {
       res.status(500).json({ error: 'Failed to fetch access logs' });
     }
   }
+}
+
+export default VisitorAccessController;
