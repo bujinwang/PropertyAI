@@ -1,4 +1,36 @@
 import { dashboardService, AuditLog } from '../services/dashboardService';
+import axios from 'axios';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+// API client for audit logging
+const auditAPI = {
+  createLog: async (data: {
+    action: string;
+    entityType: string;
+    entityId: string;
+    details?: any;
+    severity?: string;
+  }) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        `${API_BASE_URL}/audit/log`,
+        data,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error calling audit API:', error);
+      throw error;
+    }
+  },
+};
 
 // Audit logging utility
 export const auditUtils = {
@@ -12,24 +44,22 @@ export const auditUtils = {
     userAgent?: string
   ): Promise<void> => {
     try {
-      const auditEntry: Omit<AuditLog, 'id' | 'createdAt'> = {
-        userId,
-        action,
-        resource: 'users',
-        resourceId,
-        details,
-        ipAddress,
-        userAgent,
-      };
-
-      // In a real implementation, this would send to an audit service
-      // For now, we'll just log to console and could store locally
-      console.log('Audit Log - User Action:', auditEntry);
-
-      // TODO: Implement actual audit logging API call
-      // await dashboardService.createAuditLog(auditEntry);
+      // Call the backend audit API
+      await auditAPI.createLog({
+        action: `USER_${action.toUpperCase()}`,
+        entityType: 'USER',
+        entityId: resourceId,
+        details: {
+          ...details,
+          userId,
+          ipAddress,
+          userAgent: userAgent || navigator.userAgent,
+        },
+        severity: 'INFO',
+      });
     } catch (error) {
       console.error('Failed to log user action:', error);
+      // Don't throw - audit logging should not break the application
     }
   },
 
@@ -53,10 +83,19 @@ export const auditUtils = {
         userAgent,
       };
 
-      console.log('Audit Log - Role Action:', auditEntry);
-
-      // TODO: Implement actual audit logging API call
-      // await dashboardService.createAuditLog(auditEntry);
+      // Call the backend audit API
+      await auditAPI.createLog({
+        action: `ROLE_${action.toUpperCase()}`,
+        entityType: 'ROLE',
+        entityId: resourceId,
+        details: {
+          ...details,
+          userId,
+          ipAddress,
+          userAgent: userAgent || navigator.userAgent,
+        },
+        severity: 'INFO',
+      });
     } catch (error) {
       console.error('Failed to log role action:', error);
     }
@@ -82,10 +121,19 @@ export const auditUtils = {
         userAgent,
       };
 
-      console.log('Audit Log - Permission Action:', auditEntry);
-
-      // TODO: Implement actual audit logging API call
-      // await dashboardService.createAuditLog(auditEntry);
+      // Call the backend audit API
+      await auditAPI.createLog({
+        action: `PERMISSION_${action.toUpperCase()}`,
+        entityType: 'PERMISSION',
+        entityId: resourceId,
+        details: {
+          ...details,
+          userId,
+          ipAddress,
+          userAgent: userAgent || navigator.userAgent,
+        },
+        severity: 'WARNING',
+      });
     } catch (error) {
       console.error('Failed to log permission action:', error);
     }
@@ -111,10 +159,19 @@ export const auditUtils = {
         userAgent,
       };
 
-      console.log('Audit Log - Invitation Action:', auditEntry);
-
-      // TODO: Implement actual audit logging API call
-      // await dashboardService.createAuditLog(auditEntry);
+      // Call the backend audit API
+      await auditAPI.createLog({
+        action: `INVITATION_${action.toUpperCase()}`,
+        entityType: 'INVITATION',
+        entityId: resourceId,
+        details: {
+          ...details,
+          userId,
+          ipAddress,
+          userAgent: userAgent || navigator.userAgent,
+        },
+        severity: 'INFO',
+      });
     } catch (error) {
       console.error('Failed to log invitation action:', error);
     }
@@ -153,10 +210,21 @@ export const auditUtils = {
         userAgent,
       };
 
-      console.log('Audit Log - Bulk Action:', auditEntry);
-
-      // TODO: Implement actual audit logging API call
-      // await dashboardService.createAuditLog(auditEntry);
+      // Call the backend audit API
+      await auditAPI.createLog({
+        action: `BULK_${action.toUpperCase()}`,
+        entityType: resource.toUpperCase(),
+        entityId: resourceIds.join(','),
+        details: {
+          ...details,
+          userId,
+          affectedIds: resourceIds,
+          count: resourceIds.length,
+          ipAddress,
+          userAgent: userAgent || navigator.userAgent,
+        },
+        severity: 'WARNING',
+      });
     } catch (error) {
       console.error('Failed to log bulk action:', error);
     }
