@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { marketingService } from '../../services/marketingService';
 import {
   Box,
   Typography,
@@ -163,10 +164,20 @@ const MarketingPromotions: React.FC = () => {
     setOpenDialog(true);
   };
 
-  const handleSavePromotion = () => {
-    // TODO: Implement API call to save promotion
-    console.log('Saving promotion:', formData);
-    setOpenDialog(false);
+  const handleSavePromotion = async () => {
+    try {
+      if (selectedPromotion) {
+        await marketingService.updatePromotion(selectedPromotion.id, formData);
+      } else {
+        await marketingService.createPromotion(formData);
+      }
+      setOpenDialog(false);
+      // Reload promotions
+      const response = await marketingService.getPromotions();
+      setPromotions(response.data || []);
+    } catch (error) {
+      console.error('Error saving promotion:', error);
+    }
   };
 
   const generatePromotionCode = () => {

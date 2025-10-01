@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { marketingService } from '../../services/marketingService';
 import {
   Box,
   Typography,
@@ -204,9 +205,15 @@ const MarketingSyndication: React.FC = () => {
     setOpenSettingsDialog(false);
   };
 
-  const handleSyncNow = (platformId: string) => {
-    // TODO: Implement manual sync
-    console.log('Syncing platform:', platformId);
+  const handleSyncNow = async (platformId: string) => {
+    try {
+      await marketingService.syncPlatform(platformId);
+      // Reload platforms to show updated sync status
+      const response = await marketingService.getSyndicationPlatforms();
+      setPlatforms(response.data || []);
+    } catch (error) {
+      console.error('Error syncing platform:', error);
+    }
   };
 
   const getStatusIcon = (status: SyndicationPlatform['status']) => {

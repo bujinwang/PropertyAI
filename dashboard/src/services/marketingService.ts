@@ -1,344 +1,214 @@
-const API_BASE_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api`;
+import axios, { AxiosInstance } from 'axios';
 
-export interface Campaign {
-  id: string;
-  name: string;
-  type: 'google_ads' | 'facebook' | 'zillow' | 'apartments_com';
-  status: 'active' | 'paused' | 'draft' | 'completed';
-  budget: number;
-  spent: number;
-  impressions: number;
-  clicks: number;
-  leads: number;
-  startDate: string;
-  endDate: string;
-}
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-export interface Promotion {
-  id: string;
-  name: string;
-  type: 'discount' | 'free_month' | 'waived_fee' | 'gift_card';
-  status: 'active' | 'scheduled' | 'expired' | 'draft';
-  discountType: 'percentage' | 'fixed_amount';
-  discountValue: number;
-  description: string;
-  startDate: string;
-  endDate: string;
-  usageLimit: number;
-  usageCount: number;
-  code: string;
-}
+class MarketingService {
+  private api: AxiosInstance;
 
-export interface SyndicationPlatform {
-  id: string;
-  name: string;
-  enabled: boolean;
-  status: 'connected' | 'disconnected' | 'error' | 'syncing';
-  lastSync: string;
-  totalListings: number;
-  activeListings: number;
-  monthlyFee: number;
-}
-
-// Campaign API calls
-export const marketingService = {
-  // Campaigns
-  async getCampaigns(): Promise<Campaign[]> {
-    const response = await fetch(`${API_BASE_URL}/marketing/campaigns`, {
+  constructor() {
+    this.api = axios.create({
+      baseURL: `${API_BASE_URL}/marketing`,
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch campaigns');
-    }
-    
-    const data = await response.json();
-    return data.data;
-  },
-
-  async createCampaign(campaignData: Partial<Campaign>): Promise<Campaign> {
-    const response = await fetch(`${API_BASE_URL}/marketing/campaigns`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(campaignData)
     });
-    
-    if (!response.ok) {
-      throw new Error('Failed to create campaign');
-    }
-    
-    const data = await response.json();
-    return data.data;
-  },
 
-  async updateCampaign(id: string, campaignData: Partial<Campaign>): Promise<Campaign> {
-    const response = await fetch(`${API_BASE_URL}/marketing/campaigns/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(campaignData)
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to update campaign');
-    }
-    
-    const data = await response.json();
-    return data.data;
-  },
-
-  async deleteCampaign(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/marketing/campaigns/${id}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+    // Add auth token to requests
+    this.api.interceptors.request.use((config) => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
       }
+      return config;
     });
-    
-    if (!response.ok) {
-      throw new Error('Failed to delete campaign');
-    }
-  },
+  }
 
-  // Analytics
-  async getAnalyticsOverview(timeRange: string = '30d') {
-    const response = await fetch(`${API_BASE_URL}/marketing/analytics/overview?timeRange=${timeRange}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch analytics overview');
-    }
-    
-    const data = await response.json();
-    return data.data;
-  },
+  // Campaign Management
+  async getCampaigns() {
+    const response = await this.api.get('/campaigns');
+    return response.data;
+  }
 
-  async getWebsiteTraffic(timeRange: string = '30d') {
-    const response = await fetch(`${API_BASE_URL}/marketing/analytics/traffic?timeRange=${timeRange}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch website traffic');
-    }
-    
-    const data = await response.json();
-    return data.data;
-  },
+  async getCampaign(id: string) {
+    const response = await this.api.get(`/campaigns/${id}`);
+    return response.data;
+  }
 
-  async getLeadSources(timeRange: string = '30d') {
-    const response = await fetch(`${API_BASE_URL}/marketing/analytics/lead-sources?timeRange=${timeRange}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch lead sources');
-    }
-    
-    const data = await response.json();
-    return data.data;
-  },
+  async createCampaign(data: {
+    name: string;
+    type: string;
+    budget: number;
+    startDate: string;
+    endDate: string;
+    description?: string;
+    targetAudience?: any;
+  }) {
+    const response = await this.api.post('/campaigns', data);
+    return response.data;
+  }
 
-  async getPropertyPerformance(timeRange: string = '30d') {
-    const response = await fetch(`${API_BASE_URL}/marketing/analytics/property-performance?timeRange=${timeRange}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch property performance');
-    }
-    
-    const data = await response.json();
-    return data.data;
-  },
+  async updateCampaign(id: string, data: Partial<{
+    name: string;
+    type: string;
+    budget: number;
+    startDate: string;
+    endDate: string;
+    description: string;
+    targetAudience: any;
+    status: string;
+  }>) {
+    const response = await this.api.put(`/campaigns/${id}`, data);
+    return response.data;
+  }
 
-  async getConversionFunnel(timeRange: string = '30d') {
-    const response = await fetch(`${API_BASE_URL}/marketing/analytics/conversion-funnel?timeRange=${timeRange}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch conversion funnel');
-    }
-    
-    const data = await response.json();
-    return data.data;
-  },
+  async deleteCampaign(id: string) {
+    const response = await this.api.delete(`/campaigns/${id}`);
+    return response.data;
+  }
 
-  // Promotions
-  async getPromotions(): Promise<Promotion[]> {
-    const response = await fetch(`${API_BASE_URL}/marketing/promotions`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch promotions');
-    }
-    
-    const data = await response.json();
-    return data.data;
-  },
+  async pauseCampaign(id: string) {
+    const response = await this.api.post(`/campaigns/${id}/pause`);
+    return response.data;
+  }
 
-  async createPromotion(promotionData: Partial<Promotion>): Promise<Promotion> {
-    const response = await fetch(`${API_BASE_URL}/marketing/promotions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(promotionData)
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to create promotion');
-    }
-    
-    const data = await response.json();
-    return data.data;
-  },
+  async resumeCampaign(id: string) {
+    const response = await this.api.post(`/campaigns/${id}/resume`);
+    return response.data;
+  }
 
-  async updatePromotion(id: string, promotionData: Partial<Promotion>): Promise<Promotion> {
-    const response = await fetch(`${API_BASE_URL}/marketing/promotions/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(promotionData)
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to update promotion');
-    }
-    
-    const data = await response.json();
-    return data.data;
-  },
+  // Promotion Management
+  async getPromotions() {
+    const response = await this.api.get('/promotions');
+    return response.data;
+  }
 
-  async deletePromotion(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/marketing/promotions/${id}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to delete promotion');
-    }
-  },
+  async getPromotion(id: string) {
+    const response = await this.api.get(`/promotions/${id}`);
+    return response.data;
+  }
+
+  async createPromotion(data: {
+    name: string;
+    type: string;
+    code: string;
+    discountType: string;
+    discountValue: number;
+    startDate: string;
+    endDate: string;
+    description?: string;
+    usageLimit?: number;
+    terms?: string;
+    applicableProperties?: any;
+  }) {
+    const response = await this.api.post('/promotions', data);
+    return response.data;
+  }
+
+  async updatePromotion(id: string, data: Partial<{
+    name: string;
+    type: string;
+    code: string;
+    discountType: string;
+    discountValue: number;
+    startDate: string;
+    endDate: string;
+    description: string;
+    usageLimit: number;
+    terms: string;
+    applicableProperties: any;
+    status: string;
+  }>) {
+    const response = await this.api.put(`/promotions/${id}`, data);
+    return response.data;
+  }
+
+  async deletePromotion(id: string) {
+    const response = await this.api.delete(`/promotions/${id}`);
+    return response.data;
+  }
+
+  async activatePromotion(id: string) {
+    const response = await this.api.post(`/promotions/${id}/activate`);
+    return response.data;
+  }
+
+  async deactivatePromotion(id: string) {
+    const response = await this.api.post(`/promotions/${id}/deactivate`);
+    return response.data;
+  }
 
   async validatePromotionCode(code: string) {
-    const response = await fetch(`${API_BASE_URL}/marketing/promotions/validate-code`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ code })
+    const response = await this.api.post('/promotions/validate-code', { code });
+    return response.data;
+  }
+
+  // Analytics
+  async getAnalyticsOverview(timeRange = '30d') {
+    const response = await this.api.get('/analytics/overview', {
+      params: { timeRange },
     });
-    
-    if (!response.ok) {
-      throw new Error('Failed to validate promotion code');
-    }
-    
-    const data = await response.json();
-    return data.data;
-  },
+    return response.data;
+  }
+
+  async getWebsiteTraffic(timeRange = '30d') {
+    const response = await this.api.get('/analytics/traffic', {
+      params: { timeRange },
+    });
+    return response.data;
+  }
+
+  async getLeadSources(timeRange = '30d') {
+    const response = await this.api.get('/analytics/lead-sources', {
+      params: { timeRange },
+    });
+    return response.data;
+  }
+
+  async getPropertyPerformance(timeRange = '30d') {
+    const response = await this.api.get('/analytics/property-performance', {
+      params: { timeRange },
+    });
+    return response.data;
+  }
+
+  async getConversionFunnel(timeRange = '30d') {
+    const response = await this.api.get('/analytics/conversion-funnel', {
+      params: { timeRange },
+    });
+    return response.data;
+  }
 
   // Syndication
-  async getSyndicationPlatforms(): Promise<SyndicationPlatform[]> {
-    const response = await fetch(`${API_BASE_URL}/marketing/syndication/platforms`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch syndication platforms');
-    }
-    
-    const data = await response.json();
-    return data.data;
-  },
+  async getSyndicationPlatforms() {
+    const response = await this.api.get('/syndication/platforms');
+    return response.data;
+  }
 
-  async updateSyndicationPlatform(id: string, platformData: Partial<SyndicationPlatform>): Promise<SyndicationPlatform> {
-    const response = await fetch(`${API_BASE_URL}/marketing/syndication/platforms/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(platformData)
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to update syndication platform');
-    }
-    
-    const data = await response.json();
-    return data.data;
-  },
+  async updateSyndicationPlatform(id: string, data: {
+    enabled?: boolean;
+    apiKey?: string;
+    apiSecret?: string;
+    config?: any;
+  }) {
+    const response = await this.api.put(`/syndication/platforms/${id}`, data);
+    return response.data;
+  }
 
-  async syncPlatform(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/marketing/syndication/platforms/${id}/sync`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to sync platform');
-    }
-  },
+  async syncPlatform(id: string) {
+    const response = await this.api.post(`/syndication/platforms/${id}/sync`);
+    return response.data;
+  }
 
-  async syncAllPlatforms(): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/marketing/syndication/sync-all`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to sync all platforms');
-    }
-  },
+  async syncAllPlatforms() {
+    const response = await this.api.post('/syndication/sync-all');
+    return response.data;
+  }
 
   async getSyncActivity() {
-    const response = await fetch(`${API_BASE_URL}/marketing/syndication/activity`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch sync activity');
-    }
-    
-    const data = await response.json();
-    return data.data;
+    const response = await this.api.get('/syndication/activity');
+    return response.data;
   }
-};
+}
+
+export const marketingService = new MarketingService();
+export default marketingService;

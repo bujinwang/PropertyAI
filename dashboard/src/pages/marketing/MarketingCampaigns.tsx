@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { marketingService } from '../../services/marketingService';
 import {
   Box,
   Typography,
@@ -61,36 +62,18 @@ const MarketingCampaigns: React.FC = () => {
   });
 
   useEffect(() => {
-    // Mock data - replace with actual API call
-    setCampaigns([
-      {
-        id: '1',
-        name: 'Downtown Luxury Apartments',
-        type: 'google_ads',
-        status: 'active',
-        budget: 2000,
-        spent: 1250,
-        impressions: 45000,
-        clicks: 890,
-        leads: 23,
-        startDate: '2024-01-01',
-        endDate: '2024-01-31'
-      },
-      {
-        id: '2',
-        name: 'Suburban Family Homes',
-        type: 'facebook',
-        status: 'paused',
-        budget: 1500,
-        spent: 800,
-        impressions: 32000,
-        clicks: 650,
-        leads: 18,
-        startDate: '2024-01-15',
-        endDate: '2024-02-15'
-      }
-    ]);
+    loadCampaigns();
   }, []);
+
+  const loadCampaigns = async () => {
+    try {
+      const response = await marketingService.getCampaigns();
+      setCampaigns(response.data || []);
+    } catch (error) {
+      console.error('Error loading campaigns:', error);
+      // Optionally show error notification to user
+    }
+  };
 
   const handleCreateCampaign = () => {
     setSelectedCampaign(null);
@@ -116,10 +99,21 @@ const MarketingCampaigns: React.FC = () => {
     setOpenDialog(true);
   };
 
-  const handleSaveCampaign = () => {
-    // TODO: Implement API call to save campaign
-    console.log('Saving campaign:', formData);
-    setOpenDialog(false);
+  const handleSaveCampaign = async () => {
+    try {
+      if (selectedCampaign) {
+        // Update existing campaign
+        await marketingService.updateCampaign(selectedCampaign.id, formData);
+      } else {
+        // Create new campaign
+        await marketingService.createCampaign(formData);
+      }
+      setOpenDialog(false);
+      await loadCampaigns(); // Reload campaigns
+    } catch (error) {
+      console.error('Error saving campaign:', error);
+      // Optionally show error notification to user
+    }
   };
 
   const getStatusColor = (status: Campaign['status']) => {
