@@ -415,7 +415,7 @@ See: `docs/ML_SETUP_STATUS.md`
 ```bash
 python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements-api.txt
+pip install -r requirements.txt
 python3 api.py
 ```
 

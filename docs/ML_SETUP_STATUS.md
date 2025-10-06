@@ -78,7 +78,7 @@ python3 -c "import platform; print(platform.machine())"
 brew install python@3.12
 
 # Reinstall dependencies with ARM Python
-/opt/homebrew/bin/python3 -m pip install -r requirements-api.txt
+/opt/homebrew/bin/python3 -m pip install -r requirements.txt
 ```
 
 ### Option 2: Use Virtual Environment with Correct Architecture
@@ -92,7 +92,7 @@ python3 -m venv venv
 # Activate and reinstall (this should use correct architecture)
 source venv/bin/activate
 pip install --upgrade pip
-pip install -r requirements-api.txt
+pip install -r requirements.txt
 
 # Test
 python -c "import numpy; print('NumPy OK')"
@@ -106,7 +106,7 @@ pip3 uninstall -y numpy pandas scikit-learn
 
 # Reinstall with no cache
 pip3 install --no-cache-dir --force-reinstall numpy==1.24.3
-pip3 install -r requirements-api.txt
+pip3 install -r requirements.txt
 ```
 
 ### Option 4: Use Docker (Production Solution)
@@ -116,8 +116,8 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements-api.txt .
-RUN pip install --no-cache-dir -r requirements-api.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
@@ -318,7 +318,7 @@ The system is **functional without ML models**:
    ```bash
    python3 -m venv venv
    source venv/bin/activate
-   pip install -r requirements-api.txt
+   pip install -r requirements.txt
    ```
 
 2. **Best for Production**: Docker

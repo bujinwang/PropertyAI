@@ -274,8 +274,8 @@ FROM python:3.9-slim
 WORKDIR /app
 
 # Install dependencies
-COPY requirements-api.txt .
-RUN pip install --no-cache-dir -r requirements-api.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy source
 COPY api.py .
@@ -299,7 +299,7 @@ docker run -p 5000:5000 --env-file .env propertyflow-ml-api
 **1. Install dependencies**:
 ```bash
 cd backend/src/predictive-analytics
-pip install -r requirements-api.txt
+pip install -r requirements.txt
 ```
 
 **2. Run with gunicorn** (production):

@@ -66,12 +66,12 @@ Required packages not installed:
 cd backend/src/predictive-analytics
 
 # Option 1: Using pip
-pip3 install -r requirements-api.txt
+pip3 install -r requirements.txt
 
 # Option 2: Using virtual environment (recommended)
 python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements-api.txt
+pip install -r requirements.txt
 ```
 
 **Dependencies**:
@@ -447,8 +447,8 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements-api.txt .
-RUN pip install --no-cache-dir -r requirements-api.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 COPY models/ models/
@@ -523,7 +523,7 @@ spec:
 cd backend/src/predictive-analytics
 python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements-api.txt
+pip install -r requirements.txt
 
 # 2. Create models directory
 mkdir -p models
@@ -578,7 +578,7 @@ mkdir -p models
 ### Issue: Python Dependencies Missing
 
 ```bash
-pip3 install -r requirements-api.txt
+pip3 install -r requirements.txt
 ```
 
 ### Issue: Database Connection Failed
@@ -808,7 +808,7 @@ Forecast = avg(recent_3_months) * (1 + 0.02 * month)  // 2% growth
 
 1. **Install Python dependencies** (5 mins)
    ```bash
-   pip3 install -r requirements-api.txt
+   pip3 install -r requirements.txt
    ```
 
 2. **Create models directory** (1 min)
