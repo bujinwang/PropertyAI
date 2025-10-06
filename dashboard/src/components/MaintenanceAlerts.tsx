@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AlertGroupView from './epic23/AlertGroupView';
 import { predictiveMaintenanceService } from '../services/predictiveMaintenanceService';
-import { AlertGroupingService } from '../../../src/services/epic23/AlertGroupingService';
+import { apiService } from '../services/apiService';
 
 interface MaintenancePrediction {
   type: string;
@@ -36,8 +36,8 @@ const MaintenanceAlerts: React.FC<MaintenanceAlertsProps> = ({
     try {
       const result = await predictiveMaintenanceService.getPredictions(selectedPropertyId);
       const rawAlerts = result.predictions || []; // Adapt to alerts array
-      const grouped = await AlertGroupingService.getGroupedAlerts(selectedPropertyId, { type: 'maintenance' });
-      setGroups(grouped.groups);
+      const grouped = await apiService.get(`/alert-groups?propertyId=${selectedPropertyId}&type=maintenance`);
+      setGroups(grouped.data?.groups || []);
       setAlerts(rawAlerts);
     } catch (err) {
       setError('Failed to load maintenance alerts');

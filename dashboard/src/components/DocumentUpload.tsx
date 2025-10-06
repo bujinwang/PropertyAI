@@ -280,7 +280,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
                       </Box>
                     )}
                   </Box>
-                )}
+                  )}
 
                 <Field
                   as={TextField}
@@ -432,10 +432,12 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
               </Button>
             </DialogActions>
           </Form>
-        )}
+          );
+        }}
       </Formik>
     </Dialog>
   </LocalizationProvider>
-);
+  );
+};
 
 export default DocumentUpload;

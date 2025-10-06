@@ -5,11 +5,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { trackPageView } from './utils/analytics';
 import { addBreadcrumb } from './utils/monitoring';
 import { AuthProvider } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { AppErrorBoundary } from './components/error-boundary/AppErrorBoundary';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
-import { ThemeProvider } from '@mui/material/styles';
-import theme from './design-system/theme';
 import { AnnouncementProvider } from './design-system/accessibility';
 import './App.css';
 import './styles/mobile-responsive.css';
@@ -113,7 +112,7 @@ function App() {
 
   return (
     <GoogleOAuthProvider clientId={(import.meta as any).env.VITE_GOOGLE_CLIENT_ID || "demo-client-id"}>
-      <ThemeProvider theme={theme}>
+      <ThemeProvider>
         <AnnouncementProvider>
           <AppErrorBoundary>
             <AuthProvider>

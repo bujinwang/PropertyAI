@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AlertGroupView from './epic23/AlertGroupView';
 import { apiService } from '../services/apiService';
-import { AlertGroupingService } from '../../../src/services/epic23/AlertGroupingService';
 
 interface ChurnPrediction {
   tenantId: string;
@@ -50,8 +49,8 @@ const ChurnRiskAlerts: React.FC<ChurnRiskAlertsProps> = ({
       // Fetch raw alerts (adapt to churn API)
       const response: any = await apiService.post('/analytics/predict-churn', { tenantId: selectedTenantId });
       const rawAlerts = response.data.predictions || []; // Adapt to array of alerts
-      const grouped = await AlertGroupingService.getGroupedAlerts(selectedTenantId, { type: 'churn' }); // Adapt for tenant
-      setGroups(grouped.groups);
+      const grouped = await apiService.get(`/alert-groups?tenantId=${selectedTenantId}&type=churn`); // Adapt for tenant
+      setGroups(grouped.data?.groups || []);
       setAlerts(rawAlerts);
     } catch (err: any) {
       setError('Failed to load churn alerts');

@@ -9,22 +9,17 @@ import {
   MenuItem, 
   ListItemIcon, 
   ListItemText,
-  Box,
   Typography
 } from '@mui/material';
 import {
   Brightness4 as DarkModeIcon,
   Brightness7 as LightModeIcon,
   BrightnessAuto as SystemIcon,
-  Palette as PaletteIcon,
 } from '@mui/icons-material';
-import { useTheme } from '@mui/material/styles';
+import { useThemeMode } from '../contexts/ThemeContext';
 
 const ThemeSwitcher: React.FC = () => {
-  const theme = useTheme();
-  // Simplified theme switcher without state management for now
-  const isDarkMode = false;
-  const isSystemTheme = false;
+  const { mode, actualMode, setThemeMode } = useThemeMode();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -37,18 +32,18 @@ const ThemeSwitcher: React.FC = () => {
   };
 
   const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
-    // TODO: Implement theme switching functionality
+    setThemeMode(newTheme);
     handleClose();
   };
 
   const getCurrentIcon = () => {
-    if (isSystemTheme) return <SystemIcon />;
-    return isDarkMode ? <DarkModeIcon /> : <LightModeIcon />;
+    if (mode === 'system') return <SystemIcon />;
+    return actualMode === 'dark' ? <DarkModeIcon /> : <LightModeIcon />;
   };
 
   const getCurrentTooltip = () => {
-    if (isSystemTheme) return 'Using system theme';
-    return isDarkMode ? 'Switch to light theme' : 'Switch to dark theme';
+    if (mode === 'system') return `Using system theme (${actualMode})`;
+    return actualMode === 'dark' ? 'Dark theme' : 'Light theme';
   };
 
   return (
@@ -79,10 +74,10 @@ const ThemeSwitcher: React.FC = () => {
       >
         <MenuItem 
           onClick={() => handleThemeChange('light')}
-          selected={theme === 'light' && !isSystemTheme}
+          selected={mode === 'light'}
         >
           <ListItemIcon>
-            <LightModeIcon />
+            <LightModeIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>
             <Typography variant="body2">Light Theme</Typography>
@@ -91,10 +86,10 @@ const ThemeSwitcher: React.FC = () => {
         
         <MenuItem 
           onClick={() => handleThemeChange('dark')}
-          selected={theme === 'dark' && !isSystemTheme}
+          selected={mode === 'dark'}
         >
           <ListItemIcon>
-            <DarkModeIcon />
+            <DarkModeIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>
             <Typography variant="body2">Dark Theme</Typography>
@@ -103,10 +98,10 @@ const ThemeSwitcher: React.FC = () => {
         
         <MenuItem 
           onClick={() => handleThemeChange('system')}
-          selected={isSystemTheme}
+          selected={mode === 'system'}
         >
           <ListItemIcon>
-            <SystemIcon />
+            <SystemIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>
             <Typography variant="body2">System Theme</Typography>

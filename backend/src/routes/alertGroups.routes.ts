@@ -1,8 +1,10 @@
 import { Router, Request, Response } from 'express';
 import AlertGroupingService from '../services/alertGroupingService';
 import { authenticateToken } from '../middleware/auth';
+import { authMiddleware } from '../middleware/authMiddleware';
 import { validateRequest } from '../middleware/validation';
 import { body, param, query } from 'express-validator';
+import { UserRole } from '@prisma/client';
 
 const router = Router();
 
@@ -226,9 +228,10 @@ router.patch('/:id/decrement',
 /**
  * @route DELETE /api/alert-groups/:id
  * @desc Delete alert group
- * @access Private
+ * @access Private (Admin only)
  */
 router.delete('/:id',
+  authMiddleware.checkRole([UserRole.ADMIN]), // Admin only access
   [
     param('id').isString().notEmpty().withMessage('Alert group ID is required'),
     validateRequest
@@ -317,7 +320,7 @@ router.get('/high-priority',
  * @access Private (Admin only)
  */
 router.post('/cleanup',
-  authMiddleware.checkRole(['ADMIN']), // Admin only access
+  authMiddleware.checkRole([UserRole.ADMIN]), // Admin only access
   async (req: Request, res: Response) => {
     try {
       const result = await AlertGroupingService.cleanupEmptyAlertGroups();

@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { PaymentMethod, PaymentTransaction } from '@/types';
 import { paymentService } from '@/services/paymentService';
 import { offlineStorageService } from '@/services/offlineStorageService';
+import { syncQueueService } from '@/services/syncQueueService';
 import { useNetwork } from '@/contexts/NetworkContext';
 
 export function PaymentsScreen() {
@@ -22,6 +23,15 @@ export function PaymentsScreen() {
   useEffect(() => {
     loadData();
   }, [activeTab]);
+
+  // Process sync queue when network comes back online
+  useEffect(() => {
+    if (isConnected) {
+      syncQueueService.processQueue().catch(error => {
+        console.error('Error processing sync queue:', error);
+      });
+    }
+  }, [isConnected]);
 
   const loadData = async () => {
     try {
@@ -123,8 +133,34 @@ export function PaymentsScreen() {
           await paymentService.setDefaultPaymentMethod(methodId);
         } catch (error) {
           console.error('Error setting default payment method on API:', error);
-          // TODO: Add to sync queue for later
+          // Add to sync queue for later
+          await syncQueueService.addToQueue(
+            `/payments/methods/${methodId}/default`,
+            'PUT',
+            {},
+            {
+              metadata: {
+                entityType: 'PAYMENT_METHOD',
+                entityId: methodId,
+                description: 'Set default payment method'
+              }
+            }
+          );
         }
+      } else {
+        // Offline - add to sync queue
+        await syncQueueService.addToQueue(
+          `/payments/methods/${methodId}/default`,
+          'PUT',
+          {},
+          {
+            metadata: {
+              entityType: 'PAYMENT_METHOD',
+              entityId: methodId,
+              description: 'Set default payment method'
+            }
+          }
+        );
       }
 
       setMenuVisible(null);
@@ -147,8 +183,34 @@ export function PaymentsScreen() {
           await paymentService.deletePaymentMethod(methodId);
         } catch (error) {
           console.error('Error deleting payment method on API:', error);
-          // TODO: Add to sync queue for later
+          // Add to sync queue for later
+          await syncQueueService.addToQueue(
+            `/payments/methods/${methodId}`,
+            'DELETE',
+            {},
+            {
+              metadata: {
+                entityType: 'PAYMENT_METHOD',
+                entityId: methodId,
+                description: 'Delete payment method'
+              }
+            }
+          );
         }
+      } else {
+        // Offline - add to sync queue
+        await syncQueueService.addToQueue(
+          `/payments/methods/${methodId}`,
+          'DELETE',
+          {},
+          {
+            metadata: {
+              entityType: 'PAYMENT_METHOD',
+              entityId: methodId,
+              description: 'Delete payment method'
+            }
+          }
+        );
       }
 
       setMenuVisible(null);

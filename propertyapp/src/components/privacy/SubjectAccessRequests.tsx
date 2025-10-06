@@ -427,7 +427,7 @@ export const SubjectAccessRequests: React.FC = () => {
     <View style={styles.modalContent}>
       <Text style={styles.modalTitle}>Select Request Type</Text>
       <Text style={styles.modalDescription}>
-        Choose the type of data request you'd like to submit.
+        Choose the type of data request you&apos;d like to submit.
       </Text>
       
       <ScrollView style={styles.typeList}>
@@ -466,7 +466,7 @@ export const SubjectAccessRequests: React.FC = () => {
     <View style={styles.modalContent}>
       <Text style={styles.modalTitle}>Select Data Categories</Text>
       <Text style={styles.modalDescription}>
-        Choose the categories of data you'd like to include in your request.
+        Choose the categories of data you&apos;d like to include in your request.
       </Text>
       
       <ScrollView style={styles.categoryList}>
@@ -598,7 +598,7 @@ export const SubjectAccessRequests: React.FC = () => {
         {requests.length === 0 ? (
           <View style={styles.emptyState}>
             <FontAwesome name="inbox" size={48} color="#6c757d" />
-            <Text style={styles.emptyStateText}>You haven't submitted any data requests yet.</Text>
+            <Text style={styles.emptyStateText}>You haven&apos;t submitted any data requests yet.</Text>
           </View>
         ) : (
           <FlatList

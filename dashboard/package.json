@@ -59,12 +59,7 @@
     "analyze": "npm run build && node scripts/analyze-bundle.js",
     "analyze:vite": "npm run build && npx vite-bundle-analyzer build/stats.html"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
+
   "browserslist": {
     "production": [
       ">0.2%",

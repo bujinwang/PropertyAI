@@ -1,5 +1,9 @@
 module.exports = {
   root: true,
+  env: {
+    node: true,
+    es2021: true,
+  },
   extends: [
     'eslint:recommended',
     'plugin:react/recommended',
@@ -12,7 +16,9 @@ module.exports = {
     'react/react-in-jsx-scope': 'off',
     'react/prop-types': 'off',
     '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+    '@typescript-eslint/no-var-requires': 'off',
     'no-console': ['warn', { allow: ['warn', 'error'] }],
+    'no-undef': 'off',
   },
   settings: {
     react: {

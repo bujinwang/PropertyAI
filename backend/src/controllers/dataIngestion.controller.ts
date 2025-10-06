@@ -12,18 +12,21 @@ class DataIngestionController {
 
     try {
       switch (source) {
-        case 'plaid':
+        case 'plaid': {
           if (!req.user) {
             return res.status(401).json({ error: 'Unauthorized' });
           }
           const linkToken = await dataIngestionService.ingestFromPlaid(req.user.id);
           return res.status(200).json(linkToken);
-        case 'stripe':
+        }
+        case 'stripe': {
           await dataIngestionService.ingestFromStripe(data);
           break;
-        case 'csv':
+        }
+        case 'csv': {
           await dataIngestionService.ingestFromCsv(data);
           break;
+        }
         default:
           return res.status(400).json({ error: 'Invalid data source.' });
       }
