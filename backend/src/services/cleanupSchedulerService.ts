@@ -1,5 +1,5 @@
 // Scheduled cleanup service for data retention and compliance
-const auditService = require('./auditService');
+import { auditService } from './audit.service';
 
 class CleanupSchedulerService {
   private isRunning: boolean;

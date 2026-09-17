@@ -28,7 +28,7 @@ export class CacheExampleController {
 
       // Cache miss - fetch from database
       logger.debug(`Cache miss for property ${id}`);
-      const property = await prisma.property.findUnique({
+      const property = await prisma.rental.findUnique({
         where: { id },
         include: {
           units: true,
@@ -71,7 +71,7 @@ export class CacheExampleController {
       const property = await cacheService.getOrSet(
         cacheKey,
         async () => {
-          return await prisma.property.findUnique({
+          return await prisma.rental.findUnique({
             where: { id },
             include: {
               units: true,
@@ -110,7 +110,7 @@ export class CacheExampleController {
     const data = req.body;
 
     try {
-      const property = await prisma.property.update({
+      const property = await prisma.rental.update({
         where: { id },
         data,
       });
@@ -173,7 +173,7 @@ export class CacheExampleController {
 
       // Fetch missing properties from database
       if (missingIds.length > 0) {
-        const fetchedProperties = await prisma.property.findMany({
+        const fetchedProperties = await prisma.rental.findMany({
           where: {
             id: { in: missingIds },
           },
@@ -229,7 +229,7 @@ export class CacheExampleController {
         cacheKey,
         async () => {
           // Expensive computation here
-          const property = await prisma.property.findUnique({
+          const property = await prisma.rental.findUnique({
             where: { id },
             include: {
               units: {

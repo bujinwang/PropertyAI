@@ -16,6 +16,46 @@ export interface AuditLogData {
   sessionId?: string;
 }
 
+/**
+ * Loose shape accepted by {@link AuditService.logEvent} for object-style calls.
+ * These calls use the pre-migration field names (resourceType / resourceId /
+ * riskLevel) which are normalised onto {@link AuditLogData} before persisting.
+ */
+export interface AuditEventData {
+  userId?: string | null;
+  action: string;
+  resourceType?: string;
+  resourceId?: string;
+  details?: any;
+  riskLevel?: string;
+  // Direct AuditLogData-style fields are also accepted for convenience.
+  entityType?: string;
+  entityId?: string;
+  severity?: AuditSeverity;
+  complianceType?: ComplianceType;
+  ipAddress?: string;
+  userAgent?: string;
+  sessionId?: string;
+}
+
+/**
+ * Normalise a risk level onto the Prisma {@link AuditSeverity} enum.
+ * Accepts lowercase (`low`/`medium`/`high`/`critical`) and already-uppercase
+ * enum values (`INFO`/`WARNING`/`ERROR`/`CRITICAL`).
+ */
+function normalizeSeverity(value?: string | null): AuditSeverity | undefined {
+  if (!value) return undefined;
+  const upper = value.toUpperCase();
+  if (upper === 'LOW') return 'INFO';
+  if (upper === 'MEDIUM') return 'WARNING';
+  if (upper === 'HIGH') return 'ERROR';
+  if (upper === 'CRITICAL') return 'CRITICAL';
+  if (upper === 'INFO' || upper === 'WARNING' || upper === 'ERROR') {
+    return upper as AuditSeverity;
+  }
+  return undefined;
+}
+
 export class AuditService {
   /**
    * Create an audit log entry
@@ -43,6 +83,50 @@ export class AuditService {
       console.error('Error creating audit log:', error);
       throw error;
     }
+  }
+
+  /**
+   * Log an audit event.
+   *
+   * Supports the two call shapes used across the codebase:
+   *  1. Positional: `logEvent(action, entityId, details?)`
+   *  2. Object:     `logEvent({ userId, action, resourceType, resourceId, details, riskLevel })`
+   *
+   * Object-shape calls are normalised onto {@link AuditLogData}
+   * (resourceType → entityType, resourceId → entityId, riskLevel → severity).
+   * When no entity type is supplied it defaults to `'SYSTEM'`.
+   */
+  async logEvent(action: string, entityId: string, details?: any): Promise<any>;
+  async logEvent(data: AuditEventData): Promise<any>;
+  async logEvent(
+    actionOrData: string | AuditEventData,
+    entityId?: string,
+    details?: any
+  ): Promise<any> {
+    // Shape 1 — positional: logEvent(action, entityId, details?)
+    if (typeof actionOrData === 'string') {
+      return this.createAuditLog({
+        action: actionOrData,
+        entityType: 'SYSTEM',
+        entityId: entityId ?? '',
+        details,
+      });
+    }
+
+    // Shape 2 — object: normalise the pre-migration field names.
+    const data = actionOrData;
+    return this.createAuditLog({
+      userId: data.userId ?? undefined,
+      action: data.action,
+      entityType: data.entityType ?? data.resourceType ?? 'SYSTEM',
+      entityId: data.entityId ?? data.resourceId ?? '',
+      details: data.details,
+      complianceType: data.complianceType,
+      severity: normalizeSeverity(data.riskLevel) ?? data.severity,
+      ipAddress: data.ipAddress,
+      userAgent: data.userAgent,
+      sessionId: data.sessionId,
+    });
   }
 
   /**

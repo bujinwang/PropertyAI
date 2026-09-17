@@ -77,7 +77,7 @@ class SmartSearchService {
     const results: SearchResult[] = [];
 
     try {
-      const properties = await prisma.property.findMany({
+      const properties = await prisma.rental.findMany({
         where: filters.propertyId ? { id: filters.propertyId } : {},
         include: {
           units: {
@@ -121,7 +121,7 @@ class SmartSearchService {
     const results: SearchResult[] = [];
 
     try {
-      const tenants = await prisma.tenant.findMany({
+      const tenants = await prisma.user.findMany({
         where: filters.tenantId ? { id: filters.tenantId } : {},
         include: {
           unit: {

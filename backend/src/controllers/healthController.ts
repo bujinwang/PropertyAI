@@ -221,7 +221,7 @@ export class HealthController {
       // Count records in key tables
       const [userCount, propertyCount] = await Promise.all([
         prisma.user.count(),
-        prisma.property.count(),
+        prisma.rental.count(),
       ]);
 
       return {

@@ -192,7 +192,7 @@ router.post('/tenant-behavior/:tenantId', authenticateToken, [
     const { tenantId } = req.params;
 
     // Get tenant data
-    const tenant = await prisma.tenant.findUnique({
+    const tenant = await prisma.user.findUnique({
       where: { id: tenantId },
       include: {
         Unit: true,
