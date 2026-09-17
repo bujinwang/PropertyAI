@@ -9,6 +9,22 @@ dev-debug.log
 # Dependency directories
 node_modules/
 
+# Python virtual environments
+venv/
+.venv/
+env/
+ENV/
+backend/src/predictive-analytics/venv/
+backend/src/predictive-analytics/.venv/
+
+# Python build artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
 # Environment variables
 .env
 .env.local
