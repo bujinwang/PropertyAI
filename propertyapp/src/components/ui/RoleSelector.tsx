@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { COLORS, FONTS, SPACING } from '@/constants/theme';
 
-type Role = 'admin' | 'propertyManager' | 'tenant';
+type Role = 'propertyManager' | 'tenant';
 
 interface RoleSelectorProps {
   selectedRole: Role;
@@ -34,11 +34,6 @@ const roleOptions: RoleOption[] = [
     value: 'tenant',
     label: 'Tenant',
     description: 'Access your rental information and communicate with managers',
-  },
-  {
-    value: 'admin',
-    label: 'Admin',
-    description: 'Full access to all system features and settings',
   },
 ];
 

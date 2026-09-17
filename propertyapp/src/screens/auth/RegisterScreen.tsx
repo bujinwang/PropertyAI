@@ -22,7 +22,7 @@ import { RoleSelector } from '@/components/ui/RoleSelector';
 import { Checkbox } from '@/components/ui/Checkbox';
 
 type RegisterScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Register'>;
-type UserRole = 'admin' | 'propertyManager' | 'tenant';
+type UserRole = 'propertyManager' | 'tenant';
 
 export const RegisterScreen: React.FC = () => {
   const navigation = useNavigation<RegisterScreenNavigationProp>();

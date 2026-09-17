@@ -156,3 +156,394 @@ export function VisitorManagementScreen({ navigation }: VisitorManagementScreenP
       );
     }
   };
+
+  const handleAddVisitor = async () => {
+    if (!newVisitor.name.trim() || !newVisitor.visitDate.trim() || !newVisitor.purpose.trim()) {
+      Alert.alert('Missing information', 'Name, visit date, and purpose are required.');
+      return;
+    }
+
+    try {
+      const created = await visitorService.createVisitor({
+        name: newVisitor.name.trim(),
+        phone: newVisitor.phone.trim() || undefined,
+        visitDate: newVisitor.visitDate.trim(),
+        visitTime: newVisitor.visitTime.trim() || undefined,
+        purpose: newVisitor.purpose.trim(),
+        notes: newVisitor.notes.trim() || undefined,
+      });
+
+      setVisitors(prev => [created, ...prev]);
+      setNewVisitor({
+        name: '',
+        phone: '',
+        visitDate: '',
+        visitTime: '',
+        purpose: '',
+        notes: '',
+      });
+      setShowAddVisitor(false);
+      Alert.alert('Success', 'Visitor request created.');
+    } catch (err) {
+      Alert.alert('Error', 'Failed to create visitor. Please try again.');
+      console.error('Error creating visitor:', err);
+    }
+  };
+
+  const renderVisitorItem = ({ item }: { item: VisitorType }) => (
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.cardTitle}>{item.name}</Text>
+        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
+          <Text style={styles.statusText}>{getStatusText(item.status)}</Text>
+        </View>
+      </View>
+
+      {item.phone ? <Text style={styles.cardDetail}>Phone: {item.phone}</Text> : null}
+      <Text style={styles.cardDetail}>Date: {item.visitDate}</Text>
+      {item.visitTime ? <Text style={styles.cardDetail}>Time: {item.visitTime}</Text> : null}
+      <Text style={styles.cardDetail}>Purpose: {item.purpose}</Text>
+      {item.notes ? <Text style={styles.cardDetail}>Notes: {item.notes}</Text> : null}
+
+      {item.status === 'PENDING' && (
+        <View style={styles.actionsRow}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.approveButton]}
+            onPress={() => handleApproveVisitor(item.id)}
+          >
+            <Text style={styles.actionButtonText}>Approve</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.denyButton]}
+            onPress={() => handleDenyVisitor(item.id)}
+          >
+            <Text style={styles.actionButtonText}>Deny</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  );
+
+  const renderDeliveryItem = ({ item }: { item: DeliveryType }) => (
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.cardTitle}>{item.description}</Text>
+        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
+          <Text style={styles.statusText}>{getStatusText(item.status)}</Text>
+        </View>
+      </View>
+
+      <Text style={styles.cardDetail}>Carrier: {item.carrier}</Text>
+      <Text style={styles.cardDetail}>Tracking: {item.trackingNumber}</Text>
+      <Text style={styles.cardDetail}>Sender: {item.sender}</Text>
+      {item.location ? <Text style={styles.cardDetail}>Location: {item.location}</Text> : null}
+
+      {item.pickupCode && item.status === 'DELIVERED' && (
+        <View style={styles.actionsRow}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.approveButton]}
+            onPress={() => handlePickupDelivery(item.id)}
+          >
+            <Text style={styles.actionButtonText}>Pick Up</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  );
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Visitor Management</Text>
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => setShowAddVisitor(prev => !prev)}
+        >
+          <Text style={styles.addButtonText}>{showAddVisitor ? 'Cancel' : '+ Add'}</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.tabRow}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'visitors' && styles.activeTab]}
+          onPress={() => setActiveTab('visitors')}
+        >
+          <Text style={[styles.tabText, activeTab === 'visitors' && styles.activeTabText]}>
+            Visitors ({visitors.length})
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'deliveries' && styles.activeTab]}
+          onPress={() => setActiveTab('deliveries')}
+        >
+          <Text style={[styles.tabText, activeTab === 'deliveries' && styles.activeTabText]}>
+            Deliveries ({deliveries.length})
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {error ? (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      ) : null}
+
+      {showAddVisitor && (
+        <View style={styles.form}>
+          <TextInput
+            style={styles.input}
+            placeholder="Visitor name"
+            value={newVisitor.name}
+            onChangeText={text => setNewVisitor(prev => ({ ...prev, name: text }))}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Phone (optional)"
+            keyboardType="phone-pad"
+            value={newVisitor.phone}
+            onChangeText={text => setNewVisitor(prev => ({ ...prev, phone: text }))}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Visit date (YYYY-MM-DD)"
+            value={newVisitor.visitDate}
+            onChangeText={text => setNewVisitor(prev => ({ ...prev, visitDate: text }))}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Visit time (HH:MM, optional)"
+            value={newVisitor.visitTime}
+            onChangeText={text => setNewVisitor(prev => ({ ...prev, visitTime: text }))}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Purpose"
+            value={newVisitor.purpose}
+            onChangeText={text => setNewVisitor(prev => ({ ...prev, purpose: text }))}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Notes (optional)"
+            value={newVisitor.notes}
+            onChangeText={text => setNewVisitor(prev => ({ ...prev, notes: text }))}
+          />
+          <TouchableOpacity style={styles.submitButton} onPress={handleAddVisitor}>
+            <Text style={styles.submitButtonText}>Create Visitor Request</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+        </View>
+      ) : activeTab === 'visitors' ? (
+        <FlatList
+          data={visitors}
+          keyExtractor={item => item.id}
+          renderItem={renderVisitorItem}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#007AFF"
+            />
+          }
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>No visitors yet.</Text>
+          }
+        />
+      ) : (
+        <FlatList
+          data={deliveries}
+          keyExtractor={item => item.id}
+          renderItem={renderDeliveryItem}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#007AFF"
+            />
+          }
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>No deliveries yet.</Text>
+          }
+        />
+      )}
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F2F2F7',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#C6C6C8',
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#000000',
+  },
+  addButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: '#007AFF',
+  },
+  addButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  tabRow: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#C6C6C8',
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  activeTab: {
+    borderBottomColor: '#007AFF',
+  },
+  tabText: {
+    fontSize: 15,
+    color: '#8E8E93',
+    fontWeight: '500',
+  },
+  activeTabText: {
+    color: '#007AFF',
+    fontWeight: '600',
+  },
+  errorBanner: {
+    backgroundColor: '#FFE5E5',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  errorText: {
+    color: '#D32F2F',
+    fontSize: 14,
+  },
+  form: {
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#C6C6C8',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#C6C6C8',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: Platform.OS === 'ios' ? 12 : 8,
+    fontSize: 15,
+    color: '#000000',
+    marginBottom: 10,
+    backgroundColor: '#FFFFFF',
+  },
+  submitButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  submitButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  listContent: {
+    padding: 16,
+    paddingBottom: 32,
+  },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000000',
+    flexShrink: 1,
+    marginRight: 8,
+  },
+  cardDetail: {
+    fontSize: 14,
+    color: '#3C3C43',
+    marginBottom: 4,
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  statusText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    marginTop: 12,
+    gap: 10,
+  },
+  actionButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  approveButton: {
+    backgroundColor: '#28A745',
+  },
+  denyButton: {
+    backgroundColor: '#DC3545',
+  },
+  actionButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: '#8E8E93',
+    fontSize: 15,
+    marginTop: 24,
+  },
+});

@@ -58,14 +58,12 @@ interface AuthContextType {
   user: ExtendedUser | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (userData: {
-    email: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-    phone?: string;
-    role?: string;
-  }) => Promise<void>;
+  register: (
+    name: string,
+    email: string,
+    password: string,
+    role?: string
+  ) => Promise<void>;
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, newPassword: string) => Promise<void>;
@@ -208,18 +206,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
   
   // Register function
-  const register = async (userData: {
-    email: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-    phone?: string;
-    role?: string;
-  }): Promise<void> => {
+  const register = async (
+    name: string,
+    email: string,
+    password: string,
+    role?: string
+  ): Promise<void> => {
     setIsLoading(true);
     
     try {
-      const response = await authService.register(userData);
+      // The UI collects a single "Full Name" field. Split it into
+      // firstName/lastName on the first space; everything after the first
+      // space is the last name. If there is no space, lastName is ''.
+      const trimmedName = name.trim();
+      const firstSpaceIndex = trimmedName.indexOf(' ');
+      const firstName =
+        firstSpaceIndex === -1 ? trimmedName : trimmedName.slice(0, firstSpaceIndex);
+      const lastName =
+        firstSpaceIndex === -1 ? '' : trimmedName.slice(firstSpaceIndex + 1).trim();
+
+      const response = await authService.register({
+        email,
+        password,
+        firstName,
+        lastName,
+        role,
+      });
       
       setToken(response.token);
       setUser(normalizeUser(response.user));
