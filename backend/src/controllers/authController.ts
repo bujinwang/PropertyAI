@@ -8,9 +8,37 @@ import { lockoutConfig } from '../config/lockout.config';
 
 const prisma = new PrismaClient();
 
+/**
+ * Roles a public, self-serve signup may self-assign.
+ *
+ * SECURITY (defence in depth): mirrors the allowlist in
+ * `middleware/validation.ts#PUBLIC_SIGNUP_ROLES`. The controller re-checks it so
+ * that a future caller which reaches `register` without running
+ * `validateRegistration` still cannot escalate to `ADMIN`.
+ */
+const PUBLIC_SIGNUP_ROLES: readonly string[] = [
+  'TENANT',
+  'OWNER',
+  'PROPERTY_MANAGER',
+  'USER',
+  'VENDOR',
+];
+
 export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password, firstName, lastName, role } = req.body;
+
+    // Fail closed on privileged/unknown roles. When `role` is omitted we pass
+    // `undefined` so the Prisma default (`TENANT`) applies; we never coerce an
+    // invalid value into a valid one.
+    if (role !== undefined && role !== null && !PUBLIC_SIGNUP_ROLES.includes(role)) {
+      return next(
+        new AppError(
+          `Invalid role. Self-service registration permits only: ${PUBLIC_SIGNUP_ROLES.join(', ')}`,
+          400
+        )
+      );
+    }
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);

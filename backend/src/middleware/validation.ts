@@ -1,8 +1,24 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from './errorMiddleware';
 
+/**
+ * Roles that a public, self-serve signup is ALLOWED to claim for itself.
+ *
+ * SECURITY: `ADMIN` is deliberately absent. Privileged roles must never be
+ * self-assignable through the unauthenticated `/api/auth/register` endpoint;
+ * admins are provisioned only through the authenticated, admin-guarded
+ * `POST /api/users` route (see src/routes/usersRoutes.ts) or the seed script.
+ */
+export const PUBLIC_SIGNUP_ROLES = [
+  'TENANT',
+  'OWNER',
+  'PROPERTY_MANAGER',
+  'USER',
+  'VENDOR',
+] as const;
+
 export const validateRegistration = (req: Request, res: Response, next: NextFunction) => {
-  const { email, password, firstName, lastName } = req.body;
+  const { email, password, firstName, lastName, role } = req.body;
 
   // Email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -18,6 +34,23 @@ export const validateRegistration = (req: Request, res: Response, next: NextFunc
   // Name validation
   if (!firstName || !lastName) {
     return next(new AppError('First name and last name are required', 400));
+  }
+
+  // Role validation (fail CLOSED).
+  // - If `role` is omitted, the Prisma-level default (`TENANT`) is applied by
+  //   the controller. We do not supply a different default here.
+  // - If `role` is present it MUST be on the public allowlist. Unknown, typo'd,
+  //   or privileged roles (e.g. `ADMIN`) are rejected rather than coerced, so a
+  //   client bug is surfaced instead of silently masked.
+  if (role !== undefined && role !== null) {
+    if (typeof role !== 'string' || !(PUBLIC_SIGNUP_ROLES as readonly string[]).includes(role)) {
+      return next(
+        new AppError(
+          `Invalid role. Self-service registration permits only: ${PUBLIC_SIGNUP_ROLES.join(', ')}`,
+          400
+        )
+      );
+    }
   }
 
   next();
