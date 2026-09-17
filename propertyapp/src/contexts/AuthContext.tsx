@@ -8,7 +8,7 @@ import {
   storeUserData 
 } from '@/utils/secureStorage';
 import { User, UserRole } from '@/types/auth';
-import * as authService from '@/services/authService';
+import { authService } from '@/services/authService';
 import { apiService } from '@/services/apiService';
 import {
   hasPermission as checkPermission,
@@ -183,7 +183,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     
     try {
-      const response = await authService.login(email, password);
+      const response = await authService.login({ email, password });
       
       // If MFA is required, we don't set the user or token yet
       if (response.requireMFA) {

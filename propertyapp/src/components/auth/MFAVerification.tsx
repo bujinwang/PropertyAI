@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { verifyMFACode } from '../../services/authService';
+import { authService } from '../../services/authService';
 
 interface MFAVerificationProps {
   email: string;
@@ -27,7 +27,7 @@ const MFAVerification: React.FC<MFAVerificationProps> = ({ email, onSuccess, onC
     setError(null);
 
     try {
-      const response = await verifyMFACode(email, code);
+      const response = await authService.verifyMFACode(email, code);
       
       if (response.token && response.user) {
         // Store auth info in context

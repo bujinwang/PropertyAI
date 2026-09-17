@@ -10,7 +10,7 @@
     "eject": "expo eject",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit --module esnext --moduleResolution bundler",
     "test": "jest --watchman=false",
     "test:watch": "jest --watch --watchman=false",
     "test:coverage": "jest --coverage --watchman=false"
