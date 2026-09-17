@@ -10,6 +10,10 @@ export interface BiometricChallenge {
   expiresAt: Date;
 }
 
+// In-memory store for pending WebAuthn challenges, keyed by challenge string.
+// Not suitable for production (use Redis or similar with a TTL); module-scoped.
+const challengeStore = new Map<string, BiometricChallenge>();
+
 export interface BiometricAssertion {
   credentialId: string;
   authenticatorData: string;
@@ -251,28 +255,22 @@ export class BiometricAuthService {
   private async storeChallenge(challenge: string, userId: string): Promise<void> {
     // In a real implementation, store this in Redis or similar with expiration
     // For now, we'll store in a simple in-memory map (not suitable for production)
-    if (!global.challengeStore) {
-      global.challengeStore = new Map();
-    }
-
     const expiresAt = new Date(Date.now() + this.CHALLENGE_TIMEOUT);
-    global.challengeStore.set(challenge, { userId, expiresAt });
+    challengeStore.set(challenge, { challenge, userId, expiresAt });
 
     // Clean up expired challenges
     setTimeout(() => {
-      global.challengeStore.delete(challenge);
+      challengeStore.delete(challenge);
     }, this.CHALLENGE_TIMEOUT);
   }
 
   private async verifyChallenge(challenge: string, userId: string): Promise<boolean> {
-    if (!global.challengeStore) return false;
-
-    const stored = global.challengeStore.get(challenge);
+    const stored = challengeStore.get(challenge);
     if (!stored || stored.userId !== userId || stored.expiresAt < new Date()) {
       return false;
     }
 
-    global.challengeStore.delete(challenge);
+    challengeStore.delete(challenge);
     return true;
   }
 

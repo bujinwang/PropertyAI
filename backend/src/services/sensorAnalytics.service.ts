@@ -243,7 +243,7 @@ class SensorAnalyticsService {
 
   private async analyzeTemperatureSensor(sensor: any): Promise<PredictiveMaintenanceResult[]> {
     const results: PredictiveMaintenanceResult[] = [];
-    const readings = sensor.readings.map(r => r.value);
+    const readings: number[] = sensor.readings.map((r: { value: number }) => r.value);
 
     // Check for overheating patterns
     const avgTemp = readings.reduce((sum, val) => sum + val, 0) / readings.length;
@@ -280,7 +280,7 @@ class SensorAnalyticsService {
 
   private async analyzeVibrationSensor(sensor: any): Promise<PredictiveMaintenanceResult[]> {
     const results: PredictiveMaintenanceResult[] = [];
-    const readings = sensor.readings.map(r => r.value);
+    const readings: number[] = sensor.readings.map((r: { value: number }) => r.value);
 
     // Check for increasing vibration patterns
     const recentReadings = readings.slice(0, 50); // Last 50 readings
@@ -310,7 +310,7 @@ class SensorAnalyticsService {
 
   private async analyzeEnergySensor(sensor: any): Promise<PredictiveMaintenanceResult[]> {
     const results: PredictiveMaintenanceResult[] = [];
-    const readings = sensor.readings.map(r => r.value);
+    const readings: number[] = sensor.readings.map((r: { value: number }) => r.value);
 
     // Check for energy consumption patterns
     const avgConsumption = readings.reduce((sum, val) => sum + val, 0) / readings.length;
@@ -335,7 +335,7 @@ class SensorAnalyticsService {
 
   private async analyzePressureSensor(sensor: any): Promise<PredictiveMaintenanceResult[]> {
     const results: PredictiveMaintenanceResult[] = [];
-    const readings = sensor.readings.map(r => r.value);
+    const readings: number[] = sensor.readings.map((r: { value: number }) => r.value);
 
     // Check for pressure fluctuations
     const pressureVariance = this.calculateVariance(readings);

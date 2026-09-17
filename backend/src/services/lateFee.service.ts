@@ -13,7 +13,7 @@ class LateFeeService {
     const leases = await prisma.lease.findMany({
       where: {
         status: 'ACTIVE',
-        transactions: {
+        Transaction: {
           some: {
             type: 'RENT_PAYMENT',
             status: 'PENDING',
@@ -24,13 +24,13 @@ class LateFeeService {
         },
       },
       include: {
-        tenant: true,
-        transactions: true,
+        User: true,
+        Transaction: true,
       },
     });
 
     for (const lease of leases) {
-      const rentTransaction = lease.transactions.find(t => t.type === 'RENT_PAYMENT' && t.status === 'PENDING');
+      const rentTransaction = lease.Transaction.find(t => t.type === 'RENT_PAYMENT' && t.status === 'PENDING');
       if (rentTransaction) {
         const dueDate = new Date(rentTransaction.createdAt);
         const diffDays = Math.ceil((today.getTime() - dueDate.getTime()) / (1000 * 3600 * 24));
@@ -48,9 +48,9 @@ class LateFeeService {
           });
 
           const message = `A late fee of $${lateFee} has been applied to your account for the overdue rent payment.`;
-          await sendNotification('email', lease.tenant.email, 'Late Fee Applied', message);
-          if (lease.tenant.phone) {
-            await sendNotification('sms', lease.tenant.phone, 'Late Fee Applied', message);
+          await sendNotification('email', lease.User.email, 'Late Fee Applied', message);
+          if (lease.User.phone) {
+            await sendNotification('sms', lease.User.phone, 'Late Fee Applied', message);
           }
         }
       }

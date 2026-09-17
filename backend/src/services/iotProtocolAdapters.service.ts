@@ -392,7 +392,7 @@ class IoTProtocolAdaptersService {
       await iotDeviceService.logDeviceEvent(deviceId, 'COMMAND_FAILED', {
         command,
         parameters,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
 
       throw error;
@@ -409,7 +409,7 @@ class IoTProtocolAdaptersService {
       return await adapter.getDeviceStatus(deviceId);
     } catch (error) {
       console.error(`Error getting status for device ${deviceId} via ${protocol}:`, error);
-      return { online: false, error: error.message };
+      return { online: false, error: error instanceof Error ? error.message : String(error) };
     }
   }
 

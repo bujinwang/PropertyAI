@@ -144,7 +144,7 @@ class SensorDataIngestionService {
         } catch (error) {
           invalidReadings.push({
             data: reading,
-            error: error.message
+            error: error instanceof Error ? error.message : String(error)
           });
         }
       }
@@ -199,7 +199,7 @@ class SensorDataIngestionService {
 
     } catch (error) {
       result.success = false;
-      result.errors.push(error.message);
+      result.errors.push(error instanceof Error ? error.message : String(error));
       console.error('Error ingesting batch data:', error);
     }
 
@@ -298,7 +298,7 @@ class SensorDataIngestionService {
         }
       } catch (error) {
         totalFailed += readings.length;
-        allErrors.push(`Error processing sensor ${sensorId}: ${error.message}`);
+        allErrors.push(`Error processing sensor ${sensorId}: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
 

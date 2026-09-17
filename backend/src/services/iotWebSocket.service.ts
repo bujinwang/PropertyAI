@@ -168,7 +168,7 @@ class IoTWebSocketService {
       socket.emit('command-error', {
         deviceId: data.deviceId,
         command: data.command,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         timestamp: new Date()
       });
     }
@@ -197,7 +197,7 @@ class IoTWebSocketService {
     } catch (error) {
       socket.emit('sensor-data-error', {
         sensorId: data.sensorId,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         timestamp: new Date()
       });
     }

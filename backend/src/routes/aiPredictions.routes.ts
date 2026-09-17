@@ -71,10 +71,10 @@ router.post('/maintenance/:applianceId', authenticateToken, [
       brand: appliance.brand || 'Unknown',
       model: appliance.model || 'Unknown',
       maintenance_count: appliance.Unit?.MaintenanceRequests?.length || 0,
-      high_priority_maintenance_count: appliance.Unit?.MaintenanceRequests?.filter(mr =>
+      high_priority_maintenance_count: appliance.Unit?.MaintenanceRequests?.filter((mr: { priority: string }) =>
         mr.priority === 'HIGH' || mr.priority === 'CRITICAL'
       ).length || 0,
-      avg_maintenance_cost: appliance.Unit?.MaintenanceRequests?.reduce((sum, mr) =>
+      avg_maintenance_cost: appliance.Unit?.MaintenanceRequests?.reduce((sum: number, mr: { estimatedCost?: number | null }) =>
         sum + (mr.estimatedCost || 0), 0
       ) / (appliance.Unit?.MaintenanceRequests?.length || 1) || 0,
     };
@@ -210,12 +210,12 @@ router.post('/tenant-behavior/:tenantId', authenticateToken, [
     const features = {
       tenure_days: tenant.moveInDate ? Math.floor((Date.now() - new Date(tenant.moveInDate).getTime()) / (1000 * 60 * 60 * 24)) : 0,
       total_payments: tenant.Payments?.length || 0,
-      late_payments: tenant.Payments?.filter(p => p.status === 'LATE').length || 0,
-      missed_payments: tenant.Payments?.filter(p => p.status === 'MISSED').length || 0,
+      late_payments: tenant.Payments?.filter((p: { status: string }) => p.status === 'LATE').length || 0,
+      missed_payments: tenant.Payments?.filter((p: { status: string }) => p.status === 'MISSED').length || 0,
       maintenance_requests: tenant.MaintenanceRequests?.length || 0,
-      urgent_maintenance: tenant.MaintenanceRequests?.filter(mr => mr.priority === 'HIGH' || mr.priority === 'CRITICAL').length || 0,
+      urgent_maintenance: tenant.MaintenanceRequests?.filter((mr: { priority: string }) => mr.priority === 'HIGH' || mr.priority === 'CRITICAL').length || 0,
       total_messages: tenant.Messages?.length || 0,
-      complaint_messages: tenant.Messages?.filter(m => m.type === 'COMPLAINT').length || 0,
+      complaint_messages: tenant.Messages?.filter((m: { type: string }) => m.type === 'COMPLAINT').length || 0,
       rent_amount: tenant.Unit?.rent_amount || 0,
       credit_score: tenant.credit_score || 600,
       employment_status: tenant.employment_status || 'Unknown',

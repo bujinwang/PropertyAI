@@ -313,14 +313,14 @@ class PricingService {
    * Group rentals by property type for market analysis
    */
   private groupByPropertyType(rentals: any[]): Record<string, any> {
-    const grouped = rentals.reduce((acc, rental) => {
+    const grouped = rentals.reduce<Record<string, number[]>>((acc, rental) => {
       const type = rental.propertyType;
       if (!acc[type]) {
         acc[type] = [];
       }
       acc[type].push(rental.rent);
       return acc;
-    }, {} as Record<string, number[]>);
+    }, {});
 
     const result: Record<string, any> = {};
     

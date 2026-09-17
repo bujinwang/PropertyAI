@@ -46,7 +46,7 @@ class DocumentService {
   async checkExpiredDocuments() {
     const documents = await prisma.document.findMany({
       where: {
-        lease: {
+        Lease: {
           endDate: {
             lt: new Date(),
           },

@@ -160,7 +160,7 @@ class SchedulerService {
       await notificationService.sendFailureNotification(
         scheduledExport.templateName,
         scheduledExport.nextRun,
-        error.message,
+        error instanceof Error ? error.message : String(error),
         [scheduledExport.email]
       );
     }

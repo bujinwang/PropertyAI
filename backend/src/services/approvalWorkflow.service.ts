@@ -168,7 +168,7 @@ class ApprovalWorkflowService {
       throw new Error('Approval instance is not in pending status');
     }
 
-    const currentStep = instance.workflow.steps.find(s => s.stepNumber === instance.currentStep);
+    const currentStep = instance.workflow.steps.find((s: { stepNumber: number }) => s.stepNumber === instance.currentStep);
 
     if (!currentStep) {
       throw new Error('Current step not found in workflow');
@@ -318,7 +318,7 @@ class ApprovalWorkflowService {
       throw new Error('Approval instance not found');
     }
 
-    const currentStep = instance.workflow.steps.find(s => s.stepNumber === instance.currentStep);
+    const currentStep = instance.workflow.steps.find((s: { stepNumber: number }) => s.stepNumber === instance.currentStep);
 
     if (!currentStep || !await this.canApproveStep(currentStep, fromUserId)) {
       throw new Error('User does not have permission to delegate this approval');
@@ -453,7 +453,7 @@ class ApprovalWorkflowService {
   }
 
   private async notifyNextApprover(instance: ApprovalInstance): Promise<void> {
-    const currentStep = instance.workflow.steps.find(s => s.stepNumber === instance.currentStep);
+    const currentStep = instance.workflow.steps.find((s: { stepNumber: number }) => s.stepNumber === instance.currentStep);
 
     if (!currentStep) return;
 
@@ -486,7 +486,7 @@ class ApprovalWorkflowService {
   }
 
   private async handleEscalation(instance: ApprovalInstance, decision: ApprovalDecision): Promise<void> {
-    const currentStep = instance.workflow.steps.find(s => s.stepNumber === instance.currentStep);
+    const currentStep = instance.workflow.steps.find((s: { stepNumber: number }) => s.stepNumber === instance.currentStep);
 
     if (!currentStep?.escalationRole) {
       throw new Error('No escalation role defined for this step');

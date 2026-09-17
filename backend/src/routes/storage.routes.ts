@@ -182,7 +182,7 @@ router.get('/files', authenticateToken, [
   query('limit').optional().isInt({ min: 1, max: 100 }),
   query('offset').optional().isInt({ min: 0 }),
   validateRequest,
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const userId = (req.user as User)!.id;
     const folder = req.query.folder as string | undefined;
@@ -230,7 +230,7 @@ router.delete('/files', authenticateToken, [
   body('keys').isArray().notEmpty(),
   body('keys.*').isString(),
   validateRequest,
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const userId = (req.user as User)!.id;
     const { keys } = req.body;
@@ -269,7 +269,7 @@ router.delete('/files', authenticateToken, [
 router.post('/properties/:propertyId/images', authenticateToken, upload.array('images', 10), [
   param('propertyId').isString().notEmpty(),
   validateRequest,
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const userId = (req.user as User)!.id;
     const { propertyId } = req.params;
@@ -341,7 +341,7 @@ router.post('/leases/:leaseId/documents', authenticateToken, upload.single('docu
   body('documentType').isIn(['LEASE', 'INSURANCE', 'IDENTITY', 'OTHER']),
   body('name').optional().isString(),
   validateRequest,
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const userId = (req.user as User)!.id;
     const { leaseId } = req.params;
@@ -360,7 +360,7 @@ router.post('/leases/:leaseId/documents', authenticateToken, upload.single('docu
         id: leaseId,
         OR: [
           { tenantId: userId },
-          { rental: { ownerId: userId } }, // Updated to use rental instead of unit.property
+          { Rental: { ownerId: userId } }, // Updated to use rental instead of unit.property
         ],
       },
     });

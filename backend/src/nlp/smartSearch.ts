@@ -102,7 +102,7 @@ class SmartSearchService {
             relevanceScore: score,
             metadata: {
               unitCount: property.units.length,
-              occupancyRate: property.units.filter(u => u.tenant).length / property.units.length,
+              occupancyRate: property.units.filter((u: { tenant?: unknown }) => u.tenant).length / property.units.length,
             },
           });
         }

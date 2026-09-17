@@ -237,11 +237,11 @@ export class EnhancedRBACService {
       case 'maintenance': {
         const maintenance = await prisma.maintenanceRequest.findUnique({
           where: { id: resourceId },
-          select: { requestedById: true, rental: { select: { ownerId: true, managerId: true } } }
+          select: { requestedById: true, Rental: { select: { ownerId: true, managerId: true } } }
         });
         return maintenance?.requestedById === user.id ||
-               maintenance?.rental.ownerId === user.id ||
-               maintenance?.rental.managerId === user.id;
+               maintenance?.Rental.ownerId === user.id ||
+               maintenance?.Rental.managerId === user.id;
       }
 
       default:

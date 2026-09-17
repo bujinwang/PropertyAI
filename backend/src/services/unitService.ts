@@ -211,7 +211,7 @@ export class UnitService {
           take,
           orderBy,
           include: {
-            manager: {
+            Manager: {
               select: {
                 id: true,
                 firstName: true,
@@ -219,7 +219,7 @@ export class UnitService {
                 email: true
               }
             },
-            owner: {
+            Owner: {
               select: {
                 id: true,
                 firstName: true,
@@ -227,7 +227,7 @@ export class UnitService {
                 email: true
               }
             },
-            Lease: {
+            Leases: {
               select: {
                 id: true,
                 startDate: true,
@@ -279,7 +279,7 @@ export class UnitService {
       const units = await prisma.rental.findMany({
         where,
         include: {
-          manager: {
+          Manager: {
             select: {
               id: true,
               firstName: true,
@@ -287,7 +287,7 @@ export class UnitService {
               email: true
             }
           },
-          Lease: {
+          Leases: {
             select: {
               id: true,
               startDate: true,
@@ -333,7 +333,7 @@ export class UnitService {
       const units = await prisma.rental.findMany({
         where,
         include: {
-          manager: {
+          Manager: {
             select: {
               id: true,
               firstName: true,
@@ -341,7 +341,7 @@ export class UnitService {
               email: true
             }
           },
-          Lease: {
+          Leases: {
             select: {
               id: true,
               startDate: true,
@@ -410,7 +410,7 @@ export class UnitService {
         where: { id },
         data: formattedData,
         include: {
-          manager: {
+          Manager: {
             select: {
               id: true,
               firstName: true,
@@ -418,7 +418,7 @@ export class UnitService {
               email: true
             }
           },
-          owner: {
+          Owner: {
             select: {
               id: true,
               firstName: true,
@@ -426,7 +426,7 @@ export class UnitService {
               email: true
             }
           },
-          Lease: true
+          Leases: true
         }
       });
 
@@ -488,7 +488,7 @@ export class UnitService {
         where: { id },
         data: updateData,
         include: {
-          manager: {
+          Manager: {
             select: {
               id: true,
               firstName: true,
@@ -517,11 +517,11 @@ export class UnitService {
       const currentUnit = await prisma.rental.findUnique({
         where: { id },
         include: {
-          Lease: true
+          Leases: true
         }
       });
 
-      if (currentUnit?.Lease && currentUnit.Lease.length > 0) {
+      if (currentUnit?.Leases && currentUnit.Leases.length > 0) {
         throw {
           message: 'Cannot remove tenant with an active lease',
           code: 'ACTIVE_LEASE_EXISTS',
@@ -566,8 +566,8 @@ export class UnitService {
       const unit = await prisma.rental.findUnique({
         where: { id },
         include: {
-          Lease: true,
-          MaintenanceRequest: {
+          Leases: true,
+          MaintenanceRequests: {
             where: {
               status: {
                 not: 'COMPLETED'
@@ -577,7 +577,7 @@ export class UnitService {
         }
       });
 
-      if (unit?.Lease && unit.Lease.length > 0) {
+      if (unit?.Leases && unit.Leases.length > 0) {
         throw {
           message: 'Cannot delete unit with an active lease',
           code: 'ACTIVE_LEASE_EXISTS',
@@ -585,7 +585,7 @@ export class UnitService {
         };
       }
 
-      if (unit?.MaintenanceRequest && unit.MaintenanceRequest.length > 0) {
+      if (unit?.MaintenanceRequests && unit.MaintenanceRequests.length > 0) {
         throw {
           message: 'Cannot delete unit with active maintenance requests',
           code: 'ACTIVE_MAINTENANCE_EXISTS',

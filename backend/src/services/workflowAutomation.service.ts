@@ -159,7 +159,7 @@ class WorkflowAutomationService {
     };
 
     try {
-      const steps = instance.definition.steps.sort((a, b) => {
+      const steps = instance.definition.steps.sort((a: { stepId: string }, b: { stepId: string }) => {
         // Simple ordering - can be enhanced with proper DAG execution
         return a.stepId.localeCompare(b.stepId);
       });

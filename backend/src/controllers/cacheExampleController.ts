@@ -247,7 +247,7 @@ export class CacheExampleController {
           // Calculate occupancy
           const totalUnits = property.units.length;
           const occupiedUnits = property.units.filter(
-            (unit) => unit.lease?.status === 'ACTIVE'
+            (unit: { lease?: { status?: string } | null }) => unit.lease?.status === 'ACTIVE'
           ).length;
 
           return {

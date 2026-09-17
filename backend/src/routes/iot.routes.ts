@@ -130,20 +130,21 @@ router.post('/discover', async (req, res) => {
       return res.status(400).json({ error: 'Property ID is required' });
     }
 
-    let results;
+    let results: Record<string, any[]> | Map<string, any[]>;
 
     if (protocols && Array.isArray(protocols)) {
       // Discover on specific protocols
-      results = {};
+      const byProtocol: Record<string, any[]> = {};
       for (const protocol of protocols) {
         try {
           const devices = await iotProtocolAdaptersService.discoverDevices(protocol);
-          results[protocol] = devices;
+          byProtocol[protocol] = devices;
         } catch (error) {
           console.error(`Error discovering devices on ${protocol}:`, error);
-          results[protocol] = [];
+          byProtocol[protocol] = [];
         }
       }
+      results = byProtocol;
     } else {
       // Discover on all protocols
       results = await iotProtocolAdaptersService.discoverAllDevices();

@@ -23,9 +23,9 @@ class FollowUpService {
         },
       },
       include: {
-        message: {
+        Message: {
           include: {
-            sender: true,
+            User_Message_senderIdToUser: true,
           },
         },
       },
@@ -35,7 +35,7 @@ class FollowUpService {
   async sendFollowUp(followUp: FollowUp): Promise<void> {
     try {
       const { messageId } = followUp;
-      const message = await prisma.message.findUnique({ where: { id: messageId }, include: { sender: true } });
+      const message = await prisma.message.findUnique({ where: { id: messageId }, include: { User_Message_senderIdToUser: true } });
       if (!message) {
         throw new Error('Message not found');
       }
@@ -43,7 +43,7 @@ class FollowUpService {
       const followUpMessage = `This is a follow-up to your message: "${message.content}"`;
 
       // Here you would typically send the follow-up message via email, SMS, etc.
-      console.log(`Sending follow-up message to ${message.sender.email}: ${followUpMessage}`);
+      console.log(`Sending follow-up message to ${message.User_Message_senderIdToUser.email}: ${followUpMessage}`);
 
       await prisma.followUp.update({
         where: { id: followUp.id },
