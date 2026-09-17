@@ -93,6 +93,10 @@ tasks/
 # Serena
 .serena/
 
+# AI assistant working state (local only)
+.workbuddy/
+.workbuddy-ai/
+
 # Build output
 dist/
 build/

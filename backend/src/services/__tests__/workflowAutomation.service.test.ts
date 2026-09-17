@@ -34,12 +34,16 @@ jest.mock('../../config/database', () => ({
 
 // Mock audit service
 jest.mock('../audit.service', () => ({
-  logEvent: jest.fn(),
+  auditService: {
+    logEvent: jest.fn(),
+  },
 }));
 
 // Mock pubSub service
 jest.mock('../pubSub.service', () => ({
-  publish: jest.fn(),
+  pubSubService: {
+    publish: jest.fn(),
+  },
 }));
 
 describe('WorkflowAutomationService', () => {
