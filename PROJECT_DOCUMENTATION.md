@@ -1,22 +1,29 @@
 # PropertyFlow AI - Comprehensive Project Documentation
 
 > **⚠️ CORRECTION (2026-09-17).** The Architecture section states
-> "**Migration Status**: Completed migration from Sequelize to Prisma". **This is false.**
-> Both ORMs are live at the same time: `sequelize ^6.37.7` is still a runtime dependency,
-> and `backend/src/models/*.js` (`Property.js`, `Feedback.js`, `ReportAuditLog.js`,
-> `GeneratedReport.js`, `ComplianceCheck.js`, `Notification.js`, `ScheduledReport.js`, …)
-> are Sequelize models sitting in the **live** `backend/src` tree — not only in the
-> archived `_src_legacy/`. `backend/src/config/database-legacy.js` and
-> `backend/src/services/dataRetentionService.js` are Sequelize-based too.
+> "**Migration Status**: Completed migration from Sequelize to Prisma". **This is
+> misleading in both directions** — the migration is neither "completed" nor, as an
+> earlier draft of this note claimed, an active dual-ORM architecture. Verified state:
 >
-> Prisma (`@prisma/client`) is the **canonical** ORM for new work, but the migration is
-> **incomplete, not complete**. Treat any `backend/src/**/*.js` service file as the
-> legacy Sequelize layer.
+> - **Prisma is the only ORM on the live path.** Nothing reachable from
+>   `backend/src/index.ts`, or from any test file, loads Sequelize at all.
+> - The Sequelize layer is **installed but never loaded**. `sequelize ^6.37.7` is still a
+>   runtime dependency, and `backend/src/models/*.js` are Sequelize models sitting in
+>   `backend/src` — but they are required **only** by unmounted, non-functional route
+>   files (`routes/payment-legacy.js`, `routes/payments-legacy.js`, `routes/reports.js`).
+>   `config/database-legacy.js` and `services/performanceMonitor.js` form a closed island
+>   that nothing else imports.
+> - So the migration is **functionally complete but the dead Sequelize files were never
+>   deleted**. They are residue, not a working second ORM.
 >
-> Also note: the `Property`/`Unit` → `Rental` schema migration is likewise unfinished —
+> Also note: the `Property`/`Unit` → `Rental` schema migration *is* genuinely unfinished —
 > the tables were dropped (`20250804155618_rental/migration.sql`) but code still
 > references `prisma.property`. There is no `Property`, `Unit`, `Tenant`, or `Payment`
 > model. See `deliverables/software-company/propertyai-backend-health-2026-09-17.md`.
+>
+> **Method note:** "in the source tree" is not the same as "in use". Reachability was
+> determined by BFS over the import graph from the app entry and from all test files —
+> see the `ts-dead-code-triage` skill.
 
 ## Table of Contents
 1. [Project Overview](#project-overview)

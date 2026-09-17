@@ -77,9 +77,21 @@ This is not drift — it was deliberate. Migration history proves it:
 
 **Consequence:** `prisma.property` in code means *unfinished migration*, not a missing model. The correct targets are `prisma.rental` / `prisma.user`. Never resolve this by growing the schema or adding a migration.
 
-### 2. Two ORMs run side by side
+### 2. Sequelize is installed but never loaded — NOT an active dual-ORM setup
 
-`@prisma/client ^5.10.2` (canonical) **and** `sequelize ^6.37.7` (legacy). `src/models/*.js` are Sequelize models (`Property.js`, `Feedback.js`, `ReportAuditLog.js`, `GeneratedReport.js`, `ComplianceCheck.js`, `Notification.js`), with `src/config/database-legacy.js` and Sequelize migrations. **Treat any `src/**/*.js` service file as the legacy ORM layer.**
+> **Corrected 2026-09-17.** This finding originally read "two ORMs run side by side". A
+> later reachability analysis (finding 8) showed that overstates it — the original claim
+> asserted "live" without verifying it, which is the exact error this report criticises
+> elsewhere. Corrected text below.
+
+`sequelize ^6.37.7` is still a runtime dependency, and `src/models/*.js` (`Property.js`, `Tenant.js`, `Payment.js`, `Feedback.js`, `ReportAuditLog.js`, `GeneratedReport.js`, `ComplianceCheck.js`, `Notification.js`, `ScheduledReport.js`, …) plus `src/config/database-legacy.js` and `src/models/migrations/` still exist in `backend/src`. **But nothing that runs loads any of it:**
+
+- `sequelize` is required **only** by `config/database-legacy.js` and the models themselves.
+- Those models are required **only** by unmounted, non-functional route files — `routes/payment-legacy.js`, `routes/payments-legacy.js`, `routes/reports.js`.
+- `services/performanceMonitor.js` is required **only** by `database-legacy.js`.
+- `services/dataRetentionService.js` (Sequelize-based, uses `ReportAuditLog.count()` / `Op`) has **zero importers**.
+
+It is a **closed island**. ⇒ **Prisma is the only ORM on the live path.** The migration is *functionally* complete; the dead Sequelize files were simply never deleted. `backend/src/models/index.js` — the barrel the dead route files require — **does not exist**, which is why `reports.js` throws on load.
 
 ### 3. The field-level migration is NOT mechanical
 
@@ -209,6 +221,47 @@ The type checker is finding genuine bugs, not noise. Reachability checked on eac
 
 `tsconfig.json` has `include: ["src/**/*"]` but **no `allowJs`**. In `backend/src` there are 476 `.ts` files (56,757 LOC) and **56 `.js` files (13,681 LOC)** — roughly **19% of the backend has zero static verification**. This is how `analyticsService.ts` was gutted to a 4-line orphan and `dataRetentionService.js` kept calling a method that doesn't exist, unnoticed. Treat the error count as a *`.ts`-only* metric.
 
+### 12. The unwired routes split into two very different categories
+
+Finding 8 established that all remaining errors are in unreachable code. That is **not** the same as "safe to delete." I traced each unwired route through the whole monorepo — backend, `dashboard/`, `propertyapp/`, `ContractorApp/` — and then **verified the HTTP behaviour against a running server**. Two categories emerged, and only one of them is delete-safe.
+
+**Category A — unwired on *both* sides. Safe to delete.**
+
+| Feature | Backend | Frontend | Errors |
+|---|---|---|---|
+| AI predictions | `aiPredictions.routes.ts`, **zero references in the repo** | **zero references anywhere** | 37 |
+| NLP smart search | `smartSearch.routes.ts` unmounted | `dashboard/src/components/SmartSearch.tsx` is an **orphan component** — never rendered | 26 |
+| UX review — bulk ops | `uxReview.bulk.routes.ts` unmounted | `UXBulkActions.tsx` / `UXExportButton.tsx` are **orphans**; nothing calls the bulk endpoints | 5 |
+| IoT devices | `iot.routes.ts` unmounted | `dashboard/src/components/iot/DeviceList.tsx` is an **orphan** | 3 |
+| Approval workflow | `approvalWorkflow.routes.ts`, import **commented out** at `routes/index.ts:58` | `dashboard/src/components/ApprovalDashboard.tsx` is an **orphan**, makes no API calls | 4 |
+| Cache example | `cacheExampleController.ts`, no importers | n/a | 8 |
+
+Both sides were abandoned together in every case — which is why these are genuinely deletable.
+
+**Category B — unwired backend, LIVE frontend. A shipped feature is broken. Mount it, do not delete it.**
+
+| Feature | Evidence |
+|---|---|
+| **Visitor management** | `propertyapp/src/screens/VisitorManagementScreen.tsx` **is registered in navigation** (`AppNavigator.tsx:80`, `Stack.Screen name="VisitorManagement"`). It calls `visitorService.getVisitors()` / `getDeliveries()` / `approveVisitor()` / `denyVisitor()` → `/api/visitors`, `/api/visitors/:id/approve`, `/api/deliveries`. `visitorManagement.routes.ts` defines exactly those paths but **is never mounted**. |
+
+**Verified against a running server** (`npm run dev:node`, then `curl`):
+
+```
+404  GET  /api/visitors            <- the mobile screen's first call
+404  GET  /api/iot/devices/x
+404  POST /api/smart-search/search
+404  POST /api/ai-predictions/financial/1
+404  POST /api/approval-workflow/workflows
+--- controls (mounted routes behave differently) ---
+401  GET  /api/rentals             (exists, auth required)
+401  POST /api/maintenance         (exists, auth required)
+400  POST /api/auth/login          (exists, bad payload)
+```
+
+So the mobile app's **Visitor Management screen loads and then shows "Failed to load data. Please try again." on every open** — a user-facing break, not dead code. This is the single most important item in the whole report, and it was hiding behind one backend type error in an "unreachable" file.
+
+**Lesson:** reachability analysis tells you what *cannot* execute. It does not tell you what *should* exist. Before deleting an unreachable module, check whether a frontend calls it — the backend can be unwired while the UI is live.
+
 ---
 
 ## Gotchas for the next session
@@ -231,16 +284,20 @@ The type checker is finding genuine bugs, not noise. Reachability checked on eac
 
 **Live code is now clean — zero type errors in anything that executes.** Every remaining error is inside an unreachable file, so every remaining decision is "delete this feature, or revive and finish it." None of them is blocked on engineering effort.
 
+**One item is not a decision at all — it is a bug (see finding 12, Category B).** The mobile app's Visitor Management screen is registered in navigation and its backend route is unmounted, so it 404s on every open. **Recommendation: mount `visitorManagement.routes.ts` at `/api`.** That is a one-line change and it fixes a user-facing break. It will add ~1 error to the count, which is the correct trade.
+
 Ordered by leverage:
 
-| # | Decision | Notes |
+| # | Decision | Evidence / notes |
 |---|---|---|
-| 1 | **Delete the unwired AI-prediction + NLP smart-search features?** | `aiPredictions.routes.ts` (37 errors) has **zero references in the entire repo**; `nlp/smartSearch.ts` (23) is reachable only via `smartSearch.routes.ts`, itself unreferenced. Deleting both removes **~68 errors with no schema change**. Highest-leverage call available. If wanted, they need a schema design pass first. |
-| 2 | **Delete `cacheExampleController.ts`?** | 8 errors, no importers, named "example". Looks like scaffolding. |
-| 3 | **Delete the other unreachable modules?** | `uxReview.bulk.routes.ts` (5), `approvalWorkflow.service.ts` (4, route commented out at `routes/index.ts:58`), `iotSecurity.service.ts` (2), `visitorManagement.routes.ts` (1), `jobMonitorService.ts` (1), plus the `iotSecurity` crypto bug — real defects but in code that never loads. Delete, or fix-and-wire? |
-| 4 | **Predictive/ML layer — repair or shelve?** | Repair = rewrite 3 Python scripts against `Rental`/`Lease`/`Transaction` + decide the income/expense mapping. Shelve = remove routes and scripts, keep the working rule-based `api-simple.py`. Note the **live** tenant-prediction endpoint is non-functional regardless: it feeds the model three effectively-constant features (`missed_payments` always 0, `credit_score` 650, `rent_amount` 1500) and calls a Flask service that **is not running** on :5001 (verified — no response). |
-| 5 | **`mobile/` removal** | Evidence complete — it is not in the `workspaces` array and `propertyapp/` is a superset. |
-| 6 | **`.git` history shrink** | Still ~244 MB. Requires `git filter-repo`/BFG + force-push, rewriting every commit hash. **Needs explicit approval.** |
+| 0 | **Fix: mount `visitorManagement.routes.ts`** | Not optional — a shipped screen calls `/api/visitors` and gets **404** (verified against a running server). `VisitorManagementScreen` is registered at `AppNavigator.tsx:80`. |
+| 1 | **Delete the AI-prediction + NLP smart-search features?** | **Dead on both sides** (finding 12, Category A): `aiPredictions.routes.ts` (37 errors) has **zero references in the entire repo**; `SmartSearch.tsx` is an orphan component that is never rendered, so nothing calls `/smart-search/*`. Deleting removes **~63 errors with no schema change**. Highest-leverage call available. |
+| 2 | **Delete the other Category-A modules?** | `cacheExampleController.ts` (8, no importers, named "example"), `uxReview.bulk.routes.ts` (5, and its dashboard counterparts `UXBulkActions`/`UXExportButton` are orphans), `approvalWorkflow.service.ts` (4, route commented out, and `ApprovalDashboard.tsx` is an orphan that makes no API calls), `iot.routes.ts` + `iotSecurity.service.ts` (3, and `DeviceList.tsx` is an orphan), `jobMonitorService.ts` (1, via an orphan controller). All confirmed unwired on both sides. |
+| 3 | **Predictive/ML layer — repair or shelve?** | Repair = rewrite 3 Python scripts against `Rental`/`Lease`/`Transaction` + decide the income/expense mapping. Shelve = remove routes and scripts, keep the working rule-based `api-simple.py`. Note the **live** tenant-prediction endpoint is non-functional regardless: it feeds the model three effectively-constant features (`missed_payments` always 0, `credit_score` 650, `rent_amount` 1500) and calls a Flask service that **is not running** on :5001 (verified — no response). |
+| 4 | **`mobile/` removal** | Evidence complete — it is not in the `workspaces` array and `propertyapp/` is a superset. |
+| 5 | **`.git` history shrink** | Still ~244 MB. Requires `git filter-repo`/BFG + force-push, rewriting every commit hash. **Needs explicit approval.** |
+
+**Broader pattern worth a separate pass:** orphaned frontend components are as common as orphaned backend modules here — `SmartSearch.tsx`, `UXBulkActions.tsx`, `UXExportButton.tsx`, `DeviceList.tsx`, `ApprovalDashboard.tsx`, `UXAnalyticsDashboard.tsx` are all unreferenced, and several `.backup` files sit alongside live ones. A frontend orphan sweep would likely mirror this report's findings.
 
 ---
 
