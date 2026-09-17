@@ -1,6 +1,7 @@
 # PropertyFlow AI — Implementation Roadmap
 
-**Last verified:** 2026-09-17 · **Verified at commit:** `9c3551c0`
+**Last verified:** 2026-09-17 · **Verified at commit:** `f7b76e47`
+**Phase 0 status:** toolchain repaired, ML API consolidated, three of six defects fixed
 **Previous version of this file:** dated 2024-01-06, substantially inaccurate (see §2)
 
 > This document is verified against the actual repository — git history, file
@@ -84,11 +85,44 @@ Re-verified by reading each file:
 
 ---
 
-## 3. Known defects — verified, not yet fixed
+## 3. Defects — status
 
-These are real, reproduced problems. They are the honest backlog.
+Three of the six defects found in the first pass were fixed in Phase 0 and are
+marked **✅ RESOLVED** below; each records the commit and the evidence. The
+remaining three are still open.
 
-### 3.1 The ML API is split across two apps on two ports
+| # | Defect | Status |
+|---|---|---|
+| 3.1 | ML API split across two apps on two ports | ✅ Resolved (`f7b76e47`) |
+| 3.2 | Backend predictions run on hardcoded placeholder inputs | ❌ Open |
+| 3.3 | Four service methods call non-existent `/api/ml/*` routes | ✅ Resolved (`f7b76e47`) |
+| 3.4 | Occupancy and rent predictions are not ML | ❌ Open |
+| 3.5 | ML test suite cannot run; assertions stale | ✅ Resolved (`bf0cdc64`, `f7b76e47`) |
+| 3.6 | Unit assignment in the dashboard is not persisted | ❌ Open |
+
+### 3.1 The ML API is split across two apps on two ports — ✅ RESOLVED (`f7b76e47`)
+
+**Resolution.** Port **5000 is occupied by macOS ControlCenter (AirPlay
+Receiver)** — confirmed with `lsof -nP -iTCP:5000 -sTCP:LISTEN`, which shows
+`ControlCe` listening on `*:5000`. `api.py`'s default port therefore can never
+bind on this machine, which means the backend's production prediction path had
+never worked. That settled the choice: **`api-simple.py` on 5001** (Flask-only,
+no numpy/pandas/joblib) is canonical.
+
+What changed:
+- `api-simple.py` gained the `/api/predict/tenant-issue` route that only `api.py`
+  had, so the backend's production path now has a real endpoint. Verified by
+  running the service and curling it — `/health` returns
+  `{"mode":"rule_based_only",...}`, the new route returns the expected contract
+  with `risk_score: 0.9`, a missing required field returns HTTP 400, and the
+  existing `/predict/churn` still returns HTTP 200.
+- `predictiveModels.ts` default `ML_API_URL` → `localhost:5001`.
+- `backend/.env.example` now documents `ML_API_URL` and `ML_API_PORT`.
+- `api.py` carries a header comment recording that it is the model-backed
+  variant, that `models/` is empty so its ML paths are dead, and that its port
+  conflicts with AirPlay.
+
+**Original finding (for reference).**
 
 There are **two** Flask ML services and the consumers disagree about which to use:
 
@@ -126,7 +160,15 @@ rent_amount: 1500,   // Placeholder - could be from lease data
 Real tenant data was never wired in, so every backend prediction is computed from
 the same two invented values regardless of the tenant.
 
-### 3.3 Four mobile ML service methods call routes that do not exist
+### 3.3 Four mobile ML service methods call routes that do not exist — ✅ RESOLVED (`f7b76e47`)
+
+**Resolution.** All four had zero call sites. `getModelHealth` now calls the
+Flask `/health` and adapts its response; `batchPredictChurn` loops over
+`predictChurnRisk`; `getChurnHistory` and `getMaintenanceHistory` were removed —
+they require a persistence layer that exists nowhere in the stack. The service
+no longer imports `../api` at all.
+
+**Original finding (for reference).**
 
 `propertyapp/src/services/mlPredictionService.ts` calls `/api/ml/health`,
 `/api/ml/predict/churn/batch`, `/api/ml/predict/churn/history/:id`, and
@@ -176,6 +218,31 @@ so the UI reports success while nothing is saved.
 | `.workbuddy/`, `.workbuddy-ai/` gitignored | ✅ **DONE** (`cfe46165`) |
 | ML integration work rescued into git | ✅ **DONE** (`9c3551c0`) |
 | Misleading status docs corrected | ✅ **DONE** — four root-level ML docs now carry a status-correction block |
+| propertyapp Jest/Babel toolchain repaired | ✅ **DONE** (`bf0cdc64`) — suite now runs; 5/5 pass |
+| ML API consolidated on one service and port | ✅ **DONE** (`f7b76e47`) |
+| `.git` history shrunk (244 MB) | ⛔ **NOT DONE** — the venv still exists in history. Shrinking requires `git filter-repo`/BFG plus a force-push, which rewrites every commit hash. **Requires explicit approval; deliberately not attempted.** |
+| `mobile/` orphaned app removed | ⛔ **NOT DONE** — awaiting decision (§1) |
+
+### Phase 0 follow-ups discovered while fixing the above
+
+1. **`package-lock.json` is internally inconsistent.** It lists
+   `@babel/plugin-proposal-logical-assignment-operators` as a dependency of
+   `@react-native/babel-preset` but carries no resolved entry for the package
+   itself, which is why npm silently skipped it. The explicit root devDependency
+   added in `bf0cdc64` works around this for the one package that surfaced, but
+   the lockfile is worth regenerating properly (`rm package-lock.json && npm
+   install`, then review the diff) to catch any other declared-but-unresolved
+   entries.
+2. **The backend does not type-check: 452 `tsc --noEmit` errors.** The dominant
+   cause is that `@prisma/client` has never been generated — many errors are
+   `Module '"@prisma/client"' has no exported member ...` and
+   `Cannot find module '../lib/prisma'`. Running `npx prisma generate` in
+   `backend/` is the likely first fix and would be worth doing before treating
+   the count as a real quality signal. Note the module `../lib/prisma` is
+   referenced by several controllers but has never existed in this repo
+   (`config/database.ts` is the real module) — the same mistake as the one fixed
+   in `api.test.ts`.
+
 | `.git` history shrunk (244 MB) | ⛔ **NOT DONE** — the venv still exists in history. Shrinking requires `git filter-repo`/BFG plus a force-push, which rewrites every commit hash. **Requires explicit approval; deliberately not attempted.** |
 | `mobile/` orphaned app removed | ⛔ **NOT DONE** — awaiting decision (§1) |
 
@@ -187,14 +254,21 @@ Sequenced against `deliverables/software-company/propertyai-feature-plan-2026-09
 whose central finding is that the platform already covers ~80% of market table
 stakes and the real gap is **depth, autonomy, and compliance** — not feature count.
 
-### Phase 0 — Make the repo honest and runnable *(do first, cheap)*
+### Phase 0 — Make the repo honest and runnable *(✅ 4 of 5 complete)*
 
-1. **Fix the propertyapp toolchain** (§3.5) so tests can run at all. Until this is
-   done, nothing in the mobile app can be verified.
-2. **Resolve the ML API split** (§3.1) — one service, one port, one env var.
-3. **Rewrite the stale ML test** to mock axios (§3.5).
-4. **Delete or mount the four dead `/api/ml/*` calls** (§3.3).
-5. **Decide `mobile/`** — archive and remove (§1).
+1. ✅ **Fixed the propertyapp toolchain** (§3.5) — `bf0cdc64`. Tests run; 5/5 pass.
+2. ✅ **Resolved the ML API split** (§3.1) — `f7b76e47`. One service
+   (`api-simple.py`), one port (5001), one env var.
+3. ✅ **Rewrote the stale ML test** to mock axios (§3.5) — `f7b76e47`.
+4. ✅ **Resolved the four dead `/api/ml/*` calls** (§3.3) — `f7b76e47`. Two
+   repointed, two removed.
+5. ⛔ **Decide `mobile/`** — archive and remove (§1). **Still open; needs a
+   product decision.** The evidence says `propertyapp/` is canonical and
+   `mobile/` is dead, but removal is the user's call.
+
+Two follow-ups surfaced during the fixes and are recorded in §4 — the
+inconsistent `package-lock.json`, and 452 backend `tsc` errors that are largely
+down to `@prisma/client` never having been generated.
 
 ### Phase 1 — Credible baseline + trust *(months 0–3, per the feature plan)*
 
