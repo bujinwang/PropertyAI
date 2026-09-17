@@ -221,6 +221,27 @@ The type checker is finding genuine bugs, not noise. Reachability checked on eac
 
 `tsconfig.json` has `include: ["src/**/*"]` but **no `allowJs`**. In `backend/src` there are 476 `.ts` files (56,757 LOC) and **56 `.js` files (13,681 LOC)** — roughly **19% of the backend has zero static verification**. This is how `analyticsService.ts` was gutted to a 4-line orphan and `dataRetentionService.js` kept calling a method that doesn't exist, unnoticed. Treat the error count as a *`.ts`-only* metric.
 
+### 11b. The test suite is not a usable quality gate — and never was
+
+This one was discovered by accident: a worker was told to record a test baseline and got stuck waiting on it for **9+ minutes**. Measuring it properly was worth the detour, because it invalidates an assumption this whole effort has been leaning on.
+
+```
+Suites: 6 PASS / 34 FAIL   ← the pre-existing baseline, before any change in this session
+```
+
+Three independent defects, all verified:
+
+1. **There is no test database.** The backend contains **no `TEST_DATABASE_URL` anywhere**. All 39 `*.test.ts` suites run against the **live development database** (`DATABASE_URL=…/propertyai`) — no isolation, no per-run schema reset, no transaction rollback. Two consequences follow mechanically:
+   - `src/__tests__/auth.test.ts:13` calls `prisma.user.create()` in `beforeAll` with a **fixed email address**, so every run after the first collides with its own residue (`Unique constraint failed on the fields: (email)`).
+   - Teardown calls `prisma.user.deleteMany()`, which fails with `Foreign key constraint violated: Rental_managerId_fkey (index)` because `Rental.managerId` still references those rows. **Cleanup can therefore never succeed**, so the failures accumulate permanently. The suite cannot self-heal without a manual DB reset.
+   - Postgres itself is healthy on 5432. This is data residue, not a connection fault.
+2. **Redis is not running**, and `src/utils/cache.ts:18` logs on every reconnect attempt: **20,568 `ECONNREFUSED` lines out of 912,866 total** — a 40 MB log where 98% is one repeated warning. Startup noise, not a test failure.
+3. **`jest.config.js`'s `testMatch` (`src/**/__tests__/**/*.ts`) also matches `src/__tests__/setup.ts`**, which contains no tests. It is reported as a failing suite on every run, and its own mocks may not be applied to itself.
+
+Plus: `"test": "jest --watchman=false --runInBand"` runs 39 suites **serially** under ts-jest, so a full run takes 9+ minutes.
+
+**Consequence for the engineering plan:** "run the tests" is not available as a regression gate in this repo. The working substitute is `npx tsc --noEmit` + a boot check + the 401-vs-404 route differential — all fast, all meaningful. Restoring the suite is a **separate project** (own database, reset strategy, and a fix to the FK-aware teardown), and it should be scheduled as such rather than assumed present.
+
 ### 12. The unwired routes split into two very different categories
 
 Finding 8 established that all remaining errors are in unreachable code. That is **not** the same as "safe to delete." I traced each unwired route through the whole monorepo — backend, `dashboard/`, `propertyapp/`, `ContractorApp/` — and then **verified the HTTP behaviour against a running server**. Two categories emerged, and only one of them is delete-safe.
