@@ -73,6 +73,7 @@
     "bmad:validate": "bmad-method validate"
   },
   "devDependencies": {
+    "@babel/plugin-proposal-logical-assignment-operators": "^7.20.7",
     "@types/jest": "^29.5.14",
     "@types/long": "^4.0.2",
     "@vitejs/plugin-react": "^4.5.2",
