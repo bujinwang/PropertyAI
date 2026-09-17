@@ -543,7 +543,7 @@ class SensorDataIngestionService {
     }
 
     // Create compressed readings
-    const compressedReadings = [];
+    const compressedReadings: SensorDataPoint[] = [];
     for (const [hourKey, data] of hourlyData) {
       const avgValue = data.values.reduce((sum, val) => sum + val, 0) / data.values.length;
       const avgQuality = data.qualities.reduce((sum, val) => sum + val, 0) / data.qualities.length;

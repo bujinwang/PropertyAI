@@ -112,21 +112,23 @@ export class ComplianceService {
   async generateGDPRComplianceReport(timeRange: { start: Date; end: Date }): Promise<ComplianceReport> {
     const auditData = await enhancedAuditService.getComplianceReport('GDPR', timeRange);
 
-    const report = {
+    const data = {
+      ...auditData,
+      dataProcessingActivities: await this.getDataProcessingActivities(timeRange),
+      dataSubjectRights: await this.getDataSubjectRights(timeRange),
+      dataBreachIncidents: await this.getDataBreachIncidents(timeRange),
+    };
+
+    // Build the report with its integrity checksum at construction, so the
+    // required `checksum` field can never be forgotten.
+    const report: ComplianceReport = {
       id: `GDPR-${Date.now()}`,
       type: 'GDPR' as ComplianceType,
       generatedAt: new Date(),
       validUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
-      data: {
-        ...auditData,
-        dataProcessingActivities: await this.getDataProcessingActivities(timeRange),
-        dataSubjectRights: await this.getDataSubjectRights(timeRange),
-        dataBreachIncidents: await this.getDataBreachIncidents(timeRange),
-      },
+      data,
+      checksum: this.generateChecksum(JSON.stringify(data)),
     };
-
-    // Generate checksum for integrity
-    report.checksum = this.generateChecksum(JSON.stringify(report.data));
 
     // Store report
     await prisma.complianceReport.create({
@@ -145,20 +147,21 @@ export class ComplianceService {
   async generateCCPAComplianceReport(timeRange: { start: Date; end: Date }): Promise<ComplianceReport> {
     const auditData = await enhancedAuditService.getComplianceReport('CCPA', timeRange);
 
-    const report = {
+    const data = {
+      ...auditData,
+      dataSales: await this.getDataSalesActivities(timeRange),
+      optOutRequests: await this.getOptOutRequests(timeRange),
+      californiaResidents: await this.getCaliforniaResidentsCount(),
+    };
+
+    const report: ComplianceReport = {
       id: `CCPA-${Date.now()}`,
       type: 'CCPA' as ComplianceType,
       generatedAt: new Date(),
       validUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-      data: {
-        ...auditData,
-        dataSales: await this.getDataSalesActivities(timeRange),
-        optOutRequests: await this.getOptOutRequests(timeRange),
-        californiaResidents: await this.getCaliforniaResidentsCount(),
-      },
+      data,
+      checksum: this.generateChecksum(JSON.stringify(data)),
     };
-
-    report.checksum = this.generateChecksum(JSON.stringify(report.data));
 
     await prisma.complianceReport.create({
       data: {
@@ -176,20 +179,21 @@ export class ComplianceService {
   async generateSOXComplianceReport(timeRange: { start: Date; end: Date }): Promise<ComplianceReport> {
     const auditData = await enhancedAuditService.getComplianceReport('SOX', timeRange);
 
-    const report = {
+    const data = {
+      ...auditData,
+      financialControls: await this.getFinancialControls(timeRange),
+      accessLogs: await this.getFinancialAccessLogs(timeRange),
+      segregationOfDuties: await this.checkSegregationOfDuties(),
+    };
+
+    const report: ComplianceReport = {
       id: `SOX-${Date.now()}`,
       type: 'SOX' as ComplianceType,
       generatedAt: new Date(),
       validUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-      data: {
-        ...auditData,
-        financialControls: await this.getFinancialControls(timeRange),
-        accessLogs: await this.getFinancialAccessLogs(timeRange),
-        segregationOfDuties: await this.checkSegregationOfDuties(),
-      },
+      data,
+      checksum: this.generateChecksum(JSON.stringify(data)),
     };
-
-    report.checksum = this.generateChecksum(JSON.stringify(report.data));
 
     await prisma.complianceReport.create({
       data: {

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticateToken } from '../middleware/auth';
+import { authenticateToken, checkRole } from '../middleware/auth';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -53,7 +53,7 @@ router.put('/bulk/status', authenticateToken, async (req, res) => {
 });
 
 // Bulk assign reviews
-router.put('/bulk/assign', authenticateToken, authorize(['ADMIN', 'PROPERTY_MANAGER']), async (req, res) => {
+router.put('/bulk/assign', authenticateToken, checkRole(['ADMIN', 'PROPERTY_MANAGER']), async (req, res) => {
   try {
     const { reviewIds, assigneeId } = req.body;
     
@@ -111,7 +111,7 @@ router.put('/bulk/assign', authenticateToken, authorize(['ADMIN', 'PROPERTY_MANA
 });
 
 // Bulk delete reviews
-router.delete('/bulk', authenticateToken, authorize(['ADMIN']), async (req, res) => {
+router.delete('/bulk', authenticateToken, checkRole(['ADMIN']), async (req, res) => {
   try {
     const { reviewIds } = req.body;
     
