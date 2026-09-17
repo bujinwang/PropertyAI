@@ -1,5 +1,26 @@
 # PropertyFlow AI - Implementation Completion Report
 
+> **⚠️ STATUS CORRECTION (2026-09-17).** This report's "Production Ready" status is
+> **not accurate** and should not be relied on. Verified as of commit `792702eb`:
+>
+> - The backend **does not typecheck** — `tsc --noEmit` reports **109 errors** (down from
+>   286), and `npm run build` fails. `npm start` works only because `tsconfig.json` has no
+>   `noEmitOnError`, so `dist/` is emitted anyway.
+> - **Phase 4 "ML Integration (100%)" is false.** It cites
+>   `backend/src/predictive-analytics/api.py`, which `joblib.load()`s three model
+>   artifacts from `src/predictive-analytics/models/` — **that directory is empty**, so its
+>   prediction endpoints cannot serve. The canonical ML service is `api-simple.py` on
+>   **port 5001** (rule-based, zero DB deps); `api.py` is non-canonical and defaults to
+>   port 5000, which cannot bind on macOS (AirPlay Receiver holds it).
+> - The schema underwent a `Property`/`Unit` → `Rental` migration that the code never
+>   finished, and the backend runs **two ORMs simultaneously** (Prisma + Sequelize).
+> - **Zero of the 109 remaining type errors are in live code** — they are all in
+>   unreachable files, i.e. unwired features awaiting a delete-or-revive decision.
+>
+> For the accurate current state see
+> `deliverables/software-company/propertyai-backend-health-2026-09-17.md`.
+> Original text below is retained as a historical record.
+
 **Date**: 2024-01-06  
 **Session Duration**: Extended Multi-Phase Development  
 **Status**: ✅ Production Ready

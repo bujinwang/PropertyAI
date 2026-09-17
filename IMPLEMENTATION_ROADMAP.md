@@ -1,7 +1,7 @@
 # PropertyFlow AI — Implementation Roadmap
 
-**Last verified:** 2026-09-17 · **Verified at commit:** `f7b76e47`
-**Phase 0 status:** toolchain repaired, ML API consolidated, three of six defects fixed
+**Last verified:** 2026-09-17 · **Verified at commit:** `792702eb`
+**Phase 0 status:** toolchain repaired, ML API consolidated, three of six defects fixed; backend type errors **286 → 109 with ZERO remaining in live code**
 **Previous version of this file:** dated 2024-01-06, substantially inaccurate (see §2)
 
 > This document is verified against the actual repository — git history, file
@@ -233,15 +233,17 @@ so the UI reports success while nothing is saved.
    the lockfile is worth regenerating properly (`rm package-lock.json && npm
    install`, then review the diff) to catch any other declared-but-unresolved
    entries.
-2. **The backend does not type-check: 452 `tsc --noEmit` errors.** The dominant
-   cause is that `@prisma/client` has never been generated — many errors are
-   `Module '"@prisma/client"' has no exported member ...` and
-   `Cannot find module '../lib/prisma'`. Running `npx prisma generate` in
-   `backend/` is the likely first fix and would be worth doing before treating
-   the count as a real quality signal. Note the module `../lib/prisma` is
-   referenced by several controllers but has never existed in this repo
-   (`config/database.ts` is the real module) — the same mistake as the one fixed
-   in `api.test.ts`.
+2. ~~**The backend does not type-check: 452 `tsc --noEmit` errors.**~~ **UPDATED 2026-09-17
+   (`792702eb`): 452 → 286** (after `npx prisma generate`) → **109**. The original
+   dominant cause was that `@prisma/client` had never been generated, plus
+   `Cannot find module '../lib/prisma'` (that module never existed;
+   `config/database.ts` is the real one). Both are now fixed.
+   **Critically: ZERO of the remaining 109 are in live code.** A reachability analysis
+   (BFS over the import graph from `src/index.ts`, 287 reachable modules) shows 107 in
+   files that are never loaded and 2 in a module commented out at `index.ts:12`. Every
+   remaining error is a delete-or-revive product decision about an unwired feature —
+   see `deliverables/software-company/propertyai-backend-health-2026-09-17.md` finding 8.
+   **Do not treat the count as a quality signal, and do not keep sweeping it.**
 
 | `.git` history shrunk (244 MB) | ⛔ **NOT DONE** — the venv still exists in history. Shrinking requires `git filter-repo`/BFG plus a force-push, which rewrites every commit hash. **Requires explicit approval; deliberately not attempted.** |
 | `mobile/` orphaned app removed | ⛔ **NOT DONE** — awaiting decision (§1) |
@@ -267,8 +269,8 @@ stakes and the real gap is **depth, autonomy, and compliance** — not feature c
    `mobile/` is dead, but removal is the user's call.
 
 Two follow-ups surfaced during the fixes and are recorded in §4 — the
-inconsistent `package-lock.json`, and 452 backend `tsc` errors that are largely
-down to `@prisma/client` never having been generated.
+inconsistent `package-lock.json`, and the backend `tsc` errors (then 452, now **109
+with zero in live code** after `prisma generate` plus the Phase 0 type cleanup).
 
 ### Phase 1 — Credible baseline + trust *(months 0–3, per the feature plan)*
 

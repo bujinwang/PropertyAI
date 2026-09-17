@@ -1,5 +1,23 @@
 # PropertyFlow AI - Comprehensive Project Documentation
 
+> **⚠️ CORRECTION (2026-09-17).** The Architecture section states
+> "**Migration Status**: Completed migration from Sequelize to Prisma". **This is false.**
+> Both ORMs are live at the same time: `sequelize ^6.37.7` is still a runtime dependency,
+> and `backend/src/models/*.js` (`Property.js`, `Feedback.js`, `ReportAuditLog.js`,
+> `GeneratedReport.js`, `ComplianceCheck.js`, `Notification.js`, `ScheduledReport.js`, …)
+> are Sequelize models sitting in the **live** `backend/src` tree — not only in the
+> archived `_src_legacy/`. `backend/src/config/database-legacy.js` and
+> `backend/src/services/dataRetentionService.js` are Sequelize-based too.
+>
+> Prisma (`@prisma/client`) is the **canonical** ORM for new work, but the migration is
+> **incomplete, not complete**. Treat any `backend/src/**/*.js` service file as the
+> legacy Sequelize layer.
+>
+> Also note: the `Property`/`Unit` → `Rental` schema migration is likewise unfinished —
+> the tables were dropped (`20250804155618_rental/migration.sql`) but code still
+> references `prisma.property`. There is no `Property`, `Unit`, `Tenant`, or `Payment`
+> model. See `deliverables/software-company/propertyai-backend-health-2026-09-17.md`.
+
 ## Table of Contents
 1. [Project Overview](#project-overview)
 2. [Architecture Overview](#architecture-overview)
@@ -76,7 +94,7 @@ PropertyFlow AI follows a **microservices architecture** with three main applica
 ### Backend Architecture (Post-Refactoring)
 - **Primary Backend**: `backend/` directory using Prisma ORM
 - **Legacy Backend**: `_src_legacy/` directory (Sequelize-based, archived)
-- **Migration Status**: Completed migration from Sequelize to Prisma
+- **Migration Status**: ~~Completed migration from Sequelize to Prisma~~ — **INCOMPLETE.** Both ORMs run concurrently; see the correction banner at the top of this file.
 - **Database**: PostgreSQL with comprehensive Prisma schema
 
 ### Frontend Technologies
