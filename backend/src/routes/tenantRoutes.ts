@@ -6,7 +6,7 @@ import { predictiveAnalyticsService } from '../services/predictiveAnalytics.serv
 const router = Router();
 
 router.get('/', authMiddleware.protect, TenantController.getAllTenants);
-router.get('/search', TenantController.searchTenants); // Temporarily remove auth for testing
+router.get('/search', authMiddleware.protect, TenantController.searchTenants);
 
 /**
  * POST /tenant-screening/predict-issues

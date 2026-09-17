@@ -101,10 +101,9 @@ configurePassport();
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Register API routes
-// First, use the centralized routes (includes /api prefix)
-app.use(routes);
-
-// Then add routes that are NOT in the centralized routes file
+// Mount the routes that are NOT in the centralized `routes` barrel FIRST.
+// The barrel (which includes the /api prefix and is mounted last, see below)
+// ends with a catch-all 404 that shadows anything registered after it.
 app.use('/api/social-media', socialMediaRoutes);
 // app.use('/api/photo', photoRoutes);
 app.use('/api/voice', voiceRoutes);
@@ -145,6 +144,14 @@ app.use('/api/payments', paymentRoutes);
 // app.use('/api/ai', aiRoutes);
 app.use('/api/market-data', marketDataRoutes);
 app.use('/api/compliance', complianceRoutes);
+
+// IMPORTANT: the centralized `routes` barrel MUST be mounted last, after every
+// other route mount. Its final handler is a catch-all 404
+// (`router.use(`${API_PREFIX}/*`, ...)` in routes/index.ts) that terminates the
+// request without calling `next()`. Because Express matches middleware in
+// registration order, anything mounted after this barrel would be shadowed and
+// permanently unreachable.
+app.use(routes);
 
 // Global error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
