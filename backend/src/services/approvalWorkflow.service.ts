@@ -28,6 +28,20 @@ interface ApprovalDecision {
   metadata?: any;
 }
 
+/**
+ * Read-only view of the JSON `metadata` payload stored on an approval instance.
+ * Prisma types the column as `Json` (`JsonValue`), so it must be narrowed before
+ * individual keys can be read.
+ */
+interface ApprovalMetadataPayload {
+  title?: string;
+}
+
+/** Narrow a Prisma `Json` value to the expected approval-metadata object shape. */
+function toApprovalMetadata(value: unknown): ApprovalMetadataPayload {
+  return (value ?? {}) as ApprovalMetadataPayload;
+}
+
 class ApprovalWorkflowService {
   /**
    * Create a new approval workflow
@@ -93,7 +107,7 @@ class ApprovalWorkflowService {
     }
 
     // Check auto-approval rules
-    if (workflow.autoApprovalRules && this.evaluateAutoApproval(workflow.autoApprovalRules, request.metadata)) {
+    if (workflow.autoApprovalRules && await this.evaluateAutoApproval(workflow.autoApprovalRules, request.metadata)) {
       return this.autoApproveRequest(request, workflow);
     }
 
@@ -480,7 +494,7 @@ class ApprovalWorkflowService {
     }
 
     if (approverEmails.length > 0) {
-      const message = `You have a new approval request pending: ${instance.metadata?.title || 'Approval Required'}`;
+      const message = `You have a new approval request pending: ${toApprovalMetadata(instance.metadata).title || 'Approval Required'}`;
       await sendNotification('email', approverEmails[0], 'Approval Request', message);
     }
   }
@@ -514,7 +528,7 @@ class ApprovalWorkflowService {
 
     const emails = escalationUsers.map(u => u.email).filter(Boolean) as string[];
     if (emails.length > 0) {
-      const message = `Escalated approval request: ${instance.metadata?.title || 'Approval Required'}`;
+      const message = `Escalated approval request: ${toApprovalMetadata(instance.metadata).title || 'Approval Required'}`;
       await sendNotification('email', emails[0], 'Escalated Approval Request', message);
     }
   }

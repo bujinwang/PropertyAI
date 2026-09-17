@@ -1,5 +1,6 @@
 import { prisma } from '../config/database';
 import {
+  Prisma,
   WorkflowDefinition,
   WorkflowInstance,
   WorkflowExecution,
@@ -11,6 +12,16 @@ import {
 } from '@prisma/client';
 import { pubSubService } from './pubSub.service';
 import { auditService } from './audit.service';
+
+/**
+ * Narrow a Prisma `Json` value to a plain JSON object so it can be spread.
+ * Non-object / array / null values yield an empty object.
+ */
+function asJsonObject(value: unknown): Prisma.JsonObject {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Prisma.JsonObject)
+    : {};
+}
 
 interface WorkflowExecutionContext {
   instanceId: string;
@@ -154,7 +165,7 @@ class WorkflowAutomationService {
   private async executeWorkflow(instance: WorkflowInstance): Promise<void> {
     const context: WorkflowExecutionContext = {
       instanceId: instance.id,
-      variables: { ...instance.variables },
+      variables: { ...asJsonObject(instance.variables) },
       currentStep: undefined
     };
 
@@ -617,16 +628,16 @@ class WorkflowAutomationService {
           name: customizations.name || `${template.name} (Copy)`,
           description: customizations.description || template.description,
           category: customizations.category || template.category,
-          definition: { ...template.definition, ...customizations.definition },
+          definition: { ...asJsonObject(template.definition), ...customizations.definition },
           isTemplate: false,
-          metadata: { ...template.metadata, ...customizations.metadata },
+          metadata: { ...asJsonObject(template.metadata), ...customizations.metadata },
           createdBy,
           steps: {
             create: template.steps.map(step => ({
               stepId: step.stepId,
               name: step.name,
               type: step.type,
-              config: { ...step.config, ...customizations.stepConfigs?.[step.stepId] },
+              config: { ...asJsonObject(step.config), ...customizations.stepConfigs?.[step.stepId] },
               position: step.position,
               connections: step.connections
             }))

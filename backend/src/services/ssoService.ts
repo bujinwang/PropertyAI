@@ -270,6 +270,11 @@ export class SSOService {
       }
     }
 
+    // Guard: `user` is created above when missing, so it must be non-null here.
+    if (!user) {
+      throw new AppError('Failed to resolve SSO user', 500);
+    }
+
     // Create or update OAuth connection
     await prisma.oAuthConnection.upsert({
       where: {

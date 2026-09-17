@@ -4,6 +4,20 @@ import { complianceService } from '../services/complianceService';
 import { enhancedAuthService } from '../services/enhancedAuthService';
 import { AppError } from '../middleware/errorMiddleware';
 
+/**
+ * Read-only view of the JSON `details` payload stored on audit entries.
+ * Prisma types the column as `Json` (`JsonValue`), so it must be narrowed
+ * before individual keys can be read.
+ */
+interface SsoEventDetails {
+  provider?: string;
+}
+
+/** Narrow a Prisma `Json` value to the expected SSO-event details shape. */
+function toSsoEventDetails(value: unknown): SsoEventDetails {
+  return (value ?? {}) as SsoEventDetails;
+}
+
 export const getSecurityOverview = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { startDate, endDate } = req.query;
@@ -301,7 +315,7 @@ async function getSSOMetrics(timeRange?: { start: Date; end: Date }): Promise<an
     totalAuthentications: ssoEvents.length,
     uniqueUsers: new Set(ssoEvents.map(e => e.userId)).size,
     providers: ssoEvents.reduce((acc, event) => {
-      const provider = event.details?.provider || 'unknown';
+      const provider = toSsoEventDetails(event.details).provider || 'unknown';
       acc[provider] = (acc[provider] || 0) + 1;
       return acc;
     }, {} as Record<string, number>),

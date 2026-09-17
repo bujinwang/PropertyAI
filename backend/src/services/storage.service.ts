@@ -265,9 +265,11 @@ class StorageService {
   }
 
   /**
-   * Generate CDN URL for public access
+   * Generate CDN URL for public access.
+   * Public because the CloudFront service falls back to it when no CDN domain
+   * is configured (`cloudfrontService.getCDNUrl`).
    */
-  private getPublicUrl(key: string): string {
+  getPublicUrl(key: string): string {
     if (this.config.cloudFrontDomain) {
       return `https://${this.config.cloudFrontDomain}/${key}`;
     }

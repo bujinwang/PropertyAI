@@ -4,6 +4,29 @@ import { AppError } from '../middleware/errorMiddleware';
 
 const prisma = new PrismaClient();
 
+/**
+ * Read-only view of the JSON `details` payload stored on audit entries and
+ * security incidents. Prisma types these columns as `Json` (`JsonValue`), so
+ * they must be narrowed before individual keys can be read.
+ */
+interface AuditDetailsPayload {
+  purpose?: string;
+  dataCategories?: string[];
+  recipients?: string[];
+  recipient?: string;
+  reason?: string;
+  status?: string;
+  affectedUsers?: unknown;
+}
+
+/**
+ * Narrow a Prisma `Json` value to the expected audit-details object shape.
+ * A null/absent value yields an empty object, matching the previous `?.` reads.
+ */
+function toAuditDetails(value: unknown): AuditDetailsPayload {
+  return (value ?? {}) as AuditDetailsPayload;
+}
+
 export interface DataAccessRequest {
   userId: string;
   requestType: 'access' | 'portability' | 'erasure' | 'rectification';
@@ -319,9 +342,9 @@ export class ComplianceService {
     });
 
     return activities.map(activity => ({
-      purpose: activity.details?.purpose,
-      dataCategories: activity.details?.dataCategories,
-      recipients: activity.details?.recipients,
+      purpose: toAuditDetails(activity.details).purpose,
+      dataCategories: toAuditDetails(activity.details).dataCategories,
+      recipients: toAuditDetails(activity.details).recipients,
       timestamp: activity.timestamp,
     }));
   }
@@ -370,7 +393,7 @@ export class ComplianceService {
       description: incident.description,
       detectedAt: incident.detectedAt,
       resolvedAt: incident.resolvedAt,
-      affectedUsers: incident.details?.affectedUsers,
+      affectedUsers: toAuditDetails(incident.details).affectedUsers,
     }));
   }
 
@@ -383,8 +406,8 @@ export class ComplianceService {
     });
 
     return sales.map(sale => ({
-      recipient: sale.details?.recipient,
-      dataCategories: sale.details?.dataCategories,
+      recipient: toAuditDetails(sale.details).recipient,
+      dataCategories: toAuditDetails(sale.details).dataCategories,
       timestamp: sale.timestamp,
     }));
   }
@@ -398,7 +421,7 @@ export class ComplianceService {
 
     return optOuts.map(optOut => ({
       userId: optOut.userId,
-      reason: optOut.details?.reason,
+      reason: toAuditDetails(optOut.details).reason,
       timestamp: optOut.timestamp,
     }));
   }
@@ -418,8 +441,8 @@ export class ComplianceService {
 
     return {
       totalControls: controls.length,
-      activeControls: controls.filter(c => c.details?.status === 'active').length,
-      failedControls: controls.filter(c => c.details?.status === 'failed').length,
+      activeControls: controls.filter(c => toAuditDetails(c.details).status === 'active').length,
+      failedControls: controls.filter(c => toAuditDetails(c.details).status === 'failed').length,
     };
   }
 

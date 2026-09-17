@@ -409,7 +409,12 @@ export class EnhancedAuthService {
     });
   }
 
-  private async auditLog(userId: string, action: string, details: any, severity: 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL' = 'INFO'): Promise<void> {
+  /**
+   * Write an authentication-related audit entry.
+   * Public because sibling services (biometricAuthService, ssoService) emit
+   * auth audit events through the shared `enhancedAuthService` singleton.
+   */
+  async auditLog(userId: string, action: string, details: any, severity: 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL' = 'INFO'): Promise<void> {
     await prisma.auditEntry.create({
       data: {
         userId,

@@ -8,7 +8,10 @@ const prisma = new PrismaClient();
 // Get user notifications
 router.get('/notifications', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.userId;
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const userId = req.user.id;
     
     const notifications = await prisma.notification.findMany({
       where: { userId },
@@ -26,8 +29,11 @@ router.get('/notifications', authenticateToken, async (req, res) => {
 // Mark notification as read
 router.put('/notifications/:id/read', authenticateToken, async (req, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
     const { id } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     const notification = await prisma.notification.updateMany({
       where: { id, userId },
@@ -44,7 +50,10 @@ router.put('/notifications/:id/read', authenticateToken, async (req, res) => {
 // Mark all notifications as read
 router.put('/notifications/read-all', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.userId;
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const userId = req.user.id;
 
     const updated = await prisma.notification.updateMany({
       where: { userId, isRead: false },
