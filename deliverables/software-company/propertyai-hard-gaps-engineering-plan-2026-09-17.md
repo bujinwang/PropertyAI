@@ -1164,7 +1164,7 @@ Gap #4 (screening + compliance) ── independent of #1 and #2 ── can start
 
 | Wave | Work | Rationale |
 |---|---|---|
-| **W0** | **T-1.1** (schema + the `Lease.rentalId` migration) | Everything else's schema is additive on top; the unique-drop is the highest-risk change and should land first, alone, reviewable |
+| **W0** | **T-0.1** (fix route mount order — blocks T-3.3, T-3.4, all §4 compliance routes) then **T-1.1** (schema + the `Lease.rentalId` migration) | T-0.1 is a one-line move that unblocks 35 mounts; T-1.1 is the highest-risk schema change and should land alone, reviewable |
 | **W1** | **T-1.2 → T-1.4** (ledger core, deposit sub-ledgers, reconciliation) ∥ **T-4.1 → T-4.2** (screening criteria + CRA decision) | Ledger is the critical path for #2; screening is the highest *legal* risk and has no dependency on #1 — run it in parallel |
 | **W2** | **T-2.1 → T-2.3** (owner statements + distributions) ∥ **T-4.3 → T-4.5** (FCRA workflow + audit) | #2 blocked only by #1; #4 continues independently |
 | **W3** | **T-3.1 → T-3.3** (1099 payee + determination + export) ∥ **T-3.4** (transmitter selection) — **time-boxed to land before the next January** | Calendar-driven, not dependency-driven |
@@ -1400,8 +1400,12 @@ No new runtime dependency is strictly required to build the data model and servi
    new rows (REVERSAL), never edits. Reject PUT/PATCH/DELETE with 405 at the middleware.
 3. Every fiduciary/legal mutation emits an AuditEntry. Reuse the existing model — entityType is the
    new model name, complianceType is 'GENERAL' | 'FAIR_HOUSING' | 'FCRA'.
-4. Routes: /api/<resource>, all under authMiddleware.protect + a role gate. Mount in routes/index.ts
-   (const API_PREFIX = '/api'). app.ts mounts a second set — check BOTH before adding.
+4. Routes: /api/<resource>, all under authMiddleware.protect + a role gate. Mount NEW routers inside
+   routes/index.ts (const API_PREFIX = '/api'), NOT in app.ts after line 105 — those are SHADOWED by the
+   catch-all at routes/index.ts:148 (see Appendix C / T-0.1). app.ts mounts a second set — check BOTH.
+   CAUTION: /api/payments is TWO files — paymentRoutes.ts (no dot, never mounted, import ELIDED, Stripe
+   billing) and payment.routes.ts (with dot, mounted at app.ts:142, approval routes). They share the
+   binding name `paymentRoutes` but are different modules. Verify which one you are editing.
 5. The property entity is Rental; tenants are User rows via Lease.tenantId. NEVER add Property/Unit.
    `prisma.property` in code is unfinished migration, not a missing model.
 6. Do NOT touch src/services/reportingService.js (dead, 9 lines, zero importers) and do NOT touch the
@@ -1424,7 +1428,13 @@ No new runtime dependency is strictly required to build the data model and servi
 
 ```mermaid
 graph TD
+  T01["T-0.1 Fix route mount order<br/>(P0 PREREQ, see Appendix C)"]
+  T01 --> T02["T-0.2 Wire never-mounted Stripe billing router<br/>(P1 — separate: exposes latent bugs)"]
+
   T11["T-1.1 Trust schema + Lease.rentalId migration<br/>(P0, W0)"]
+
+  T01 --> T33
+  T01 --> T44
 
   T11 --> T12["T-1.2 Ledger core<br/>(P0, W1)"]
   T12 --> T13["T-1.3 Deposit ledgers + state rules<br/>(P0, W1)"]
@@ -1465,7 +1475,7 @@ graph TD
   class T51,T52 xcut
 ```
 
-**Reading the graph:** only **two** hard cross-gap edges exist — `T-1.2 → T-2.1` (ledger gates statements) and the `T-1.1` root (the migration everything's additive schema sits on). **Gap #4 is fully independent** and should run in parallel from Wave 1. **Gap #3 is independent but calendar-critical.**
+**Reading the graph:** the graph now has **one root prerequisite shot first** — `T-0.1` (fix the mount order, Appendix C), which gates `T-3.3`/`T-3.4` and `T-4.4` because their routes mount at `app.ts:123`/`:147`, i.e. behind the catch-all — and then **two** hard cross-gap edges — `T-1.2 → T-2.1` (ledger gates statements) and the `T-1.1` root (the migration everything's additive schema sits on). **Gap #4 is fully independent after T-0.1** and should run in parallel from Wave 1. **Gap #3 is independent but calendar-critical.**
 
 ---
 
@@ -1511,4 +1521,94 @@ One additive migration set (plus the single index change). Grouped by gap; full 
 
 ---
 
-*End of plan. Prepared by 高见远 (Gao), Architect — 2026-09-17. All regulatory citations are to the authority named; **per-state numeric values are configuration data requiring counsel sign-off and are deliberately not asserted here.** Estimates are labelled **[inference]**. No source file was modified and no migration was created, per constraints.*
+## Appendix C — P0 prerequisite discovered after first delivery: route mount order
+
+> **Added 2026-09-17 (post-delivery), after 许清楚 (Xu, PM) reported a live route probe.** This is a **blocking prerequisite** for this plan, not a footnote. Without it, **three of the four gaps ship unreachable.**
+
+### C.1 The defect
+
+`app.ts:105` calls `app.use(routes)`. The router returned by `routes/index.ts` **terminates with a catch-all** at `routes/index.ts:148`:
+
+```js
+router.use(`${API_PREFIX}/*`, (req, res) => {
+  res.status(404).json({ status: 'error', message: 'API endpoint not found' });
+});
+```
+
+That handler **responds 404 and never calls `next()`**. Consequently **every** `app.use('/api/…')` declared *after* line 105 — **35 active mounts at `app.ts:108–147`** — is **shadowed**: Express matches the catch-all first and short-circuits.
+
+Verified live by the PM: `POST /api/payments/payment-intents` → 404, `POST /api/signatures/sign-document` → 404, `POST /api/voice/transcribe` → 404, `GET /api/compliance/data-access/:id` → 404. Controls pass (`POST /api/reminders` → 200, `GET /api/rentals/public` → 200, `POST /api/leases` → 401).
+
+### C.2 Why this blocks **this** plan
+
+| Gap | Endpoint this plan adds | Where it would be mounted | Reachable today? |
+|---|---|---|---|
+| #1 Trust | `/api/trust-accounts`, `/api/ledger` | `routes/index.ts` | ✅ (inside the router, before line 148) |
+| #2 Owner | `/api/owner-statements`, `/api/owner-distributions` | `routes/index.ts` | ✅ |
+| #3 1099 | `/api/tax-1099` (+ existing `/api/tax-document`) | `routes/index.ts` / `app.ts:123` | ⚠️ **`app.ts:123` → shadowed** |
+| #4 Screening | `/api/screening*`, `/api/adverse-action` | `routes/index.ts` | ✅ |
+| #4 Compliance | `/api/compliance/fair-housing-report` | `app.ts:147` | ⚠️ **shadowed** |
+
+⇒ **Gap #3's existing tax-document route and Gap #4's compliance route are already dead on the HTTP surface.** The plan's decision to mount Gap #1/#2 and the screening routers **inside `routes/index.ts`** is **reinforced** — that is the reachable location. Verified all plan mount targets (`/api/rentals`, `/api/leases`, `/api/transactions`, `/api/applications`, `/api/vendors`, `/api/vendor-payments`, `/api/background-checks`) sit at `routes/index.ts:79–113`, i.e. reachable. ✅
+
+### C.3 ⚠️ Enhanced — `/api/payments` is **two different modules** that are dead for **two different reasons**
+
+The PM's probe found `/api/payments` dead. I verified it and found the situation is **worse and more dangerous** than "dead on both surfaces" — **the same binding name refers to two different files across two files**:
+
+| | `src/routes/paymentRoutes.ts` (**no dot**) | `src/routes/payment.routes.ts` (**with dot**) |
+|---|---|---|
+| Imported at | `routes/index.ts:31` | `app.ts:43` |
+| Local binding name | `paymentRoutes` | `paymentRoutes` ← **same name, different module** |
+| Mounted? | **Never `router.use`'d anywhere** | `app.use('/api/payments', …)` at `app.ts:142` |
+| Emitted `require`? | **NO — elided** (verified by `transpileModule` with `removeComments:true`: only `require("./vendorPayment.routes")` is emitted from `routes/index.ts`; no `require("./paymentRoutes")`) | **YES** — `require("./routes/payment.routes")` is emitted in `app.ts` |
+| Why dead | **Never mounted + import elided** | **Shadowed by ordering** (`:142` after `app.use(routes)` at `:105`) |
+| Routes it serves | **Stripe billing** — `/payment-intents`, `/subscriptions`, `/webhooks`, `/customers`, `/invoices`, `/refunds`, `/calculate-fees`, `/setup-intents`, `/payment-methods/attach`, `/customer-portal-session` (14 routes) | **Transaction/vendor-payment approvals** — `/transactions/pending`, `/transactions/:id/approve`, `/transactions/:id/reject`, `/vendor-payments/pending`, `/vendor-payments/:id/approve`, `/vendor-payments/:id/reject` (6 routes) |
+
+**The two path sets are provably disjoint** (verified with `comm -12` on the sorted path lists → empty intersection). So mounting both is *additive*, not a conflict.
+
+**Three consequences the one-line reorder does NOT fix:**
+
+1. **The reorder fixes only the with-dot file.** `paymentRoutes.ts` needs an actual `router.use(\`${API_PREFIX}/payments\`, paymentRoutes)` added to `routes/index.ts` — **and** that import must be made live (it is currently elided, so annotating it is not enough; it must be *used*).
+2. **The PM's smoke test hit the never-mounted file.** `POST /api/payments/payment-intents` → 404 is a *`paymentRoutes.ts`* path. The with-dot file's own paths (`/api/payments/transactions/pending`) were **never probed**. Post-reorder verification must smoke **both** path families or it will pass on one and silently miss the other.
+3. **⚠️ Mounting `paymentRoutes.ts` exposes latent runtime bugs, not a clean win.** `paymentService` *does* define all 15 methods its controller calls (verified — **zero missing**), so it will load. But the call signatures do not line up: `paymentController.ts` calls `createRefund(req.body)` while `payment.service.ts` declares `createRefund(paymentIntentId: string)`; it calls `createSubscription(customerId, priceId)` while the service expects `items: Stripe.SubscriptionCreateParams.Item[]`; and `processPaymentWebhook(req.body, signature)` needs a **raw** request body (Stripe signature verification) which the global JSON parser will have already consumed. ⇒ **Expect 404s to become 500s, not 200s.** Wiring this route is a **task in its own right**, not a rider on the reorder.
+
+**Silent-divergence trap (worth a code comment):** because both files are imported under the identically-named binding `paymentRoutes` in two different files, an editor "fixing payments" can easily edit the wrong one, and the shadowing bug will mask the mistake — the route stays 404 either way, so the change *looks* like it did nothing.
+
+**Decision for T-0.1:** scope T-0.1 to the **mount order only** (the minimal, highest-leverage fix). Split the `paymentRoutes.ts` wiring + signature repair into **T-0.2 (P1)** — it is a Stripe-billing feature revival, not a route fix, and bundling it would make T-0.1 unreviewable.
+
+#### T-0.2 — Wire the never-mounted Stripe billing router (P1)
+- **Dependencies:** T-0.1
+- **Priority:** **P1**
+- **Files:** `backend/src/routes/index.ts` (add the `router.use`), `backend/src/routes/paymentRoutes.ts`, `backend/src/controllers/paymentController.ts`, `backend/src/services/payment.service.ts`
+- **Acceptance criteria:**
+  - `POST /api/payments/payment-intents` returns **401** (auth required), not 404/500.
+  - `createRefund` / `createSubscription` argument shapes reconciled between controller and service.
+  - `POST /api/payments/webhooks` receives a **raw** body (verify body-parser ordering; Stripe signature verification needs the unparsed buffer).
+  - Smoke test covers **both** path families (`/payment-intents` and `/transactions/pending`).
+
+
+### C.4 The fix and its one caveat
+
+**Fix:** move `app.use(routes)` to **last** (after `app.ts:147`), so the specific mounts are tried before the catch-all.
+
+**Caveat — must not be done blind:** if a path is declared in **both** `routes/index.ts` and `app.ts`, the move changes which handler wins. I spot-checked the five paths this plan depends on (`/api/tax-document`, `/api/compliance`, `/api/signatures`, `/api/voice`, `/api/payments`) — **all return 0 matches in `routes/index.ts`**, so no collision for those. **A full diff of the two mount lists is a required step of T-0.1.**
+
+### C.5 New task
+
+#### T-0.1 — Fix API route mount order (P0 prerequisite)
+- **Dependencies:** none — **must precede T-3.3, T-3.4 and all §4 compliance routes**
+- **Priority:** **P0**
+- **Files:** `backend/src/app.ts` (move `app.use(routes)`); possibly `backend/src/routes/index.ts`
+- **Acceptance criteria:**
+  - A full diff of the `routes/index.ts` mount list vs the `app.ts` mount list is attached to the PR, with any collision resolved explicitly.
+  - Smoke test: each of `/api/payments`, `/api/signatures`, `/api/voice`, `/api/compliance`, `/api/tax-document` returns **401/400/200** — **never 404** — with auth as a control.
+  - A regression test asserts the catch-all does **not** shadow a mount declared later (fails if someone reorders it back).
+  - **Post-fix smoke must cover BOTH `/api/payments` path families** — see Appendix C.3. Probing only `/payment-intents` (the never-mounted `paymentRoutes.ts`) will pass the reorder test while leaving the with-dot file unverified, and vice versa. Add a control that distinguishes 404-not-found from 404-shadowed.
+  - **Do NOT bundle the `paymentRoutes.ts` wiring into T-0.1** — that is T-0.2, a separate P1 task, because it exposes latent controller/service signature mismatches (Appendix C.3, point 3).
+  - Note: the real defect is *class* — a catch-all that does not `next()`. Long-term the catch-all should be the **last** middleware on the app, not the last route in a router that gets mounted first.
+
+> **Also folded in from the PM's probe (no change to this plan, recorded for accuracy):** the live maintenance-triage path is **Gemini text/NLP** (`triage.service.ts`, 92 LOC) reached **only** via `contractor.service.ts:80` (vendor *unassign* re-triage). `createMaintenanceRequest` **does not call triage**. The CV/photo path is dead. **This plan assumes no AI triage on intake** — no correction required.
+
+---
+
+*End of plan. Prepared by 高见远 (Gao), Architect — 2026-09-17. All regulatory citations are to the authority named; **per-state numeric values are configuration data requiring counsel sign-off and are deliberately not asserted here.** Estimates are labelled **[inference]**. No source file was modified and no migration was created, per constraints. Appendix C added post-delivery after the PM's route probe.*
