@@ -5,33 +5,24 @@ import { generateToken, generateRecoveryToken, generateRefreshToken, verifyRefre
 import { sendRecoveryEmail, sendPasswordResetConfirmationEmail } from '../services/emailService';
 import { AppError } from '../middleware/errorMiddleware';
 import { lockoutConfig } from '../config/lockout.config';
+import { PUBLIC_SIGNUP_ROLES, normalizePublicSignupRole } from '../middleware/validation';
 
 const prisma = new PrismaClient();
-
-/**
- * Roles a public, self-serve signup may self-assign.
- *
- * SECURITY (defence in depth): mirrors the allowlist in
- * `middleware/validation.ts#PUBLIC_SIGNUP_ROLES`. The controller re-checks it so
- * that a future caller which reaches `register` without running
- * `validateRegistration` still cannot escalate to `ADMIN`.
- */
-const PUBLIC_SIGNUP_ROLES: readonly string[] = [
-  'TENANT',
-  'OWNER',
-  'PROPERTY_MANAGER',
-  'USER',
-  'VENDOR',
-];
 
 export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password, firstName, lastName, role } = req.body;
 
-    // Fail closed on privileged/unknown roles. When `role` is omitted we pass
-    // `undefined` so the Prisma default (`TENANT`) applies; we never coerce an
-    // invalid value into a valid one.
-    if (role !== undefined && role !== null && !PUBLIC_SIGNUP_ROLES.includes(role)) {
+    // SECURITY (defence in depth): the route already runs
+    // `validateRegistration`, but we re-check here so a future caller that
+    // reaches `register` directly still cannot escalate to `ADMIN`. We reuse the
+    // single shared `normalizePublicSignupRole` helper from `middleware/validation`
+    // (rather than a duplicated allowlist) so the two layers cannot drift apart.
+    // An explicit-but-invalid role fails closed; a missing role falls through to
+    // the Prisma column default (`TENANT`).
+    const hasExplicitRole = role !== undefined && role !== null;
+    const normalizedRole = normalizePublicSignupRole(role);
+    if (hasExplicitRole && !normalizedRole) {
       return next(
         new AppError(
           `Invalid role. Self-service registration permits only: ${PUBLIC_SIGNUP_ROLES.join(', ')}`,
@@ -49,7 +40,11 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
         password: hashedPassword,
         firstName,
         lastName,
-        role,
+        // Always persist the canonical enum value. Previously the raw request
+        // value was written verbatim, so a lowercase role either never reached
+        // this point (case-sensitive allowlist) or, once normalisation was
+        // introduced, must not be written in its un-normalised form.
+        role: normalizedRole,
       },
     });
 

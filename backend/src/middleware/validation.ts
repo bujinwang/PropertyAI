@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { UserRole } from '@prisma/client';
 import { AppError } from './errorMiddleware';
 
 /**
@@ -16,6 +17,53 @@ export const PUBLIC_SIGNUP_ROLES = [
   'USER',
   'VENDOR',
 ] as const;
+
+export type PublicSignupRole = (typeof PUBLIC_SIGNUP_ROLES)[number];
+
+const PUBLIC_SIGNUP_ROLE_SET: ReadonlySet<string> = new Set(PUBLIC_SIGNUP_ROLES);
+
+/**
+ * Canonicalises a client-supplied role to the uppercase `SNAKE_CASE` form used
+ * by the Prisma `UserRole` enum, so that client naming conventions do not change
+ * the *semantics* of a role:
+ *
+ *   - `'tenant'`          -> `'TENANT'`
+ *   - `'propertyManager'` -> `'PROPERTY_MANAGER'`  (camelCase -> SNAKE_CASE)
+ *   - `'property-manager'`-> `'PROPERTY_MANAGER'`  (kebab-case -> SNAKE_CASE)
+ *   - `'TENANT'`          -> `'TENANT'`            (idempotent)
+ *
+ * Normalisation is *only* about casing/separators. It never widens the set of
+ * permitted roles: `'ADMIN'`/`'admin'` still normalise to `'ADMIN'`, which is
+ * deliberately absent from `PUBLIC_SIGNUP_ROLES`, so privilege escalation stays
+ * blocked. Returns `undefined` for non-string input (caller decides policy).
+ */
+export const normalizeRoleToEnum = (role: unknown): string | undefined => {
+  if (typeof role !== 'string') {
+    return undefined;
+  }
+  return role
+    .trim()
+    .replace(/[\s-]+/g, '_') // kebab / spaced -> snake
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2') // camelCase -> snake_case
+    .toUpperCase();
+};
+
+/**
+ * Normalises a submitted role and returns it as a validated enum value.
+ *
+ * FAIL CLOSED: returns `undefined` when the normalised value is not on the
+ * public allowlist (or not a valid enum member at all). Callers that require an
+ * explicit, valid role use `undefined` as the rejection signal; the registration
+ * controller uses it to fall back to the Prisma column default when no role was
+ * supplied at all.
+ */
+export const normalizePublicSignupRole = (role: unknown): UserRole | undefined => {
+  const normalized = normalizeRoleToEnum(role);
+  if (normalized && PUBLIC_SIGNUP_ROLE_SET.has(normalized)) {
+    return normalized as UserRole;
+  }
+  return undefined;
+};
 
 export const validateRegistration = (req: Request, res: Response, next: NextFunction) => {
   const { email, password, firstName, lastName, role } = req.body;
@@ -39,11 +87,14 @@ export const validateRegistration = (req: Request, res: Response, next: NextFunc
   // Role validation (fail CLOSED).
   // - If `role` is omitted, the Prisma-level default (`TENANT`) is applied by
   //   the controller. We do not supply a different default here.
-  // - If `role` is present it MUST be on the public allowlist. Unknown, typo'd,
-  //   or privileged roles (e.g. `ADMIN`) are rejected rather than coerced, so a
-  //   client bug is surfaced instead of silently masked.
+  // - If `role` is present it is normalised to the enum's uppercase SNAKE_CASE
+  //   form (so the mobile client's `tenant` / `propertyManager` are accepted)
+  //   and MUST then be on the public allowlist. Unknown, typo'd, or privileged
+  //   roles (e.g. `ADMIN`) are rejected rather than coerced, so a client bug is
+  //   surfaced instead of silently masked.
   if (role !== undefined && role !== null) {
-    if (typeof role !== 'string' || !(PUBLIC_SIGNUP_ROLES as readonly string[]).includes(role)) {
+    const normalizedRole = normalizePublicSignupRole(role);
+    if (!normalizedRole) {
       return next(
         new AppError(
           `Invalid role. Self-service registration permits only: ${PUBLIC_SIGNUP_ROLES.join(', ')}`,
@@ -51,6 +102,9 @@ export const validateRegistration = (req: Request, res: Response, next: NextFunc
         )
       );
     }
+    // Propagate the canonical value so the controller (and anything else
+    // downstream) sees a single, enum-safe representation of the role.
+    req.body.role = normalizedRole;
   }
 
   next();

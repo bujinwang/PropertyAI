@@ -1,6 +1,6 @@
 import express from 'express';
 import passport from 'passport';
-import { loginRateLimiter } from '../middleware/rateLimiter';
+import { loginRateLimiter, registerRateLimiter } from '../middleware/rateLimiter';
 import { RequestHandler } from 'express';
 import * as authController from '../controllers/authController';
 import { authMiddleware } from '../middleware/authMiddleware';
@@ -8,7 +8,9 @@ import { validateRegistration, validateLogin } from '../middleware/validation';
 
 const router = express.Router();
 
-router.post('/register', validateRegistration, authController.register);
+// Registration is throttled *after* validation so malformed/cheap-to-reject
+// requests never consume the (expensive) allowance, mirroring `/login` below.
+router.post('/register', validateRegistration, registerRateLimiter, authController.register);
 router.post('/login', loginRateLimiter as unknown as RequestHandler, validateLogin, authController.login);
 router.post('/refresh-token', authController.refreshToken);
 router.post('/forgot-password', authController.forgotPassword);
