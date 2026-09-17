@@ -18,6 +18,18 @@ export const getApiKeysByUserId = async (userId: string) => {
   });
 };
 
+/**
+ * Looks up a single API key by id.
+ *
+ * Used by the controller to verify ownership before mutating a key, since the
+ * key table has no other way to attribute a row to its principal.
+ */
+export const getApiKeyById = async (id: string) => {
+  return prisma.apiKey.findUnique({
+    where: { id },
+  });
+};
+
 export const deleteApiKey = async (id: string) => {
   return prisma.apiKey.delete({
     where: { id },

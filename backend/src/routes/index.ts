@@ -84,7 +84,13 @@ router.use(`${API_PREFIX}/units`, unitRoutes);
 router.use(`${API_PREFIX}`, imageRoutes); // Image routes handle both property and unit images
 router.use(`${API_PREFIX}/search`, searchRoutes); // Search routes for advanced filtering
 router.use(`${API_PREFIX}/geocoding`, geocodingRoutes); // Geocoding and address validation routes
-router.use(`${API_PREFIX}/listings`, listingRoutes); // Property listing management routes
+// `publicListingRoutes` MUST be mounted before `listingRoutes`: both live under
+// `/api/listings`, and `listingRoutes` declares `GET /:id` behind
+// `authMiddleware.protect`. Mounted first it would capture `/api/listings/public`
+// with `:id="public"` and 401 the public listing endpoint before this router is
+// ever reached. (Same class of ordering bug as the app.ts barrel shadowing.)
+router.use(`${API_PREFIX}/listings`, publicListingRoutes); // Public marketplace listings (anonymous)
+router.use(`${API_PREFIX}/listings`, listingRoutes); // Property listing management routes (authenticated)
 router.use(`${API_PREFIX}/applications`, applicationRoutes); // Tenant application routes
 router.use(`${API_PREFIX}/ai-content`, aiContentRoutes); // AI-generated content routes
 router.use(`${API_PREFIX}/auth`, authRoutes); // Primary authentication routes
@@ -122,7 +128,6 @@ router.use(`${API_PREFIX}/seo`, seoRoutes);
 router.use(`${API_PREFIX}/publishing`, publishingRoutes);
 router.use(`${API_PREFIX}/contractor`, contractorRoutes);
 router.use(`${API_PREFIX}/manager`, managerRoutes);
-router.use(`${API_PREFIX}/listings`, publicListingRoutes);
 router.use(`${API_PREFIX}/ux-review`, uxReviewRoutes);
 router.use(`${API_PREFIX}/marketing`, marketingRoutes);
 router.use(`${API_PREFIX}/tenant-ratings`, tenantRatingRoutes);
@@ -144,7 +149,12 @@ router.post(`${API_PREFIX}/cache/clear`, (req, res) => {
   res.status(200).json({ message: `Cache for key ${key} cleared` });
 });
 
-// 404 handler for API routes
+// 404 handler for API routes.
+//
+// CAUTION: this is a terminal handler — it responds and does NOT call `next()`.
+// Anything mounted on the app *after* this barrel (`app.use(routes)`) is therefore
+// permanently unreachable (this previously shadowed 36 route mounts). Keep
+// `app.use(routes)` as the LAST route mount in app.ts, before the error handler.
 router.use(`${API_PREFIX}/*`, (req, res) => {
   res.status(404).json({
     status: 'error',

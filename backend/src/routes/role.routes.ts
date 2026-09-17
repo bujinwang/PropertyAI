@@ -1,12 +1,16 @@
 import { Router } from 'express';
 import * as roleController from '../controllers/role.controller';
+import { authMiddleware } from '../middleware/authMiddleware';
 
 const router = Router();
 
 router.get('/roles', roleController.getRoles);
-router.post('/roles', roleController.createRole);
-router.put('/roles/:id', roleController.updateRole);
-router.delete('/roles/:id', roleController.deleteRole);
+// Role mutations are privileged: any authenticated tenant must not be able to
+// create/alter/delete roles. `protect` establishes req.user, `admin` enforces
+// the ADMIN role.
+router.post('/roles', authMiddleware.protect, authMiddleware.admin, roleController.createRole);
+router.put('/roles/:id', authMiddleware.protect, authMiddleware.admin, roleController.updateRole);
+router.delete('/roles/:id', authMiddleware.protect, authMiddleware.admin, roleController.deleteRole);
 
 router.get('/permissions', roleController.getPermissions);
 
