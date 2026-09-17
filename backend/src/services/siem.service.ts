@@ -1,5 +1,4 @@
 import { config } from '../config/config';
-import { auditService } from './audit.service';
 
 class SiemService {
   constructor() {
@@ -14,18 +13,3 @@ class SiemService {
 }
 
 export const siemService = new SiemService();
-
-// Example of forwarding audit logs to SIEM
-auditService.logAction = new Proxy(auditService.logAction, {
-  apply: async (target, thisArg, args: [string, string, any]) => {
-    const [userId, action, details] = args;
-    const logEntry = {
-      userId,
-      action,
-      details,
-      timestamp: new Date(),
-    };
-    siemService.forwardLog(logEntry);
-    return target.apply(thisArg, args);
-  },
-});

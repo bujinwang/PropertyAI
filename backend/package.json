@@ -9,6 +9,7 @@
     "dev": "concurrently \"npm:dev:node\" \"npm:start:python\"",
     "dev:node": "node --require ts-node/register src/index.ts",
     "build": "tsc",
+    "typecheck": "tsc --noEmit",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
