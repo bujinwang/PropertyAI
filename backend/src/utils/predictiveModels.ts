@@ -31,7 +31,11 @@ export const predictTenantIssue = async (tenant: User & TenantData): Promise<any
 
   // Prepare data for ML API
   const latePayments = payments.filter(p => p.status === 'FAILED').length;
-  const missedPayments = payments.filter(p => p.status === 'MISSED').length;
+  // TransactionStatus has no MISSED state — a missed payment is the absence of a
+  // transaction, which this data cannot represent. The value is therefore always
+  // 0 (kept explicit to preserve the exact feature sent to the ML API).
+  // TODO: source missed payments from a real data source (e.g. expected vs. received rent).
+  const missedPayments = 0;
   const totalPayments = payments.length;
 
   const requestData = {

@@ -9,7 +9,6 @@ import VoicemailService from './services/voicemailService';
 import { rentCollectionService } from './services/rentCollection.service';
 import { documentExpirationService } from './services/documentExpiration.service';
 import './services/pubSub.service';
-import schedulerService from './services/schedulerService';
 // const cleanupSchedulerService = require('./services/cleanupSchedulerService');
 import path from 'path';
 
