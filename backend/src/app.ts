@@ -6,6 +6,7 @@ import passport from 'passport';
 import * as dotenv from 'dotenv';
 import configurePassport from './config/passport';
 import routes from './routes';
+import { requireAuth } from './middleware/requireAuth';
 // Import only routes that are NOT in the centralized routes file
 import socialMediaRoutes from './routes/socialMediaRoutes';
 // import photoRoutes from './routes/photoRoutes';
@@ -99,6 +100,17 @@ configurePassport();
 
 // Serve static files from the uploads directory
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// Fail-closed authentication guard for the ENTIRE /api surface.
+//
+// Placed here, AFTER the /uploads static mount and BEFORE the first /api route
+// mount, it covers every router registered below it in one statement — both the
+// app.ts mounts and the barrel mounted at the bottom. Routes are deny-by-default:
+// only the explicit PUBLIC allowlist in middleware/requireAuth.ts is reachable
+// without a valid JWT. This closes the ~188 handlers that had no auth at any
+// level. (Order matters: moving this below any /api mount would leave that mount
+// unguarded.)
+app.use('/api', requireAuth);
 
 // Register API routes
 // Mount the routes that are NOT in the centralized `routes` barrel FIRST.
