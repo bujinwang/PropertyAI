@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { cacheService, CacheKeys, CacheTTL } from '../services/cacheService';
-import { prisma } from '../lib/prisma';
-import { logger } from '../utils/logger';
+import { prisma } from '../config/database';
+import logger from '../utils/logger';
 
 /**
  * Example controller demonstrating cache usage patterns

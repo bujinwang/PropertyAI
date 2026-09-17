@@ -3,7 +3,7 @@ import { Server as SocketIOServer, Socket } from 'socket.io';
 import { iotDeviceService } from './iotDevice.service';
 import { sensorAnalyticsService } from './sensorAnalytics.service';
 import { realtimeAnalyticsService } from './realtimeAnalytics.service';
-import { authenticateToken } from '../middleware/auth.middleware';
+import { authenticateToken } from '../middleware/auth';
 
 interface ConnectedClient {
   id: string;

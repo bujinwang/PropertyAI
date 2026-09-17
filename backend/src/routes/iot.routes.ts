@@ -2,8 +2,8 @@ import { Router } from 'express';
 import { iotDeviceService } from '../services/iotDevice.service';
 import { iotProtocolAdaptersService } from '../services/iotProtocolAdapters.service';
 import { sensorAnalyticsService } from '../services/sensorAnalytics.service';
-import { authenticateToken } from '../middleware/auth.middleware';
-import { validateRequest } from '../middleware/validation.middleware';
+import { authenticateToken } from '../middleware/auth';
+import { validateRequest } from '../middleware/validation';
 
 const router = Router();
 

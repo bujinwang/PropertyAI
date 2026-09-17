@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { jobMonitorService } from '../services/jobMonitorService';
-import { logger } from '../utils/logger';
+import logger from '../utils/logger';
 
 export class JobsController {
   /**

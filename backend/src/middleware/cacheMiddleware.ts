@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { cacheService, CacheTTL } from '../services/cacheService';
-import { logger } from '../utils/logger';
+import logger from '../utils/logger';
 
 interface CacheOptions {
   ttl?: number;

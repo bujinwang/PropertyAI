@@ -1,5 +1,5 @@
 import { Queue, Job } from 'bullmq';
-import { logger } from '../utils/logger';
+import logger from '../utils/logger';
 import { cacheService } from './cacheService';
 
 interface JobStats {

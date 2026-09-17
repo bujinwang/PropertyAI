@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { prisma } from '../lib/prisma';
+import { prisma } from '../config/database';
 import { cacheService } from '../services/cacheService';
-import { logger } from '../utils/logger';
+import logger from '../utils/logger';
 import os from 'os';
 
 interface HealthStatus {

@@ -2,6 +2,12 @@
 const auditService = require('./auditService');
 
 class CleanupSchedulerService {
+  private isRunning: boolean;
+  private cleanupIntervalId: NodeJS.Timeout | null;
+  private statsIntervalId: NodeJS.Timeout | null;
+  private cleanupSchedule: { hour: number; minute: number };
+  private statsSchedule: { dayOfWeek: number; hour: number; minute: number };
+
   constructor() {
     this.isRunning = false;
     this.cleanupIntervalId = null;
@@ -140,7 +146,7 @@ class CleanupSchedulerService {
         riskLevel: 'low'
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Daily cleanup failed:', error);
 
       // Log cleanup failure
@@ -185,7 +191,7 @@ class CleanupSchedulerService {
       // - Generate compliance reports
       // - Alert administrators of retention policy violations
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Weekly stats generation failed:', error);
 
       await auditService.logEvent({
