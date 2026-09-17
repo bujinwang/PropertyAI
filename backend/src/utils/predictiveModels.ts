@@ -17,7 +17,9 @@ interface TenantPredictionResponse {
 }
 
 // ML API configuration
-const ML_API_URL = process.env.ML_API_URL || 'http://localhost:5000';
+// Default to port 5001: the canonical Flask service (api-simple.py) runs there.
+// Port 5000 is claimed by macOS ControlCenter (AirPlay Receiver) and cannot bind.
+const ML_API_URL = process.env.ML_API_URL || 'http://localhost:5001';
 const ML_API_TIMEOUT = parseInt(process.env.ML_API_TIMEOUT || '5000', 10);
 
 /**

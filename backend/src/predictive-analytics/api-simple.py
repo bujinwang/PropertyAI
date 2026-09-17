@@ -222,6 +222,79 @@ def predict_maintenance():
         logger.error(f"Error in maintenance prediction: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/predict/tenant-issue', methods=['POST'])
+def predict_tenant_issue():
+    """
+    Predict tenant issues based on behavior (rule-based only)
+
+    There are no trained models in this service, so the model-backed branch that
+    exists in api.py is intentionally omitted and only the rule-based logic is used.
+
+    Expected input: {
+        "tenant_id": "tenant-123",
+        "maintenance_requests": 8,
+        "late_payments": 3,
+        "missed_payments": 1,
+        "total_payments": 12,
+        "complaint_messages": 0,
+        "months_as_tenant": 18,
+        "credit_score": 650,
+        "rent_amount": 1500
+    }
+
+    Response: {
+        "tenant_id": "tenant-123",
+        "prediction": {
+            "issue": "High risk of lease termination",
+            "confidence": 0.85,
+            "risk_score": 0.85,
+            "model_used": "rule_based"
+        }
+    }
+    """
+    try:
+        data = request.json
+
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+
+        # Validate input
+        required_fields = ['tenant_id', 'maintenance_requests', 'late_payments']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+
+        # Rule-based tenant issue prediction
+        late_payments = data.get('late_payments', 0)
+        missed_payments = data.get('missed_payments', 0)
+        maintenance_requests = data.get('maintenance_requests', 0)
+
+        risk_score = 0.0
+
+        # Calculate risk score
+        if late_payments > 0:
+            risk_score += late_payments * 0.15
+        if missed_payments > 0:
+            risk_score += missed_payments * 0.25
+        if maintenance_requests > 5:
+            risk_score += 0.20
+
+        risk_score = min(risk_score, 1.0)
+
+        return jsonify({
+            'tenant_id': data['tenant_id'],
+            'prediction': {
+                'issue': 'High risk of lease termination' if risk_score > 0.5 else 'Low risk',
+                'confidence': 0.85 if risk_score > 0.5 else 0.95,
+                'risk_score': risk_score,
+                'model_used': 'rule_based'
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Error in tenant issue prediction: {e}")
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     logger.info("Starting ML API in rule-based mode (no ML models)")
     logger.info("All predictions will use fallback logic")

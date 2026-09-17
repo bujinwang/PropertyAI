@@ -1,4 +1,3 @@
-import { api } from './api';
 import axios from 'axios';
 import { ML_API_URL, ENDPOINTS } from '../constants/api';
 
@@ -334,7 +333,10 @@ export const mlPredictionService = {
   },
 
   /**
-   * Get ML model health status
+   * Get ML model health status.
+   *
+   * Calls the Flask service's real `/health` endpoint and adapts its response
+   * to this method's declared return type.
    */
   getModelHealth: async (): Promise<{
     status: string;
@@ -346,8 +348,18 @@ export const mlPredictionService = {
     }>;
   }> => {
     try {
-      const response = await api.get('/ml/health');
-      return response;
+      const response = await axios.get(`${ML_API_URL}${ENDPOINTS.ML.HEALTH}`);
+      const data = response.data || {};
+
+      return {
+        status: data.status || 'unknown',
+        models: (data.models_loaded || []).map((name: string) => ({
+          name,
+          version: 'rule_based',
+          accuracy: 0,
+          lastTrained: data.timestamp || '',
+        })),
+      };
     } catch (error) {
       console.error('Error getting ML model health:', error);
       throw error;
@@ -355,57 +367,33 @@ export const mlPredictionService = {
   },
 
   /**
-   * Batch predict churn for multiple tenants
+   * Batch predict churn for multiple tenants.
+   *
+   * There is no backend batch route, so this reuses `predictChurnRisk` for each
+   * tenant id. Only the tenant id is available here, so the remaining request
+   * fields are populated with neutral defaults.
    */
   batchPredictChurn: async (
     tenantIds: string[]
   ): Promise<Array<ChurnPredictionResponse & { tenantId: string }>> => {
-    try {
-      const response = await api.post('/ml/predict/churn/batch', { tenantIds });
-      return response;
-    } catch (error) {
-      console.error('Error batch predicting churn:', error);
-      throw error;
-    }
-  },
+    const predictions = await Promise.all(
+      tenantIds.map(async (tenantId) => {
+        const prediction = await mlPredictionService.predictChurnRisk({
+          tenantId,
+          paymentHistory: {
+            onTimePayments: 0,
+            latePayments: 0,
+            totalPayments: 0,
+          },
+          maintenanceRequests: 0,
+          leaseMonthsRemaining: 12,
+          communicationFrequency: 0,
+        });
 
-  /**
-   * Get prediction history for a tenant
-   */
-  getChurnHistory: async (tenantId: string): Promise<{
-    predictions: Array<{
-      date: string;
-      prediction: string;
-      probability: number;
-      confidence: number;
-    }>;
-  }> => {
-    try {
-      const response = await api.get(`/ml/predict/churn/history/${tenantId}`);
-      return response;
-    } catch (error) {
-      console.error('Error getting churn history:', error);
-      throw error;
-    }
-  },
+        return { ...prediction, tenantId };
+      })
+    );
 
-  /**
-   * Get maintenance prediction history for a rental
-   */
-  getMaintenanceHistory: async (rentalId: string): Promise<{
-    predictions: Array<{
-      date: string;
-      predictedCost: number;
-      actualCost?: number;
-      accuracy?: number;
-    }>;
-  }> => {
-    try {
-      const response = await api.get(`/ml/predict/maintenance/history/${rentalId}`);
-      return response;
-    } catch (error) {
-      console.error('Error getting maintenance history:', error);
-      throw error;
-    }
+    return predictions;
   },
 };

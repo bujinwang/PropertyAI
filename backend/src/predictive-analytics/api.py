@@ -1,6 +1,17 @@
 """
 PropertyFlow AI - ML Model API Server
 Flask API for serving predictive models
+
+NOTE - this is the MODEL-BACKED variant of the ML API, not the canonical service.
+  * It requires trained artifacts under `models/` (tenant_behavior_model.pkl,
+    anomaly_detection_model.pkl, financial_forecast_model.pkl). That directory is
+    currently EMPTY, so every endpoint falls back to rule-based output and the ML
+    code paths are effectively dead.
+  * Its default port is 5000, which conflicts with macOS ControlCenter
+    (AirPlay Receiver) and therefore cannot bind on macOS. Run it with the
+    ML_API_PORT environment variable set to a free port if you really need it.
+  * For the canonical, dependency-light service (Flask only - no numpy/pandas/
+    joblib) use `api-simple.py`, which defaults to port 5001.
 """
 
 from flask import Flask, request, jsonify
