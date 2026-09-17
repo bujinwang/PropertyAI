@@ -4,6 +4,8 @@
 > **Coordinated by:** 齐活林 (Qi) · Delivery Director
 > **Date:** 2026-09-10  ·  **Mode:** Research  ·  **Market scope:** USA/Canada real estate (agents, brokers, property managers, landlords)
 > **Method:** Live web research (competitor products, practitioner feedback, industry trend reports, user reviews of comparable AI tools). Every substantive claim carries a `[S#]` reference → see **Appendix G**.
+>
+> **⚠️ Addendum (2026-09-17):** The target-segment open question in §F has been **resolved** — see **§F-1**. The resolution re-anchors the roadmap on the **SMB landlord / small-PM tier (the "Buildium zone", ~50–500 units)** and **demotes or drops the agent/brokerage-side items** (AVM, CMA, CRM, predictive seller intent, AI-search visibility). **Read §F-1 before acting on the Tier tables below.** Full analysis: `propertyai-positioning-2026-09-17.md`.
 
 ---
 
@@ -223,10 +225,34 @@ T3.1 (agentic performers), T3.2 (CV condition → valuation), T3.3 (AI-search vi
 | **Assumption** | Market is USA/Canada agent/broker/PM/landlord | Confirm segment priority: brokerage-agent vs multifamily PM have divergent needs (EliseAI/AppFolio are PM-first) |
 | **Assumption** | Buyers value agentic autonomy over point tools | Validate via pricing tests; EliseAI/AppFolio evidence supports it [S15][S18] |
 | **Assumption** | AI-search visibility (T3.3) becomes a lead channel for brokerages | Monitor Zillow/Redfin ChatGPT integrations + AEO vendor claims [S7][S34] |
-| **Open Q** | Will we target SMB landlords (Buildium/TurboTenant territory) or 500+ unit operators (EliseAI, ~$25k min)? | Pricing & packaging decision; affects T1.7/T1.9 depth |
+| **Open Q → ✅ RESOLVED (2026-09-17)** | Will we target SMB landlords (Buildium/TurboTenant territory) or 500+ unit operators (EliseAI, ~$25k min)? | **Resolved: SMB landlords / small PM — the "Buildium zone" (~50–500 units, sweet spot 80–300).** See **§F-1 below**. |
 | **Open Q** | Build vs. partner for AVM + AI voice + computer vision? | HouseCanary/Restb.ai/Ylopo prove strong third-party layers [S34][S37] |
 | **Open Q** | Do we need multilingual + affordable-housing compliance modes at launch? | EliseAI's 47 languages & Affordable Leasing signal enterprise expectation [S13][S14] |
 | **Open Q** | What is our defensible data moat vs. Zillow/Redfin/CoreLogic? | Likely = proprietary ops/workflow data + compliance layer, not public-record valuation |
+
+---
+
+### F-1. Resolved (2026-09-17) — Target Segment Decision
+
+**Question (row above):** SMB landlords (Buildium territory) or 500+ unit operators (EliseAI, ~$25k min)?
+
+**Decision: target the SMB landlord / small property-manager tier — the "Buildium zone" (~50–500 units, sweet spot 80–300).**
+
+| Element | Decision |
+|---|---|
+| **Target segment** | SMB landlords / small PM firms — ~50–500 units, sweet spot **80–300**, 1–10 staff. *Definition:* the tier that has real operational needs (bookkeeping, rent collection, maintenance work orders, tenant portal, screening, owner statements) that a $20/mo tool can't serve, but neither the budget nor the staff for an enterprise RFP or 12-month implementation. It buys self-serve-plus-light-touch: sign up, watch a demo, run a 14-day trial, be productive in days. Buildium ($55–400/mo) is the archetypal incumbent — hence "the Buildium zone". |
+| **Decision basis** | The verified codebase is a property-*operations* platform (rent collection, accounting/expense categorization, maintenance triage with CV + predictive-maintenance, vendor/work-order ops, tenant portal, e-sign, syndication) and structurally fits this tier. The agent/brokerage segment has **no code** (no CRM, lead scoring, IDX/MLS, AVM/CMA, showing requests → verified zero matches). The 1,000+ enterprise tier requires AI voice/call-center, deep fair-housing/affordable compliance, and legacy-PMS integration depth that do not exist today. |
+| **Wedge / beachhead** | Maintenance + tenant-communications automation; land at **80–200 units**, expand across the book. |
+| **Pricing shape** *(inference — validate)* | Per-unit/month with a monthly floor (~$1.5–2.5/unit/mo; **$79 / $149 / $499** floors) — transparent, self-serve, **no training-data lock-in**. |
+| **Forced additions (P0)** | **NEW-1** fair-housing/FCRA screening guardrail · **NEW-2** owner statements/reporting · **NEW-3** self-serve onboarding + data import · **NEW-4** production two-way QuickBooks sync. |
+| **Deliberate no-build** | Agent CRM/IDX · public-record AVM/CMA · enterprise voice/call-center · 47-language / affordable-housing modes · productized bias-audit-as-a-service. |
+| **Impact on T1.7 / T1.9** | **T1.9 (rent collection + accounting) is promoted to core.** **T1.7 (screening) is held P0 but gated behind the compliance guardrail — do not ship screening without it.** |
+
+**Net roadmap shift:** from an *agent/brokerage AI suite* (valuation + CRM + listing) to an **SMB property-operations platform** (maintenance + comms + rent/accounting + owner reporting), with **compliance as mandatory infrastructure** and **self-serve onboarding** as the acquisition engine.
+
+**Items this decision demotes or drops** (full table in the positioning doc): T1.3 AVM engine, T1.4 AI CMA, T1.5 CRM + lead routing + nurture, T2.2 predictive seller intent, T3.3 AI-search visibility, T3.9 white-label for brokerages → **DROPPED**; T2.1 AI Voice agent, T2.5 rent/revenue optimization, T3.6 IoT predictive maintenance → **DEMOTED**. **PROMOTED:** T1.8 maintenance triage (wedge #1), T1.1 conversational AI (reframed to tenant/prospect ops), T1.9 rent/accounting, T2.4 compliance guardrail (→ P0 internal), T2.9 open API + PMS/accounting integrations, T2.10 bulk SMS.
+
+> Full analysis, code-grounded capability-fit matrix and risk assessment: **`propertyai-positioning-2026-09-17.md`**
 
 ---
 
