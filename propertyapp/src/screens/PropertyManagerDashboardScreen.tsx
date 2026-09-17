@@ -89,6 +89,12 @@ export const PropertyManagerDashboardScreen: React.FC = () => {
 
   const quickActions: QuickAction[] = [
     {
+      title: 'ML Insights',
+      icon: 'analytics-outline',
+      color: '#1976D2',
+      onPress: () => navigation.navigate('MLInsights' as any),
+    },
+    {
       title: 'Add Property',
       icon: 'add-circle-outline',
       color: '#007AFF',

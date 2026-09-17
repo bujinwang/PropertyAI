@@ -60,6 +60,9 @@ export type RootStackParamList = {
   DeliveryTracking: undefined;
   DeliveryDetail: { deliveryId: string };
   
+  // ML Insights
+  MLInsights: undefined;
+  
   // Legacy compatibility - keeping old property details route
   PropertyDetails: { propertyId: string };
 };

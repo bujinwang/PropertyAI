@@ -1,5 +1,8 @@
 export const API_URL = 'http://localhost:3001/api';
 
+// ML API URL (Python Flask service)
+export const ML_API_URL = 'http://localhost:5001';
+
 // Timeout for API requests in milliseconds
 export const API_TIMEOUT = 15000;
 
@@ -43,6 +46,18 @@ export const ENDPOINTS = {
     IMAGES: (id: string) => `/units/${id}/images`,
   },
   
+  // Rentals
+  RENTALS: {
+    LIST: '/rentals',
+    DETAIL: (id: string) => `/rentals/${id}`,
+  },
+  
+  // Leases
+  LEASES: {
+    LIST: '/leases',
+    DETAIL: (id: string) => `/leases/${id}`,
+  },
+  
   // Search
   SEARCH: {
     PROPERTIES: '/search/properties',
@@ -54,5 +69,12 @@ export const ENDPOINTS = {
     UPLOAD: '/upload',
     PROPERTY: (id: string) => `/properties/${id}/images`,
     UNIT: (id: string) => `/units/${id}/images`,
+  },
+  
+  // ML Predictions
+  ML: {
+    HEALTH: '/health',
+    PREDICT_CHURN: '/predict/churn',
+    PREDICT_MAINTENANCE: '/predict/maintenance',
   },
 };

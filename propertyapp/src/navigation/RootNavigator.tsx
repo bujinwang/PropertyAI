@@ -14,6 +14,7 @@ import { LoadingIndicator } from '@/components/ui/LoadingIndicator';
 import { LoadingScreen } from '@/screens/LoadingScreen'; // From mobile
 import AIGuidedSetupWizardScreen from '@/screens/AIGuidedSetupWizardScreen';
 import PublicListingScreen from '@/screens/PublicListingScreen';
+import { MLInsightsScreen } from '@/screens/MLInsightsScreen';
 
 import PropertyDetailScreen from '@/screens/PropertyDetailScreen';
 import UnitDetailScreen from '@/screens/UnitDetailScreen';
@@ -69,6 +70,11 @@ export function RootNavigator() {
               name="Settings"
               component={SettingsScreen}
               options={{ headerShown: true, title: 'Settings' }}
+            />
+            <Stack.Screen
+              name="MLInsights"
+              component={MLInsightsScreen}
+              options={{ headerShown: false }}
             />
             {/* Added from mobile */}
             <Stack.Screen
