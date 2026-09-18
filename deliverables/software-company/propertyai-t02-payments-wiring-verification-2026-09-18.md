@@ -15,6 +15,10 @@
 But **the free tier still cannot collect revenue**: `calculateFees` remains a placeholder (see
 "The remaining gap" below). This task made the route reachable; it did not make the fee correct.
 
+> **UPDATE (`4434a46c`):** the fee rate *was* specified and has since been fixed — see the UPDATE
+> at the end of "The remaining gap". The rate is no longer the blocker; the missing `FirmFee`
+> ledger and Stripe Connect rail are.
+
 ---
 
 ## The blocker that was not in the original plan
@@ -127,6 +131,43 @@ monetization path is now wired but still not monetizing.**
 This is the last gap in the chain, and it is a **product/pricing decision, not a wiring one** — it
 needs the fee model (rate, who bears it, whether Stripe's cost is passed through or absorbed,
 rounding, refund handling) settled before implementation.
+
+### UPDATE — the rate was already specified, and is now fixed (`4434a46c`)
+
+The paragraph above said this needed a pricing decision. **It did not** — the decision was already
+recorded at `gtm-free-tier-spec:57`: *"Tenant-paid ACH convenience fee: **1.25%, min $2.50, max
+$12.00**."* The code simply contradicted the spec. Fixed in `4434a46c`.
+
+The units were the trap. The probe `{amount:1000}` → `59` is Stripe's fee for a **$10** charge
+(2.9% × $10 + 30¢), which is what proves the field is **cents, not dollars** — reading `1000` as
+$1,000 would put the rate off by 100×.
+
+The old values were wrong in **both** directions, and materially:
+
+| Rent | Old (wrong) | Correct |
+|---|---|---|
+| $10 | 59¢ | **250¢** (floor) |
+| $200 | $6.10 | **$2.50** |
+| $500 | $14.80 | **$6.25** |
+| $1,000 | $29.30 | **$12.00** (cap) |
+| $2,000 | $58.30 | **$12.00** (cap) |
+
+Up to a **4.9× overcharge** on larger rents — the cap exists precisely so a free-tier fee does not
+become a churn event. Verified live: 11/11 probes (7 boundaries including both clamp edges, 3 input
+validation, 1 auth); typecheck unchanged at 18.
+
+**But the rate was never the binding constraint.** The chain now reads:
+
+| Link | State |
+|---|---|
+| Route reachable | ✅ `6483f81c` |
+| Route authorized | ✅ `6483f81c` |
+| **Fee rate correct** | ✅ `4434a46c` |
+| `FirmFee` ledger model | ❌ **does not exist** (§2.5 D2: a new model, not a `Transaction` change) |
+| Stripe Connect rail (`application_fee_amount`) | ❌ not implemented (item 2, size L) — needs **real** Stripe keys to verify |
+| Any consumer of `calculate-fees` | ❌ none exists |
+
+**Revenue still does not flow**, and the remaining work is infrastructure, not pricing.
 
 ## Deployment prerequisites
 
