@@ -1401,11 +1401,15 @@ No new runtime dependency is strictly required to build the data model and servi
 3. Every fiduciary/legal mutation emits an AuditEntry. Reuse the existing model — entityType is the
    new model name, complianceType is 'GENERAL' | 'FAIR_HOUSING' | 'FCRA'.
 4. Routes: /api/<resource>, all under authMiddleware.protect + a role gate. Mount NEW routers inside
-   routes/index.ts (const API_PREFIX = '/api'), NOT in app.ts after line 105 — those are SHADOWED by the
-   catch-all at routes/index.ts:148 (see Appendix C / T-0.1). app.ts mounts a second set — check BOTH.
+   routes/index.ts (const API_PREFIX = '/api'), NOT in app.ts after the barrel mount — those are SHADOWED
+   by the catch-all at routes/index.ts:158 (see Appendix C / T-0.1). The barrel is now mounted LAST
+   (app.ts:178), so this is CURRENTLY safe for existing mounts, but adding a mount AFTER `app.use(routes)`
+   re-introduces the shadow. app.ts mounts a second set — check BOTH.
    CAUTION: /api/payments is TWO files — paymentRoutes.ts (no dot, never mounted, import ELIDED, Stripe
-   billing) and payment.routes.ts (with dot, mounted at app.ts:142, approval routes). They share the
+   billing) and payment.routes.ts (with dot, mounted at app.ts:165, approval routes). They share the
    binding name `paymentRoutes` but are different modules. Verify which one you are editing.
+   Line numbers in this plan were taken at commit 1658136d; app.ts shifts whenever a mount or comment
+   is added, so re-grep for the symbol rather than trusting the number.
 5. The property entity is Rental; tenants are User rows via Lease.tenantId. NEVER add Property/Unit.
    `prisma.property` in code is unfinished migration, not a missing model.
 6. Do NOT touch src/services/reportingService.js (dead, 9 lines, zero importers) and do NOT touch the
@@ -1414,14 +1418,73 @@ No new runtime dependency is strictly required to build the data model and servi
 7. There are dot/no-dot duplicate services (audit.service.ts vs auditService.ts; riskAssessment.service.ts
    vs riskAssessmentService.js). Verify which one you are editing.
 8. ts-node runs transpileOnly — a booting dev server is NOT a type-check pass. Run npm run typecheck.
-   Baseline is 109 errors, all in unreachable code; new code must not increase it.
+   **BASELINE CORRECTED: it is now 18 errors, not 109.** The 109 figure was measured before the dead-code
+   deletions (`6bd66e54`, `e00f1e62`, `e74f29bd`, `e4cb00dc`, `30068672`, `792702eb`) removed ~192 files;
+   measured at commit 1658136d with `npx tsc --noEmit`, current output is **18 errors**. New code must not
+   increase it. (Several commits in the chain also state "tsc unchanged at 18", which agrees with this
+   measurement — the "109" in earlier plan revisions is stale.)
 9. Do NOT run npm install (sandbox hazard). List dependencies as proposed additions.
 10. No CI exists. Migration PRs require the manual checklist (T-5.2). A destructive-looking SQL statement
     must be justified in the PR description — this repo has a precedent destructive migration.
-11. req.user is the raw JWT payload {id, email, role} — NOT a User row. where: {userId: undefined}
-    silently matches everything (past cross-tenant leak). Always validate the id.
+11. `req.user` — THERE ARE NOW THREE MIDDLEWARE WITH TWO INCOMPATIBLE SHAPES. After
+   commit 0d4a2062 the global guard (src/middleware/requireAuth.ts, mounted app.use('/api', ...) at
+   app.ts:125) hydrates the FULL Prisma User row; authMiddleware.protect does the same. But
+   src/middleware/auth.ts:7 (isAuthenticated) sets req.user to the raw JWT PAYLOAD {id, email, role}.
+   New code must use the hydrated row (req.user.role === UserRole.ADMIN) and must NOT redeclare shape.
+   Regardless of shape: where: {userId: undefined} silently matches everything (past cross-tenant
+   leak, fixed at c71863e3 — commit 4484ee86 cited in review notes does NOT exist). Always validate the
+   id before using it in a query.
 12. Human-in-the-loop is a HARD rule for: adverse action (denial), distribution approval, 1099 submission.
     Encode it as a guard test, not a comment.
+13. FAIL-CLOSED AUTH IS GLOBAL: every /api route is now deny-by-default via the PUBLIC allowlist in
+    src/middleware/requireAuth.ts (10 groups). If your new endpoint is genuinely public, add its path
+    THERE with a justification — do not remove the /api guard and do not mount above app.ts:125.
+    The `/uploads` static mount is no longer the exception it once was: commit 1658136d attached
+    requireAuth to it (app.ts:114), so anonymous reads are now 401 (verified: no allowlist entry
+    matches any `/uploads/*` path, so it is deny-by-default). BUT that mount now *authenticates without
+    authorizing* — any logged-in user can still fetch any file. Never persist a fetchable /uploads path
+    into Document.url, w9DocumentId, rawReportUrl, reportCopyUrl, summaryOfRightsUrl or
+    Consent.documentId; store an opaque document id and serve it through an ownership-checked handler —
+    see Appendix D / T-0.3.
+14. PROBING / SMOKE TESTS POST-GUARD: an unauthenticated 401 on an /api/* path now proves ONLY that the
+    guard exists — NOT that a router is mounted, and not that a route exists. app.use('/api', requireAuth)
+    (app.ts:125) runs BEFORE route matching, so a nonexistent /api/* path 401s exactly like a real one.
+    To prove a route is wired you MUST use a valid Bearer token: 404-with-token = not mounted;
+    200/400/403/500-with-token = handler reached. Never write "returns 401, therefore mounted" in a PR —
+    it is vacuous post-guard. Same rule for any "was 404, now works" verification: a route going
+    401 -> 200 requires the token, and a route that 404s with a token is still broken.
+    THERE ARE THREE ORIENTATIONS OF THIS BUG, and all three are present in this repo:
+      (a) VACUOUS  — criterion asserts 401 as proof of mounting. Now true for unmounted routes too.
+                     (T-0.1/T-0.2, corrected above.)
+      (b) INVERTED — test asserts 404 for a nonexistent /api path with NO token. Pre-guard that reached
+                     the barrel catch-all; post-guard it 401s, so the assertion is now wrong.
+                     LIVE INSTANCE: src/__tests__/security-owasp.test.ts:165-171
+                     ("should not expose sensitive information in errors") does
+                     request(app).get('/api/nonexistent-endpoint') and expects 404.
+      (c) NOISE    — a route mounted with NO middleware now returns 401-without-token, which reads as
+                     "protected" but is only the global guard. Verify with a token before claiming auth.
+    Fix for (b): either add a valid token (then 404 is genuinely correct and the test asserts what it
+    means) or assert 401 and rename the test — do NOT relax it to accept both, which would hide a real
+    regression. Authored tests are not run by the four-gap work, but any NEW route test must follow this.
+    (Credit: SE-4-2 — found (b) on the convention's first use, then I widened it to (a)/(c).)
+15. THE TEST SUITE IS NOT A QUALITY GATE, AND THIS IS WHY — three independent blockers, all verified:
+    (i)  `tsconfig.json` **excludes** `src/__tests__` and `**/*.test.ts` (tsconfig.json:26), so test files
+         are never type-checked; a type error in a test (e.g. TS2614) is invisible to `npm run typecheck`.
+    (ii) `src/__tests__/security-owasp.test.ts:2` and `src/__tests__/integration/api.test.ts:2` do
+         `import { app } from '../app'`, but `app.ts` has ONLY `export default app` (app.ts:206) — no
+         named export. Verified empirically: a named import from a default-only module is `undefined`
+         at runtime (`request(undefined)`), and tsc reports **TS2614** "has no exported member 'app'".
+         Nine test files use supertest; 8 import `app` — 6 correctly as default, **2 incorrectly named**
+         (the other is `security.test.ts`, which imports no app at all).
+    (iii) The suite aborts in `beforeEach` before any assertion runs: `security-owasp.test.ts:13`
+         `prisma.maintenanceRequest.deleteMany()` throws
+         `Foreign key constraint violated: WorkOrder_maintenanceRequestId_fkey`.
+         Measured: `npx jest src/__tests__/security-owasp.test.ts` → **20 failed / 20 total**, all in setup.
+    **Consequence for convention 14(b):** the inverted assertion is **LATENT, not currently failing** —
+    the test never reaches line 169 because setup throws first. Do not report it as a live break; report
+    it as a trap that fires the moment (i)/(ii)/(iii) is fixed. Also: because of (i), adding test files
+    to the gaps' acceptance criteria without addressing (i)-(iii) means the criteria cannot actually be
+    executed — prefer a probe script (curl with/without token) or fix the suite first.
 ```
 
 ## 10. Task dependency graph
@@ -1435,6 +1498,10 @@ graph TD
 
   T01 --> T33
   T01 --> T44
+  T03["T-0.3 Per-document authz for docs<br/>(P2 hardening, Appendix D)"]
+  T03 --> T31
+  T03 --> T33
+  T03 --> T43
 
   T11 --> T12["T-1.2 Ledger core<br/>(P0, W1)"]
   T12 --> T13["T-1.3 Deposit ledgers + state rules<br/>(P0, W1)"]
@@ -1473,9 +1540,16 @@ graph TD
   class T31,T32,T33,T34,T35 gap3
   class T41,T42,T43,T44,T45 gap4
   class T51,T52 xcut
+  class T01,T03 xcut
+  classDef prereq fill:#fecaca,stroke:#7f1d1d,stroke-width:2px
+  classDef soft fill:#fef3c7,stroke:#b45309,stroke-dasharray:4 3,stroke-width:2px
+  class T01 prereq
+  class T03 soft
 ```
 
-**Reading the graph:** the graph now has **one root prerequisite shot first** — `T-0.1` (fix the mount order, Appendix C), which gates `T-3.3`/`T-3.4` and `T-4.4` because their routes mount at `app.ts:123`/`:147`, i.e. behind the catch-all — and then **two** hard cross-gap edges — `T-1.2 → T-2.1` (ledger gates statements) and the `T-1.1` root (the migration everything's additive schema sits on). **Gap #4 is fully independent after T-0.1** and should run in parallel from Wave 1. **Gap #3 is independent but calendar-critical.**
+**T-0.1 is the only hard prerequisite.** **T-0.3 is now a P2 soft constraint** (dashed): the *blocking* condition it was written for — regulated documents anonymously fetchable — was closed by commit `1658136d` (see Appendix D.0). The remaining per-document authorization is a correctness requirement that can land any time before the Gap #3/#4 document endpoints go live; it no longer gates the wave plan.
+
+**Reading the graph:** one root prerequisite — `T-0.1` (fix the mount order, Appendix C) — which gates `T-3.3`/`T-3.4` and `T-4.4` because their routes previously mounted behind the catch-all. *(Note: `T-0.1` itself is effectively **done** — the barrel was moved last at c71863e3, now `app.ts:178`, and the guard landed at 0d4a2062/1658136d. It is retained in the graph because its acceptance criteria — the both-`/api/payments`-families smoke and the anti-regression test — are still worth executing, but it is no longer calendar-blocking.)* Then **two** hard cross-gap edges — `T-1.2 → T-2.1` (ledger gates statements) and the `T-1.1` root (the migration everything's additive schema sits on). **Gap #4 is fully independent** and should run in parallel from Wave 1. **Gap #3 is independent but calendar-critical.**
 
 ---
 
@@ -1501,6 +1575,7 @@ One additive migration set (plus the single index change). Grouped by gap; full 
 | `Consent` (+`ipAddress`, `userAgent`, `documentId`) | fields | 4 | Additive, nullable |
 | `ComplianceType` (+`FAIR_HOUSING`, `FCRA`) | enum members | 4 | Additive (Postgres enum) |
 | Back-relations on `User`, `Rental`, `Lease`, `Vendor`, `Document`, `Application`, `Screening` | relations | 1–4 | Additive |
+| `Document.url` stays a free-form `String` — **storage/serving contract changed, schema unchanged** (see **Appendix D**: gap documents must not be served from the `/uploads` mount — it is guarded since `1658136d` but not per-document-authorized) | convention | 1,3,4 | none (no schema change; behavioral constraint + T-0.3, P2) |
 | **`Lease.rentalId`: `@unique` → `@@index([rentalId, status])`** + raw partial unique index | **index change** | 1 | **Destructive-index (non-lossy), 0 rows backfilled** |
 
 **Total:** +17 models, +15 enums, 1 index change, 0 column drops, 0 table drops, 0 rows lost.
@@ -1527,7 +1602,9 @@ One additive migration set (plus the single index change). Grouped by gap; full 
 
 ### C.1 The defect
 
-`app.ts:105` calls `app.use(routes)`. The router returned by `routes/index.ts` **terminates with a catch-all** at `routes/index.ts:148`:
+> Line numbers as observed when this appendix was written. At `HEAD` (`1658136d`): barrel mount `app.ts:105` → **`app.ts:178`**; catch-all `routes/index.ts:148` → **`routes/index.ts:158`**. See E.3. **The defect itself is now fixed** — `c71863e3` moved the barrel last, and the guard landed in `0d4a2062`.
+
+`app.ts:105` called `app.use(routes)`. The router returned by `routes/index.ts` **terminates with a catch-all** at `routes/index.ts:148`:
 
 ```js
 router.use(`${API_PREFIX}/*`, (req, res) => {
@@ -1581,10 +1658,10 @@ The PM's probe found `/api/payments` dead. I verified it and found the situation
 - **Priority:** **P1**
 - **Files:** `backend/src/routes/index.ts` (add the `router.use`), `backend/src/routes/paymentRoutes.ts`, `backend/src/controllers/paymentController.ts`, `backend/src/services/payment.service.ts`
 - **Acceptance criteria:**
-  - `POST /api/payments/payment-intents` returns **401** (auth required), not 404/500.
-  - `createRefund` / `createSubscription` argument shapes reconciled between controller and service.
+  - **⚠️ CORRECTED — "returns 401" is NOT a pass condition here.** The original criterion read *"`POST /api/payments/payment-intents` returns **401** (auth required), not 404/500."* Post-guard that is satisfied by **any** non-allowlisted `/api/*` path, mounted or not, because `app.use('/api', requireAuth)` (`app.ts:125`) runs before route matching — so 401 only proves the guard is present, not that this router is wired. **Prove the wiring with a valid token:** unauthenticated → 401 (guard, uninformative); **with a valid Bearer token → the path must reach the handler (200/400/500-with-a-real-cause), and specifically must NOT 404.** If it still 404s with a token, the mount did not take effect and this task is not done. (Credit: SE-4-2, `8d16f704`.)
+  - `createRefund` / `createSubscription` argument shapes reconciled between controller and service. **Expect 500s to appear once the router is genuinely reachable** (Appendix C.3, point 3) — a 500 from a real handler is *evidence the route is now mounted*, which is the last thing the old criterion would have accepted.
   - `POST /api/payments/webhooks` receives a **raw** body (verify body-parser ordering; Stripe signature verification needs the unparsed buffer).
-  - Smoke test covers **both** path families (`/payment-intents` and `/transactions/pending`).
+  - Smoke test covers **both** path families (`/payment-intents` and `/transactions/pending`), **each with a valid token**, since that is the only way to distinguish 404-not-found from 404-shadowed after the guard.
 
 
 ### C.4 The fix and its one caveat
@@ -1595,15 +1672,19 @@ The PM's probe found `/api/payments` dead. I verified it and found the situation
 
 ### C.5 New task
 
-#### T-0.1 — Fix API route mount order (P0 prerequisite)
+#### T-0.1 — Fix API route mount order (P0 prerequisite) — **effectively DONE; criteria corrected**
 - **Dependencies:** none — **must precede T-3.3, T-3.4 and all §4 compliance routes**
-- **Priority:** **P0**
+- **Priority:** **P0** *(the fix has landed — `c71863e3` moved the barrel last, now `app.ts:178`; the criteria below remain worth executing as a regression guard)*
 - **Files:** `backend/src/app.ts` (move `app.use(routes)`); possibly `backend/src/routes/index.ts`
 - **Acceptance criteria:**
   - A full diff of the `routes/index.ts` mount list vs the `app.ts` mount list is attached to the PR, with any collision resolved explicitly.
-  - Smoke test: each of `/api/payments`, `/api/signatures`, `/api/voice`, `/api/compliance`, `/api/tax-document` returns **401/400/200** — **never 404** — with auth as a control.
+  - **⚠️ CORRECTED — the original smoke criterion was invalidated by the guard.** It read: *"each of `/api/payments`, `/api/signatures`, `/api/voice`, `/api/compliance`, `/api/tax-document` returns 401/400/200 — never 404."* **That no longer proves anything.** Once `app.use('/api', requireAuth)` is mounted at `app.ts:125` — *above* every router — an unauthenticated request to **any** non-allowlisted `/api/*` path returns **401 regardless of whether a router is mounted there**. Express runs the guard before route matching, so a *nonexistent* route also 401s. A pre-guard probe distinguished "mounted" from "unmounted" (200/400 vs 404); post-guard it cannot.
+  - **The corrected probe must use a VALID TOKEN as the control**, so the guard passes and routing is actually exercised:
+    - with a valid Bearer token → each listed path returns **404 if unmounted** ("route not found" from the barrel catch-all) vs **200/400/403 if mounted** ("handler reached");
+    - without a token → **401**, which is now merely the guard's fail-closed behavior and **must not** be cited as evidence that a mount exists.
+  - **This distinction must be stated in the PR.** (Credit: SE-4-2 identified it while verifying the `order-upload` deletion in `8d16f704` — an unauthenticated `POST /api/order-upload/*` returned 401, not 404, which is *not* evidence the mount survived; 404-with-token is.)
   - A regression test asserts the catch-all does **not** shadow a mount declared later (fails if someone reorders it back).
-  - **Post-fix smoke must cover BOTH `/api/payments` path families** — see Appendix C.3. Probing only `/payment-intents` (the never-mounted `paymentRoutes.ts`) will pass the reorder test while leaving the with-dot file unverified, and vice versa. Add a control that distinguishes 404-not-found from 404-shadowed.
+  - **Post-fix smoke must cover BOTH `/api/payments` path families** — see Appendix C.3. Probing only `/payment-intents` (the never-mounted `paymentRoutes.ts`) will pass the reorder test while leaving the with-dot file unverified, and vice versa. Add a control that distinguishes 404-not-found from 404-shadowed — and note that post-guard, the *only* way to distinguish them is with a token.
   - **Do NOT bundle the `paymentRoutes.ts` wiring into T-0.1** — that is T-0.2, a separate P1 task, because it exposes latent controller/service signature mismatches (Appendix C.3, point 3).
   - Note: the real defect is *class* — a catch-all that does not `next()`. Long-term the catch-all should be the **last** middleware on the app, not the last route in a router that gets mounted first.
 
@@ -1611,4 +1692,340 @@ The PM's probe found `/api/payments` dead. I verified it and found the situation
 
 ---
 
-*End of plan. Prepared by 高见远 (Gao), Architect — 2026-09-17. All regulatory citations are to the authority named; **per-state numeric values are configuration data requiring counsel sign-off and are deliberately not asserted here.** Estimates are labelled **[inference]**. No source file was modified and no migration was created, per constraints. Appendix C added post-delivery after the PM's route probe.*
+## Appendix D — Document storage: the read path, and why the four-gap documents must not reuse it
+
+Added post-delivery while verifying the fail-closed guard (`middleware/requireAuth.ts`, commit `0d4a2062`). **Updated after commit `1658136d`** — the *anonymous* exposure described in D.1 was closed while this appendix was being written, and a residual remains. Read D.0 first: it is the current state; D.1–D.3 preserve the original finding and its reasoning because the *design* conclusion (D.4) is unchanged.
+
+### D.0 UPDATE (post-`1658136d`) — anonymous read closed; the authorization gap remains
+
+Commit `1658136d` ("guard the /uploads read path + confine tax-document writes") landed the fix I had recommended for the anonymous static mount, and independently arrived at the same two adjacent defects I logged in D.5. Verified at `HEAD`:
+
+```ts
+// backend/src/app.ts:114
+app.use('/uploads', requireAuth, express.static(path.join(__dirname, '../uploads')));
+```
+
+- **Anonymous read is closed.** I evaluated `requireAuth`'s own `isPublicApiPath()` against `/uploads`, `/uploads/`, `/uploads/x.pdf`, `/uploads/orders/x.pdf` — **none match any of the 23 allowlist entries**, so the mount is deny-by-default and anonymous reads now 401. (Checked by executing the matcher, not by reading it.)
+- **`taxDocument.service.ts` path traversal closed.** The commit sanitizes the caller-controlled `rentalId` to `[a-zA-Z0-9_-]`, slices to 64, and writes into `os.tmpdir()` instead of a CWD-relative `./tax-document-<id>-<year>.pdf` — which also removes the unbounded working-tree growth. Both D.5 bullets are **resolved**.
+- **The residual is now narrower and more precise than D.1 stated: the mount *authenticates* but does not *authorize*.** Any holder of a valid JWT — including any tenant, on any account — can still `GET /uploads/<name>` and receive any file in the store. That is strictly better than anonymous, and **still insufficient** for the documents Appendix A introduces: a W-9 with a payee TIN, a consumer report, or an FCRA §615(a) required copy must be restricted to the *owning* principal, not to "anyone logged in." The commit's own comment records this as a `TODO` and names the same remedy D.4 does.
+
+**Net effect on this plan:** T-0.3 drops from P1/blocking to **P2/hardening**, because the blocking part (anonymous exposure of regulated documents) is gone. What remains is per-document authorization, which is a correctness requirement for Gap #3/#4 but no longer a "stop the line" item. D.4's rule — **store an opaque id, not a fetchable path** — is unchanged and still binding on the new schema fields.
+
+### D.1 (historical — state at commit `0d4a2062`) The guard's scope was `/api` — and only `/api`
+
+> Line numbers in D.1–D.3 are as they were at `0d4a2062`; at `HEAD` (`1658136d`) they are +12 (guard `:125`, `/uploads` `:114`). See E.3.
+
+`app.ts:113` mounted the guard as `app.use('/api', requireAuth)`. That is correct and deliberate: the guard is *path-prefixed*, so it protects `/api/*` and nothing else. One mount was therefore **outside** it by construction:
+
+```ts
+// backend/src/app.ts:102  (was 11 lines above the guard; now :114, and guarded)
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+```
+
+`/uploads` was **anonymous and unauthenticated**: `express.static` served any file beneath `backend/uploads` to anyone who knew or guessed the name, with no token, no ownership check, and no listing protection beyond the filename. A valid JWT was not required and `req.user` was never consulted. **This was fixed in `1658136d` (see D.0).**
+
+This is not an oversight in the guard design — the guard was scoped to `/api` on purpose — but it means **"all handlers are now guarded" ≠ "all bytes are now guarded."** Any document whose URL begins `/uploads/` is public.
+
+### D.2 Evidence: what actually writes to `/uploads`, and how it is reachable
+
+| Writer | Destination | URL handed to the client | Write gated by | Read gated by (was → now) |
+|---|---|---|---|---|
+| ~~`routes/orderUpload.ts:8` (multer `dest: 'uploads/orders/'`)~~ — **DELETED in `8d16f704`, row historical** | `uploads/orders/` | `/uploads/orders/${file.filename}` — `orderUploadController.ts:28,71,108` | ✅ `authMiddleware.protect` (`orderUpload.ts:40,49,58`) | ❌ anonymous → ✅ JWT required (`1658136d`) |
+| `routes/imageRoutes.ts:7` (multer `dest: 'uploads/'`) — **the only remaining writer** | **`uploads/` root** | `/uploads/${file.filename}` — `services/imageService.ts:14` | ✅ `protect` + `checkRole([PROPERTY_MANAGER, ADMIN])` (`imageRoutes.ts:13-14`) | ❌ anonymous → ✅ JWT required (`1658136d`) |
+
+Both callers were mounted **inside the barrel** (`routes/index.ts:84` for `imageRoutes`, `:135` for `order-upload`) — i.e. **below** the guard (then `app.ts:113`, now `:125`) — so the *upload* leg was always correctly authenticated. The **download** leg was not: it was a static file server registered above the guard. As of `1658136d` the download leg carries the same `requireAuth` (`app.ts:114`), so it now requires a JWT — but still no per-document ownership check (D.0).
+
+> **Update — the `orderUpload` module is now DELETED (commit `8d16f704`), and I verified the deletion is clean.** `routes/orderUpload.ts` and `controllers/orderUploadController.ts` are gone, the barrel `import` (`index.ts:55`) and mount (`index.ts:135`) are removed, and the stale `app.ts` comment was corrected. Zero `orderUpload`/`order-upload` references remain anywhere in `backend/src`, `dashboard/src`, `propertyapp/src`, `ContractorApp/src`. I also confirmed SE-4-2's rationale independently: `orderUploadController` made **zero Prisma calls** (wrote bytes, returned a URL to an orphan), `WorkOrder` (`schema.prisma:995`) has **no** file/url/attachment field, and `multer` retains 4 other importers (`imageRoutes`, `photoEnhancement.routes`, `seo.routes`, `voiceRoutes`) so the dependency stays.
+>
+> **Consequence for this plan: the `uploads/orders/` residual is closed as a non-issue.** With no writer and no persistence path, `uploads/orders/` cannot accumulate in normal operation, so it no longer needs to ride Gap #3/#4 — **nothing is parked on the gap plan for it.** The `imageRoutes` row is now the **only** remaining `/uploads` writer, and it is unaffected: the anonymous-read concern and T-0.3 (gap documents must not be served from `/uploads`) both remain exactly as written, because the concern was never the *writer* — it was the *document fields* Appendix A introduces.
+
+Current on-disk state (measured, not inferred): `backend/uploads/` contains a single empty directory `uploads/orders/` and **no files**. So there is **no live exposure** — the hole was latent, and the four-gap schema would have opened it.
+
+### D.3 Why this becomes a real exposure under this plan
+
+Appendix A (§1.3 / §3.3 / §4.3) introduces fields that point at documents:
+
+- **Gap #3** — `W9Document Document? @relation("W9Document", ...)` on `TaxpayerProfile` (`w9DocumentId`), i.e. an **IRS Form W-9**, which carries the recipient's **TIN/EIN** — the single most identity-sensitive artifact in the whole feature set.
+- **Gap #4** — `ScreeningReport.rawReportUrl` (the consumer report itself), and `AdverseActionNotice.reportCopyUrl` + `summaryOfRightsUrl` (the copies FCRA §615(a) **requires** the landlord to deliver). These are regulated consumer records with access restrictions under FCRA §609.
+- **Gap #4** — `Consent.documentId` (proof of the §606 disclosure the applicant signed).
+
+The existing code establishes a *pattern* of storing a local `/uploads/...` path in a document field: `imageService.ts:14` returns exactly `/uploads/${file.filename}` and annotates it `// This would be a CDN URL in production`. `schema.prisma:170` types `Document.url` as a **free-form `String`**, so nothing structurally prevents a W-9 or a screening report from being persisted as `/uploads/w9-....pdf` and then served to **any authenticated principal** who guesses the name — and, before `1658136d`, to anyone at all.
+
+**An unguessable filename is not authorization.** These are precisely the documents for which "what can be fetched without a session" is a compliance question, not a convenience one. *(Post-`1658136d`: reads now need a session — but still not the **right** session. See D.0.)*
+
+### D.4 Design requirement (binding on Gap #1/#3/#4 document work)
+
+**No document referenced by `w9DocumentId`, `rawReportUrl`, `reportCopyUrl`, `summaryOfRightsUrl` or `Consent.documentId` may be served via the `/uploads` static mount.** Choose one, in preference order:
+
+1. **[recommended for v1] Guarded streaming endpoint.** Add `GET /api/documents/:id/content` that (a) sits under the existing `/api` guard, (b) loads the `Document` row, (c) authorizes the caller against the document's owning entity (`uploadedById`, or the `Rental`/`Lease`/`TaxpayerProfile`/`ScreeningReport` it hangs off) using the same `authorizeTargetUser` pattern the compliance controller already uses, and (d) streams the bytes with a `Content-Disposition: attachment` and no caching. Store an **opaque document id** in the schema field, never a path. This reuses the guard that is already in place and needs no infrastructure.
+2. **Private object storage** (S3-compatible) with short-lived **presigned URLs** and no public bucket policy — the `cdnUrl`/`key`/`thumbnailCdnUrl` columns already on `Document` (`schema.prisma:181-184`) are the intended home for this. Correct long-term, but out of v1 scope and requires a real `url`→`key` migration.
+3. **A `/uploads` mount behind the guard** — this is now the *shipped* state (`1658136d`, `app.ts:114`). Acceptable as a stopgap; it authenticates but does **not** authorize per-document, so any logged-in user could fetch any file. Insufficient for W-9s and screening reports — which is exactly why D.0 leaves T-0.3 open at P2.
+
+Whichever is chosen, the schema field must hold an **identifier, not a fetchable path**, and the acceptance criteria for the Gap #3/#4 download endpoints must include a **negative test** (a second user requesting another user's W-9 / report copy gets 403/404, not 200).
+
+### D.5 Two adjacent file-handling defects found in the same sweep (both now **closed**)
+
+- **~~`deleteUploadedFile` is an orphan.~~** `orderUploadController.ts:125` implemented deletion, but **no route in `routes/orderUpload.ts` referenced it** (verified: the only occurrence of the symbol in the tree was its own definition). It also built its target with a **CWD-relative** path (`path.join('uploads/orders/', filename)`, `:133`). **RESOLVED by `a570c05e`** — the handler and its now-unused `path` import were **removed**, not wired. I verified the removal is clean and behaviorally inert: the symbol no longer appears anywhere in `src/`; `POST /image`, `/single`, `/multiple` remain mounted (`orderUpload.ts:39,48,57`); `fs` is still legitimately used at `:64` (`fs.unlinkSync(file.path)` — note this is the *local variable* `file.path`, not the removed module); and no `path.` module usage remains.
+  - **SE-4-2's characterization of *why* removal was right is the important part, and I endorse it:** the handler was not merely unreachable, it was **unsafe to wire** — it took `filename` from the route param unvalidated, joined it to `uploads/orders/` with no containment check, and performed **no ownership check**, so mounting it as-is would have been a **delete-any-file-by-name** primitive (traversal + IDOR in one). Removing dead-but-dangerous code is strictly better than "wiring it up later"; if the retention story in Gap #3/#4 needs a delete path, it must be built fresh with an ownership check and an absolute `UPLOADS_DIR`, not resurrected.
+  - **Net state (final, after `8d16f704`):** the whole `orderUpload` module is now deleted, so there is no upload path, no delete path, and no retention exposure. The earlier "no delete path → unbounded accumulation" note is **superseded** — nothing writes to `uploads/orders/` at all. **Nothing is parked on Gap #3/#4 for this.** (If a future feature genuinely needs order attachments, it needs a schema model first — `WorkOrder` has no attachment field — and it must be built with an ownership check from the start.)
+- **~~Tax-document PDFs are written to the repo root.~~** **RESOLVED by `1658136d`.** `services/taxDocument.service.ts` now sanitizes the caller-controlled `rentalId` (`replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 64)`) and writes to `path.join(os.tmpdir(), ...)` instead of `./tax-document-${rentalId}-${year}.pdf`. This closes **both** the path-traversal concern and the unbounded working-tree growth. (The download was already behind the guard at `/api/tax-document`.)
+
+**Lesson recorded for the Engineer:** these two were found by *reachability* checks (is the symbol referenced? is the path CWD-relative?), not by reading the code. Both looked correct on the page. `1658136d` found the same two independently — which is weak confirmation that reachability, not readability, is the right test.
+
+### D.6 Task (downgraded after `1658136d`)
+
+#### T-0.3 — Per-document authorization for gap documents (P2 hardening, was P1)
+- **Change:** the *blocking* half of this task — "regulated documents are anonymously fetchable" — was closed by `1658136d` (verified: `/uploads` is deny-by-default under `requireAuth`; no allowlist entry matches). What remains is per-**document** authorization, which is a correctness requirement for Gap #3/#4 but no longer a stop-the-line item. **P1 → P2.**
+- **Dependencies:** none (design constraint); should precede the Gap #4 download endpoints (`reportCopyUrl` / `summaryOfRightsUrl` delivery) and the Gap #3 W-9 retrieval endpoint.
+- **Sequencing (agreed with SE-4-2, and I endorse it):** do **not** build `documents/:id/content` as a standalone slice. It depends on the Gap #3/#4 schema (it must authorize against `TaxpayerProfile` / `ScreeningReport` / `AdverseActionNotice`, names that **do not exist yet** — verified: `w9DocumentId`, `payeeTIN`, `rawReportUrl`, `reportCopyUrl`, `summaryOfRightsUrl`, `TaxpayerProfile`, `ScreeningReport`, `AdverseActionNotice` all return **0 matches** in `prisma/schema.prisma`). It should therefore **ride the four-gap migration** (§1.3/§3.3/§4.3) as the serving layer for those fields, not land ahead of it. Building it standalone would mean authorizing against models that aren't there.
+- **Priority:** **P2**
+- **Files:** `backend/src/routes/document.routes.ts` (currently one route: `POST /generate-lease`), a new document-content controller/handler
+- **Acceptance criteria:**
+  - No schema field introduced by gaps #3/#4 stores a fetchable `/uploads/...` path; fields hold an opaque document id.
+  - The document-serving handler authorizes the caller against the document's owner (**not** merely "has a valid JWT") — the `1658136d` mount authenticates but does not authorize, so a logged-in tenant can currently fetch any file by name.
+  - **Negative test:** user B requesting user A's W-9 / `reportCopyUrl` → **403 or 404**, never 200, never a byte stream.
+  - **Regression test:** a test asserts the four document fields never emit a `/uploads` prefix.
+  - **The anonymous-read half is already covered** — a regression test should assert `GET /uploads/<existing file>` without a Bearer token returns **401**, so `1658136d`'s fix cannot silently regress.
+
+### D.7 What this appendix does and does not claim
+
+- **Claimed (as of the original finding, `0d4a2062`):** the `/uploads` mount was anonymous; it sat above the guard; orders/images uploads were authenticated on the write leg and anonymous on the read leg; the four-gap schema would persist W-9s and screening reports into that same pattern if the field is a path; there was **no live file on disk** (still true).
+- **Claimed (as of `HEAD`, `1658136d`):** the anonymous read is **closed** (deny-by-default, verified by executing the matcher); the tax-document path/CWD defect is **fixed**; the residual is that the mount **authenticates without authorizing**, so a valid JWT from any principal can read any file.
+- **Not claimed:** that the guard is wrong, or that any file leaked — `uploads/` still holds no files, so nothing was ever exposed. The guard's `/api` scope is correct; D.1–D.3 documented a second, adjacent surface, and `1658136d` independently fixed it. **This appendix is retained rather than deleted because the design conclusion in D.4 is what governs the new schema fields** — the fix guards the *mount*, not the *document*.
+
+---
+
+### A note on verification method for Appendices C and D
+
+Every line citation in Appendices C and D was produced by reading the file at the cited line, not recalled. Claims about *reachability* (`app.ts` mount order, which router wins, whether a symbol is referenced anywhere in the tree) were checked with a tree-wide symbol search, because "the code exists" and "the code is reachable" are different facts and this codebase has repeatedly shown dead-but-plausible-looking code (e.g. the never-mounted `paymentRoutes.ts`, Appendix C.3; `orderUploadController.deleteUploadedFile`, D.5).
+
+---
+
+## Appendix E — Corrections to review claims (accepting two, disputing two)
+
+Added 2026-09-17 after a review pass. Recorded here because a plan that silently absorbs wrong facts into its §9 conventions propagates them to every Engineer who follows.
+
+### E.1 ACCEPTED — my `serviceUtils.ts` citation was imprecise
+
+I wrote that `serviceUtils.ts:71,80` are where the inter-service header is sent. **Those are call sites, not header sends.** Line 71 is `return this.call('users', '/validate/${userId}', 'GET');`; it contains no header. The header is set **once**, centrally, at `serviceUtils.ts:38` inside `call()`:
+
+```ts
+headers: {
+  'Content-Type': 'application/json',
+  'X-Internal-Service-Call': 'true',   // :38 — the only send site
+  ...headers
+},
+```
+
+Every method (`validateUser`, `validateProperty`, `getUserBasicInfo`, `getPropertyBasicInfo`) inherits it through `call()`. **Correction accepted.** Verified by reading lines 21–99.
+
+**Also accepted, and it sharpens the disposition:** I described the receive-side check as "a forgeable literal." That is right about the mechanism but I should not have paired it with a "never sent / dead scaffolding" framing. The correct statement is that `x-internal-service-call` is a **deliberately-implemented, unauthenticated authentication bypass whose only credential is a string the attacker types** — which is *worse* than dead code, not equivalent to it. `usersRoutes.ts:26,61` read it; `serviceUtils.ts:38` writes it; the class that would call the writer is **never invoked** (verified below). So no legitimate traffic exists to protect, and the endpoints are correctly 401'd by the global guard. **My recommendation is unchanged: do not allowlist them.**
+
+### E.2 CONFIRMED by exhaustive search — the writer class is never invoked (my "no live caller" claim holds)
+
+Re-verified the reachability claim my whole rejection rests on, tree-wide (`backend/src`, excluding `node_modules`/`venv`):
+
+```
+ServiceCommunication mentions  → 6, all in serviceUtils.ts (definition) + usersRoutes.ts (imports ServiceCommunicationError ONLY)
+imports from 'serviceUtils'    → 1: usersRoutes.ts:5  import { ServiceCommunicationError }
+validateUser/getUserBasicInfo/validateProperty/getPropertyBasicInfo → 4 hits, ALL in serviceUtils.ts (their own definitions)
+```
+
+Zero call sites for any `ServiceCommunication.*` method. The *class* is never constructed; only the *error class* is imported. `serviceUtils.ts` is **115 lines** (not 0). So: the header writer exists and is correctly implemented, and nothing calls it. My rejection stands on this, and I am now citing the search rather than an impression.
+
+### E.3 DISPUTED — `app.ts:113` / `app.ts:105` / `routes/index.ts:148` in earlier review notes are stale line numbers
+
+Line numbers cited in review traffic do not match `HEAD`. Measured at **`1658136d`**:
+
+| Symbol | Cited | Actual at HEAD | Verified by |
+|---|---|---|---|
+| `app.use('/api', requireAuth)` | `app.ts:113` | **`app.ts:125`** | `grep -n` |
+| `app.use('/uploads', …)` | `app.ts:102` | **`app.ts:114`** | `grep -n` |
+| `app.use(routes)` (barrel) | `app.ts:105`, `:166` | **`app.ts:178`** | `grep -n` |
+| catch-all | `routes/index.ts:148` | **`routes/index.ts:158`** | `grep -n` |
+| `app.use('/api/payments', …)` | `app.ts:142` | **`app.ts:165`** | `grep -n` |
+
+Cause: `1658136d` added a 13-line comment block above the `/uploads` mount, shifting everything below it by +12. **This is a real hazard for this plan** — §9 conventions and Appendix C/D previously cited the old numbers. All corrected in place, and §9 item 4 now instructs the Engineer to **re-grep for the symbol rather than trust a line number**. Recommend the same for any other document citing `app.ts` lines.
+
+### E.4 DISPUTED — commit `4484ee86` does not exist
+
+A review note attributed the cross-tenant-`undefined` fix to commit `4484ee86`. **`git log -1 4484ee86` → `fatal: ambiguous argument '4484ee86': unknown revision or path not in the working tree.`** Searched `git log --all` for messages matching *leak|tenant|cross-tenant|undefined*: no such commit. **The actual fix is `c71863e3`** ("unshadow 36 route mounts + restore tenant search auth"), whose body states: *"FIX 2 (unauth tenant data leak): `/api/tenants/search` was mounted without `authMiddleware.protect`… Re-add the middleware."* Also `git log -S "userId: undefined"` returns **zero** commits, so the `undefined`-filter pattern was never introduced *or* removed by a tracked commit — it is a latent convention hazard, not a fixed incident. **§9 item 11 corrected to cite `c71863e3` and to note that `4484ee86` is not a real revision.**
+
+### E.5 RESOLVED — `route-auth-audit.js` FOUND, FIXED, and its misleading number suppressed
+
+**Update (later same day):** the file was not in the repo because it is a **user-level skill script**, at
+**`~/.workbuddy-ai/skills/ts-dead-code-triage/scripts/route-auth-audit.js`** — which is why no repo-wide search could find it. My original "not found" note stands as an accurate record of the search; the resolution follows.
+
+I patched the tool (backup kept at `route-auth-audit.js.bak-pre-guard-fix`) to implement exactly rule (a)–(d) above, and **tested it in three configurations**:
+
+| Case | Setup | Result | Correct? |
+|---|---|---|---|
+| Real repo | `app.use('/api', requireAuth)` at `app.ts:125` | `GLOBAL GUARD: DETECTED — app.use('/api', requireAuth); (app entry line 125)`; `reachable-without-credentials: 0`; `covered-by-global-guard: 166 [NOT leaks]` | ✅ the 166 is now labelled covered, not leaked |
+| No guard present | fake app entry with no `app.use(<prefix>, <auth>)` | `GLOBAL GUARD: NOT DETECTED`; *"the open-handler total below … IS meaningful"*; `fully bare mounts: 1 -> 1 open handlers` | ✅ does **not** over-suppress |
+| Guard with a non-covering prefix | `app.use('/public', requireAuth)` + `/api` mounts | `DETECTED (/public)`; `NOTE: no mounts fall under its prefix, so nothing was suppressed`; `reachable-without-credentials: 2` | ✅ prefix scoping respected |
+
+It also now detects **both** live guards in this repo — `/uploads` @ `app.ts:114` **and** `/api` @ `app.ts:125` — and treats mounts outside a guard's prefix as still reachable, which is the `/uploads` finding itself (Appendix D). `--json` mode emits `globalGuard`, `globalGuards[]`, and `globallyGuarded[]` so downstream tooling can consume it.
+
+**Re-verified after `8d16f704`** (the `orderUpload` deletion, which removed a barrel mount between my first and second measurements): the tool now reports `mounts: 85 (app 35, barrel 50)` — the barrel count dropped 51 → 50 as expected — while `reachable-without-credentials: 0` and `covered-by-global-guard: 166 across 60` are **unchanged**. The reason is worth noting because it corrects a caveat I had raised: I had warned that the `166` was "slightly stale" for the same reason the mount count moved, but **it was not** — the deleted mount contributed **0 open handlers**, so removing it left the open-handler total untouched. **The lesson is the narrow one, not the broad one:** mount counts and handler counts move independently, so a changed mount count does not imply the handler total is stale. Re-measure both; do not infer one from the other. (Both figures are now current as of `8d16f704`.)
+
+Two adjacent usability fixes, both from the same "the model must match reality" principle: the missing-app-entry path now prints the **actual command to run with the correct CWD** (it resolves `src/app.ts` relative to CWD, so running from the repo root previously failed with a bare `app entry not found`), and passing an explicit app-entry path works from anywhere (verified from the repo root).
+
+I also corrected the skill's own `SKILL.md`, which still documented the stale "~169 open handlers" and had no mention that a barrel-only model inverts the posture once a global guard exists. That is the **upstream** fix — the reason the number was misread is that the tooling's own documentation described a pre-guard world.
+
+**Durable lesson recorded in both places:** a security count must state *which era* it is from. A stale count that inverts the security posture is worse than no count, because it looks like a regression and invites a "fix" for a problem that does not exist.
+
+---
+
+## Appendix F — Metering key: decide on `userId`, and a fact-check on `Rental` FKs
+
+Added 2026-09-17 in answer to the team-lead's question: should the free tier meter on `userId` (no schema change) or wait for a multi-tenant `Account` model? **Answered from the schema, and it contains one disputed claim.**
+
+### F.1 The decision: meter on `userId`, and accept duplicate-signup leakage
+
+**Verdict: `userId`.** Not a preference — it is the only key that exists today. Verified: `grep -iE "^model .*(org|account|company|team|workspace)" prisma/schema.prisma` → **no matches**, and there is no `Organization`/`Account`/`Company`/`Team` model anywhere across the 94 models. Ownership is per-**User** (`Rental.managerId`, `Rental.ownerId`, `Rental.createdById`, `Lease.tenantId`). A metering key therefore has nothing else to hang off.
+
+**Recommended meter: active leases, scoped to `userId`.** `Lease.status` is `LeaseStatus @default(ACTIVE)` (`schema.prisma:276`), so "≤3 **active** leases" is computable today with a single `count()` and no migration. This also **matches the GTM spec's own meter choice** — that document argues for metering **per active lease**, not per unit (*"Bills occupancy, not doors — vacancy months are free… It also aligns with the free-tier meter (leases), so one metering implementation serves both"*). So one implementation serves the free tier and the paid plan: **no divergence, no second meter.**
+
+**Accept the duplicate-signup leak — for v1.** A landlord who registers twice gets two free tiers, and nothing in the schema can detect it. At free-tier scale this is the correct trade: the cost of the leakage is a handful of unmonetized leases, while the cost of the alternative is a `Account` + `AccountMember` retrofit touching **every authorization check in the app** — and this app's authorization is currently `Rental`-scoped with an FK to `User`. Retrofitting an org boundary is not a free-tier feature; it is a re-platforming of ownership. Mitigate later, cheaply, with detection rather than prevention: same billing fingerprint / same email domain / same phone on two accounts flags for review. **Do not block shipping on it.**
+
+**But this is a product-shape call, not mine to make alone, and it has a hard deadline:** the GTM spec itself (§ D3) already flags this as *"the largest hidden dependency in this plan"* and says a free tier requiring an `Account` boundary means billing is **gated on a multi-tenancy retrofit**. The window to decide is **now**, while there are zero paying customers and the migration is free — once checkout ships, adding `Account` means migrating live subscription ownership. **Recommendation to the PM: decide before checkout ships, and prefer `userId` + detection over `Account` + prevention.**
+
+### F.2 DISPUTED — `Rental.managerId`/`ownerId` **do** have `@relation` and **do** have real FK constraints
+
+A review note stated that `Rental.ownerId` and `Rental.managerId` are *"both plain required `String`s with no `@relation` to `User`, so nothing at the DB level enforces that they even point at real users."* **This is incorrect, and it matters** — it is the same claim the PM made earlier in this project and it was corrected then too. Verified two ways:
+
+**At the Prisma layer** (`schema.prisma:566-568`):
+```prisma
+Manager   User @relation("RentalManager",   fields: [managerId],   references: [id])
+Owner     User @relation("RentalOwner",     fields: [ownerId],     references: [id])
+CreatedBy User @relation("RentalCreatedBy", fields: [createdById], references: [id])
+```
+Named relations, both directions, plus `@@index([managerId])` and `@@index([ownerId])` (`:586-587`).
+
+**At the database layer** — the decisive check, since Prisma relations and DB constraints can drift. `grep -rn "Rental_managerId_fkey" prisma/migrations/`:
+```
+20250802_consolidate_to_rental/migration.sql:104  ALTER TABLE "Rental" ADD CONSTRAINT "Rental_managerId_fkey"
+                                                  FOREIGN KEY ("managerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+20250802_consolidate_to_rental/migration.sql:105  ALTER TABLE "Rental" ADD CONSTRAINT "Rental_ownerId_fkey"
+                                                  FOREIGN KEY ("ownerId")   REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+```
+And `grep -rn "DROP CONSTRAINT \"Rental_" prisma/migrations/` → **no matches**, so these FKs were **never dropped** and are live. The FK is `ON DELETE RESTRICT`, i.e. the database will **refuse** to delete a `User` who is a `Rental`'s manager or owner — which is the opposite of "nothing at the DB level enforces."
+
+**Why the distinction matters:** the note used "no FK" as its argument for why metering on `Rental.ownerId` would be *worse* than metering on a muddled field. The argument's *conclusion* (meter on `userId`) is right, but its premise is wrong, so it reaches the right answer for the wrong reason. The real risks with `ownerId`/`managerId` as a **billing** key are different and should be stated correctly:
+
+1. **Write-path trust.** `rentalController.createRental` (`:13-31`) destructures `req.body` directly and its only validation is presence — `['title','address','city','state','zipCode','propertyType','rent','managerId','ownerId','createdById']` must be truthy, then the whole object is handed to `prisma.rental.create`. **So `managerId`/`ownerId`/`createdById` are caller-supplied**, an authenticated user can set them to arbitrary *existing* user ids, and the FK happily accepts that (the FK checks *existence*, not *who*). That — not a missing FK — is the actual reason these fields are unsafe to bill on today.
+2. **Semantic authority.** A `Rental` has three distinct user links with different meanings (`Manager`, `Owner`, `CreatedBy`). Which one is "the payer"? Undefined. A metering key must have one unambiguous owner; `userId` (the authenticated principal) is the only field that does.
+3. **Cards** — a firm with 300 doors holds 300 `Rental` rows *and* the trust accounts, but there is no row representing *the firm*. That is the genuine gap, and it is a **missing entity**, not a broken FK.
+
+**Net effect on this plan:** none for the four gaps — `TrustAccount` is designed with `createdById` as the actor, not as the billing owner (§1.3). What this corrections changes is only the **justification** recorded for the metering decision, so it isn't repeated wrong a fourth time. Accordingly, **metering key = `userId`; the caller-supplied `managerId`/`ownerId` must not be used for billing; and if `Account` is ever introduced, it is a new entity, not a repair.**
+
+---
+
+## Appendix G — The test suite is not a quality gate: three verified blockers
+
+Added 2026-09-17 after SE-4-2 audited the backend suite against §9 convention 14 ("when you change an auth boundary, audit the tests that assert on it"). The convention found a real instance on its first use — and the audit then surfaced why that instance cannot currently fail, which is itself the more important finding.
+
+### G.1 The convention found a live instance — orientation (b), an inverted assertion
+
+`src/__tests__/security-owasp.test.ts:165-171`:
+```ts
+it('should not expose sensitive information in errors', async () => {
+  const response = await request(app)
+    .get('/api/nonexistent-endpoint');
+  expect(response.status).toBe(404);          // ← guard-inverted
+  expect(response.body).not.toContain('stack');
+```
+Pre-guard, an unauthenticated request to a nonexistent `/api/*` path fell through to the barrel catch-all → **404**, so the assertion held. Post-guard, `app.use('/api', requireAuth)` (`app.ts:125`) runs **before route matching**, so the same request → **401**, and `toBe(404)` is now wrong.
+
+**This is the mirror image of my T-0.1/T-0.2 error, and the two are worth stating together** — there are three orientations of the same defect, and all three exist in this repo:
+
+| | Orientation | Symptom | Where |
+|---|---|---|---|
+| (a) | **Vacuous** | Asserts 401 as *proof of mounting* — now also true for unmounted routes | my T-0.1/T-0.2 (corrected) |
+| (b) | **Inverted** | Asserts 404 for a nonexistent `/api` path with no token — now returns 401 | `security-owasp.test.ts:169` (latent, see G.2) |
+| (c) | **Noise** | No-middleware route 401s without a token → reads as "protected" but is only the global guard | applies to every new route the gaps add |
+
+**Fix for (b) — and the fix is *not* "accept either status":** add a valid token (then 404 is genuinely correct, and the test asserts what it means) **or** assert 401 and rename the test. Relaxing it to accept both would hide a real regression later, which is worse than the original bug.
+
+### G.2 Why (b) is LATENT, not currently failing — three independent blockers
+
+I ran the affected file rather than reasoning about it: `npx jest src/__tests__/security-owasp.test.ts` → **20 failed / 20 total**. The failure is in **setup**, not the assertion:
+
+```
+PrismaClientKnownRequestError:
+Invalid `prisma.maintenanceRequest.deleteMany()` invocation in
+  .../src/__tests__/security-owasp.test.ts:13:37
+Foreign key constraint violated: `WorkOrder_maintenanceRequestId_fkey (index)`
+```
+`beforeEach` (lines 7-16) deletes in an order that violates `WorkOrder → MaintenanceRequest` FK before it reaches line 169. **No assertion in the file ever executes.** So (b) is a trap that fires the moment the suite is revived — not a live break. **Reporting it as a live failure would be wrong**, and I've recorded it as latent.
+
+**Exact cause, verified precisely** (a correction to the review note that prompted this — "no `WorkOrder.deleteMany()` appears" is true of *this file*, not of the suite):
+- `security-owasp.test.ts:13` runs `prisma.maintenanceRequest.deleteMany({})`; `WorkOrder.maintenanceRequestId` is `String @unique` with a required relation (`schema.prisma:1006`, `:1012`), so an existing `WorkOrder` blocks the delete.
+- `security-owasp.test.ts` contains **no** `workOrder` deletion anywhere. **Verified across the full suite of 39 `*.test.ts` files: only three files delete `maintenanceRequest` at all — `contractor` (workOrderDel=1), `manager` (workOrderDel=1), `security-owasp` (workOrderDel=0).** So it is the **only** file in the entire suite that violates this FK, not merely the only one among the supertest set.
+- **The correct order already exists in this repo** (`manager.test.ts:105-107`, also `contractor.test.ts:98`): `workOrderQuote` → **`workOrder`** → `maintenanceRequest` → `rental` → `vendor` → `user`. So the fix is not novel — it is copying an established pattern, which lowers the cost of a future revival.
+- Also structural, and unique in its class: measured across all 9 supertest (app-touching) files, `security-owasp.test.ts` is the **only app-touching** file whose cleanup runs in **`beforeEach`** (line 8) — `auth`, `contractor`, `manager` clean in `afterAll`; `api`, `maintenance`, `properties`, `units` have **no `deleteMany` at all**; `security.test.ts` has no hooks. So its FK failure aborts **every** test in the file (20/20) rather than leaking state between files, which is why it is the one file that cannot run at all.
+  - **Scope caveat, deliberately stated (a correction to my own first wording, which said "the only file" unqualified — that was over-broad):** `beforeEach`+`deleteMany` appears in **six** files suite-wide, not one. The other five are **not app-touching** and **do not touch the FK tables**, so they are disqualified on two independent grounds and the conclusion is unchanged:
+    ```
+    compliance-testing.test.ts                    beforeEach+deleteMany · no supertest · no app · no FK tables
+    middleware/__tests__/enhancedRBACMiddleware   beforeEach+deleteMany · no supertest · no FK tables
+    services/__tests__/complianceService          beforeEach+deleteMany · no supertest · no FK tables
+    services/__tests__/enhancedAuthService        beforeEach+deleteMany · no supertest · no FK tables
+    services/__tests__/ssoService                 beforeEach+deleteMany · no supertest · no FK tables
+    security-owasp.test.ts                        beforeEach+deleteMany · SUPERTEST · app · FK TABLES  ← the one
+    ```
+    The precise claim is therefore **"the only *app-touching* file whose cleanup runs in `beforeEach`"** — true as stated. A future reader must not cite it as "the only file in the suite," which my original phrasing invited. (Caught by SE-4-2; I had over-scoped my own correction, which is the same error class this appendix tracks — now correctly bounded.)
+  ```
+  file                deleteMany  cleanup hook
+  auth.test.ts              2      afterAll
+  contractor.test.ts        5      afterAll
+  manager.test.ts           6      afterAll      ← correct delete order (workOrder → maintenanceRequest)
+  security-owasp.test.ts    6      beforeEach    ← wrong order, no workOrder clear → aborts 20/20
+  api / maintenance / properties / units    0    (no cleanup)
+  security.test.ts          0      (no hooks, no app)
+  ```
+
+Three verified, independent blockers — any one of which would alone prevent the suite from being a gate:
+
+1. **Test files are excluded from type-checking.** `tsconfig.json:26` → `"exclude": ["node_modules", "src/__tests__", "**/*.test.ts"]`. A type error inside a test is **invisible to `npm run typecheck`**. This is why the defect below survives a "clean" typecheck.
+2. **Two files import a named export that does not exist.** `security-owasp.test.ts:2` and `integration/api.test.ts:2` do `import { app } from '../app'`, but `app.ts:206` has only `export default app`. **Verified empirically, not assumed:** a named import from a default-only module is `undefined` at runtime (`request(undefined)`), and `tsc` reports **TS2614** *"Module has no exported member 'app'. Did you mean to use 'import app from "./target"' instead?"* — so the two tests are non-functional even before (iii). Blast radius (SE-4-2 said 3 files use supertest; I measured **9**, of which **8** import `app` — **6 correctly as default, 2 incorrectly named**; `security.test.ts` imports supertest but no app at all):
+   | File | Import |
+   |---|---|
+   | `auth.test.ts`, `contractor.test.ts`, `maintenance.test.ts`, `manager.test.ts`, `properties.test.ts`, `units.test.ts` | `import app from '../app'` ✅ |
+   | `security-owasp.test.ts`, `integration/api.test.ts` | `import { app } from '../app'` ❌ → `undefined` |
+   | `security.test.ts` | no app import ⚠️ |
+3. **`beforeEach` FK violation** (above) — aborts all 20 tests in that file.
+
+**Compounding effect, and the reason this belongs in the plan:** someone fixing (2) would then reach (1)'s exclusion invisibly and hit (3), then (b). Fixing any subset yields a suite that *looks* greener while the real assertion is still wrong. **The three must be fixed together, or not at all.**
+
+### G.3 Consequence for this plan's acceptance criteria — **RESOLVED: use probes, defer the suite**
+
+**Decision (settled, not open): the three blockers are NOT fixed now, and no standalone test commit is made.** Rationale: they are outside the four gaps' critical path; with no executable suite a test-only commit is **unverifiable** (which is why it was refused rather than attempted); and fixing any subset yields a greener-looking suite with the real assertion still wrong. The gaps proceed on **direct probes**; suite revival is a separate future task. Details:
+
+- **Do not put "add a test" in the gaps' acceptance criteria until G.2(i)-(iii) are fixed together.** Because tests are un-type-checked and the suite aborts in setup, a new test can be added, pass review, and never execute — a silently-passing gap test is worse than no test.
+- **For route-reachability criteria** (T-0.1/T-0.2, T-0.3, and every Gap #3/#4 route), use a **direct probe** instead — `curl` the path **with and without a token**, per convention 14. That is executable today and cannot silently no-op.
+- **If the suite is ever revived**, its definition of done is the three blockers moving **together** (add `src/__tests__` to tsconfig scope, fix the 2 named imports to default imports, fix the `beforeEach` delete order) — **not** "make tests pass", which is satisfiable by deleting them. The delete order is a known pattern to copy (`manager.test.ts:104-110`), so the estimate is a port, not a design.
+- **This is an accepted limitation with a named owner task**, not an oversight. Recorded so a later reader does not mistake these latent defects for live failures or re-open the scope call.
+
+### G.4 Method note — and a correction to the audit that prompted this
+
+SE-4-2 reported "three import `app`" and flagged the pair. I re-ran the partition myself and got **9 supertest files / 8 app imports / 6 correct / 2 incorrect**, plus `security.test.ts` importing supertest with no app. **The finding was right; the count understated the blast radius by ~3×.** Not a criticism — the specific instances they named are the two that are actually wrong — but the corrected denominator is what tells us whether this is a one-off or a pattern, and it is 2 of 8. Also, independently: I derived (i) and (iii) while checking their claim, which is the useful outcome of verifying rather than accepting.
+
+**And the correction went both ways — SE-4-2 then caught an over-scope in *my* correction.** I wrote that `security-owasp.test.ts` is "the only file whose cleanup runs in `beforeEach`." Unqualified, that is false: **six** files suite-wide use `beforeEach`+`deleteMany` (`compliance-testing`, `enhancedRBACMiddleware`, `complianceService`, `enhancedAuthService`, `ssoService`, `security-owasp`). The claim is only true when scoped to **app-touching** files — the other five import no supertest and touch none of the FK tables. Corrected above. **I had over-generalised my own generalisation**, which is the same defect I was correcting in someone else's note.
+
+**The error class, finally named — because it recurred five times today and all five were the same thing:** *a quantitative claim whose denominator is narrower than its quantifier.*
+
+| # | Claim | Written as | Actually scoped to |
+|---|---|---|---|
+| 1 | `X-Internal-Service-Call` is absent | "does not send the header" | a case-sensitive grep, not the file |
+| 2 | `ServiceCommunication` reachability | "nothing imports it" | the error class only, not the file |
+| 3 | app-importing tests | "three files" | status assertions, not the import census |
+| 4 | `afterAll` cleanup | "the other files clean in `afterAll`" | a subset; four have no cleanup at all |
+| 5 | `beforeEach` cleanup | "the only file" | app-touching files only; six suite-wide |
+
+**Every one was a true-sounding sentence that a reader would mis-cite.** The rule worth carrying: **when you write "all", "only", "none", or "every", state the set you enumerated** — and if you enumerated a subset, say which. All five were caught by someone re-running the scan rather than reading the prose, which is the only reliable defence. This appendix is the record.
+
+**Nothing in Appendix G is in the four gaps' critical path.** It is recorded because the gaps' own acceptance criteria depend on a test suite that does not currently run, and because a stale-green suite is a safety hazard for exactly the fiduciary and FCRA logic this plan adds — where a silently-skipped test is indistinguishable from a passing one.
+
+---
+
+*End of plan. Prepared by 高见远 (Gao), Architect — 2026-09-17. All regulatory citations are to the authority named; **per-state numeric values are configuration data requiring counsel sign-off and are deliberately not asserted here.** Estimates are labelled **[inference]**. No source file was modified and no migration was created, per constraints; the only out-of-plan file changed was the user-level audit tool `~/.workbuddy-ai/skills/ts-dead-code-triage/scripts/route-auth-audit.js` (+ its `SKILL.md`), which is a skill script, not product code, and is recorded in Appendix E.5. Appendix C added post-delivery after the PM's route probe; Appendix D after verifying the fail-closed guard (`0d4a2062`), the compliance hardening (`28da3755`) and the read-path fix (`1658136d`); Appendix E after a review pass (two corrections accepted, two disputed); Appendix F after the team-lead's metering question (one decision made, one claim disputed); Appendix G after SE-4-2's audit of the test suite against §9 convention 14.*

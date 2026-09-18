@@ -44,7 +44,7 @@ Monetized by transaction fees rather than subscription, per the user's brief. **
 | Support (email-only, no SLA) | ~$1.00 | inference |
 | **Total allocated cost** | **~$7.00/mo = $84/yr** | |
 
-**Step 2 — rent processed per free account.** 2 units × 2 active leases × $1,800/mo rent × 12 = **$43,200/yr**.
+**Step 2 — rent processed per free *account*.** 2 units × 2 active leases × $1,800/mo rent × 12 = **$43,200/yr**. **"Account" here means one `User`, per §2.7 — the meter key is the `userId` that created the rental, not `managerId`/`ownerId` (caller-supplied).**
 
 **Step 3 — the floor.** To break even: `$84 / $43,200` = **0.194% of rent processed**.
 
@@ -85,6 +85,8 @@ Monetized by transaction fees rather than subscription, per the user's brief. **
 | `subscription\|billing\|checkout\|priceId\|planId\|trial\|signup\|onboard` across `backend/src` | **0 files** |
 | Usage metering against `Lease` | **none** |
 | Transaction-fee billing path | **none** |
+| `User.stripeCustomerId String? @unique` | **EXISTS — and referenced in 0 live sites.** The one billing field in the schema, and it is **per-`User`** ⇒ the intended v1 billing shape was already per-user (relied on by §2.7 MK-2) |
+| `Account` / `Organization` / staff / invite / seat / employee | **0 matches** — ownership is per-`User`; see §2.7 |
 
 There is **no billing scaffolding to build on.** This is a from-scratch schema + middleware + webhook + reconciliation build.
 
@@ -92,27 +94,31 @@ There is **no billing scaffolding to build on.** This is a from-scratch schema +
 
 ## 2. Signup / checkout flow
 
-### 2.1 ⛔ Hard preconditions (both are release blockers)
+### 2.1 Hard preconditions — **status re-verified 2026-09-17 at `HEAD 8d16f704`: 1 of 2 closed, 1 mitigated**
 
-**P0-A — privilege escalation on `POST /api/auth/register`.** Verified unauth at HEAD:
-- `backend/src/middleware/validation.ts:5` — `validateRegistration` destructures only `{email, password, firstName, lastName}`. **It never inspects `role`.**
-- `backend/src/controllers/authController.ts:13,24` — destructures `role` **from `req.body`** and writes it into `prisma.user.create({data:{...,role}})`.
-- `backend/src/routes/authRoutes.ts:11` — `router.post('/register', validateRegistration, authController.register)`. **No rate limiter** (`loginRateLimiter` guards only `/login`).
+> **Summary after re-verification:** **P0-A `ADMIN` escalation — ✅ CLOSED** (+ rate limiter now present) · **P0-A residual `PROPERTY_MANAGER` self-assignment — 🔴 STILL OPEN and now ACTIVE** (the mount fix made the vendor-payout endpoint reachable) · **P0-B tenant PII leak — 🟡 blanket-mitigated by the global guard, root cause not fixed.** Details below.
+
+**P0-A — the original defect (as found at `HEAD 6bd66e54`; kept as the record of what was wrong):**
+- `backend/src/middleware/validation.ts:5` — `validateRegistration` destructured only `{email, password, firstName, lastName}`. **It never inspected `role`.**
+- `backend/src/controllers/authController.ts:13,24` — destructured `role` **from `req.body`** and wrote it into `prisma.user.create({data:{...,role}})`.
+- `backend/src/routes/authRoutes.ts:11` — `router.post('/register', validateRegistration, authController.register)`. **No rate limiter** (`loginRateLimiter` guarded only `/login`). *(✅ since fixed — see below.)*
 - `UserRole = {ADMIN, PROPERTY_MANAGER, TENANT, USER, VENDOR, OWNER}`.
-- Live confirmation: `POST /api/auth/register` with `{}` returns the validator's `400 "Please provide a valid email address"` — proving the route is mounted, unauthenticated, and reachable from the open internet. (The `role:"ADMIN"` write itself was confirmed by reading the controller; no account was created during verification — an existing-email probe failed on the unique constraint and created nothing.)
+- Live confirmation: `POST /api/auth/register` with `{}` returned the validator's `400 "Please provide a valid email address"` — proving the route was mounted, unauthenticated, and reachable from the open internet. (The `role:"ADMIN"` write itself was confirmed by reading the controller; no account was created during verification — an existing-email probe failed on the unique constraint and created nothing.)
 
-⇒ Anyone on the internet can self-register as `ADMIN`. The plan puts a **public, no-card signup at the front of the funnel**. **Fix before any launch.** A separate engineer is dispatched; treat as **fixed and verified** before §2.2 ships.
+⇒ Anyone on the internet could self-register as `ADMIN`, and the plan puts a **public, no-card signup at the front of the funnel**. **✅ This is now fixed — do not ship a spec that still calls it open.**
 
-**Fix status observed 2026-09-17 (uncommitted working tree, `HEAD` still `6bd66e54`).** The dispatched fix adds a `PUBLIC_SIGNUP_ROLES` allowlist in `authController.ts` (defence-in-depth, re-checked in the controller) and a mirrored allowlist in `validation.ts`, failing closed on unknown roles and passing `undefined` so the Prisma `TENANT` default applies. **This closes the `ADMIN` escalation — the critical finding.**
+**Fix status RE-VERIFIED 2026-09-17 (`HEAD 8d16f704`, fix now committed into the tree).** The fix adds `PUBLIC_SIGNUP_ROLES` in `validation.ts:13` and re-checks it in `authController.ts:8,24-33` via a shared `normalizePublicSignupRole` helper (defence in depth — one allowlist, two layers, cannot drift), failing closed on unknown roles and persisting the canonical enum value. **`ADMIN` escalation is fully closed — the critical finding.**
 
-**Two residual gaps remain, and both bear on this GTM plan:**
+**🟢 Also closed since my first pass: the rate limiter.** `authRoutes.ts:3,13` now reads `router.post('/register', validateRegistration, registerRateLimiter, authController.register)`, and `registerRateLimiter` exists (`rateLimiter.ts:32-38`) at **5 registrations / IP / hour** — exactly the "no rate limiter" gap I flagged. **Verified present in the working tree.**
+
+**One residual gap remains, and the mount fix made it worse:**
 
 | Residual | Evidence | Impact |
 |---|---|---|
-| `PROPERTY_MANAGER` and `VENDOR` are **still self-assignable** | The allowlist is `['TENANT','OWNER','PROPERTY_MANAGER','USER','VENDOR']` | `PROPERTY_MANAGER` is granted privileged access across the app: `checkRole(['ADMIN','PROPERTY_MANAGER'])` guards `vendor.routes.ts:11` (vendor management), `vendorPayment.routes.ts:10` (**vendor payout initiation**), `predictiveMaintenance.routes.ts:10`, `maintenanceRoutes.ts:28`, `imageRoutes.ts:14`, `aiRouting.routes.ts:10`. A self-serve signup can therefore self-assign a role that can initiate vendor payments. **Recommendation: narrow the public allowlist to `OWNER` only** (plus `TENANT` via explicit invite/lease flow). §2.2 step 3 assumes this |
-| **No rate limiter on `/register`** | `authRoutes.ts:11` still `router.post('/register', validateRegistration, authController.register)` — unchanged | A public no-card signup endpoint with no rate limit is an account-farming and enumeration vector. Add `loginRateLimiter` (already imported in this file) or a dedicated limiter |
+| `PROPERTY_MANAGER` and `VENDOR` are **still self-assignable** | `PUBLIC_SIGNUP_ROLES = ['TENANT','OWNER','PROPERTY_MANAGER','USER','VENDOR']` (`validation.ts:13`) | 🔴 **RECLASSIFIED FROM THEORETICAL TO ACTIVE.** `PROPERTY_MANAGER` guards `vendorPayment.routes.ts:10` — **vendor payout initiation** — plus `vendor.routes.ts:11`, `predictiveMaintenance.routes.ts:10`, `maintenanceRoutes.ts:28`, `imageRoutes.ts:14`, `aiRouting.routes.ts:10`. **While `/api/vendor-payments` was shadowed (§2.3), a self-assigned `PROPERTY_MANAGER` could not reach the payout endpoint — the escalation was inert. T-0.1 made that mount reachable (`POST /api/vendor-payments/payout` now runs its handler: 400 "Work order ID is required").** So the residual is now a **live** privilege path, not a paper one. **Recommendation: narrow the public allowlist to `OWNER` only** (+ `TENANT` via explicit invite/lease flow). §2.2 step 3 assumes this |
+| 🔴 **NEW (team-lead, verified) — the payout path has an unscoped IDOR that survives the allowlist fix** | `grep -c "req.user" vendorPayment.controller.ts` → **0**. `initiatePayment` takes `workOrderId` **from `req.body`** (`:7`) and never consults the authenticated principal; `getPaymentHistory` takes `vendorId` from `params` (`:23`). | **Narrowing the allowlist is necessary but NOT sufficient.** Any legitimately-granted `PROPERTY_MANAGER` can still initiate a payout against **any** work order, and read **any** vendor's payment history. **Both fixes are required:** (1) narrow the allowlist to `OWNER`; (2) add an ownership check on the payout path — `WorkOrder → MaintenanceRequest → Rental → managerId/ownerId` — before `vendorPaymentService.initiatePayment(workOrderId)` is called. Team-lead has directed both. |
 
-**P0-B — unauthenticated tenant PII leak.** `GET /api/tenants/search?q=a` → **HTTP 200** with real tenant names and emails, **no auth** (verified live). `backend/src/routes/tenantRoutes.ts:9` carries the comment `// Temporarily remove auth for testing`. On a free tier that invites anonymous traffic, this is a reportable data exposure. Fix before launch.
+**P0-B — STILL OPEN, and partially mitigated.** `GET /api/tenants/search?q=a` now returns **401 `Not authorized, no token`** (was **200 with real tenant PII**) — the new global `app.use('/api', requireAuth)` (`app.ts:125`) closed the anonymous read, and `/tenants/*` is **not** on the public allowlist. ✅ **However:** this is a *blanket* guard, not a fix to the root cause — `tenantRoutes.ts:9` still carries `// Temporarily remove auth for testing`, so the route remains unguarded *within* the router and is protected only by the global layer. **Any future allowlist edit, or mounting that router anywhere outside `/api`, re-exposes it. Fix the route itself before launch.**
 
 ### 2.2 The flow, step by step, naming the live module each step touches
 
@@ -124,43 +130,65 @@ There is **no billing scaffolding to build on.** This is a from-scratch schema +
 | 4 | Guided onboarding: add first rental | `POST /api/rentals` | `rentalController.ts` ✅ | `Rental.slug` is `@unique` + required, and `managerId`/`ownerId`/`createdById` are required → **onboarding must synthesize slug + set all three to the new user** |
 | 5 | Add tenant + lease | `POST /api/leases` | `leaseController.ts` ✅ | `Lease.rentalId` is **`@unique`** → one lease per rental, ever (§2.4) |
 | 6 | Invite tenant → tenant portal | tenant app screens | `propertyapp` — `TenantDashboardScreen.tsx`, `RentPaymentScreen.tsx` etc. ✅ | The tenant portal **is the Expo app**, not a web portal. Tenant must install an app. MagicDoor's pitch is explicitly *"tenants need no app (SMS)"* — a direct competitive weakness |
-| 7 | Tenant sets up autopay / pays rent | **checkout** | `paymentController.ts` (163 LOC, 15 methods incl. `createSubscription`, `createInvoice`, `getCustomerPortalSession`) — **reachable on the import graph but its HTTP mount is SHADOWED → 404** (§2.3) | ⛔ **Blocker** |
+| 7 | Tenant sets up autopay / pays rent | **checkout** | `paymentController.ts` (163 LOC, 15 methods incl. `createSubscription`, `createInvoice`, `getCustomerPortalSession`) — **mount now reachable (T-0.1 landed, §2.3), but this is the no-dot file ⇒ STILL 404** | ⛔ **Still blocked — now by the mount (§2.6 T-0.2), not by ordering** |
 | 8 | PA takes its fee; landlord receives rent | new Stripe Connect path | **does not exist** — `application_fee_amount`/`transfer_data` grep: 0 | Must be built |
 | 9 | Rent receipted as a `Transaction` | `POST /api/transactions` | `transactionController.ts` ✅ | `Transaction.leaseId` is a **required** `String` (§2.4) |
 | 10 | Maintenance request filed | `POST /api/maintenance` | `maintenanceController.ts` ✅ | ⚠️ `createMaintenanceRequest` writes and returns — **it does not call `triageService`.** Triage only fires on *re*-triage from `contractor.service.ts:80` (vendor unassign). "AI triage" is **not** on the intake path |
 | 11 | Reminders to tenant | `POST /api/reminders` | `reminderController.ts` ✅ — **verified live: `200 {"message":"Reminders sent successfully"}`** | Today this sends **email** (`rentCollection.service.ts` → `sendEmail`), not SMS |
 | 12 | Upgrade prompt at the 3-lease cap | new entitlement middleware + Stripe Checkout | **does not exist** | |
 
-### 2.3 ⛔ NEW BLOCKER — 35 route mounts are shadowed by a 404 catch-all
+### 2.3 ✅ (WAS ⛔) 35 route mounts were shadowed by a 404 catch-all — **FIXED and re-verified 2026-09-17**
 
-`backend/src/app.ts:105` mounts the central router: `app.use(routes)`.
+> **STATUS UPDATE — RESOLVED.** The fix landed (working tree, `HEAD 8d16f704`). `app.use(routes)` is now **line 178**, i.e. **last**; the 35 mounts sit at `app.ts:131–170`, *before* the barrel. I re-verified the formerly-shadowed families **with an authenticated token**, and all now reach their handlers:
+>
+> | Formerly dead | Before | **After (verified)** |
+> |---|---|---|
+> | `POST /api/vendor-payments/payout` | 404 catch-all | **400 `"Work order ID is required."`** — handler ran |
+> | `GET /api/tax-document/:propertyId/:year` | 404 catch-all | **404 `"Property not found"`** — handler ran (app-level, not the catch-all) |
+> | `GET /api/compliance/data-access/:id` | 404 catch-all | **500** — handler ran |
+> | `POST /api/signatures/sign-document` | 404 catch-all | **400 `"Document ID, user ID, and signature are…"`** |
+> | `POST /api/voice/transcribe` | 404 catch-all | **400 `"No audio file uploaded"`** |
+> | `GET /api/payments/transactions/pending` (with-dot) | 404 catch-all | **403 Forbidden** (`isOwner` guard — mounted) |
+>
+> ⇒ **§7 #4's stated blocker ("item 2 is blocked by a routing bug") is CLEARED.**
+>
+> **🔴 But the fix changed the verification method — anyone re-testing must know this.** The same change added a **fail-closed global `app.use('/api', requireAuth)` (`app.ts:125`)** that returns **401 for *unmounted* paths too** — confirmed: `GET /api/definitely-not-a-real-endpoint` → **401**. So **the old 404-based test is now blind**; it can no longer tell "shadowed" from "never existed". **Post-fix verification must send a valid JWT** — with a token, `404` = unmounted/shadowed and anything else = mounted. **A 401 is no longer evidence of anything.** Seeded admin for testing: `POST /api/auth/login`, `admin@propertyai.com` / `Password123!` (`prisma/seed/data/users.ts`).
+>
+> **⚠️ And one half of the payment problem survives, exactly as §2.6 predicted:** the **no-dot** `paymentRoutes.ts` is **still never mounted** — `grep -cE "router\.use.*paymentRoutes" routes/index.ts` → **0**; only the import at `:31`. Verified with a token: `POST /api/payments/payment-intents` → **404 catch-all**, while the with-dot family → **403**. ⇒ **T-0.1 fixed one of the two files. The Stripe billing surface is still dead; the approvals surface is now live. T-0.2 is still required.**
+
+**Historical record of the defect** (kept — it explains why the design was wrong, and what else it hid):
+
+`backend/src/app.ts:105` mounted the central router: `app.use(routes)`.
 `backend/src/routes/index.ts:148` ends the central router with a catch-all:
 ```js
 router.use(`${API_PREFIX}/*`, (req, res) => { res.status(404).json({status:'error', message:'API endpoint not found'}); });
 ```
-The catch-all **responds** and never calls `next()`. Therefore **every `app.use('/api/…')` registered after line 105 is unreachable** — and there are **35 of them**, at `app.ts:108–147`.
+The catch-all **responds** and never calls `next()`. Therefore **every `app.use('/api/…')` registered after line 105 was unreachable** — **35 of them**, formerly at `app.ts:108–147`.
 
-**Verified live against the running server (control pair proves the mechanism):**
+**Verified live at the time (control pair proved the mechanism):**
 
-| Route | Declared at | Expected | **Actual** |
+| Route | Declared at | Expected | **Actual (before fix)** |
 |---|---|---|---|
-| `POST /api/signatures/sign-document` | `app.ts:126` (after 105) | 200/401 | **404 central catch-all** |
-| `POST /api/payments/payment-intents` | `app.ts:142` (after 105) | 401/400 | **404 central catch-all** |
-| `POST /api/payments/customers` | `app.ts:142` | 401/400 | **404 central catch-all** |
-| `POST /api/voice/transcribe` | `app.ts:110` | 400 | **404 central catch-all** |
-| `GET /api/compliance/data-access/:id` | `app.ts:147` | 401 | **404 central catch-all** |
-| `GET /api/translation/languages` | `app.ts:136` | 200 | **404 central catch-all** |
+| `POST /api/signatures/sign-document` | after 105 | 200/401 | **404 central catch-all** |
+| `POST /api/payments/payment-intents` | after 105 | 401/400 | **404 central catch-all** |
+| `POST /api/payments/customers` | after 105 | 401/400 | **404 central catch-all** |
+| `POST /api/voice/transcribe` | after 105 | 400 | **404 central catch-all** |
+| `GET /api/compliance/data-access/:id` | after 105 | 401 | **404 central catch-all** |
+| `GET /api/translation/languages` | after 105 | 200 | **404 central catch-all** |
 | **Control** `POST /api/reminders` (central, `index.ts:112`) | — | — | **200** ✅ |
 | **Control** `POST /api/leases` (central, `index.ts:96`) | — | 401 | **401** ✅ |
 | **Control** `GET /api/rentals/public` (central, `index.ts:79`) | — | 200 | **200** ✅ |
 | **Control** `POST /api/vendor-payments/stripe-webhooks` (central, `index.ts:111`) | — | — | **200** ✅ |
 
-**Consequences for this GTM plan, stated plainly:**
-- **Published pricing + self-serve checkout cannot ship as-is.** The entire Stripe checkout surface (`paymentController.ts`, 15 methods, 163 LOC, mounted at `app.ts:142`) returns 404. **Item 2 is blocked by a routing bug, not by missing billing.**
-- **E-sign leases are dead on the HTTP surface** (`app.ts:126`), despite the director's brief listing Lease e-sign as "live". The *module* is reachable on the import graph; the *endpoint* is not.
-- 30 more mounts (appliances, business hours, emergency protocols, escalation policies, on-call, white-label, API keys, roles, documents, legal notices, tax documents, expense categorization, cash-flow forecasting, market data, compliance/GDPR, …) are equally invisible. `dead-set.js` reports this explicitly: `src/routes/index.ts -> ./paymentRoutes (binding "paymentRoutes" unused)`.
-- **The only live Stripe webhook is `POST /api/vendor-payments/stripe-webhooks`** (central mount, returns 200). It reads `const event = req.body` and **never calls `stripe.webhooks.constructEvent`** → **no signature verification**. Our own verification POST with an empty body returned `200 {"received":true}`. `app.use(express.json())` also makes raw-body verification impossible without a route-scoped `express.raw()`. Any billing build must fix this.
-- **Fix order:** move `app.use(routes)` to the **last** registration in `app.ts` (or remove/relocate the catch-all), then re-verify with the control-pair method above. This is likely a **one-line move** unlocking 35 mounts — the cheapest high-leverage change in the entire plan.
+**Consequences as they stood — and which the fix resolved:**
+- ✅ **RESOLVED — published pricing + self-serve checkout** were blocked by routing, not by missing billing. **But see §2.6: the no-dot billing file is still unmounted, so the Stripe endpoints themselves remain 404.** *The routing blocker is gone; the mount blocker is not.*
+- ✅ **RESOLVED — e-sign leases** (`/api/signatures`) now reach their handler.
+- ✅ **RESOLVED — the 30 further mounts** (appliances, business hours, emergency protocols, escalation policies, on-call, white-label, API keys, roles, documents, legal notices, tax documents, expense categorization, cash-flow forecasting, market data, compliance/GDPR, …) are now visible. Previously `dead-set.js` flagged this: `src/routes/index.ts -> ./paymentRoutes (binding "paymentRoutes" unused)`.
+- ⛔ **STILL OPEN — the live vendor webhook accepts forged events, and the blast radius is specific: it can mark *any* vendor payment PAID.** `POST /api/vendor-payments/stripe-webhooks` (`vendorPayment.routes.ts:21`, **no auth** — it is on the public allowlist, `requireAuth.ts:118`) reads `const event = req.body` (`vendorPayment.controller.ts:34`) and **never calls `stripe.webhooks.constructEvent`**. The handler then does the damage directly: `vendorPayment.service.ts:80-105` — `if (event.type === 'payout.paid') { … prisma.vendorPayment.update({ where: { id: payout.metadata.vendorPaymentId }, data: { status: 'PAID' } }) }`. **So a forged `{"type":"payout.paid","data":{"object":{"metadata":{"vendorPaymentId":"<any id>"}}}}` marks any vendor payment paid** — no signature, no auth, no ownership check. Our empty-body POST returns `200 {"received":true}`. **⚠️ The mount fix made this worse, not better:** the endpoint was previously shadowed/dead and is now reachable *and* public. **Any billing build must fix this first (item 0d).**
+  - **Fix note (from the team-lead, verified):** adding `constructEvent` **alone will not work** — `app.ts:82` is `express.json({ limit: '100mb' })` with **no `verify` callback**, so the raw bytes are consumed before any handler runs, and Stripe signs raw bytes. You need a route-scoped `express.raw({type:'application/json'})` mounted on the webhook route (the same pattern §2.6 calls for on the no-dot file's `/webhooks`).
+  - **⚠️ Two webhooks, two *different* failure modes — do not conflate them.** `POST /api/payments/webhooks` (the no-dot file) is **broken, not insecure**: `payment.service.ts:188` types the param `requestBody: Buffer` and passes it to `constructEvent`, but `paymentController.ts:44` calls it with `req.body` — a **parsed object, not a Buffer** ⇒ `constructEvent` throws ⇒ the controller's `catch` returns **500**. So it **can never verify a signature and never has worked** — *and* it is unmounted anyway (§2.6). ⇒ **"The Stripe payments webhook is live" is not a true statement; there is no working payments webhook.** The vendor webhook is the one that is live-and-insecure; the payments one is dead-and-broken.
+- **🔴 NEW P0 the fix EXPOSED — the residual role-escalation gap is now genuinely exploitable.** `PUBLIC_SIGNUP_ROLES = ['TENANT','OWNER','PROPERTY_MANAGER','USER','VENDOR']` (`validation.ts:13`), so `PROPERTY_MANAGER` and `VENDOR` stay self-assignable — and **`PROPERTY_MANAGER` is precisely the role that guards `POST /api/vendor-payments/payout`** (`vendorPayment.routes.ts:10`, **vendor payout initiation**). While that mount was shadowed, the escalation was **theoretical**; now it is **live**. ⇒ **Pre-existing P0-A residual re-classified to active.** Fix: narrow the public allowlist to `OWNER` (+ `TENANT` via invite) — §2.1.
+- **Fix applied:** `app.use(routes)` moved to the **last** registration in `app.ts`; a global `/api` auth guard added at `app.ts:125`.
 
 ### 2.4 Schema constraints that bear directly on entitlement + meter design
 
@@ -177,7 +205,7 @@ The catch-all **responds** and never calls `next()`. Therefore **every `app.use(
 **Open questions — RESOLVED by the architect (高见远), with measured evidence, 2026-09-17. See §2.5.**
 1. ~~Does `Lease.rentalId @unique` get relaxed?~~ **RESOLVED: yes — `@@index([rentalId, status])` + partial unique `WHERE status='ACTIVE'`. Meter counts `status='ACTIVE'`. Blast radius measured: ZERO breaking call sites.**
 2. ~~Does `Transaction.leaseId` become nullable?~~ **RESOLVED: NO — do not touch `Transaction`.** Book platform fees on a **new dedicated `FirmFee` model** (architect's `TrustLedgerEntry` with `accountType=FIRM_FEE` is the alternative if the fee goes in the ledger). **Explicit decision, recorded so it is not re-opened:** the fee is **not** a `Transaction`, and `Transaction.leaseId` stays required. Rationale: `TransactionType` (`schema.prisma:1134-1140`) has **no platform-fee member**, `Transaction` has no debit/credit concept, and nullable `leaseId` would introduce null derefs into the payments path with `transpileOnly: true` and no CI to catch them.
-3. ~~Is tenancy single-user or multi-user?~~ **RESOLVED (recommendation): single-user for v1 — meter by `User` via `managerId`/`createdById` relations, which exist today. Multi-user needs an `Account` model and is a separate workstream.** ⚠️ **Escalated to team-lead as a scope call — see §2.5 D3 and §6.**
+3. ~~Is tenancy single-user or multi-user?~~ **RESOLVED — product call made: v1 is SINGLE-USER. Meter on `userId` + `Lease WHERE status='ACTIVE'`; do NOT build `Account`.** Recorded as an **accepted, dated risk**, not left open. Retrofit measured as a **re-platform** (51/86 route files unguarded; live guard is enum-only with zero ownership scoping; the tenancy-capable RBAC is DEAD). Overturned only by the Pro/Scale tiers needing an org payer — **decide at first Pro deal, in the same migration wave as billing.** Full reasoning: **§2.7**.
 
 ### 2.5 Architect responses (measured) — and one correction to this spec
 
@@ -195,12 +223,12 @@ Backed by `User.rentalsManaged` / `rentalsOwned` / `rentalsCreated` (`schema.pri
 
 **What remains true:** there is genuinely **no `Account`/`Organization`/`Team` model** (0 matches in 94). So the *account boundary* is still net-new.
 
-**🔴 D3 is a scope decision for team-lead, and it is the largest hidden dependency in this plan.** If the free tier requires an `Account` boundary to enforce "2 units / 3 leases **per account**", then **billing is gated on a multi-tenancy retrofit** (`Account` + `AccountMember` + every authorization check + `slug` synthesis). That is not a free-tier feature.
+**🟢 D3 — DECIDED (product call, 2026-09-17): v1 is single-user. Meter on `userId` + active leases. Do NOT build `Account`.** Full reasoning, the measured retrofit cost, and the one condition that would overturn it are in **§2.7**. Recorded as an **accepted, dated risk** — not left open. If it ever becomes (b), the minimal `Account` + `AccountMember` blocks must ride the **same migration wave as the billing tables**, while that wave is still free.
 
 | Option | Cost | Trade-off |
 |---|---|---|
-| **v1: scope "account" to `User`** (single-user tenancy) | **No schema change; shippable now** | Meter `Rental`/`Lease` by `managerId`/`createdById` via the relations above. Cannot support staff or a separate owner-portal login on the free tier. **Architect and I both recommend this for v1.** |
-| **Multi-tenant `Account` model** | **Large — separate workstream** | Required for staff/owner-portal logins; **gates all billing work behind it**. Must not be smuggled in as part of the free tier. |
+| **✅ v1: scope "account" to `User`** (single-user tenancy) | **No schema change; shippable now** | Meter `Rental`/`Lease` by the authenticated `userId` (`createdById`/session identity — **not** caller-supplied `managerId`/`ownerId`, see MK-3). Cannot support staff or a separate owner-portal login on the free tier — **and that is fine, because the free tier's ICP is the solo landlord (§2.7).** |
+| **Multi-tenant `Account` model** | **Larger than "large" — it is a re-platform** | Measured: **51 of 86 route files have no guard at all**, the live guard is **enum-only** with **zero ownership scoping**, and the DB-backed RBAC built for team semantics (`enhancedRBACMiddleware`) is **DEAD/unmounted**. There is no authz layer to extend — there is one to **write**. Required for the Pro/Scale tiers, not for the free tier. **Decide at first Pro deal (§2.7 MK-2).** |
 
 **D1 — RESOLVED: relax `Lease.rentalId`.** Decision: `@@index([rentalId, status])` with a **partial unique index `WHERE status='ACTIVE'`** — gives history *and* enforces one-active-lease in the DB. **Meter on `Lease WHERE status='ACTIVE'`, not raw `Lease` rows** — counting rows would meter *churn* (a renewal consuming entitlement) instead of *usage*.
 **Blast radius: measured ZERO breaking sites.** My §2.4 called this a blocking design question; the architect swept it and found:
@@ -268,7 +296,57 @@ The architect found this and **it is worse than either of us first stated.** Bot
 
 **Decision taken by the architect, and I agree:** scope the mount-order fix to that **alone** (minimal, reviewable); split the `paymentRoutes.ts` wiring + Stripe signature repair into a **separate P1 task**. Bundling them would hide a Stripe-billing revival inside a one-line "fix."
 
-⇒ Two files, near-identical names, both dead, **different causes**, and **one is a trap**. `payment.service.ts` — the module a 1.25% rent-payment fee would ride — is orphaned on the HTTP surface. **The one-line mount fix resolves the with-dot file only; the no-dot file needs a real `router.use` plus three call-shape repairs.**
+⇒ Two files, near-identical names, both dead, **different causes**, and **one is a trap**. `payment.service.ts` — the module a 1.25% rent-payment fee would ride — is orphaned on the HTTP surface. **The mount-order fix (T-0.1, landed) resolved the with-dot file only — verified: it now returns 403 (`isOwner`) instead of 404. The no-dot file is STILL dead — verified: `POST /api/payments/payment-intents` → 404 catch-all. It needs a real `router.use` plus three call-shape repairs.**
+
+**Status after T-0.1 (verified 2026-09-17 with an authenticated token):**
+
+| File | Surface | Before | After T-0.1 | Remaining action |
+|---|---|---|---|---|
+| `payment.routes.ts` (with-dot) | **Approvals** — 6 routes | 404 catch-all | **403 Forbidden** ⇒ **LIVE** | ✅ none |
+| `paymentRoutes.ts` (no-dot) | **Stripe billing** — 14 routes | 404 (never mounted + elided) | **404 catch-all** ⇒ **STILL DEAD** | **T-0.2:** add `router.use`, keep the import live, repair 3 call shapes, add raw-body handling |
+
+---
+
+### 2.7 🟢 METERING KEY — **the product call: `userId`, active leases. No `Account` model for v1.**
+
+The architect asked the strategic half of the team-lead's question and said he'd route it to me. **Answer: (a) — billing is per-landlord for the segment we are actually selling to. Ship `userId` + active-lease metering; do not build `Account`.**
+
+**Product recommendation, stated plainly:** *"The firm" is not a billing entity in the product we take to market in 2026.* The free tier's ICP is the **T1 self-managing landlord** ("solo owner / accidental landlord, often a side business" — positioning doc §A, ≤10 units typical). That persona has **no staff, no second login, and no appetite for an org chart**. Requiring an `Account` boundary to meter "2 units / 3 leases" imposes an enterprise data model on a customer whose entire mental model is *"my units."* That is how you lose the funnel mouth.
+
+**Which makes the decision cheap *and* time-sensitive.** The architect is right that the window is now (zero paying customers ⇒ migration is free). But that argues for **deciding now**, not for **building now**. Building `Account` now would mean paying a multi-tenancy-retrofit price to solve a leak worth a handful of unmonetized leases — while all four competitors ship within weeks.
+
+**Measured cost of the retrofit — it is larger than "large".** I priced it, and the authorization layer we'd extend is not what the plans assume:
+
+| What I measured | Result | Implication |
+|---|---|---|
+| Route files with **no guard at all** | **51 of 86** | There is no authorization layer to *extend*. `Account`-scoping would mean **writing** 51 guards, not editing them. |
+| Live guard: `rbacMiddleware` | **2 files** (`contractor`, `manager`) — pure `roles.includes(user.role)` | The **live** authorization is **enum-only**. It has **no ownership notion at all** — nothing scopes by `managerId`/`ownerId`. |
+| Ownership-scoped refs anywhere | **20 total**, of which **12** in one file (`rentalService.ts`) | Ownership scoping is **not a query convention** here — it is 12 ad-hoc filters in a single service. |
+| DB-backed `Role`/`Permission` M2M | Model exists, **but `enhancedRBACMiddleware.ts` is DEAD** (dead-set E14) — unmounted; only `rbacMiddleware` (enum) and 8 `checkRole` calls are live | The one mechanism built for multi-role/team semantics **was never mounted**. The "retrofit" would have to resurrect it first. |
+| `Account`/`Organization`/`Team`/staff/invite/seat models | **0 matches** in 94 models | Genuinely net-new. |
+| `User.stripeCustomerId String? @unique` | **Exists — and used in 0 live sites** | ⚠️ Someone already modelled billing **per-`User`**. This is the strongest single signal in the schema that per-user was the **intended** v1 shape. It is also a **live constraint**: per-user uniqueness now, and two rows cannot share a customer id later. |
+
+⇒ **An `Account` model does not add a column; it changes *who the app thinks it is serving*.** That is a re-platform, and the evidence says the platform was never built for orgs.
+
+**Decisions I'm making (escaping the "it depends" trap):**
+
+| # | Decision | Rationale |
+|---|---|---|
+| **MK-1** | **Meter on `userId` + `Lease WHERE status='ACTIVE'`.** One meter serves free tier and every paid tier (§1.3, §3.3) — no second implementation, no divergence. | Matches the architect's recommendation; `Lease.status` defaults `ACTIVE` (`schema.prisma:276`) ⇒ one `count()`, no migration. |
+| **MK-2** | **Do NOT build `Account` for v1.** | No guard layer to extend (51/86 unguarded); dead RBAC; wrong persona. |
+| **MK-3** | **Do NOT meter by `ownerId`/`managerId`.** Meter by **`userId`** (the authenticated principal that created the rows). | `rentalController.createRental` takes all three **from `req.body`** with **presence-only** validation (verified: `requiredFields.includes` on line 18-19, no ownership assertion). They are **caller-supplied** and a rental has **three** user links with **no defined payer** among them. Metering on a field the caller sets is a self-service bypass *and* an ambiguity. `createdById`/session identity is not. |
+| **MK-4** | **Accept and document the leakage.** Two signups ⇒ two free tiers. Mitigate by **detection, not prevention**: flag same email-domain / same phone / same billing fingerprint. | Cost ≈ a few unmonetized leases at T1 rent. Cheaper than the retrofit by orders of magnitude. |
+| **MK-5** | **Free-tier entitlement is scoped to one `User` — say so in the T&Cs, explicitly.** | Prevents the leak from becoming a support argument. |
+
+**⚠️ The one condition that would overturn MK-2 — a trigger, not a hedge.** `Account` becomes **required** the moment pricing, not the free tier, needs an org payer. Concretely:
+
+- **The Pro/Scale tiers (§3.3, 76–300 leases) are where this bites.** A 3-person PM firm running 150 leases under one login is the **T2 "Buildium zone"** we named as the beachhead — and **"unlimited employee accounts" is a live, compared feature**: Rentec Direct ships it today, and it is on our own competitor card. A T2 buyer *will* ask "does my property manager get their own login?" **Multi-user is growth-tier table stakes, not a free-tier feature.**
+- **So the honest framing is:** `Account` is **not gated on the free tier** — it is gated on **Pro/Scale sellability**. Recommend the team-lead place it in **Wave 2**, immediately *after* checkout exists and *before* Pro is actively sold, so the migration happens while subscription ownership is still small.
+- **Trigger to watch:** first Pro-tier pipeline deal. Decide then, with real buyer input, at a moment when the migration is still cheap.
+
+**Because checkout is the deadline:** once self-serve checkout ships, adding `Account` means migrating **live subscription ownership**. So I am recording this as an **accepted, dated risk** — *"`Account` deferred 2026-09-17; window closes when checkout ships"* — rather than leaving it as an open question. If the team-lead wants (b), the minimal `Account` + `AccountMember` blocks must land **in the same migration wave as the billing tables**, while that wave costs nothing.
+
+**Factual correction accepted.** My §2.4/§2.5 says the `Rental` FK relations exist (`schema.prisma:566-568`) — the architect re-verified this twice and I confirmed it. The claim that they are "plain Strings with no relation" **is wrong and I have already corrected it (§2.5).** But note the *conclusion* MK-3 draws is unchanged and does **not** rest on that false premise: the fields **are** real `FOREIGN KEY`s (`Rental_managerId_fkey`, `Rental_ownerId_fkey`, added in `20250802_consolidate_to_rental`) — and they are **still unfit as a billing key, for a different and better reason: they are caller-supplied inputs, not authenticated identity.** The constraint was never the problem; the *trust* is.
 
 ---
 
@@ -323,6 +401,8 @@ The director's brief cites Rentec at **"$2.00/unit, $50 min"** and the carried-o
 - **No unit minimums, no setup fee, no contract, cancel anytime.** All four competitors advertise this; not matching it is a silent disqualifier.
 - **The monthly floor is real and published.** A $45 floor at 11 leases is $4.09/lease — visible, not hidden.
 - **No downgrade from Pro→Starter** (mirrors Rentec, protects expansion).
+
+**⚠️ One caveat the table must not hide (§2.7 MK-2):** every tier from **Growth up assumes staff can log in**, and **multi-user is not built** — there is no `Account` model and no invite/seat primitive (0 matches). **"Unlimited employee accounts" is a live, compared feature that Rentec ships today.** So Pro/Scale are **not sellable** until `Account` lands. The table is honest about price and must be equally honest about this: **Growth is the first tier a 2nd login matters on, and Pro is where a buyer will actually ask.** Treat multi-user as a **Growth/Pro prerequisite**, not a free-tier feature — and note it conflicts with the earlier framing that `Account` "gates the free tier." **It does not. It gates the top of the table.**
 
 ### 3.4 Recommendation on the live unit-count slider: **YES — copy it, and beat it**
 
@@ -409,7 +489,7 @@ Incumbents use different entity names. The trap is that **their `Unit` is our `R
 | TenantCloud `Lease` | Lease | `Lease` | **TC caps leases 10/30/60** — imports may exceed our tier; must prompt for tier, not silently truncate |
 | Any `Payment` / `Transaction` | Payment | `Transaction` | **`leaseId` is required** — orphan payments must be rejected or force-attached |
 | Any `Property` row | Property | **dropped** (address copied down) | Do not create a `Property` model in response. MEMORY.md: *"Never 'fix' this by growing the schema."* |
-| `Owner` / `Manager` | Owner | `Rental.ownerId` / `managerId` (bare strings) | Create `User` rows (`OWNER` / `PROPERTY_MANAGER`) first |
+| `Owner` / `Manager` | Owner | `Rental.ownerId` / `managerId` | Create `User` rows (`OWNER` / `PROPERTY_MANAGER`) **first** — all three of `managerId`/`ownerId`/`createdById` are required FKs, so the importer cannot insert a `Rental` until the referenced users exist |
 
 ### 4.4 "Trial-period data must survive conversion" — the mechanics
 
@@ -496,12 +576,13 @@ Callers (all **one-to-one, event-triggered**, none bulk): `notificationService.t
 
 | # | Item | Size | Blocks | Notes |
 |---|---|---|---|---|
-| **0a** | **Fix `POST /api/auth/register` role escalation + add rate limiter** | **S** | **Everything public** | §2.1 P0-A. **Partially landed** (uncommitted, 2026-09-17): `ADMIN` escalation closed via allowlist. **Two residual gaps: `PROPERTY_MANAGER`/`VENDOR` still self-assignable (narrow to `OWNER`), and `/register` still has no rate limiter.** Close both. **Hard precondition.** |
-| **0b** | **Fix unauthenticated `GET /api/tenants/search`** | **S** | **Everything public** | §2.1 P0-B. Restore `authMiddleware.protect`. Verified leaking live. |
-| **0c** | **Fix the route-shadowing bug** — move `app.use(routes)` after all `/api/*` mounts, or relocate the `router.use('/api/*')` catch-all | **S (likely one-line move)** | Checkout, e-sign, 35 mounts | §2.3. **Highest leverage-to-effort ratio in the plan.** Unlocks Stripe checkout + e-sign + 30 other mounts. Re-verify with the control-pair method. |
-| **0d** | **Verify Stripe webhook signature** + add `express.raw()` to the webhook route | **S** | Billing integrity | §2.3. Currently accepts any body → `200`. |
-| **1** | **Billing & entitlement foundation** — `Plan`/`Subscription` models; `plan`/`trialEndsAt`/`leaseLimit` on `User`; entitlement-check middleware; usage metering (`COUNT Lease WHERE status='ACTIVE'`); **plus the new dedicated `FirmFee` model (§2.5 D2)** | **L** | Items 2, 3, 4; §1.3 | **Zero of this exists.** Schema + migration + middleware + tests. ⚠️ **Two sub-decisions are now resolved and de-risk this item:** D1 (`Lease.rentalId` → `@@index` + partial unique; **measured ZERO breaking call sites**) and D2 (**do NOT touch `Transaction`** — the fee is a new **`FirmFee`** model, and `Transaction.leaseId` stays required; this protects the payments path from null derefs the compiler cannot catch). ⚠️ **D3 is an open scope call for team-lead:** single-user metering (no schema change, **recommended**) vs multi-tenant `Account` (**gates this item behind a separate retrofit**). |
-| **2** | **Stripe Connect + transaction-fee rail** — connected accounts, `application_fee_amount`, ACH (0.8% cap $5) + card (2.9%+30¢), tenant-paid fee at 1.25%/min $2.50, **fee written to `FirmFee`** | **L** | Free-tier revenue | **`application_fee_amount`/`transfer_data` currently 0 matches.** Plus live Stripe credentials (`.env` holds placeholders — §1.2). Reduced risk by D2 (§2.5): no `Transaction` migration needed. ⚠️ **Its HTTP surface is item 8** — `payment.service.ts` is orphaned today. |
+| **0a** | **Fix `POST /api/auth/register` role escalation + add rate limiter** | **S** | **Everything public** | §2.1 P0-A. **✅ MOSTLY LANDED, RE-VERIFIED 2026-09-17:** `ADMIN` escalation closed (allowlist at `validation.ts:13` + controller re-check) **and the rate limiter is now in** (`registerRateLimiter`, 5/IP/hr). **🔴 One residual, now ACTIVE: `PROPERTY_MANAGER`/`VENDOR` still self-assignable — and `PROPERTY_MANAGER` guards the now-reachable vendor-payout endpoint.** **Team-lead has directed BOTH fixes:** (1) narrow `PUBLIC_SIGNUP_ROLES` to **`OWNER`**; (2) add an **ownership check on the payout path** (`WorkOrder → MaintenanceRequest → Rental → managerId/ownerId`), because `vendorPayment.controller.ts` consults `req.user` **0 times** — so narrowing alone leaves an IDOR. **Hard precondition.** |
+| **0b** | **Fix unauthenticated `GET /api/tenants/search`** | **S** | **Everything public** | §2.1 P0-B. **🟡 BLANKET-MITIGATED, not fixed:** the new global `requireAuth` guard now returns 401 (was 200 + PII). But `tenantRoutes.ts:9` still says `// Temporarily remove auth for testing` — the route is protected only by the global layer. **Fix the route itself.** |
+| **0c** | **Fix the route-shadowing bug** — move `app.use(routes)` after all `/api/*` mounts | **S** | Checkout, e-sign, 35 mounts | §2.3. **✅ LANDED + VERIFIED 2026-09-17.** `app.use(routes)` now last (`app.ts:178`); formerly-shadowed mounts reach their handlers. ⚠️ **Verification method changed: the new global guard returns 401 for unmounted paths too, so the old 404 test is blind — must use a JWT (§2.3).** |
+| **0d** | **Verify the vendor webhook signature** + add route-scoped `express.raw()` | **S** | Billing integrity | §2.3. **🔴 URGENT — worse after 0c.** `vendorPayment.controller.ts:34` reads `const event = req.body`; `vendorPayment.service.ts:80-105` then sets `status:'PAID'` from `payout.metadata.vendorPaymentId` ⇒ **anyone can mark any vendor payment PAID.** Now **live + explicitly public**. ⚠️ **`constructEvent` alone is insufficient** — `app.ts:82`'s `express.json()` has no `verify` callback, so raw bytes are already consumed; needs a route-scoped `express.raw()`. |
+| **0e** | **T-0.2 — mount the no-dot `paymentRoutes.ts` in the barrel** + keep the import live + repair the 3 controller/service call-shape mismatches + add raw-body handling for its webhook route | **M** | **Item 2, item 3** | §2.6. **T-0.1 did NOT fix this and was never expected to** — verified: `POST /api/payments/payment-intents` still 404s. Until this lands, **`payment.service.ts` is unreachable over HTTP and the Stripe billing surface does not exist.** ⚠️ **Name the file by path in any PR — both files import as the binding `paymentRoutes`, so fixing the wrong one looks like it did nothing.** |
+| **1** | **Billing & entitlement foundation** — `Plan`/`Subscription` models; `plan`/`trialEndsAt`/`leaseLimit` on `User`; entitlement-check middleware; usage metering (`COUNT Lease WHERE status='ACTIVE'` **scoped to the authenticated `userId`**); **plus the new dedicated `FirmFee` model (§2.5 D2)** | **L** | Items 2, 3, 4; §1.3 | **Zero of this exists.** Schema + migration + middleware + tests. ⚠️ **All three sub-decisions are now RESOLVED and de-risk this item:** D1 (`Lease.rentalId` → `@@index` + partial unique; **measured ZERO breaking call sites**) · D2 (**do NOT touch `Transaction`** — the fee is a new **`FirmFee`** model, `Transaction.leaseId` stays required; protects the payments path from null derefs the compiler cannot catch) · **D3/MK-2 (`userId` + active-lease meter, NO `Account` — §2.7: no schema change, and `User.stripeCustomerId @unique` says per-user was the intended shape).** ⚠️ **This item is now fully unblocked — the meter key is decided, so it can start immediately.** |
+| **2** | **Stripe Connect + transaction-fee rail** — connected accounts, `application_fee_amount`, ACH (0.8% cap $5) + card (2.9%+30¢), tenant-paid fee at 1.25%/min $2.50, **fee written to `FirmFee`** | **L** | Free-tier revenue | **`application_fee_amount`/`transfer_data` currently 0 matches.** Plus live Stripe credentials (`.env` holds placeholders — §1.2). Reduced risk by D2 (§2.5): no `Transaction` migration needed. ⚠️ **Its HTTP surface is item 0e** — `payment.service.ts` is still orphaned on the HTTP surface (no-dot file unmounted); T-0.1 fixed only the with-dot approvals file. |
 | **3** | **Self-serve signup → checkout → first rent payment** | **M** | Funnel | §2.2. Depends on 0a, 0c, 1, 2. Stripe Checkout for new plans; Billing Portal for changes (`getCustomerPortalSession` already written, currently 404). |
 | **4** | **Published pricing page + live unit slider + fee-transparency page** | **M** | Item 2 of the brief | §3.4. Front-end + a published rate card. No marketing site exists in the repo — this is greenfield. Slider must render the quote before any input is focused. |
 | **5** | **Import / migration — CSV + 3 incumbent profiles + trial-data preservation** | **M → L** | Switching | §4. CSV + mapper alone is **M**. Trial-data preservation (§4.4) is **L** and now depends **only** on **D1 landing** (§2.5) + item 1 — the `Lease.rentalId @unique` conflict resolves once `@@index` + partial unique is in. |
@@ -514,11 +595,13 @@ Callers (all **one-to-one, event-triggered**, none bulk): `notificationService.t
 | User's claim | Verdict |
 |---|---|
 | Item 1 (free tier) is *"纯打包，模块都已存在，杠杆最高"* — the cheapest thing | ❌ **False.** No `Plan`/`Subscription`/`Price`/`Tier` model (0 of 94), no entitlement field on `User`, no enforcement middleware, no Connect marketplace rail, no live Stripe credentials. **This is the single largest item in the plan (S+S+L+L).** The *packaging* is cheap; the *billing substrate* it requires does not exist. |
-| Item 2 is *"literally a pricing-page and billing-integration change, not a product change"* | ⚠️ **Half true.** The pricing page is genuinely a front-end task (item 4). But checkout is blocked by a **routing bug** (0c) *and* needs the entitlement model (1) *and* a Connect rail (2). |
+| Item 2 is *"literally a pricing-page and billing-integration change, not a product change"* | ⚠️ **Half true.** The pricing page is genuinely a front-end task (item 4). But checkout needs the entitlement model (1), a Connect rail (2), **and the no-dot payments file mounted (0e)**. **The routing blocker (0c) is now fixed** — but 0e is **not** covered by it, so item 2 is still blocked by a mount, not by a missing product. |
 | Item 3 (import) is *"the cheapest way to make switching easier than staying"* | ⚠️ **CSV + mapping: yes, cheap (M).** But "trial data survives conversion" is **L** — it needs the entitlement model (item 1). **Good news from §2.5 D1:** the `Lease.rentalId @unique` blocker I originally flagged resolves with a **measured zero-blast-radius index swap**, so trial-preservation is **less** blocked than first assessed. Rentec's move is cheap *for Rentec* because it has one tenancy; here it still needs the billing/entitlement substrate. |
 | Item 5 (bulk SMS) is *"the only expensive one"* | ❌ **False — and it is not the most expensive.** It is L, but item 1 is L×2, and item 5's *compliance* prerequisites (consent ledger, opt-out, quiet hours) are P0 blockers that also apply retroactively to the existing non-compliant one-to-one SMS path. |
 
-**Net: three of the five scope claims are wrong, and all three err in the same direction — assuming infrastructure that is not there. The genuinely cheap wins are 0c (one-line route fix unlocking 35 mounts), 0a/0b (security), and item 4's pricing page.**
+**Net: three of the five scope claims are wrong, and all three err in the same direction — assuming infrastructure that is not there. The genuinely cheap wins are 0c (route fix — ✅ landed, unlocked 35 mounts), 0a/0b/0d (security, still open), and item 4's pricing page.**
+
+**⚠️ The 0c fix did not shrink the critical path as much as it first appears.** It was "the cheapest high-leverage change" because it unblocked 35 mounts — but the mount most valuable to item 2, the **Stripe billing surface**, turned out to be dead by a **second, independent cause** (never mounted, §2.6) that 0c cannot touch. **So the critical path for item 2 is still: 0e (mount) → 0d (webhook signature) → 1 (entitlement) → 2 (Connect) → 3 (checkout).** 0c removed one blocker from the *approvals* path and from e-sign/GDPR/roles; it did not remove item 2's.
 
 ---
 
@@ -529,23 +612,40 @@ Callers (all **one-to-one, event-triggered**, none bulk): `notificationService.t
 | 1 | *"Item 1 is 纯打包，模块都已存在，杠杆最高"* | 0 billing models / 0 entitlement fields / 0 enforcement / 0 Connect / placeholder Stripe keys | **Irreconcilable.** Surfaced, not smoothed. §1.3, §6.1 |
 | 2 | *"Monetise transaction fees (exactly Hemlane/TurboTenant's model)"* | No `application_fee_amount`/`transfer_data`/`on_behalf_of` (0 matches) | Model is right; **the rail to take a fee does not exist.** Requires Stripe Connect. §1.2 |
 | 3 | *"Publish prices; Rentec's slider is the bar"* | Slider is right; Rentec's **cited figures are stale** ($2.00/unit + $50 min → now $25 flat ≤10 / $50 entry) | **Benchmark moved.** Copying the stale number means overpricing. §3.1 |
-| 4 | *"Item 2 is literally a pricing-page and billing-integration change"* | 35 route mounts are shadowed by a 404 catch-all; **every Stripe checkout endpoint returns 404** | **Irreconcilable as stated.** Blocked by a routing bug first. §2.3 |
+| 4 | *"Item 2 is literally a pricing-page and billing-integration change"* | 35 route mounts shadowed by a 404 catch-all; **every Stripe checkout endpoint returned 404** | **Was irreconcilable; the routing half is now FIXED (§2.3, verified).** ⚠️ **But item 2 is *still* blocked — by the no-dot `paymentRoutes.ts` never being mounted (§2.6), which the ordering fix did not touch. So the premise is still wrong for a second, independent reason.** §2.3, §2.6 |
 | 5 | *"Item 3 — trial data must survive conversion"* | `Lease.rentalId @unique` ⇒ one lease per rental ever | **Direct conflict — RESOLVED by §2.5 D1.** Relaxing to `@@index([rentalId, status])` + partial unique `WHERE status='ACTIVE'` has a **measured zero breaking call sites**. Until that migration lands, a conversion adding a lease to an already-imported unit **will be rejected by the unique constraint.** **D1 is a hard prerequisite for §4.4, not for the CSV import.** |
 | 6 | *"AI maintenance triage is the wedge"* (positioning doc, row #4 "the only honest moat") | `cv/photoAnalysis.ts` was a **7-line placeholder** (`return {labels:['property','interior']}`) — **now deleted**; `photoAnalysis.service.ts` (626 LOC, real AWS Rekognition) is **DEAD**; the photo-analysis mount is **commented out**; `urgency.service.ts` **deleted**. Live path: `triage.service.ts` (92 LOC) = **Gemini text/NLP**, reached only via `contractor.service.ts:80` (vendor *unassign* re-triage) — **and `createMaintenanceRequest` does not call it at all** | **Not CV. Not on the intake path.** Restate as: *text/NLP triage, needs wiring to the intake path + validation.* Do not sell "CV is our moat." §2.2 step 10 |
 | 7 | Accounting cited as a strength area | `accounting.service.ts` was 33 LOC posting to the QuickBooks **sandbox** with a hardcoded company id — **and was deleted in `6bd66e54`** | Was never a strength. Now gone entirely. |
 | 8 | *"If you reuse figures from the positioning doc, mark them as carried-over"* | Rentec's public pricing changed **and** the repo advanced one commit (81 dead files deleted) mid-analysis | Every carried-over number in this doc is marked; Rentec's is marked **superseded**. §3.1 |
 | 9 | *(not in the brief)* Free tier is an open space | **TurboTenant already runs this exact model at scale**: free plan, unlimited rentals, rent collection, **$2.00/ACH tenant-paid** | The free tier is **occupied**. Must differentiate on capability (e-sign, accounting, SMS), not generosity. §3.2 |
 | 10 | *(not in the brief)* Bulk SMS is a feature gap | The **existing** one-to-one SMS path sends with **no consent check and no opt-out** | Not just a gap — a **live TCPA liability** ($500–$1,500/message). Compliance is a P0 prerequisite, not a follow-up. §5.2 |
+| 11 | *(not in the brief — raised by the architect)* "Per-account" enforcement needs an `Account` boundary | **No `Account`/`Organization`/staff/seat model (0 matches); `User.stripeCustomerId @unique` is the only billing field and it is per-`User`** | **Resolved as a product call, not deferred: v1 is per-`User` (§2.7).** The retrofit is a **re-platform** (51/86 route files unguarded; live guard enum-only; tenancy RBAC dead), and the correct trigger is **Pro/Scale sellability**, not the free tier. §2.5 D3, §2.7 |
+| 12 | *(not in the brief — surfaced by re-verification)* Bulk SMS compliance is the only live liability | The **mount fix exposed a second one**: the vendor webhook `POST /api/vendor-payments/stripe-webhooks` **never verifies the signature** — it reads `const event = req.body` and then sets `status:'PAID'` from `payout.metadata.vendorPaymentId` ⇒ **anyone can mark any vendor payment PAID** — and it is now **live + explicitly public** | ⛔ **New P0, and the fix caused it.** Order the billing build behind webhook verification. ⚠️ **Note the asymmetry: the *vendor* webhook is live-and-insecure; the *payments* webhook (`/api/payments/webhooks`) is dead-and-broken** (Buffer-vs-object ⇒ always 500) — so "the payments webhook is live" is not a true statement. §2.3, §6 |
+| 13 | *(not in the brief — surfaced by re-verification)* The role-escalation gap is a residual | `PROPERTY_MANAGER` is self-assignable **and** now guards a *reachable* vendor-payout endpoint | **Reclassified from theoretical to ACTIVE by the mount fix.** Narrow the allowlist to `OWNER`. §2.1 |
 
 ---
 
 ## 8. Appendix — verification method
 
 - **Reachability:** `node ~/.workbuddy-ai/skills/ts-dead-code-triage/scripts/dead-set.js` from `backend/`. At `6bd66e54`: app entry `src/index.ts`, 41 test entries, 533 → **346 total src files** (after the 81-file deletion), **287 reachable from the app**, 336 reachable including tests. The script now explicitly reports the shadowed binding: `src/routes/index.ts -> ./paymentRoutes (binding "paymentRoutes" unused)`.
-- **Route reachability (the decisive method):** boot with `node --require ts-node/register src/index.ts` (Redis `ECONNREFUSED :6379` is expected and non-fatal — verified the app reaches `Server successfully started on port 3001`), then probe. **Mounted central routes return 401 (auth) / 400 (bad payload) / 200; shadowed routes return `404 {"status":"error","message":"API endpoint not found"}`.** Always include a known-good control — §2.3 lists four.
+- **Route reachability (the decisive method):** boot with `node --require ts-node/register src/index.ts` (Redis `ECONNREFUSED :6379` is expected and non-fatal — verified the app reaches `Server successfully started on port 3001`), then probe.
+  - **⚠️ METHOD CHANGED MID-ANALYSIS — the old test is now blind.** At the original `HEAD 6bd66e54`, **unauthenticated** probing distinguished the two states cleanly: mounted-central → 401/400/200; shadowed → `404 {"status":"error","message":"API endpoint not found"}`.
+  - **After the fix (`HEAD 8d16f704`) the new global `app.use('/api', requireAuth)` (`app.ts:125`) returns 401 for *unmounted* paths as well** — confirmed: `GET /api/definitely-not-a-real-endpoint` → **401**. So an unauthenticated probe can no longer tell "shadowed" from "never existed". **Every post-fix reachability claim in this document was therefore re-made with a valid JWT** obtained from `POST /api/auth/login` (`admin@propertyai.com` / `Password123!`, `prisma/seed/data/users.ts`). With a token: **`404` = unmounted/shadowed; anything else = mounted.** Always include a known-good control — §2.3 lists them.
 - **Express mount-shadowing mechanism** was reproduced in isolation: a router ending in a `use('/api/*')` handler that responds without calling `next()` prevents every later `app.use('/api/…')` from ever matching. Confirmed by test before the live probe, so the 404s are explained, not merely observed.
 - **Env credential check:** values inspected for **length, prefix, and placeholder pattern only**; no secret content is reproduced in this document. Findings are the verdicts ("placeholder" / length), not the values.
 - **Source files were read, never modified.** The only writes are inside `/tmp` (throwaway probe scripts, since removed) and this deliverable.
 - **The repo advanced one commit during analysis** (`6bd66e54`, 81 dead files deleted — including `cv/photoAnalysis.ts`, `services/urgency.service.ts`, `services/accounting.service.ts`, `config/stripe.config.js`, `services/signatureService.ts`, `services/stripeService.js`, `nlp/*`). All citations in this document were **re-verified against `6bd66e54`**, not against the earlier snapshot. Where the director's brief cites a now-deleted file, it is marked as such (§1.2, §7 #7).
+- **🔁 The repo then advanced AGAIN during peer review (`HEAD 8d16f704`), and this mattered.** Three security/routing fixes landed in the working tree while this document was being reviewed: **T-0.1** (mount reorder + a fail-closed global `app.use('/api', requireAuth)`), **P0-A** (`PUBLIC_SIGNUP_ROLES` allowlist + `registerRateLimiter`), and **P0-B's** blanket mitigation. **I re-verified every affected claim against the new HEAD rather than shipping the old findings**, which changed six sections (§2.1, §2.2, §2.3, §2.6, §6, §7) and produced **two new findings the fixes themselves created**:
+  1. **The 401-masking of unmounted paths.** The new global guard makes the previous 404-based reachability test **blind** — a method change, recorded above, that invalidates any naive re-test.
+  2. **Two P0s the mount fix *activated* rather than fixed:** the Stripe webhook (`/api/vendor-payments/stripe-webhooks`) is now **live + explicitly public with no signature verification**; and the residual `PROPERTY_MANAGER` self-assignment now guards a **reachable** vendor-payout endpoint, upgrading it from theoretical to **active**.
+  **Method note:** T-0.1 was verified **not** by trusting the diff but by probing the formerly-shadowed paths with a valid JWT and confirming the **handlers ran** (`POST /api/vendor-payments/payout` → `400 "Work order ID is required."`, not the catch-all 404). **A fix that "looks applied" and a fix that "takes effect" are different claims** — the payment files are the proof: 0c applied, and the no-dot file is *still* dead.
 - **Peer review / corrections.** §2.5 records 高见远 (software-architect)'s measured answers to the three open schema questions this spec raised. **One of my own claims was wrong and is corrected there:** `Rental.managerId/ownerId/createdById` are **backed by real relations** (`schema.prisma:566-568`), not "bare strings with no relation" — verified independently and corrected in §2.4/§2.5. His D1/D2 measurements were also **independently re-verified** here: `prisma.lease.*` sweep (0 `findUnique`-by-`rentalId`), `prisma.transaction.*` sweep (**4 files / 12 live call sites**, matching his count), `TransactionType` has no platform-fee member (`schema.prisma:1134-1140`), and the null-deref traversals at `payment.service.ts:102-118` and `tenantIssuePrediction.service.ts:64`. His D2 conclusion **overrides my D2 recommendation** and this spec now carries his (safer) design.
 - **Two payment route files, distinguished by elision check.** `paymentRoutes.ts` (no dot): emitted `routes/index.ts` contains **no** `require('./paymentRoutes')` — TypeScript elides the unused import. `payment.routes.ts` (with dot): emitted `app.ts` **does** contain the require, confirming it loads and is killed only by mount ordering. Verified with `ts.transpileModule(..., {removeComments:true})`, since a naive regex matches commented-out requires.
+- **Metering-key evidence (§2.7), all measured 2026-09-17:**
+  - **Guard census** — `ls src/routes/*.ts | wc -l` = **86**; `comm -23` against files matching `rbacMiddleware|authMiddleware|requireAuth|checkRole|authenticate` = **51 files with no guard**; `rbacMiddleware` = **2 files**; `authMiddleware|requireAuth` = **30**; `checkRole` = **8**.
+  - **Live guard is enum-only** — `src/middleware/rbacMiddleware.ts:13` is `roles.includes(user.role)`. **No ownership/tenancy predicate anywhere in it.**
+  - **Tenancy-capable RBAC is DEAD** — `dead-set.js` lists `src/middleware/enhancedRBACMiddleware.ts` (and its test). It is **not imported by any route** (`grep -rn "enhancedRBAC|checkPermission" src/routes src/app.ts src/routes/index.ts` → 0 hits in routes). Its `Role`/`Permission` M2M is reached only via `role.controller.ts` → `role.routes.ts`, mounted at `app.ts:157` — i.e. role *administration* is mounted, but **permission enforcement is not**.
+  - **Ownership scoping is 20 refs, 12 of them in one file** — `grep -rnE "(managerId|ownerId|createdById)\s*:" src --include="*.ts"`: `rentalService.ts` 12, `enhancedRBACMiddleware.ts` 3 (dead), `uxReview.service.ts` 2, `rentalController.ts` 2, `uxReview.routes.ts` 1. **No reusable ownership-scope helper exists** (grep for a `scope`/`ownRentals` helper → no match).
+  - **`User.stripeCustomerId String? @unique` exists (`schema.prisma:841`) and is referenced in 0 live sites** (`grep -rn "stripeCustomerId" src` → empty). It is the **only** billing field in the schema.
+  - **`managerId`/`ownerId`/`createdById` are caller-supplied** — `rentalController.createRental` takes `const rentalData: CreateRentalDto = req.body` (line 15) and validates **presence only** (`requiredFields.includes`, lines 18-19). No ownership assertion. The FK **constraints are real** (`Rental_managerId_fkey`, from `20250802_consolidate_to_rental`) — the reason they are unfit as a **meter** is *trust*, not *integrity*.
+  - **No `Account`/`Organization`/`Team`/staff/invite/seat/employee model or field** — single combined grep against `prisma/schema.prisma` → 0 matches (excluding the unrelated `accountDeletionRequested`/`accountDeletionRequestedAt` fields on `User`).
