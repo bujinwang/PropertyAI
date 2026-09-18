@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../middleware/errorMiddleware';
 import fs from 'fs';
-import path from 'path';
 
 // Interface for file upload response
 interface FileUploadResult {
@@ -114,35 +113,6 @@ export const uploadMultiple = async (req: Request, res: Response, next: NextFunc
       message: `${files.length} files uploaded successfully`,
       data: results,
     });
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * Delete uploaded file
- */
-export const deleteUploadedFile = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { filename } = req.params;
-
-    if (!filename) {
-      return next(new AppError('Filename is required', 400));
-    }
-
-    const filePath = path.join('uploads/orders/', filename);
-
-    // Check if file exists
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-
-      return res.status(200).json({
-        success: true,
-        message: 'File deleted successfully',
-      });
-    } else {
-      return next(new AppError('File not found', 404));
-    }
   } catch (error) {
     next(error);
   }
