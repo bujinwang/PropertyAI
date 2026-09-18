@@ -103,9 +103,9 @@ configurePassport();
 // SECURITY: this static mount is OUTSIDE the `/api` prefix, so the global
 // `app.use('/api', requireAuth)` guard (below) does NOT cover it. Without its own
 // guard it would be the single anonymous read path in the app: uploads are gated
-// (see routes/orderUpload.ts, imageRoutes.ts — both behind authMiddleware.protect)
-// but the bytes would be served to anyone with the URL. Attach the same
-// fail-closed guard here so reads require a valid JWT too.
+// (see routes/imageRoutes.ts — behind authMiddleware.protect) but the bytes would
+// be served to anyone with the URL. Attach the same fail-closed guard here so
+// reads require a valid JWT too.
 //
 // NOTE: none of requireAuth's PUBLIC allowlist entries match a `/uploads/*` path,
 // so this mount is deny-by-default. TODO: if per-record ownership is required,
