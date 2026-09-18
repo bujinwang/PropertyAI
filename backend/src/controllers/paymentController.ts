@@ -179,10 +179,16 @@ class PaymentController {
   async calculateFees(req: Request, res: Response) {
     try {
       const { amount } = req.body;
+      // `amount` is in CENTS (Stripe's unit). Validate at the boundary so a bad
+      // client value is a 400, not a 500 — and so a missing value can never reach
+      // the service and become a NaN fee.
+      if (typeof amount !== 'number' || !Number.isFinite(amount) || amount < 0) {
+        return res.status(400).json({ error: 'amount must be a non-negative number of cents' });
+      }
       const fees = await paymentService.calculateFees(amount);
-      res.status(200).json(fees);
+      return res.status(200).json(fees);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: error.message });
     }
   }
 }

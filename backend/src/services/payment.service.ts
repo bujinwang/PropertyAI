@@ -6,6 +6,21 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2024-06-20' as any
 });
 
+/**
+ * Tenant-paid ACH convenience fee — the PropertyAI Free revenue line.
+ *
+ * Spec: `deliverables/software-company/propertyai-gtm-free-tier-spec-2026-09-17.md:57`
+ * — "Tenant-paid ACH convenience fee: **1.25%, min $2.50, max $12.00**".
+ *
+ * UNITS: all amounts here are in CENTS, matching Stripe's own unit. The previous
+ * implementation (`amount * 0.029 + 30`) returned Stripe's *processing* cost —
+ * 2.9% + 30¢ — which is what it costs to take the money, not what we charge for
+ * taking it. It is a different quantity at a different rate.
+ */
+const TENANT_FEE_RATE = 0.0125;
+const TENANT_FEE_MIN_CENTS = 250; // $2.50
+const TENANT_FEE_MAX_CENTS = 1200; // $12.00
+
 export const paymentService = {
   approveTransaction: async (transactionId: string, userId: string): Promise<Transaction> => {
     const transaction = await prisma.transaction.findUnique({ where: { id: transactionId } });
@@ -267,8 +282,23 @@ export const paymentService = {
     });
   },
 
+  /**
+   * The tenant-paid ACH convenience fee for a rent payment.
+   *
+   * @param amount Rent amount in CENTS (Stripe's unit).
+   * @returns The fee in CENTS: 1.25% of `amount`, floored at $2.50, capped at
+   *          $12.00. The floor binds below a $200 payment and the cap above $960,
+   *          so most payments attract the floor or the cap rather than the rate.
+   *
+   * The cap matters: at a $2,000 rent the rate alone would be $25.00, and a fee
+   * that size on a free tier is a churn event, not revenue.
+   */
   async calculateFees(amount: number) {
-    // Simplified fee calculation example, replace with actual calculation
-    return amount * 0.029 + 30;
+    if (!Number.isFinite(amount) || amount < 0) {
+      throw new Error('amount must be a non-negative number of cents');
+    }
+
+    const raw = Math.round(amount * TENANT_FEE_RATE);
+    return Math.min(Math.max(raw, TENANT_FEE_MIN_CENTS), TENANT_FEE_MAX_CENTS);
   }
 };
