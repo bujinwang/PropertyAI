@@ -2,11 +2,25 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 
 export type RootStackParamList = {
+  // ── Live tree: routes registered by RootNavigator (the active navigator,
+  // reached from App.tsx → RootNavigator). Keep these in sync with
+  // RootNavigator.tsx; screens navigate to them via useNavigation<...>().
+  Main: undefined;
+  AIGuidedSetupWizard: undefined;
+  ChatDetail: { conversationId?: string } | undefined;
+  Dashboard: undefined;
+  Maintenance: undefined;
+  Payments: undefined;
+
   // Auth Stack
   Login: undefined;
   Register: undefined;
   ForgotPassword: undefined;
-  
+  ResetPassword: undefined;
+
+  // Public (unauthenticated) entry
+  PublicListing: undefined;
+
   // Main App Stack
   MainTabs: undefined;
   
@@ -65,6 +79,44 @@ export type RootStackParamList = {
   
   // Legacy compatibility - keeping old property details route
   PropertyDetails: { propertyId: string };
+};
+
+/**
+ * The bottom-tab routes registered by MainTabNavigator.
+ *
+ * `MainTabParamList` was previously imported by both MainTabNavigator and (the
+ * now-deleted) AppNavigator but defined nowhere. It mirrors the <Tab.Screen>
+ * names actually rendered in MainTabNavigator.tsx: Home, Properties, Messages,
+ * Profile are always present; ManageListings, Maintenance and Admin are
+ * role-conditional (rendered only for propertyManager / admin).
+ */
+export type MainTabParamList = {
+  Home: undefined;
+  Properties: undefined;
+  Messages: undefined;
+  ManageListings: undefined;
+  Maintenance: undefined;
+  Admin: undefined;
+  Profile: undefined;
+};
+
+/**
+ * Param lists for the nested stack navigators mounted inside the bottom tabs.
+ *
+ * Each nested stack registers its own routes, so it must NOT be typed with
+ * RootStackParamList — doing so produces TS2322/TS2820 because e.g.
+ * 'MaintenanceRequests' is not a root route. Keeping these definitions in
+ * types.ts (rather than in the navigator files) lets both the navigator and its
+ * member screens import them without a circular dependency.
+ */
+export type ListingStackParamList = {
+  ManageListings: undefined;
+  EditListing: undefined;
+};
+
+export type MaintenanceStackParamList = {
+  MaintenanceRequests: undefined;
+  MaintenanceRequestDetails: { requestId: string };
 };
 
 // Navigation props for screens

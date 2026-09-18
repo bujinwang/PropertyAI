@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../navigation/types';
+import { ListingStackParamList } from '../navigation/types';
 import { listingService, Listing } from '../services/listingService';
 
-type EditListingScreenRouteProp = RouteProp<RootStackParamList, 'EditListing'>;
-type EditListingScreenNavigationProp = StackNavigationProp<RootStackParamList, 'EditListing'>;
+type EditListingScreenRouteProp = RouteProp<ListingStackParamList, 'EditListing'>;
+type EditListingScreenNavigationProp = StackNavigationProp<ListingStackParamList, 'EditListing'>;
 
 type Props = {
   route: EditListingScreenRouteProp;
