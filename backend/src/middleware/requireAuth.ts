@@ -111,9 +111,13 @@ export const PUBLIC_API_PATHS: readonly string[] = [
   '/search/property-types',
 
   // --- Payment-provider webhooks (authenticated by provider SIGNATURE, not JWT) ---
-  // Stripe cannot present a user JWT. paymentController.handleWebhook reads the
-  // `stripe-signature` header and verifies it in paymentService.processPaymentWebhook;
-  // vendorPayment.controller.handleStripeWebhook does the same.
+  // Stripe cannot present a user JWT. Both webhook handlers therefore authenticate
+  // the request with the provider signature over the RAW request bytes
+  // (`req.rawBody`, captured by the `verify` hook on express.json in src/app.ts):
+  //   - paymentController.handleWebhook          -> paymentService.processPaymentWebhook
+  //   - vendorPayment.controller.handleStripeWebhook -> vendorPaymentService.verifyWebhookSignature
+  // Each fails closed with HTTP 400 when the signature/raw body is missing or the
+  // signature does not verify. Neither trusts the parsed `req.body`.
   '/payments/webhooks',
   '/vendor-payments/stripe-webhooks',
 ];

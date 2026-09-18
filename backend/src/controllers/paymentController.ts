@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { paymentService } from '../services/payment.service';
+import logger from '../utils/logger';
 
 class PaymentController {
   async createCustomer(req: Request, res: Response) {
@@ -39,12 +40,26 @@ class PaymentController {
   }
 
   async handleWebhook(req: Request, res: Response) {
+    // This route is on the anonymous allowlist (Stripe cannot present a JWT);
+    // authenticity comes from the provider signature over the RAW request bytes.
+    // Fail closed: reject before doing anything when the signature or raw body is
+    // absent, and reject when the signature does not verify.
+    const signature = req.headers['stripe-signature'] as string | undefined;
+
+    if (!req.rawBody || !signature) {
+      return res.status(400).json({ error: 'Missing Stripe signature or raw request body.' });
+    }
+
     try {
-      const signature = req.headers['stripe-signature'] as string;
-      await paymentService.processPaymentWebhook(req.body, signature);
-      res.status(200).send();
+      // NOTE: pass the raw buffer, not the parsed body — `constructEvent` verifies
+      // the exact bytes Stripe signed. Passing `req.body` (an object) always throws.
+      await paymentService.processPaymentWebhook(req.rawBody, signature);
+      return res.status(200).send();
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      // `processPaymentWebhook` performs signature verification only, so a throw
+      // here means the signature was invalid -> 400 (fail closed), not 500.
+      logger.warn(`Rejected Stripe webhook with invalid signature: ${error?.message}`);
+      return res.status(400).json({ error: 'Invalid Stripe signature.' });
     }
   }
 

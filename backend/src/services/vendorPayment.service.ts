@@ -1,4 +1,4 @@
-import { PrismaClient, VendorPayment } from '@prisma/client';
+import { PrismaClient, VendorPayment, Prisma } from '@prisma/client';
 import Stripe from 'stripe';
 import logger from '../utils/logger';
 
@@ -77,6 +77,26 @@ class VendorPaymentService {
     }
   }
 
+  /**
+   * Verify a Stripe webhook signature against the RAW request bytes.
+   *
+   * Stripe signs the exact bytes it sent, so verification is only possible with
+   * the untouched request buffer (`req.rawBody`), never the parsed `req.body`.
+   *
+   * This method is intentionally pure verification: it does NOT fall back to a
+   * "no secret configured" passthrough and does NOT swallow Stripe's error.
+   * `constructEvent` throws when the signature, secret or timestamp is missing /
+   * invalid; callers MUST translate that throw into a fail-closed HTTP 400 and
+   * MUST NOT proceed to {@link handleStripeWebhook}.
+   */
+  verifyWebhookSignature(rawBody: Buffer, signature: string): Stripe.Event {
+    return stripe.webhooks.constructEvent(
+      rawBody,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET as string
+    );
+  }
+
   async handleStripeWebhook(event: Stripe.Event): Promise<void> {
     if (event.type === 'payout.paid') {
       const payout = event.data.object as Stripe.Payout;
@@ -104,9 +124,32 @@ class VendorPaymentService {
     }
   }
 
-  async getPaymentHistory(vendorId: string): Promise<VendorPayment[]> {
+  /**
+   * Payment history for a vendor.
+   *
+   * @param vendorId         The vendor whose payments to return.
+   * @param managerUserId    Optional PROPERTY_MANAGER / OWNER scope. When set,
+   *                         the result is restricted to payments whose work
+   *                         order belongs to a rental this user manages or owns,
+   *                         so a manager can never read another manager's
+   *                         payouts. Omit for ADMIN (full history).
+   */
+  async getPaymentHistory(vendorId: string, managerUserId?: string): Promise<VendorPayment[]> {
+    const where: Prisma.VendorPaymentWhereInput = { vendorId };
+
+    if (managerUserId) {
+      // WorkOrder -> MaintenanceRequest -> Rental -> (managerId | ownerId)
+      where.WorkOrder = {
+        MaintenanceRequest: {
+          Rental: {
+            OR: [{ managerId: managerUserId }, { ownerId: managerUserId }],
+          },
+        },
+      };
+    }
+
     return prisma.vendorPayment.findMany({
-      where: { vendorId },
+      where,
       orderBy: { createdAt: 'desc' },
     });
   }

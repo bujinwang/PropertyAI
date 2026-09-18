@@ -79,7 +79,21 @@ app.use(cors({
 
 // Body parser configuration - MUST be before routes
 // Enhanced configuration to handle large payloads
-app.use(express.json({ limit: '100mb' })); // Parse JSON bodies with increased limit
+//
+// The `verify` hook stashes the RAW request bytes on `req.rawBody`. Stripe
+// webhooks are authenticated by a signature over the exact bytes received, so
+// `stripe.webhooks.constructEvent` needs that raw buffer — a parsed /
+// re-serialized `req.body` object can never verify. The webhook handlers in
+// controllers/vendorPayment.controller.ts and controllers/paymentController.ts
+// consume `req.rawBody` and fail closed when it is absent.
+app.use(express.json({
+  limit: '100mb', // Parse JSON bodies with increased limit
+  verify: (req, _res, buf) => {
+    // `req` is the raw Node IncomingMessage here; widen it to the Express
+    // Request shape that carries the augmentation above.
+    (req as express.Request).rawBody = buf;
+  },
+}));
 app.use(express.urlencoded({ extended: true, limit: '100mb' })); // Parse URL-encoded bodies with increased limit
 
 // Configure express-session
