@@ -114,6 +114,14 @@ router.use(`${API_PREFIX}/vendor-performance`, vendorPerformanceRoutes);
 router.use(`${API_PREFIX}/background-checks`, backgroundCheckRoutes);
 router.use(`${API_PREFIX}/audit`, auditRoutes);
 router.use(`${API_PREFIX}/vendor-payments`, vendorPaymentRoutes);
+// Stripe billing router (customers / payment-intents / subscriptions / refunds /
+// invoices / webhooks …). Previously imported (line 31) but never mounted, so TS
+// elided the import and the whole router never loaded. Mounting it here both
+// wires the 14 routes and makes the import genuinely used. This is additive to
+// the dotted `payment.routes.ts` mounted at app.ts:179 under the same
+// `/api/payments` prefix: the two routers' path sets are disjoint. Every
+// non-webhook route carries its own isAuthenticated + checkRole guard.
+router.use(`${API_PREFIX}/payments`, paymentRoutes);
 router.use(`${API_PREFIX}/reminders`, reminderRoutes);
 router.use(`${API_PREFIX}/vendors`, vendorRoutes);
 router.use(`${API_PREFIX}/predictive-maintenance`, predictiveMaintenanceRoutes);

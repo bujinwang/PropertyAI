@@ -29,10 +29,15 @@ class PaymentController {
 
   async createSubscription(req: Request, res: Response) {
     try {
-      const subscription = await paymentService.createSubscription(
-        req.body.customerId,
-        req.body.priceId
-      );
+      // HTTP boundary accepts a single `priceId`; the service is Stripe-correct
+      // and expects `items: Stripe.SubscriptionCreateParams.Item[]`. Adapt here.
+      const { customerId, priceId } = req.body;
+      if (!customerId || !priceId) {
+        return res.status(400).json({ error: 'customerId and priceId are required' });
+      }
+      const subscription = await paymentService.createSubscription(customerId, [
+        { price: priceId },
+      ]);
       res.status(201).json(subscription);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -75,7 +80,14 @@ class PaymentController {
 
   async createRefund(req: Request, res: Response) {
     try {
-      const refund = await paymentService.createRefund(req.body);
+      // Service expects `paymentIntentId: string`; the previous call passed the
+      // whole `req.body` object as `payment_intent`, which Stripe rejected. Pass
+      // the id, and 400 when it is missing rather than 500.
+      const { paymentIntentId } = req.body;
+      if (!paymentIntentId) {
+        return res.status(400).json({ error: 'paymentIntentId is required' });
+      }
+      const refund = await paymentService.createRefund(paymentIntentId);
       res.status(201).json(refund);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
