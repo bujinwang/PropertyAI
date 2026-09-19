@@ -1,18 +1,46 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import * as SecureStore from 'expo-secure-store';
-import { API_URL, API_CONFIG, API_ENDPOINTS } from '../constants/api';
-import { User, AuthTokens, LoginCredentials, RegisterData, OAuthProvider, MFAVerificationResponse } from '../types/auth';
+import { API_URL, API_TIMEOUT, ENDPOINTS } from '../constants/api';
+import { User, AuthTokens, LoginCredentials, RegistrationData, OAuthProvider, MFAVerificationResponse } from '../types/auth';
 import { apiService } from './apiService';
 import { storeRefreshToken } from '../utils/secureStorage';
+
+// Re-exported so consumers (e.g. LoginScreen) can type their OAuth handlers without
+// reaching into types/auth directly.
+export type { OAuthProvider };
+
+/** JSON body the backend returns on failure. */
+type ApiErrorPayload = {
+  message?: string;
+  code?: string;
+};
 
 // Define error types for better type safety
 type ErrorWithResponse = {
   response?: {
+    status?: number;
     data?: {
       message?: string;
+      code?: string;
     };
   };
 };
+
+/**
+ * An Error that also carries the API's status/code so callers can branch on them,
+ * instead of the codebase attaching ad-hoc properties to a bare `Error`.
+ */
+class ApiError extends Error {
+  status?: number;
+  code?: string;
+
+  constructor(message: string, status?: number, code?: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code;
+  }
+}
 
 interface LoginResponse {
   token?: string;
@@ -34,7 +62,7 @@ interface OAuthLoginResponse {
 class AuthService {
   private api = axios.create({
     baseURL: API_URL,
-    timeout: API_CONFIG.TIMEOUT,
+    timeout: API_TIMEOUT,
     headers: {
       'Content-Type': 'application/json',
     },
@@ -87,7 +115,7 @@ class AuthService {
 
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
     try {
-      const response: AxiosResponse = await this.api.post(API_ENDPOINTS.AUTH.LOGIN, credentials);
+      const response: AxiosResponse = await this.api.post(ENDPOINTS.AUTH.LOGIN, credentials);
       
       // Backend returns data in a 'data' wrapper
       const loginData = response.data.data || response.data;
@@ -122,9 +150,9 @@ class AuthService {
     }
   }
 
-  async register(data: RegisterData): Promise<{ token: string; user: User }> {
+  async register(data: RegistrationData): Promise<{ token: string; user: User }> {
     try {
-      const response: AxiosResponse = await this.api.post(API_ENDPOINTS.AUTH.REGISTER, data);
+      const response: AxiosResponse = await this.api.post(ENDPOINTS.AUTH.REGISTER, data);
       
       const registerData = response.data.data || response.data;
       const { user, accessToken, refreshToken, expiresIn } = registerData;
@@ -157,7 +185,7 @@ class AuthService {
 
   async verifyMFACode(email: string, code: string): Promise<MFAVerificationResponse> {
     try {
-      const response: AxiosResponse = await this.api.post(API_ENDPOINTS.AUTH.MFA.VERIFY, {
+      const response: AxiosResponse = await this.api.post(ENDPOINTS.MFA.VERIFY, {
         email,
         code
       });
@@ -181,7 +209,7 @@ class AuthService {
 
   async refreshToken(refreshToken: string): Promise<{ data: AuthTokens }> {
     try {
-      const response: AxiosResponse = await this.api.post(API_ENDPOINTS.AUTH.REFRESH, {
+      const response: AxiosResponse = await this.api.post(ENDPOINTS.AUTH.REFRESH, {
         refreshToken,
       });
 
@@ -367,7 +395,7 @@ class AuthService {
 
   async logout(): Promise<void> {
     try {
-      await this.api.post(API_ENDPOINTS.AUTH.LOGOUT);
+      await this.api.post(ENDPOINTS.AUTH.LOGOUT);
     } catch (error) {
       // Even if logout fails on server, clear local data
       console.warn('Server logout failed:', error);
@@ -385,13 +413,10 @@ class AuthService {
   }
 
   private handleError(error: unknown): Error {
-    const err = error as AxiosError | ErrorWithResponse;
+    const err = error as AxiosError<ApiErrorPayload> | ErrorWithResponse;
     if ('response' in err && err.response) {
       const message = err.response.data?.message || 'An error occurred';
-      const apiError = new Error(message);
-      apiError.status = err.response.status;
-      apiError.code = err.response.data?.code;
-      return apiError;
+      return new ApiError(message, err.response.status, err.response.data?.code);
     } else if ('request' in err) {
       return new Error('Network error. Please check your connection.');
     } else {

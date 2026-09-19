@@ -8,7 +8,11 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
-import { mlPredictionService } from '../services/mlPredictionService';
+import {
+  mlPredictionService,
+  ChurnPredictionResponse,
+  MaintenancePredictionResponse,
+} from '../services/mlPredictionService';
 import { ChurnRiskCard } from '../components/ml/ChurnRiskCard';
 import { MaintenancePredictionCard } from '../components/ml/MaintenancePredictionCard';
 import { OccupancyForecastCard } from '../components/ml/OccupancyForecastCard';
@@ -16,22 +20,13 @@ import { RentOptimizationCard } from '../components/ml/RentOptimizationCard';
 import { api } from '../services/api';
 import { ENDPOINTS } from '../constants/api';
 
-interface ChurnPredictionWithName {
-  prediction: string;
-  probability: number;
-  confidence: number;
-  factors: Array<{ name: string; impact: number; description: string }>;
-  recommendations: string[];
+// Extends the canonical response instead of re-declaring it — the local copy had
+// widened `prediction` to `string`, which made it incompatible with ChurnRiskCard.
+interface ChurnPredictionWithName extends ChurnPredictionResponse {
   tenantName: string;
 }
 
-interface MaintenancePredictionWithName {
-  predictedCost: number;
-  costRange: { min: number; max: number };
-  confidence: number;
-  breakdown: Array<{ category: string; predictedCost: number; probability: number; urgency: string }>;
-  recommendations: string[];
-  timeline: string;
+interface MaintenancePredictionWithName extends MaintenancePredictionResponse {
   propertyName: string;
 }
 

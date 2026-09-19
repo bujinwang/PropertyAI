@@ -21,8 +21,8 @@ import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '@/navigation/types';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import MFAVerification from '@/components/auth/MFAVerification';
-import { login, loginWithOAuth, OAuthProvider } from '@/services/authService';
-import { User } from '@/types/user';
+import { authService, type OAuthProvider } from '@/services/authService';
+import type { ExtendedUser } from '@/contexts/AuthContext';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -67,7 +67,7 @@ export const LoginScreen: React.FC = () => {
     
     try {
       setIsLoading(true);
-      const response = await login(email, password);
+      const response = await authService.login({ email, password });
       
       if (response.requireMFA && response.email) {
         // Show MFA verification modal
@@ -90,7 +90,7 @@ export const LoginScreen: React.FC = () => {
   };
   
   // Handle MFA verification success
-  const handleMFASuccess = (token: string, user: User) => {
+  const handleMFASuccess = (token: string, user: ExtendedUser) => {
     setShowMFAModal(false);
     setUser(user);
     setToken(token);
@@ -106,7 +106,7 @@ export const LoginScreen: React.FC = () => {
   const handleOAuthLogin = async (provider: OAuthProvider) => {
     try {
       setIsLoading(true);
-      const response = await loginWithOAuth(provider);
+      const response = await authService.loginWithOAuth(provider);
       
       // If we have a URL, we need to open it for the OAuth flow
       if (response.url) {

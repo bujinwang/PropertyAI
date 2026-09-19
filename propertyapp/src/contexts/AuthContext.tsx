@@ -47,7 +47,7 @@ interface UserSettings {
 }
 
 // Extend User type to include settings
-interface ExtendedUser extends User {
+export interface ExtendedUser extends User {
   settings?: UserSettings;
 }
 
@@ -62,7 +62,7 @@ interface AuthContextType {
     name: string,
     email: string,
     password: string,
-    role?: string
+    role?: UserRole
   ) => Promise<void>;
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
@@ -210,7 +210,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     name: string,
     email: string,
     password: string,
-    role?: string
+    role?: UserRole
   ): Promise<void> => {
     setIsLoading(true);
     

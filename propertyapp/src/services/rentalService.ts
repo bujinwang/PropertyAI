@@ -1,4 +1,4 @@
-import { api } from './api';
+import { api, unwrap, ApiEnvelope } from './api';
 import { Rental, CreateRentalDto, UpdateRentalDto, RentalFilterParams } from '../types/rental';
 
 export class RentalService {
@@ -20,8 +20,8 @@ export class RentalService {
         ? `${this.baseUrl}?${queryParams.toString()}`
         : this.baseUrl;
         
-      const response = await api.get(url);
-      return response.data.data || response.data;
+      const response = await api.get<ApiEnvelope<Rental[]>>(url);
+      return unwrap(response);
     } catch (error) {
       console.error('Error fetching rentals:', error);
       throw error;
@@ -30,8 +30,8 @@ export class RentalService {
 
   async getRentalById(id: string): Promise<Rental> {
     try {
-      const response = await api.get(`${this.baseUrl}/${id}`);
-      return response.data.data || response.data;
+      const response = await api.get<ApiEnvelope<Rental>>(`${this.baseUrl}/${id}`);
+      return unwrap(response);
     } catch (error) {
       console.error('Error fetching rental:', error);
       throw error;
@@ -40,8 +40,8 @@ export class RentalService {
 
   async createRental(rentalData: CreateRentalDto): Promise<Rental> {
     try {
-      const response = await api.post(this.baseUrl, rentalData);
-      return response.data.data || response.data;
+      const response = await api.post<ApiEnvelope<Rental>>(this.baseUrl, rentalData);
+      return unwrap(response);
     } catch (error) {
       console.error('Error creating rental:', error);
       throw error;
@@ -50,8 +50,8 @@ export class RentalService {
 
   async updateRental(id: string, rentalData: UpdateRentalDto): Promise<Rental> {
     try {
-      const response = await api.put(`${this.baseUrl}/${id}`, rentalData);
-      return response.data.data || response.data;
+      const response = await api.put<ApiEnvelope<Rental>>(`${this.baseUrl}/${id}`, rentalData);
+      return unwrap(response);
     } catch (error) {
       console.error('Error updating rental:', error);
       throw error;
@@ -60,7 +60,7 @@ export class RentalService {
 
   async deleteRental(id: string): Promise<void> {
     try {
-      await api.delete(`${this.baseUrl}/${id}`);
+      await api.delete<ApiEnvelope<void>>(`${this.baseUrl}/${id}`);
     } catch (error) {
       console.error('Error deleting rental:', error);
       throw error;
@@ -69,8 +69,8 @@ export class RentalService {
 
   async getRentalsByManager(managerId: string): Promise<Rental[]> {
     try {
-      const response = await api.get(`${this.baseUrl}/manager/${managerId}`);
-      return response.data.data || response.data;
+      const response = await api.get<ApiEnvelope<Rental[]>>(`${this.baseUrl}/manager/${managerId}`);
+      return unwrap(response);
     } catch (error) {
       console.error('Error fetching rentals by manager:', error);
       throw error;
@@ -79,8 +79,8 @@ export class RentalService {
 
   async getRentalsByOwner(ownerId: string): Promise<Rental[]> {
     try {
-      const response = await api.get(`${this.baseUrl}/owner/${ownerId}`);
-      return response.data.data || response.data;
+      const response = await api.get<ApiEnvelope<Rental[]>>(`${this.baseUrl}/owner/${ownerId}`);
+      return unwrap(response);
     } catch (error) {
       console.error('Error fetching rentals by owner:', error);
       throw error;
@@ -89,11 +89,11 @@ export class RentalService {
 
   async setRentalAvailability(id: string, isAvailable: boolean, availableDate?: Date): Promise<Rental> {
     try {
-      const response = await api.put(`${this.baseUrl}/${id}/availability`, {
+      const response = await api.put<ApiEnvelope<Rental>>(`${this.baseUrl}/${id}/availability`, {
         isAvailable,
         availableDate
       });
-      return response.data.data || response.data;
+      return unwrap(response);
     } catch (error) {
       console.error('Error setting rental availability:', error);
       throw error;
@@ -102,8 +102,8 @@ export class RentalService {
 
   async searchRentals(searchParams: any): Promise<Rental[]> {
     try {
-      const response = await api.post(`${this.baseUrl}/search`, searchParams);
-      return response.data.data || response.data;
+      const response = await api.post<ApiEnvelope<Rental[]>>(`${this.baseUrl}/search`, searchParams);
+      return unwrap(response);
     } catch (error) {
       console.error('Error searching rentals:', error);
       throw error;
@@ -123,8 +123,8 @@ export class RentalService {
         ? `${this.baseUrl}/public?${queryParams.toString()}`
         : `${this.baseUrl}/public`;
         
-      const response = await api.get(url);
-      return response.data.data || response.data;
+      const response = await api.get<ApiEnvelope<Rental[]>>(url);
+      return unwrap(response);
     } catch (error) {
       console.error('Error fetching public rentals:', error);
       throw error;

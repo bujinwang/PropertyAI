@@ -210,12 +210,19 @@ export const mlPredictionService = {
       
       // Transform breakdown if available
       const breakdown = response.data.breakdown
-        ? Object.entries(response.data.breakdown).map(([category, cost]) => ({
-            category,
-            predictedCost: cost as number,
-            probability: 0.75,
-            urgency: (cost as number) > predictedCost * 0.3 ? 'high' : 'medium',
-          }))
+        ? Object.entries(response.data.breakdown).map(
+            ([category, cost]): {
+              category: string;
+              predictedCost: number;
+              probability: number;
+              urgency: 'low' | 'medium' | 'high';
+            } => ({
+              category,
+              predictedCost: cost as number,
+              probability: 0.75,
+              urgency: (cost as number) > predictedCost * 0.3 ? 'high' : 'medium',
+            })
+          )
         : [];
       
       return {

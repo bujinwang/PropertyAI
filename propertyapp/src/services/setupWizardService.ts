@@ -1,6 +1,11 @@
 import { UserRole } from '../types/auth';
 import { api } from './api';
 
+/** Body shape returned by the /ai/setup-recommendations/* endpoints. */
+interface RecommendationsBody {
+  recommendations: AIRecommendation[];
+}
+
 export interface AIRecommendation {
   id: string;
   title: string;
@@ -37,7 +42,7 @@ const setupWizardService = {
     portfolioSize?: PortfolioSize
   ): Promise<AIRecommendation[]> => {
     try {
-      const response = await api.post('/ai/setup-recommendations/notifications', {
+      const response = await api.post<RecommendationsBody>('/ai/setup-recommendations/notifications', {
         role,
         portfolioSize
       });
@@ -194,7 +199,7 @@ const setupWizardService = {
     request: AIRecommendationRequest
   ): Promise<AIRecommendation[]> => {
     try {
-      const response = await api.post('/ai/setup-recommendations/features', request);
+      const response = await api.post<RecommendationsBody>('/ai/setup-recommendations/features', request);
       return response.recommendations;
     } catch (error) {
       console.error('Error fetching feature recommendations:', error);
@@ -344,7 +349,7 @@ const setupWizardService = {
    */
   getPrivacyRecommendations: async (role: UserRole): Promise<AIRecommendation[]> => {
     try {
-      const response = await api.post('/ai/setup-recommendations/privacy', { role });
+      const response = await api.post<RecommendationsBody>('/ai/setup-recommendations/privacy', { role });
       return response.recommendations;
     } catch (error) {
       console.error('Error fetching privacy recommendations:', error);

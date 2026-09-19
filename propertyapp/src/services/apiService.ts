@@ -18,6 +18,16 @@ interface ApiError {
   errors?: Record<string, string[]>;
 }
 
+/**
+ * Shape of the JSON body the backend returns on failure. Used to type the axios
+ * response interceptor so `error.response.data` is not `unknown`.
+ */
+interface ApiErrorPayload {
+  message?: string;
+  code?: string;
+  errors?: Record<string, string[]>;
+}
+
 // Rate limiting configuration
 interface RateLimitConfig {
   maxRequests: number;
@@ -172,7 +182,7 @@ class ApiService {
     // Add response interceptor for error handling and token refresh
     this.api.interceptors.response.use(
       (response) => response,
-      async (error: AxiosError) => {
+      async (error: AxiosError<ApiErrorPayload>) => {
         const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
         
         // Handle rate limit errors (429 Too Many Requests)

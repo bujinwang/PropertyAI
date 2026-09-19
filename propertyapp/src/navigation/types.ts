@@ -16,7 +16,12 @@ export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   ForgotPassword: undefined;
-  ResetPassword: undefined;
+  /**
+   * Carries the reset token handed over by ForgotPasswordScreen
+   * (`navigate('ResetPassword', { token })`). ResetPasswordScreen reads
+   * `route.params.token`.
+   */
+  ResetPassword: { token: string };
 
   // Public (unauthenticated) entry
   PublicListing: undefined;

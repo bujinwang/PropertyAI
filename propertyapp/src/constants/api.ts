@@ -15,6 +15,14 @@ export const ENDPOINTS = {
     ME: '/auth/me',
     GOOGLE: '/auth/google',
     OAUTH_CALLBACK: '/auth/google/callback',
+    /** Matches backend/src/routes/authRoutes.ts:15 — note the `-token` suffix. */
+    REFRESH: '/auth/refresh-token',
+    /**
+     * NOTE: the backend exposes no logout route. AuthService.logout() already treats a
+     * failure as non-fatal (warns, then clears local state in `finally`), so this 404s
+     * harmlessly. Left here so the client contract stays explicit.
+     */
+    LOGOUT: '/auth/logout',
   },
   
   // MFA

@@ -261,6 +261,31 @@ class ApiService {
 // Create and export API service instance
 export const api = new ApiService(API_URL);
 
+/**
+ * Shape the backend wraps every payload in (see e.g.
+ * `backend/src/controllers/rentalController.ts`).
+ *
+ * NOTE: `ApiService.get/post/...` return the **response body**, not an AxiosResponse —
+ * so callers must read `body.data`, not `body.data.data`.
+ */
+export interface ApiEnvelope<T> {
+  status?: string;
+  message?: string;
+  data?: T;
+}
+
+/**
+ * Unwrap an `{ status, message, data }` envelope, tolerating endpoints that return the
+ * payload directly. Replaces the old `response.data.data || response.data`, which was
+ * written as if the methods returned an AxiosResponse.
+ */
+export function unwrap<T>(body: ApiEnvelope<T> | T): T {
+  if (body !== null && typeof body === 'object' && 'data' in (body as object)) {
+    return (body as ApiEnvelope<T>).data as T;
+  }
+  return body as T;
+}
+
 // Specific API calls
 export const getPublicListings = (query?: string) => {
   return api.get('/rentals/public', { params: { search: query } });
