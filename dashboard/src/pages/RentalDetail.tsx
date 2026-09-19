@@ -6,7 +6,7 @@ import {
  Button,
  Card,
  CardContent,
- Grid,
+ GridLegacy as Grid,
  Chip,
  Divider,
  List,

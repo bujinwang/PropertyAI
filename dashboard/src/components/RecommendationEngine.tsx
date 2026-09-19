@@ -19,7 +19,7 @@ import {
   DialogActions,
   LinearProgress,
   Alert,
-  Grid,
+  GridLegacy as Grid,
   Paper,
   Divider,
 } from '@mui/material';

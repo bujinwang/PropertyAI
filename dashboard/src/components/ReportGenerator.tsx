@@ -10,7 +10,7 @@ import {
   Select,
   MenuItem,
   TextField,
-  Grid,
+  GridLegacy as Grid,
   Card,
   CardContent,
   Chip,

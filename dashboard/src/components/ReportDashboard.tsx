@@ -9,7 +9,7 @@ import {
   Card,
   CardContent,
   Typography,
-  Grid,
+  GridLegacy as Grid,
   Button,
   Chip,
   Tabs,

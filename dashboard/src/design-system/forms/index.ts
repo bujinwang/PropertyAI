@@ -3,6 +3,9 @@
 
 // Core form system
 export { FormProvider, useForm } from './FormProvider';
+// Imported as well as re-exported: the re-export below does NOT put the name in
+// local scope, yet FORM_CONFIGS uses it as a type (that was 12 x TS2304).
+import type { ValidationMode } from './FormProvider';
 export type { 
   FormContextType,
   FormState,
@@ -58,40 +61,40 @@ export type {
 export const FORM_CONFIGS = {
   // Validation modes
   VALIDATION_MODES: {
-    ON_CHANGE: 'onChange' as ValidationMode,
-    ON_BLUR: 'onBlur' as ValidationMode,
-    ON_SUBMIT: 'onSubmit' as ValidationMode,
-    MANUAL: 'manual' as ValidationMode,
+    ON_CHANGE: 'onChange',
+    ON_BLUR: 'onBlur',
+    ON_SUBMIT: 'onSubmit',
+    MANUAL: 'manual',
   },
   
   // Default configurations for different form types
   QUICK_FORM: {
-    mode: 'onSubmit' as ValidationMode,
-    reValidateMode: 'onChange' as ValidationMode,
+    mode: 'onSubmit',
+    reValidateMode: 'onChange',
     shouldFocusError: true,
     shouldUnregister: false,
     delayError: 0,
   },
   
   LIVE_VALIDATION: {
-    mode: 'onChange' as ValidationMode,
-    reValidateMode: 'onChange' as ValidationMode,
+    mode: 'onChange',
+    reValidateMode: 'onChange',
     shouldFocusError: true,
     shouldUnregister: true,
     delayError: 300,
   },
   
   WIZARD_FORM: {
-    mode: 'onBlur' as ValidationMode,
-    reValidateMode: 'onChange' as ValidationMode,
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     shouldFocusError: true,
     shouldUnregister: false,
     delayError: 0,
   },
   
   SEARCH_FORM: {
-    mode: 'manual' as ValidationMode,
-    reValidateMode: 'manual' as ValidationMode,
+    mode: 'manual',
+    reValidateMode: 'manual',
     shouldFocusError: false,
     shouldUnregister: true,
     delayError: 500,

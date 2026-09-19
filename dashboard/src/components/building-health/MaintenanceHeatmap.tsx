@@ -4,7 +4,7 @@ import {
  Card,
  CardContent,
  CardHeader,
- Grid,
+ GridLegacy as Grid,
  Typography,
  Chip,
  Dialog,

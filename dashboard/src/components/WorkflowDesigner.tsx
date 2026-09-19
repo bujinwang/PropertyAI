@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Box, Paper, Typography, Button, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Select, MenuItem, FormControl, InputLabel, Grid, Card, CardContent, Chip } from '@mui/material';
+import { Box, Paper, Typography, Button, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Select, MenuItem, FormControl, InputLabel, GridLegacy as Grid, Card, CardContent, Chip } from '@mui/material';
 import { Add, Delete, Edit, PlayArrow, Save, Settings } from '@mui/icons-material';
 import { useDrop, useDrag, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';

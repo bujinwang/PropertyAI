@@ -15,7 +15,7 @@ import {
  DialogContent,
  DialogActions,
  Button,
- Grid,
+ GridLegacy as Grid,
  Paper,
  Chip,
 } from '@mui/material';

@@ -9,7 +9,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Grid,
+  GridLegacy as Grid,
   Paper
 } from '@mui/material';
 import { Star, TrendingUp, TrendingDown } from '@mui/icons-material';

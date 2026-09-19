@@ -16,7 +16,7 @@ import {
   Switch,
   FormControlLabel,
   TextField,
-  Grid
+  GridLegacy as Grid
 } from '@mui/material';
 import { Download, Schedule } from '@mui/icons-material';
 

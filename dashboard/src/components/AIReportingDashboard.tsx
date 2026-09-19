@@ -6,7 +6,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
-  Grid,
+  GridLegacy as Grid,
   Card,
   CardContent,
   Typography,

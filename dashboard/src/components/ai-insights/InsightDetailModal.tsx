@@ -8,7 +8,7 @@ import {
  Typography,
  Chip,
  IconButton,
- Grid,
+ GridLegacy as Grid,
  List,
  ListItem,
  ListItemText,

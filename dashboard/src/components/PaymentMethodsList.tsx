@@ -15,7 +15,7 @@ import {
   Alert,
   CircularProgress,
   Divider,
-  Grid,
+  GridLegacy as Grid,
 } from '@mui/material';
 import {
   Add as AddIcon,

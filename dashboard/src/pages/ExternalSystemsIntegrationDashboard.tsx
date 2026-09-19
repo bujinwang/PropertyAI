@@ -4,7 +4,7 @@ import {
  Typography,
  Paper,
  Button,
- Grid,
+ GridLegacy as Grid,
  Card,
  CardContent,
  Switch,

@@ -7,7 +7,7 @@ import {
   Button,
   Alert,
   Divider,
-  Grid,
+  GridLegacy as Grid,
   Chip,
   IconButton
 } from '@mui/material';

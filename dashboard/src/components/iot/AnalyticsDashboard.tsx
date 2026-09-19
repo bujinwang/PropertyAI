@@ -4,7 +4,7 @@ import {
   Card,
   CardContent,
   Typography,
-  Grid,
+  GridLegacy as Grid,
   Paper,
   Table,
   TableBody,

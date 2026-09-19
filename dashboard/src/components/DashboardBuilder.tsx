@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Grid,
+  GridLegacy as Grid,
   Card,
   CardContent,
   IconButton,

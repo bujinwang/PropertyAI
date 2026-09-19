@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import {
  Box,
  Typography,
- Grid,
+ GridLegacy as Grid,
  Button,
  Card,
  CardContent,

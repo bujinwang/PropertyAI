@@ -10,7 +10,7 @@ import {
  CardHeader,
  Typography,
  Box,
- Grid,
+ GridLegacy as Grid,
  Chip,
  List,
  ListItem,

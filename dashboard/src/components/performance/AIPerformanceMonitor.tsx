@@ -11,7 +11,7 @@ import {
  Typography,
  LinearProgress,
  Chip,
- Grid,
+ GridLegacy as Grid,
  IconButton,
  Collapse,
  Alert,

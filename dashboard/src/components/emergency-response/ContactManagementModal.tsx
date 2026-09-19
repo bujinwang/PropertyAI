@@ -6,7 +6,7 @@ import {
  DialogActions,
  Button,
  TextField,
- Grid,
+ GridLegacy as Grid,
  FormControl,
  InputLabel,
  Select,

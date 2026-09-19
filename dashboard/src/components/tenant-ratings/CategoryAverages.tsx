@@ -4,7 +4,7 @@ import {
   Typography,
   LinearProgress,
   Paper,
-  Grid,
+  GridLegacy as Grid,
   Chip,
   Tooltip
 } from '@mui/material';

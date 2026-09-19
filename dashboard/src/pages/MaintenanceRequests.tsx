@@ -6,7 +6,7 @@ import {
   CardContent,
   TextField,
   Button,
-  Grid,
+  GridLegacy as Grid,
   Paper,
   Alert,
   CircularProgress,

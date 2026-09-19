@@ -12,7 +12,7 @@ import {
  Box,
  Paper,
  Chip,
- Grid,
+ GridLegacy as Grid,
  Alert
 } from '@mui/material';
 import {

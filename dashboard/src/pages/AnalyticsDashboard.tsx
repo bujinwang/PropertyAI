@@ -6,7 +6,7 @@ const { useState, useEffect, useMemo } = React;
 import {
   Box,
   Typography,
-  Grid,
+  GridLegacy as Grid,
   Paper,
   Tab,
   Tabs,

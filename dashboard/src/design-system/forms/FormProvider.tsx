@@ -5,7 +5,21 @@ import * as React from 'react';
 const { createContext, useContext, useState, useEffect, ReactNode } = React;
 
 export type ValidationTrigger = 'onChange' | 'onBlur' | 'onSubmit' | 'manual';
-export type ValidationMode = 'all' | 'touched' | 'dirty';
+/**
+ * When validation runs. The union must contain the values this module actually
+ * compares against — `config.mode === 'onChange'` (line ~213) and `'onBlur'`
+ * (~233) — plus the defaults below and the modes index.ts publishes. The previous
+ * `'all' | 'touched' | 'dirty'` matched none of them, which is why every real
+ * usage had to be silenced with `as ValidationMode`.
+ */
+export type ValidationMode =
+  | 'onChange'
+  | 'onBlur'
+  | 'onSubmit'
+  | 'manual'
+  | 'all'
+  | 'touched'
+  | 'dirty';
 
 export interface FieldError {
   type: string;

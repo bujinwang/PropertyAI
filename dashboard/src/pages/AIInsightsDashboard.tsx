@@ -6,7 +6,7 @@ import {
   Tabs,
   Tab,
   Badge,
-  Grid,
+  GridLegacy as Grid,
 } from '@mui/material';
 import {
   Insights as InsightsIcon,

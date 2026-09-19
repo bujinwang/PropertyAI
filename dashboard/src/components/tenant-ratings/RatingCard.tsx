@@ -9,7 +9,7 @@ import {
   IconButton,
   Collapse,
   Divider,
-  Grid,
+  GridLegacy as Grid,
   Tooltip
 } from '@mui/material';
 import {

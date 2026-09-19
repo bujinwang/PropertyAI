@@ -19,7 +19,7 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Grid,
+  GridLegacy as Grid,
   Card,
   CardContent,
   Dialog,

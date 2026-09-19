@@ -13,7 +13,7 @@ import {
  Paper,
  Chip,
  TextField,
- Grid,
+ GridLegacy as Grid,
  FormControl,
  InputLabel,
  Select,

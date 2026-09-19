@@ -6,7 +6,7 @@ const { forwardRef, ReactNode } = React;
 import { styled } from '@mui/material/styles';
 import {
   Box,
-  Grid,
+  GridLegacy as Grid,
   Paper,
   Typography,
   Divider,

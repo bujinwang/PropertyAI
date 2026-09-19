@@ -5,7 +5,7 @@ import {
   Typography,
   Card,
   CardContent,
-  Grid,
+  GridLegacy as Grid,
   Switch,
   FormControlLabel,
   Button,

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
  Container,
  Typography,
- Grid,
+ GridLegacy as Grid,
  Box,
  Alert
 } from '@mui/material';

@@ -21,7 +21,7 @@ import {
   Paper,
   Alert,
   CircularProgress,
-  Grid,
+  GridLegacy as Grid,
   Divider
 } from '@mui/material';
 import {

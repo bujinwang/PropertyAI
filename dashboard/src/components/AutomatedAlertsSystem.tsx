@@ -20,7 +20,7 @@ import {
   FormControlLabel,
   Alert,
   Snackbar,
-  Grid,
+  GridLegacy as Grid,
   Paper,
   Avatar,
   Badge,

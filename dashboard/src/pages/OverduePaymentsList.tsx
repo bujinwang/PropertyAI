@@ -21,7 +21,7 @@ import {
   Alert,
   AlertTitle,
   Button,
-  Grid,
+  GridLegacy as Grid,
   Card,
   CardContent,
   IconButton,

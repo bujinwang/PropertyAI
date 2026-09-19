@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Button, Typography, Grid } from '@mui/material';
+import { Box, Button, Typography, GridLegacy as Grid } from '@mui/material';
 import { DashboardCard, StatusIndicator, NotificationBanner, NotificationItem } from './index';
 
 const SharedComponentsDemo: React.FC = () => {

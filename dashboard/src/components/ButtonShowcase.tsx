@@ -2,7 +2,7 @@
 // Test component to demonstrate all button variants and functionality
 
 import React, { useState } from 'react';
-import { Box, Typography, Grid, Paper, Divider } from '@mui/material';
+import { Box, Typography, GridLegacy as Grid, Paper, Divider } from '@mui/material';
 import { 
   Add as AddIcon,
   Delete as DeleteIcon,

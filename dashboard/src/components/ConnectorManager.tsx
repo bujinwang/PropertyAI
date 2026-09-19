@@ -6,7 +6,7 @@ import {
   Card,
   CardContent,
   CardActions,
-  Grid,
+  GridLegacy as Grid,
   Dialog,
   DialogTitle,
   DialogContent,

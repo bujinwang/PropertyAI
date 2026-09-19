@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Grid, Box, Alert } from '@mui/material';
+import { GridLegacy as Grid, Box, Alert } from '@mui/material';
 import MetricsWidget from './MetricsWidget';
 import HomeIcon from '@mui/icons-material/Home';
 import PeopleIcon from '@mui/icons-material/People';

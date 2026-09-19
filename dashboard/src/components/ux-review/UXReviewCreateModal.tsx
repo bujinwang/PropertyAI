@@ -13,7 +13,7 @@ import {
  Chip,
  Box,
  Typography,
- Grid,
+ GridLegacy as Grid,
  FormHelperText,
 } from '@mui/material';
 import { Upload as UploadIcon } from '@mui/icons-material';

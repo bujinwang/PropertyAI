@@ -9,7 +9,7 @@ import {
   Stepper,
   Step,
   StepLabel,
-  Grid,
+  GridLegacy as Grid,
   TextField,
   FormControl,
   InputLabel,

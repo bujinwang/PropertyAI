@@ -15,7 +15,7 @@ import {
   Alert,
   IconButton,
   Collapse,
-  Grid,
+  GridLegacy as Grid,
   LinearProgress
 } from '@mui/material';
 import {

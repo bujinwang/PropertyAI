@@ -2,7 +2,7 @@
 // Demonstrates all accessibility features and best practices
 
 import React, { useState, useRef } from 'react';
-import { Box, Typography, Grid, Paper, Divider, TextField, FormControl, FormLabel, Alert } from '@mui/material';
+import { Box, Typography, GridLegacy as Grid, Paper, Divider, TextField, FormControl, FormLabel, Alert } from '@mui/material';
 import { 
   VisuallyHidden, 
   SkipLink, 
