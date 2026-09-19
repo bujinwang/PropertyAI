@@ -201,7 +201,87 @@ is part of the *same* feature the live `AddProperty` and `CreateListing` buttons
 
 ---
 
-## 6. Decisions required (yours, not mine)
+## 6. Outcome — what was fixed (commit `b945ee46`)
+
+| | Before | After |
+|---|---|---|
+| Total errors | 226 | **146** |
+| **Reachable** errors | **90** | **23** |
+| Unreachable errors | 136 | 123 |
+| Test suite touched (`mlPredictionService`) | pass | **pass** |
+
+13 files, +240/−70. **No `as any`, no `@ts-ignore`, no `@ts-expect-error`** (verified by
+scanning the added lines). Only one behavioural change — the login repair — because that
+was a crash.
+
+**The login crash is fixed.** `LoginScreen` now calls `authService.login({ email, password })`
+and `authService.loginWithOAuth(provider)`. Verified against the real instance methods *and*
+end-to-end: `POST /api/auth/login` is mounted at `routes/index.ts:95`, and
+`API_URL` + `ENDPOINTS.AUTH.LOGIN` resolve to `http://localhost:3001/api/auth/login`.
+
+**Clusters resolved:** `rentalService` 18→0 · `PropertyDetailScreen` 15→0 ·
+`authService` 12→2 · `PropertyFormScreen` 8→1 · `LoginScreen` 4→0 · `setupWizardService` 3→0 ·
+`apiService` 3→0 · `MLInsightsScreen` 2→0 · `mlPredictionService` 1→0 ·
+`ForgotPassword`/`ResetPassword` 2→0.
+
+**Three client types were lying about the API — all three were caught by checking the backend:**
+
+1. **`authService` was half-migrated.** It imported `API_CONFIG`/`API_ENDPOINTS`/`RegisterData`,
+   none of which exist any more. Its `REFRESH`/`LOGOUT` endpoints were never defined at all —
+   I added `REFRESH: '/auth/refresh-token'` to match `authRoutes.ts:15` exactly (note the
+   `-token` suffix; `/auth/refresh` would have 404'd).
+2. **`RegistrationData` described the wrong contract.** It declared `name` + `acceptTerms`;
+   the backend reads `{ email, password, firstName, lastName, role }` (`authController.ts:14`)
+   and defaults a missing `role` to `TENANT`. The *client call* was right and the *type* was
+   wrong — the opposite of what the error implied.
+3. **`api.ts` returns the response body, not an `AxiosResponse`.** `get<T>` returns
+   `response.data`, so every caller's `response.data.data || response.data` was wrong-but-lucky
+   (the second `.data` is always `undefined`, so the fallback always won). Added
+   `ApiEnvelope<T>` + `unwrap()` rather than patching 12 call sites.
+
+**Two of my own guesses were wrong and the compiler caught them** — worth recording:
+`photos` is consumed as a list of URL **strings** (`item.photos?.[0]` feeds an image `uri`),
+not objects; and `RentalImage.id` is an `Int`, not a `String`. I corrected both rather than
+casting.
+
+## 7. New live defects found *because* of the fixes
+
+Repairing a broken import stops a symbol collapsing to `any`, which **reveals** previously
+hidden errors. Three surfaced, and two are genuine bugs:
+
+1. **The create-property flow is broken twice over.** `PropertyFormScreen:205` submits a
+   payload that (a) is **missing `managerId`, `ownerId`, `createdById`** — the backend's
+   required-field check returns 400 — and (b) **includes `rentalType` and `images`**, which
+   `backend/src/services/rentalService.ts:131` spreads directly into
+   `prisma.rental.create({ data: formattedData })`. Neither is a Prisma column (`images` is a
+   relation needing `RentalImages: { create: [...] }`), so Prisma rejects the write.
+   **This screen is registered and reachable — a user filling the property form cannot succeed.**
+   I did not "fix" it by inventing fields: the ids must come from somewhere (auth context?
+   the selected manager?) and the images need the separate upload endpoint. Decision needed.
+2. **`AIGuidedSetupWizardScreen:57`** destructures `isFirstLogin`/`role`/`portfolioSize` from
+   `route.params`, but **all four call sites navigate with no params** — so the wizard's
+   personalisation is permanently `undefined`. It already has `useAuth()` in scope.
+3. **`PublicListingScreen:24`** reads `listingId` from params, and nothing navigates to
+   `PublicListing` at all.
+
+**Also found:** `UserSettings` is declared in **both** `types/user.ts:3` and
+`AuthContext.tsx:26` — a fourth duplicate-name pair in this repo.
+
+## 8. What I am deliberately NOT doing
+
+- The remaining **23 reachable errors**: 9 are the unregistered-nav problem (§3, a product
+  decision — casting them to `any` would hide real dead buttons), 8 are `EditListingScreen`
+  (untyped route params + arity mismatches, fixable but not urgent), and the rest are the
+  two param-shape screens above.
+- The **123 unreachable errors / 65 files**: untouched. Deleting or wiring those features is
+  your call.
+- The `.git` shrink (declined). The `ContractorApp` peer conflict is pre-existing and was
+  deliberately not `--force`d.
+- `Button.test.tsx` fails with `Cannot find module 'react-test-renderer'` — a pre-existing
+  module-resolution gap. **I changed no dependencies**, so this is not mine; that file is also
+  in the unreachable set.
+
+## 9. Decisions required (yours, not mine)
 
 1. **Navigation** — for each of the 26 broken targets: register the screen, or remove the
    button? The 2 renames and the `ForgotPassword` param are unambiguous and I will just do
@@ -219,14 +299,18 @@ That converts 20 dead buttons into either working features or honest UI.
 
 ---
 
-## 7. What I am doing now
+## 10. Next steps
 
-- Live-error fixes delegated with the clusters above as a precise brief; **no `as any`, no
-  `@ts-ignore`, no touching the unreachable set.** (§4.1 login is the priority.)
-- Everything will be independently re-verified before commit — including booting the login
-  path, since a typecheck-clean fix is not evidence that login works.
-- `tsc` counts are expected to *rise* mid-fix: repairing a broken import stops symbols
-  collapsing to `any`, which reveals previously-hidden errors.
+1. **Decide the 26 navigation targets** (register vs remove). The 2 renames and the
+   `ForgotPassword`/`ResetPassword` param are already done.
+2. **Fix the create-property flow** (§8.1) — it needs a decision on where `managerId` /
+   `ownerId` / `createdById` come from, and the images need the separate upload endpoint
+   rather than a field in the create payload.
+3. **Then** start the `dashboard` sweep (1341 errors). First move there is to identify the
+   single root cause behind **TS2769 = 584 of 1341 (44%)** — that concentration is a
+   systemic overload mismatch (MUI + React 19 is the prime suspect), not 584 separate bugs.
+   `dashboard` also sets `allowJs: true`, so its count *includes* `.js` files — unlike the
+   backend, whose counts are `.ts`-only. Do not compare the two numbers directly.
 
 **Not doing:** the `.git` shrink (declined). The `ContractorApp` peer conflict is
 pre-existing and was deliberately not `--force`d.
