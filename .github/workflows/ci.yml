@@ -98,9 +98,35 @@ jobs:
       # failure (exit 124). Jest's own `--testTimeout` cannot help here: it
       # relies on the timer queue, which a microtask-starvation loop never
       # reaches. The job-level `timeout-minutes` is the backstop.
+      #
+      # The suite also carries a large body of pre-existing failures (129 of 207
+      # as of 2026-09-20), so a plain `jest` is permanently red and carries no
+      # signal. This ratchets instead, like the TypeScript check in the Code
+      # Quality job: it fails when the failure count GROWS, which is what
+      # actually indicates a regression. Lower BASELINE as tests are fixed.
       run: |
         cd backend
-        timeout --kill-after=30s 900 npm test -- --coverage
+        timeout --kill-after=30s 900 npm test -- --coverage > /tmp/jest.log 2>&1 && status=0 || status=$?
+        cat /tmp/jest.log
+
+        # A missing summary means the run did not complete — hang, crash, or
+        # timeout. Fail loudly instead of reading the absent count as zero.
+        if ! grep -qE '^ *Tests:' /tmp/jest.log; then
+          echo "::error::Jest produced no 'Tests:' summary (exit $status) — the run did not complete."
+          exit 1
+        fi
+
+        failed=$(grep -E '^ *Tests:' /tmp/jest.log | grep -oE '[0-9]+ failed' | head -1 | grep -oE '[0-9]+')
+        failed=${failed:-0}
+        BASELINE=129
+        echo "backend: $failed failing tests (baseline $BASELINE)"
+        if [ "$failed" -gt "$BASELINE" ]; then
+          echo "::error::Failing tests increased from $BASELINE to $failed. Fix the new failures."
+          exit 1
+        fi
+        if [ "$failed" -lt "$BASELINE" ]; then
+          echo "::notice::Failing tests fell from $BASELINE to $failed — lower BASELINE in .github/workflows/ci.yml to lock in the gain."
+        fi
 
     - name: Upload backend coverage
       uses: codecov/codecov-action@v3
@@ -133,10 +159,31 @@ jobs:
 
     - name: Run dashboard tests
       # See the note on the backend job: `timeout` converts a non-terminating
-      # runner into an immediate, legible failure instead of a silent hang.
+      # runner into an immediate, legible failure instead of a silent hang, and
+      # the failure count ratchets so that a plain `jest` — permanently red at
+      # 346 of 961 pre-existing failures as of 2026-09-20 — still carries
+      # signal. Lower BASELINE as tests are fixed.
       run: |
         cd dashboard
-        timeout --kill-after=30s 900 npm test -- --coverage --watchAll=false
+        timeout --kill-after=30s 900 npm test -- --coverage --watchAll=false > /tmp/jest.log 2>&1 && status=0 || status=$?
+        cat /tmp/jest.log
+
+        if ! grep -qE '^ *Tests:' /tmp/jest.log; then
+          echo "::error::Jest produced no 'Tests:' summary (exit $status) — the run did not complete."
+          exit 1
+        fi
+
+        failed=$(grep -E '^ *Tests:' /tmp/jest.log | grep -oE '[0-9]+ failed' | head -1 | grep -oE '[0-9]+')
+        failed=${failed:-0}
+        BASELINE=346
+        echo "dashboard: $failed failing tests (baseline $BASELINE)"
+        if [ "$failed" -gt "$BASELINE" ]; then
+          echo "::error::Failing tests increased from $BASELINE to $failed. Fix the new failures."
+          exit 1
+        fi
+        if [ "$failed" -lt "$BASELINE" ]; then
+          echo "::notice::Failing tests fell from $BASELINE to $failed — lower BASELINE in .github/workflows/ci.yml to lock in the gain."
+        fi
 
     - name: Upload dashboard coverage
       uses: codecov/codecov-action@v3
