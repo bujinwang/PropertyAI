@@ -101,6 +101,7 @@ export interface FocusableContainerProps {
 export const FocusableContainer = forwardRef<HTMLElement, FocusableContainerProps>(
   ({ children, trapFocus = false, returnFocus = true, initialFocus, className, as = 'div', ...props }, ref) => {
     // Import hook inside component to avoid circular dependencies
+    // eslint-disable-next-line @typescript-eslint/no-var-requires -- require() is intentional here: ../hooks is resolved lazily inside render to break a circular import at module load time.
     const { useFocusManagement } = require('../hooks');
     const { containerRef } = useFocusManagement({
       trapFocus,

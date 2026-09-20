@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -47,34 +47,71 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
   const [availableUnits, setAvailableUnits] = useState<UnitOption[]>([]);
   const [selectedUnits, setSelectedUnits] = useState<UnitOption[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (open && propertyId) {
-      // Fetch vacant unit options
-      dashboardService.getVacantUnitOptions(propertyId).then(setAvailableUnits);
-    }
+    if (!open || !propertyId) return;
+    // Reset on each open so a previous failure does not linger.
+    setLoadError(null);
+    // The rejection used to be unhandled: the promise silently vanished and the
+    // picker rendered an empty list, so "the request failed" and "there are no
+    // vacant units" were indistinguishable to the user.
+    dashboardService
+      .getVacantUnitOptions(propertyId)
+      .then(setAvailableUnits)
+      .catch((error: unknown) => {
+        setAvailableUnits([]);
+        setLoadError(error instanceof Error ? error.message : 'Failed to fetch units');
+      });
   }, [open, propertyId]);
 
-  const validationSchema = Yup.object({
-    unitId: mode === 'assign' ? Yup.string().required('Unit is required') : Yup.string(),
-    unitIds: mode === 'bulk' ? Yup.array().min(1, 'At least one unit required').required('Units are required') : Yup.array(),
-    leaseStart: (mode === 'assign' || mode === 'bulk') ? Yup.date().required('Lease start is required') : Yup.date(),
-    leaseEnd: (mode === 'assign' || mode === 'bulk') ? Yup.date().required('Lease end is required').min(Yup.ref('leaseStart'), 'End date must be after start') : Yup.date(),
-  });
+  // Memoised so the object identity is stable across renders. This is hygiene,
+  // not a bug fix: an earlier investigation blamed a re-render loop here, but
+  // the actual cause of the test-suite hang was a `waitFor` callback that
+  // mutated the DOM and so re-armed its own MutationObserver forever (see the
+  // note at the top of AssignmentModal.test.tsx).
+  const validationSchema = useMemo(
+    () =>
+      Yup.object({
+        unitId: mode === 'assign' ? Yup.string().required('Unit is required') : Yup.string(),
+        unitIds: mode === 'bulk' ? Yup.array().min(1, 'At least one unit required').required('Units are required') : Yup.array(),
+        // `.nullable()` matters: `initialValues` sets these to `null`, and a bare
+        // `Yup.date()` REJECTS null ("cannot be null"). Without it the unassign
+        // form could never validate, so Formik's `isActuallyValid` gate meant
+        // `onSubmit` was never called and unassigning a tenant silently did
+        // nothing.
+        leaseStart: (mode === 'assign' || mode === 'bulk') ? Yup.date().required('Lease start is required') : Yup.date().nullable(),
+        leaseEnd: (mode === 'assign' || mode === 'bulk') ? Yup.date().required('Lease end is required').min(Yup.ref('leaseStart'), 'End date must be after start') : Yup.date().nullable(),
+      }),
+    [mode],
+  );
 
-  const formik = useFormik({
-    initialValues: {
+  const initialValues = useMemo(
+    () => ({
       unitId: unitId || '',
       unitIds: [],
       leaseStart: null,
       leaseEnd: null,
-    },
+    }),
+    [unitId],
+  );
+
+  const formik = useFormik({
+    initialValues,
     validationSchema,
     onSubmit: (values) => {
+      const isBulk = mode === 'bulk';
       onSubmit({
-        ...values,
+        // Only the fields that apply to the current mode are populated; the
+        // other mode's fields are omitted rather than sent as stale values
+        // (assign mode used to emit `unitIds: []`, bulk mode used to echo back
+        // the `unitId` prop). Every consumer reads these per-mode.
+        unitId: isBulk ? '' : values.unitId,
+        unitIds: isBulk ? values.unitIds : undefined,
+        leaseStart: values.leaseStart,
+        leaseEnd: values.leaseEnd,
         tenantId,
-        tenantIds: mode === 'bulk' ? tenantIds : undefined,
+        tenantIds: isBulk ? tenantIds : undefined,
         mode,
       });
       onClose();
@@ -91,6 +128,11 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
         </DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
+            {loadError && (
+              <Typography color="error" sx={{ mb: 2 }}>
+                {loadError}
+              </Typography>
+            )}
             {isAssignMode && (
               <>
                 <Autocomplete

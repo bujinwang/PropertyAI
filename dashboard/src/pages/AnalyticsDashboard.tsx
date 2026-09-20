@@ -273,7 +273,7 @@ const AnalyticsDashboard: React.FC = () => {
 
         <Alert severity="info" sx={{ mb: 3 }}>
           <Typography variant="body2">
-            This dashboard demonstrates PropertyFlow AI's data visualization capabilities with sample data.
+            This dashboard demonstrates PropertyFlow AI&apos;s data visualization capabilities with sample data.
             Real-time data integration and advanced analytics features are available in production.
           </Typography>
         </Alert>

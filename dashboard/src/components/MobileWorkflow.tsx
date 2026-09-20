@@ -106,18 +106,20 @@ const MobileWorkflow: React.FC<MobileWorkflowProps> = ({
       // Type-specific validation
       if (value) {
         switch (field.type) {
-          case 'email':
+          case 'email': {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(value)) {
               stepErrors[field.id] = 'Please enter a valid email address';
             }
             break;
-          case 'tel':
-            const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
-            if (!phoneRegex.test(value.replace(/[\s\-\(\)]/g, ''))) {
+          }
+          case 'tel': {
+            const phoneRegex = /^[+]?[1-9][\d]{0,15}$/;
+            if (!phoneRegex.test(value.replace(/[\s\-()]/g, ''))) {
               stepErrors[field.id] = 'Please enter a valid phone number';
             }
             break;
+          }
           case 'number':
             if (isNaN(Number(value))) {
               stepErrors[field.id] = 'Please enter a valid number';

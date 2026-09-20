@@ -472,7 +472,7 @@ const SmartSearch: React.FC = () => {
             Save this search query for quick access later?
           </Typography>
           <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-            Query: "{query}"
+            Query: &quot;{query}&quot;
           </Typography>
         </DialogContent>
         <DialogActions>

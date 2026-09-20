@@ -105,8 +105,8 @@ export const FORM_CONFIGS = {
 export const VALIDATION_PATTERNS = {
   // Contact information
   EMAIL: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-  PHONE: /^[\+]?[(]?[\d\s\-\(\)]{10,}$/,
-  US_PHONE: /^(\+1-?)?(\([0-9]{3}\)|[0-9]{3})[\s\-]?[0-9]{3}[\s\-]?[0-9]{4}$/,
+  PHONE: /^[+]?[(]?[\d\s\-()]{10,}$/,
+  US_PHONE: /^(\+1-?)?(\([0-9]{3}\)|[0-9]{3})[\s-]?[0-9]{3}[\s-]?[0-9]{4}$/,
   
   // Property related
   ZIP_CODE: /^[0-9]{5}(-[0-9]{4})?$/,
@@ -122,7 +122,7 @@ export const VALIDATION_PATTERNS = {
   PROPERTY_ID: /^[A-Z0-9]{3,20}$/i,
   
   // Common text patterns
-  NAME: /^[A-Za-z\s\-'\.]{2,50}$/,
+  NAME: /^[A-Za-z\s\-'.]{2,50}$/,
   USERNAME: /^[A-Za-z0-9_]{3,20}$/,
   PASSWORD_STRONG: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
 } as const;
@@ -193,7 +193,7 @@ export const PROPERTY_FIELD_CONFIGS = {
     required: true,
     minLength: 2,
     maxLength: 100,
-    pattern: /^[A-Za-z0-9\s\-'\.&]{2,100}$/,
+    pattern: /^[A-Za-z0-9\s\-'.&]{2,100}$/,
   },
   
   PROPERTY_ADDRESS: {

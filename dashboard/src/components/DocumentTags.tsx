@@ -260,14 +260,18 @@ const DocumentTags: React.FC<DocumentTagsProps> = ({
               <TextField {...params} label="Select tags" placeholder="Choose tags..." />
             )}
             renderTags={(value, getTagProps) =>
-              value.map((option, index) => (
-                <Chip
-                  label={option}
-                  {...getTagProps({ index })}
-                  size="small"
-                  color={getTagColor(option)}
-                />
-              ))
+              value.map((option, index) => {
+                const { key, ...tagProps } = getTagProps({ index });
+                return (
+                  <Chip
+                    key={key}
+                    label={option}
+                    {...tagProps}
+                    size="small"
+                    color={getTagColor(option)}
+                  />
+                );
+              })
             }
             freeSolo
             sx={{ mb: 2 }}

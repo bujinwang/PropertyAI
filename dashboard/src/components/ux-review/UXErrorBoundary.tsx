@@ -74,7 +74,7 @@ export class UXErrorBoundary extends Component<Props, State> {
                   Oops! Something went wrong
                 </Typography>
                 <Typography variant="body1" color="text.secondary" paragraph>
-                  We encountered an issue while loading the UX reviews. Don't worry, we're on it!
+                  We encountered an issue while loading the UX reviews. Don&apos;t worry, we&apos;re on it!
                 </Typography>
               </Box>
 

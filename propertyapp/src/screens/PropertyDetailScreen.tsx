@@ -48,12 +48,12 @@ export const PropertyDetailScreen: React.FC = () => {
 
   const handleContact = () => {
     // Navigate to contact screen
-    navigation.navigate('ChatDetail' as any, { rentalId: propertyId });
+    navigation.navigate('ChatDetail', { rentalId: propertyId });
   };
 
   const handleSchedule = () => {
     // Navigate to scheduling screen
-    navigation.navigate('ScheduleTour' as any, { rentalId: propertyId });
+    navigation.navigate('ScheduleTour', { rentalId: propertyId });
   };
 
   const handleViewUnits = () => {

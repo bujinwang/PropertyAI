@@ -103,7 +103,7 @@ const FormsShowcase: React.FC = () => {
             type="tel"
             validation={{
               pattern: {
-                value: /^[\+]?[(]?[\d\s\-\(\)]{10,}$/,
+                value: /^[+]?[(]?[\d\s\-()]{10,}$/,
                 message: 'Please enter a valid phone number',
               },
             }}
@@ -237,7 +237,7 @@ const FormsShowcase: React.FC = () => {
           Enhanced Forms System
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-          PropertyFlow AI's comprehensive form system with validation, accessibility, and enhanced UX features.
+          PropertyFlow AI&apos;s comprehensive form system with validation, accessibility, and enhanced UX features.
         </Typography>
         
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 3 }}>
@@ -506,7 +506,7 @@ const FormsShowcase: React.FC = () => {
                     placeholder="(555) 123-4567"
                     validation={{
                       pattern: {
-                        value: /^[\+]?[(]?[\d\s\-\(\)]{10,}$/,
+                        value: /^[+]?[(]?[\d\s\-()]{10,}$/,
                         message: 'Please enter a valid phone number',
                       },
                     }}

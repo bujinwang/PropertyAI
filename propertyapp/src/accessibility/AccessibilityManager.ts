@@ -1,5 +1,6 @@
 import { AccessibilityInfo, findNodeHandle } from 'react-native';
 import { useEffect, useRef, useCallback } from 'react';
+import type { Component } from 'react';
 
 // Accessibility configuration
 export const AccessibilityConfig = {
@@ -61,10 +62,10 @@ export const AccessibilityConfig = {
 
 // Focus management utilities
 export class FocusManager {
-  private static focusableRefs = new Map<string, any>();
+  private static focusableRefs = new Map<string, Component | number>();
   private static currentFocus = '';
 
-  static registerFocusable(id: string, ref: any) {
+  static registerFocusable(id: string, ref: Component | number) {
     this.focusableRefs.set(id, ref);
   }
 
@@ -119,7 +120,7 @@ export class ScreenReader {
 }
 
 export const useAccessibility = () => {
-  const ref = useRef<any>(null);
+  const ref = useRef<Component | null>(null);
 
   const setAccessibilityFocus = useCallback(() => {
     if (ref.current) {
@@ -223,9 +224,25 @@ export class KeyboardNavigation {
   }
 }
 
+/**
+ * Minimal shape of a React Native element inspected by
+ * {@link AccessibilityValidator}. Kept intentionally loose because callers pass
+ * arbitrary component props.
+ */
+interface AccessibleElement {
+  accessibilityLabel?: string;
+  accessibilityRole?: string;
+  style?: {
+    minWidth?: number;
+    minHeight?: number;
+    color?: string;
+    backgroundColor?: string;
+  };
+}
+
 // Accessibility validation
 export class AccessibilityValidator {
-  static validateElement(element: any): string[] {
+  static validateElement(element: AccessibleElement): string[] {
     const issues: string[] = [];
 
     // Check for accessibility label
@@ -239,7 +256,11 @@ export class AccessibilityValidator {
     }
 
     // Check for touch target size
-    if (element.style && (element.style.minWidth < 44 || element.style.minHeight < 44)) {
+    if (
+      element.style &&
+      ((element.style.minWidth ?? Infinity) < 44 ||
+        (element.style.minHeight ?? Infinity) < 44)
+    ) {
       issues.push('Touch target too small (minimum 44x44)');
     }
 
@@ -253,7 +274,7 @@ export class AccessibilityValidator {
     return issues;
   }
 
-  static validateScreen(elements: any[]): string[] {
+  static validateScreen(elements: AccessibleElement[]): string[] {
     const issues: string[] = [];
     
     elements.forEach((element, index) => {

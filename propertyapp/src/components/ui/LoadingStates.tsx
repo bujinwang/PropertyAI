@@ -1,19 +1,26 @@
 import React from 'react';
-import { StyleSheet, View, ActivityIndicator } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  ActivityIndicator,
+  StyleProp,
+  ViewStyle,
+  DimensionValue,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 interface LoadingStateProps {
   type?: 'skeleton' | 'spinner' | 'shimmer';
   size?: 'small' | 'medium' | 'large';
-  style?: any;
+  style?: StyleProp<ViewStyle>;
 }
 
 // Skeleton loading component
 export const SkeletonLoader: React.FC<{
-  width: number | string;
+  width: DimensionValue;
   height: number;
   borderRadius?: number;
-  style?: any;
+  style?: StyleProp<ViewStyle>;
 }> = ({ width, height, borderRadius = 8, style }) => (
   <View style={[
     styles.skeleton,
@@ -24,10 +31,10 @@ export const SkeletonLoader: React.FC<{
 
 // Shimmer effect component
 export const Shimmer: React.FC<{
-  width: number | string;
+  width: DimensionValue;
   height: number;
   borderRadius?: number;
-  style?: any;
+  style?: StyleProp<ViewStyle>;
 }> = ({ width, height, borderRadius = 8, style }) => (
   <View style={[
     styles.shimmerContainer,

@@ -424,7 +424,7 @@ class PhotoAnalysisService {
     const recommendations = [];
 
     switch (roomType.toLowerCase()) {
-      case "kitchen":
+      case "kitchen": {
         const kitchenLabels = ["Stove", "Refrigerator", "Cabinet", "Counter"];
         const hasEssential = analysis.labels.some((label: { name: string }) =>
           kitchenLabels.some((item) =>
@@ -439,8 +439,9 @@ class PhotoAnalysisService {
           });
         }
         break;
+      }
 
-      case "bathroom":
+      case "bathroom": {
         const bathroomLabels = ["Toilet", "Sink", "Shower", "Bathtub"];
         const hasBathroomEssential = analysis.labels.some(
           (label: { name: string }) =>
@@ -456,8 +457,9 @@ class PhotoAnalysisService {
           });
         }
         break;
+      }
 
-      case "bedroom":
+      case "bedroom": {
         const bedroomLabels = ["Bed", "Closet", "Window", "Lamp"];
         const hasBedroomEssential = analysis.labels.some(
           (label: { name: string }) =>
@@ -473,6 +475,7 @@ class PhotoAnalysisService {
           });
         }
         break;
+      }
     }
 
     return recommendations;

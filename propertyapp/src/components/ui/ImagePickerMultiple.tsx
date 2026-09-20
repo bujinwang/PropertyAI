@@ -27,7 +27,7 @@ interface ImageAsset {
   height?: number;
   assetId?: string;
   base64?: string;
-  exif?: Record<string, any>;
+  exif?: Record<string, unknown>;
   duration?: number;
 }
 

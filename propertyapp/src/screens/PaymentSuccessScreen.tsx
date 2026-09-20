@@ -107,7 +107,7 @@ export function PaymentSuccessScreen({ navigation }: PaymentSuccessScreenProps) 
         </View>
 
         <View style={styles.messageCard}>
-          <Text style={styles.messageTitle}>What's Next?</Text>
+          <Text style={styles.messageTitle}>What&apos;s Next?</Text>
           <Text style={styles.messageText}>
             • A receipt has been sent to your email{'\n'}
             • Your payment will be reflected in your account within 24 hours{'\n'}

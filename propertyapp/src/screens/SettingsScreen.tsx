@@ -18,11 +18,14 @@ import { RootStackParamList } from '@/navigation/types';
 
 type SettingsNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
+/** Union of valid Ionicons glyph names, derived from the component's props. */
+type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
+
 interface SettingItem {
   id: string;
   title: string;
   description?: string;
-  icon: string;
+  icon: IoniconName;
   type: 'navigate' | 'toggle' | 'action';
   value?: boolean;
   onPress?: () => void;
@@ -121,7 +124,7 @@ export const SettingsScreen: React.FC = () => {
       description: 'Customize what notifications you receive',
       icon: 'settings-outline',
       type: 'navigate',
-      onPress: () => navigation.navigate('NotificationSettings' as any),
+      onPress: () => navigation.navigate('NotificationSettings'),
     },
     {
       id: 'payment-methods',
@@ -129,7 +132,7 @@ export const SettingsScreen: React.FC = () => {
       description: 'Manage your saved payment methods',
       icon: 'card-outline',
       type: 'navigate',
-      onPress: () => navigation.navigate('PaymentMethods' as any),
+      onPress: () => navigation.navigate('PaymentMethods'),
     },
     {
       id: 'help',
@@ -137,7 +140,7 @@ export const SettingsScreen: React.FC = () => {
       description: 'Get help and contact customer support',
       icon: 'help-circle-outline',
       type: 'navigate',
-      onPress: () => navigation.navigate('Support' as any),
+      onPress: () => navigation.navigate('Support'),
     },
     {
       id: 'about',
@@ -145,7 +148,7 @@ export const SettingsScreen: React.FC = () => {
       description: 'App version, terms of service, and privacy policy',
       icon: 'information-circle-outline',
       type: 'navigate',
-      onPress: () => navigation.navigate('About' as any),
+      onPress: () => navigation.navigate('About'),
     },
   ];
 
@@ -156,7 +159,7 @@ export const SettingsScreen: React.FC = () => {
       description: 'Update your personal information',
       icon: 'person-outline',
       type: 'navigate',
-      onPress: () => navigation.navigate('EditProfile' as any),
+      onPress: () => navigation.navigate('EditProfile'),
     },
     {
       id: 'change-password',
@@ -164,7 +167,7 @@ export const SettingsScreen: React.FC = () => {
       description: 'Update your account password',
       icon: 'lock-closed-outline',
       type: 'navigate',
-      onPress: () => navigation.navigate('ChangePassword' as any),
+      onPress: () => navigation.navigate('ChangePassword'),
     },
     {
       id: 'two-factor',
@@ -172,7 +175,7 @@ export const SettingsScreen: React.FC = () => {
       description: 'Add an extra layer of security to your account',
       icon: 'key-outline',
       type: 'navigate',
-      onPress: () => navigation.navigate('TwoFactorAuth' as any),
+      onPress: () => navigation.navigate('TwoFactorAuth'),
     },
   ];
 
@@ -185,7 +188,7 @@ export const SettingsScreen: React.FC = () => {
     >
       <View style={styles.settingLeft}>
         <View style={[styles.iconContainer, item.destructive && styles.destructiveIconContainer]}>
-          <Ionicons name={item.icon as any} size={24} color={item.destructive ? '#FF3B30' : '#666'} />
+          <Ionicons name={item.icon} size={24} color={item.destructive ? '#FF3B30' : '#666'} />
         </View>
         <View style={styles.settingText}>
           <Text style={[styles.settingTitle, item.destructive && styles.destructiveText]}>

@@ -562,7 +562,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
         <DialogTitle>Delete Device</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete device "{deleteDialog.device?.name}"?
+            Are you sure you want to delete device &quot;{deleteDialog.device?.name}&quot;?
             This action cannot be undone.
           </Typography>
         </DialogContent>

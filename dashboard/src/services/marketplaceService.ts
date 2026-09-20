@@ -28,9 +28,9 @@ export const scoreProperty = async (propertyId: string, criteria: { locationPref
   if (!property) throw new Error('Property not found');
 
   // Mock suitability
-  let locationScore = criteria.locationPref === property.city ? 1 : 0.6;
-  let priceScore = criteria.priceRange ? (property.rent >= criteria.priceRange[0] && property.rent <= criteria.priceRange[1] ? 1 : 0.5) : 0.8;
-  let amenityScore = criteria.amenities ? criteria.amenities.filter(a => property.amenities?.includes(a)).length / (criteria.amenities.length || 1) : 0.7;
+  const locationScore = criteria.locationPref === property.city ? 1 : 0.6;
+  const priceScore = criteria.priceRange ? (property.rent >= criteria.priceRange[0] && property.rent <= criteria.priceRange[1] ? 1 : 0.5) : 0.8;
+  const amenityScore = criteria.amenities ? criteria.amenities.filter(a => property.amenities?.includes(a)).length / (criteria.amenities.length || 1) : 0.7;
 
   const overallScore = (locationScore * 0.3 + priceScore * 0.4 + amenityScore * 0.3).toFixed(2);
 

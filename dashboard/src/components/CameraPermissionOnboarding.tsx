@@ -203,13 +203,13 @@ const CameraPermissionOnboarding: React.FC<CameraPermissionOnboardingProps> = ({
             <h3>Allow Camera Access</h3>
             <p>
               Your browser will now ask for camera permission.
-              Select "Allow" to enable property photo features.
+              Select &quot;Allow&quot; to enable property photo features.
             </p>
 
             <div className="browser-permission-notice">
               <div className="browser-icon">🌐</div>
               <p>
-                Look for the camera permission prompt in your browser's address bar or a popup dialog.
+                Look for the camera permission prompt in your browser&apos;s address bar or a popup dialog.
               </p>
             </div>
           </div>
@@ -288,8 +288,8 @@ const CameraPermissionOnboarding: React.FC<CameraPermissionOnboardingProps> = ({
             <div className="error-help">
               <h4>To enable camera access later:</h4>
               <ol>
-                <li>Click the camera icon (📷) in your browser's address bar</li>
-                <li>Select "Always allow" or "Allow" for this site</li>
+                <li>Click the camera icon (📷) in your browser&apos;s address bar</li>
+                <li>Select &quot;Always allow&quot; or &quot;Allow&quot; for this site</li>
                 <li>Refresh the page to apply changes</li>
               </ol>
             </div>

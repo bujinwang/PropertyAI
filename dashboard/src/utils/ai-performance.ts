@@ -243,7 +243,7 @@ export const createLazyAIComponent = <T extends React.ComponentType<any>>(
 ) => {
   const LazyComponent = React.lazy(importFn);
   
-  return React.forwardRef<any, React.ComponentProps<T>>((props, ref) => {
+  return React.forwardRef<any, React.ComponentProps<T>>(function LazyAIComponent(props, ref) {
     const fallbackElement = fallback ? React.createElement(fallback) : React.createElement('div', {}, 'Loading...');
     
     return React.createElement(

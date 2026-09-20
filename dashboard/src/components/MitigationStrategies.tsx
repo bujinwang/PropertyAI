@@ -41,7 +41,8 @@ import {
   ExpandMore as ExpandMoreIcon,
   PlayArrow as PlayArrowIcon,
   Assignment as AssignmentIcon,
-  Timeline as TimelineIcon
+  Timeline as TimelineIcon,
+  Info as InfoIcon
 } from '@mui/icons-material';
 
 interface MitigationStrategy {

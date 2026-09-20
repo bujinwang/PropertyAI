@@ -96,7 +96,7 @@ const SharedComponentsDemo: React.FC = () => {
       title="Loading State Example"
       loading={true}
      >
-      <Typography>This content won't show during loading</Typography>
+      <Typography>This content won&apos;t show during loading</Typography>
      </DashboardCard>
     </Grid>
 
@@ -105,7 +105,7 @@ const SharedComponentsDemo: React.FC = () => {
       title="Error State Example"
       error="Failed to load property data. Please try again."
      >
-      <Typography>This content won't show during error</Typography>
+      <Typography>This content won&apos;t show during error</Typography>
      </DashboardCard>
     </Grid>
 

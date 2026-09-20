@@ -100,7 +100,7 @@ export class RentalService {
     }
   }
 
-  async searchRentals(searchParams: any): Promise<Rental[]> {
+  async searchRentals(searchParams: Record<string, unknown>): Promise<Rental[]> {
     try {
       const response = await api.post<ApiEnvelope<Rental[]>>(`${this.baseUrl}/search`, searchParams);
       return unwrap(response);

@@ -319,15 +319,7 @@ export const waitForAsyncOperations = (): Promise<void> => {
   return new Promise(resolve => setTimeout(resolve, 0));
 };
 
-// Custom matchers for testing
-declare global {
-  namespace jest {
-    interface Matchers<R> {
-      toHaveNoViolations(): R;
-      toMatchSelector(selector: string): R;
-    }
-  }
-}
+// Custom matcher type augmentations live in src/types/jest-matchers.d.ts
 
 // Add custom matcher for selector matching
 expect.extend({

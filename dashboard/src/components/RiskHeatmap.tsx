@@ -101,14 +101,14 @@ export const RiskHeatmap: React.FC<RiskHeatmapProps> = ({
 
     // Count property risks
     propertyRisks.forEach(risk => {
-      if (risk.riskLevel && distribution.hasOwnProperty(risk.riskLevel)) {
+      if (risk.riskLevel && Object.prototype.hasOwnProperty.call(distribution, risk.riskLevel)) {
         distribution[risk.riskLevel as keyof typeof distribution]++;
       }
     });
 
     // Count tenant risks
     tenantRisks.forEach(risk => {
-      if (risk.riskLevel && distribution.hasOwnProperty(risk.riskLevel)) {
+      if (risk.riskLevel && Object.prototype.hasOwnProperty.call(distribution, risk.riskLevel)) {
         distribution[risk.riskLevel as keyof typeof distribution]++;
       }
     });

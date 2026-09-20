@@ -458,7 +458,7 @@ const MobileCamera: React.FC<MobileCameraProps> = ({
         <div className="camera-error">
           <div className="error-icon">📷</div>
           <h3>Camera Not Available</h3>
-          <p>Your device doesn't have a camera or camera access is not supported.</p>
+          <p>Your device doesn&apos;t have a camera or camera access is not supported.</p>
           <button className="close-button" onClick={handleClose}>
             Close
           </button>

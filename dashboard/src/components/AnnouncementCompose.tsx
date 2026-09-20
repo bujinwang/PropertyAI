@@ -324,13 +324,17 @@ const AnnouncementCompose: React.FC<AnnouncementComposeProps> = ({
                   />
                 )}
                 renderTags={(tagValue, getTagProps) =>
-                  tagValue.map((option, index) => (
-                    <Chip
-                      label={option.address}
-                      {...getTagProps({ index })}
-                      size="small"
-                    />
-                  ))
+                  tagValue.map((option, index) => {
+                    const { key, ...tagProps } = getTagProps({ index });
+                    return (
+                      <Chip
+                        key={key}
+                        label={option.address}
+                        {...tagProps}
+                        size="small"
+                      />
+                    );
+                  })
                 }
               />
             </Grid>
@@ -350,13 +354,17 @@ const AnnouncementCompose: React.FC<AnnouncementComposeProps> = ({
                   />
                 )}
                 renderTags={(tagValue, getTagProps) =>
-                  tagValue.map((option, index) => (
-                    <Chip
-                      label={option.name}
-                      {...getTagProps({ index })}
-                      size="small"
-                    />
-                  ))
+                  tagValue.map((option, index) => {
+                    const { key, ...tagProps } = getTagProps({ index });
+                    return (
+                      <Chip
+                        key={key}
+                        label={option.name}
+                        {...tagProps}
+                        size="small"
+                      />
+                    );
+                  })
                 }
               />
             </Grid>

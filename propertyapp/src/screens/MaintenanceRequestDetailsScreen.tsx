@@ -1,5 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
+import type { RouteProp } from '@react-navigation/native';
+import type { MaintenanceStackParamList } from '@/navigation/types';
 
 const aiSuggestions = [
   { id: '1', text: 'Have you tried turning it off and on again?' },
@@ -7,7 +9,11 @@ const aiSuggestions = [
   { id: '3', text: 'Please provide a photo of the issue.' },
 ];
 
-const MaintenanceRequestDetailsScreen = ({ route }: { route: any }) => {
+const MaintenanceRequestDetailsScreen = ({
+  route,
+}: {
+  route: RouteProp<MaintenanceStackParamList, 'MaintenanceRequestDetails'>;
+}) => {
   const { requestId } = route.params;
 
   const renderSuggestion = ({ item }: { item: { id: string; text: string } }) => (

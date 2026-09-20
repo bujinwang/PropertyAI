@@ -17,18 +17,21 @@ import { RootStackParamList } from '@/navigation/types';
 
 type AdminDashboardNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
+/** Union of valid Ionicons glyph names, derived from the component's props. */
+type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
+
 interface StatCard {
   title: string;
   value: string | number;
   change: string;
-  icon: string;
+  icon: IoniconName;
   color: string;
   trend: 'up' | 'down' | 'neutral';
 }
 
 interface QuickAction {
   title: string;
-  icon: string;
+  icon: IoniconName;
   color: string;
   onPress: () => void;
 }
@@ -86,37 +89,37 @@ export const AdminDashboardScreen: React.FC = () => {
       title: 'Manage Users',
       icon: 'people-outline',
       color: '#007AFF',
-      onPress: () => navigation.navigate('UserManagement' as any),
+      onPress: () => navigation.navigate('UserManagement'),
     },
     {
       title: 'System Settings',
       icon: 'settings-outline',
       color: '#5856D6',
-      onPress: () => navigation.navigate('SystemSettings' as any),
+      onPress: () => navigation.navigate('SystemSettings'),
     },
     {
       title: 'Analytics',
       icon: 'analytics-outline',
       color: '#FF9500',
-      onPress: () => navigation.navigate('Analytics' as any),
+      onPress: () => navigation.navigate('Analytics'),
     },
     {
       title: 'Data Export',
       icon: 'download-outline',
       color: '#34C759',
-      onPress: () => navigation.navigate('DataExport' as any),
+      onPress: () => navigation.navigate('DataExport'),
     },
     {
       title: 'AI Training',
       icon: 'bulb-outline',
       color: '#AF52DE',
-      onPress: () => navigation.navigate('AITraining' as any),
+      onPress: () => navigation.navigate('AITraining'),
     },
     {
       title: 'API Keys',
       icon: 'key-outline',
       color: '#FF2D92',
-      onPress: () => navigation.navigate('APIKeys' as any),
+      onPress: () => navigation.navigate('APIKeys'),
     },
   ];
 
@@ -158,7 +161,7 @@ export const AdminDashboardScreen: React.FC = () => {
     },
   ];
 
-  const getActivityIcon = (type: RecentActivity['type']) => {
+  const getActivityIcon = (type: RecentActivity['type']): IoniconName => {
     switch (type) {
       case 'user':
         return 'person-add-outline';
@@ -193,7 +196,7 @@ export const AdminDashboardScreen: React.FC = () => {
       <Card.Content>
         <View style={styles.statHeader}>
           <View style={[styles.statIcon, { backgroundColor: `${stat.color}20` }]}>
-            <Ionicons name={stat.icon as any} size={24} color={stat.color} />
+            <Ionicons name={stat.icon} size={24} color={stat.color} />
           </View>
           <View style={styles.statChange}>
             <Ionicons
@@ -219,7 +222,7 @@ export const AdminDashboardScreen: React.FC = () => {
       onPress={action.onPress}
     >
       <View style={[styles.actionIcon, { backgroundColor: action.color }]}>
-        <Ionicons name={action.icon as any} size={24} color="#fff" />
+        <Ionicons name={action.icon} size={24} color="#fff" />
       </View>
       <Text style={[styles.actionTitle, { color: action.color }]}>{action.title}</Text>
     </TouchableOpacity>
@@ -229,7 +232,7 @@ export const AdminDashboardScreen: React.FC = () => {
     <View key={activity.id} style={styles.activityItem}>
       <View style={[styles.activityIcon, { backgroundColor: `${getActivityColor(activity.type)}15` }]}>
         <Ionicons
-          name={getActivityIcon(activity.type) as any}
+          name={getActivityIcon(activity.type)}
           size={20}
           color={getActivityColor(activity.type)}
         />

@@ -215,7 +215,7 @@ const ReportPreview: React.FC<ReportPreviewProps> = ({
         return (
           <Box sx={{ p: 2, textAlign: 'center' }}>
             <Typography variant="body2" color="text.secondary">
-              Visualization type "{type}" not supported in preview
+              Visualization type &quot;{type}&quot; not supported in preview
             </Typography>
           </Box>
         );

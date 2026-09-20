@@ -255,7 +255,7 @@ const AccessibilityShowcase: React.FC = () => {
                 )}
                 {!errors.email && (
                   <Typography id="email-help" variant="caption" color="text.secondary">
-                    We'll use this email for account notifications
+                    We&apos;ll use this email for account notifications
                   </Typography>
                 )}
               </FormControl>

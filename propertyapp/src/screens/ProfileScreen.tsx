@@ -20,11 +20,14 @@ import { RootStackParamList } from '@/navigation/types';
 
 type ProfileScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
+/** Union of valid Ionicons glyph names, derived from the component's props. */
+type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
+
 interface SettingItem {
   id: string;
   title: string;
   description?: string;
-  icon: string;
+  icon: IoniconName;
   type: 'navigate' | 'toggle' | 'action';
   value?: boolean;
   onPress?: () => void;
@@ -61,7 +64,7 @@ export const ProfileScreen: React.FC = () => {
 
   const handleEditProfile = () => {
     // Navigate to edit profile screen
-    navigation.navigate('EditProfile' as any);
+    navigation.navigate('EditProfile');
   };
 
   const handlePrivacySettings = () => {
@@ -128,7 +131,7 @@ export const ProfileScreen: React.FC = () => {
       description: 'Get help and contact support',
       icon: 'help-circle-outline',
       type: 'navigate',
-      onPress: () => navigation.navigate('Support' as any),
+      onPress: () => navigation.navigate('Support'),
     },
     {
       id: 'about',
@@ -136,7 +139,7 @@ export const ProfileScreen: React.FC = () => {
       description: 'App version and legal information',
       icon: 'information-circle-outline',
       type: 'navigate',
-      onPress: () => navigation.navigate('About' as any),
+      onPress: () => navigation.navigate('About'),
     },
   ];
 
@@ -149,7 +152,7 @@ export const ProfileScreen: React.FC = () => {
     >
       <View style={styles.settingLeft}>
         <View style={styles.iconContainer}>
-          <Ionicons name={item.icon as any} size={24} color="#666" />
+          <Ionicons name={item.icon} size={24} color="#666" />
         </View>
         <View style={styles.settingText}>
           <Text style={styles.settingTitle}>{item.title}</Text>

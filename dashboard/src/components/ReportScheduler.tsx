@@ -223,7 +223,7 @@ const ReportScheduler: React.FC<ReportSchedulerProps> = ({ templates }) => {
     const now = new Date();
     const [hours, minutes] = schedule.time.split(':').map(Number);
 
-    let nextRun = new Date(now);
+    const nextRun = new Date(now);
     nextRun.setHours(hours, minutes, 0, 0);
 
     if (nextRun <= now) {
@@ -232,10 +232,11 @@ const ReportScheduler: React.FC<ReportSchedulerProps> = ({ templates }) => {
         case 'daily':
           nextRun.setDate(nextRun.getDate() + 1);
           break;
-        case 'weekly':
+        case 'weekly': {
           const daysUntilNext = (schedule.dayOfWeek! - nextRun.getDay() + 7) % 7;
           nextRun.setDate(nextRun.getDate() + (daysUntilNext || 7));
           break;
+        }
         case 'monthly':
           nextRun.setMonth(nextRun.getMonth() + 1);
           nextRun.setDate(schedule.dayOfMonth!);

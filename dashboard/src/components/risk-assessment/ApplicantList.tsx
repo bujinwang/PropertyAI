@@ -78,7 +78,7 @@ export const ApplicantList: React.FC<ApplicantListProps> = ({
           aValue = a.applicationDate.getTime();
           bValue = b.applicationDate.getTime();
           break;
-        case 'risk':
+        case 'risk': {
           aValue = a.riskAssessment?.riskLevel || 'low';
           bValue = b.riskAssessment?.riskLevel || 'low';
           // Convert to numeric for sorting
@@ -86,6 +86,7 @@ export const ApplicantList: React.FC<ApplicantListProps> = ({
           aValue = riskOrder[aValue as RiskLevel];
           bValue = riskOrder[bValue as RiskLevel];
           break;
+        }
         case 'score':
           aValue = a.riskAssessment?.overallScore || 0;
           bValue = b.riskAssessment?.overallScore || 0;

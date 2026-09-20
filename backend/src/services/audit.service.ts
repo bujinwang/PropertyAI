@@ -95,6 +95,13 @@ export class AuditService {
    * Object-shape calls are normalised onto {@link AuditLogData}
    * (resourceType → entityType, resourceId → entityId, riskLevel → severity).
    * When no entity type is supplied it defaults to `'SYSTEM'`.
+   *
+   * These two overload signatures are intentional and are what keeps
+   * `entityId` required for the positional form. ESLint's base
+   * `no-dupe-class-members` cannot tell TypeScript overload signatures apart
+   * from a genuine duplicate method, so `backend/.eslintrc.js` disables the
+   * base rule and enables `@typescript-eslint/no-dupe-class-members`, which
+   * understands them. Do not delete these signatures to satisfy the linter.
    */
   async logEvent(action: string, entityId: string, details?: any): Promise<any>;
   async logEvent(data: AuditEventData): Promise<any>;

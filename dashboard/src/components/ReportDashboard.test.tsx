@@ -38,7 +38,7 @@ describe('ReportDashboard', () => {
     jest.clearAllMocks();
 
     // Mock useAuth hook
-    const mockUseAuth = require('../hooks/useAuth');
+    const mockUseAuth = jest.requireMock('../hooks/useAuth');
     mockUseAuth.useAuth = jest.fn(() => ({ user: mockUser }));
 
     // Mock reporting service methods

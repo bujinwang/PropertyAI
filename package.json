@@ -61,7 +61,7 @@
     "test:dashboard": "npm run test --workspace=dashboard",
     "test:contractor": "npm run test --workspace=ContractorApp",
     "test:propertyapp": "npm run test --workspace=propertyapp",
-    "lint": "npm run lint --workspaces",
+    "lint": "npm run lint --workspaces --if-present",
     "lint:backend": "npm run lint --workspace=backend",
     "lint:dashboard": "npm run lint --workspace=dashboard",
     "lint:contractor": "npm run lint --workspace=ContractorApp",

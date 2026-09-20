@@ -6,14 +6,14 @@
 describe('InsightCard Component', () => {
   it('should be implemented and exportable', () => {
     // This test verifies that the component exists and can be imported
-    const InsightCard = require('./InsightCard').default;
+    const InsightCard = jest.requireActual('./InsightCard').default;
     expect(InsightCard).toBeDefined();
     expect(typeof InsightCard).toBe('function');
   });
 
   it('should have proper TypeScript types', () => {
     // Verify that the component accepts the expected props
-    const InsightCard = require('./InsightCard').default;
+    const InsightCard = jest.requireActual('./InsightCard').default;
     const mockInsight = {
       id: '1',
       title: 'Test Insight',

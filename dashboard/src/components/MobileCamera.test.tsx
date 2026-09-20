@@ -204,7 +204,7 @@ describe('MobileCamera with AI Integration', () => {
 
   it('handles AI analysis errors gracefully', async () => {
     // Mock AI service to throw error
-    const { aiPhotoAnalysisService } = require('../services/aiPhotoAnalysisService');
+    const { aiPhotoAnalysisService } = jest.requireMock('../services/aiPhotoAnalysisService');
     aiPhotoAnalysisService.analyzePhoto.mockRejectedValue(new Error('AI analysis failed'));
 
     render(<MobileCamera {...defaultProps} />);

@@ -64,7 +64,7 @@ export const VirtualizationConfig = {
     maxToRenderPerBatch: 10,
     updateCellsBatchingPeriod: 50,
     removeClippedSubviews: true,
-    getItemLayout: (data: any, index: number) => ({
+    getItemLayout: (data: unknown, index: number) => ({
       length: 120, // Height of each item
       offset: 120 * index,
       index,

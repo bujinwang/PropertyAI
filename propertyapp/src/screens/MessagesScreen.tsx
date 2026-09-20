@@ -166,7 +166,7 @@ export const MessagesScreen: React.FC = () => {
       <Ionicons name="chatbubble-ellipses-outline" size={64} color="#ccc" />
       <Text style={styles.emptyTitle}>No messages</Text>
       <Text style={styles.emptyText}>
-        You don't have any messages yet. Start a conversation with your property manager or tenants.
+        You don&apos;t have any messages yet. Start a conversation with your property manager or tenants.
       </Text>
     </View>
   );

@@ -72,7 +72,7 @@ class TenantDashboardErrorBoundary extends Component<
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: any) {
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('TenantDashboard Error:', error, errorInfo);
   }
 

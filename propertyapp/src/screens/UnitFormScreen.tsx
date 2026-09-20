@@ -263,7 +263,7 @@ const UnitFormScreen = () => {
 
               <Button
                 title={unitId ? 'Update Unit' : 'Create Unit'}
-                onPress={handleSubmit as any}
+                onPress={() => handleSubmit()}
                 disabled={loading}
                 style={styles.submitButton}
               />

@@ -8,6 +8,7 @@ import {
   InputLabel,
   IconButton,
   Chip,
+  Typography,
   useTheme,
   useMediaQuery,
 } from '@mui/material';

@@ -3,10 +3,11 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator 
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { authService } from '../../services/authService';
+import type { User } from '../../types/auth';
 
 interface MFAVerificationProps {
   email: string;
-  onSuccess: (token: string, user: any) => void;
+  onSuccess: (token: string, user: User) => void;
   onCancel: () => void;
 }
 
@@ -39,8 +40,12 @@ const MFAVerification: React.FC<MFAVerificationProps> = ({ email, onSuccess, onC
       } else {
         setError('Verification failed. Please try again.');
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to verify MFA code. Please try again.');
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to verify MFA code. Please try again.'
+      );
     } finally {
       setLoading(false);
     }

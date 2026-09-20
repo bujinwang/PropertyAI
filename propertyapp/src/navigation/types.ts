@@ -7,7 +7,42 @@ export type RootStackParamList = {
   // RootNavigator.tsx; screens navigate to them via useNavigation<...>().
   Main: undefined;
   AIGuidedSetupWizard: undefined;
-  ChatDetail: { conversationId?: string } | undefined;
+  ChatDetail:
+    | { conversationId?: string; rentalId?: string; unitId?: string }
+    | undefined;
+  // Routes that live screens navigate to but that NO navigator registers.
+  //
+  // ⚠️ These are declared here purely so `navigation.navigate('X')` type-checks
+  // instead of needing `as any`. Declaring a route does NOT make it work:
+  // React Navigation only resolves routes registered as `<Stack.Screen name=…>`,
+  // and `defaultOnUnhandledAction` returns early in production, so navigating to
+  // any of these is a **silent no-op** (a dead button), not a crash.
+  //
+  // This is a known, unfixed product defect — see the navigation-target audit.
+  // The compiler used to flag these; this declaration trades that signal for
+  // lint cleanliness. Register the screen or delete the call site to fix it
+  // properly. Do not treat this block as evidence the routes exist.
+  UserManagement: undefined;
+  SystemSettings: undefined;
+  Analytics: undefined;
+  DataExport: undefined;
+  AITraining: undefined;
+  APIKeys: undefined;
+  EditProfile: undefined;
+  Support: undefined;
+  About: undefined;
+  DataPrivacyCompliance: undefined;
+  AddProperty: undefined;
+  CreateListing: undefined;
+  Tasks: undefined;
+  Messages: undefined;
+  Reports: undefined;
+  NotificationSettings: undefined;
+  PaymentMethods: undefined;
+  ChangePassword: undefined;
+  TwoFactorAuth: undefined;
+  ScheduleTour: { rentalId: string };
+  Application: { unitId: string };
   Dashboard: undefined;
   Maintenance: undefined;
   Payments: undefined;
@@ -130,12 +165,10 @@ export type NavigationProps<T extends keyof RootStackParamList> = {
   route: RouteProp<RootStackParamList, T>;
 };
 
-// Type declaration for React Navigation to have proper typing
-declare global {
-  namespace ReactNavigation {
-    interface RootParamList extends RootStackParamList {}
-  }
-}
+// The React Navigation global type augmentation lives in
+// `src/types/react-navigation.d.ts` (a declaration file, where the `namespace`
+// syntax used for module augmentation is exempt from
+// `@typescript-eslint/no-namespace`).
 
 // Screen-specific navigation prop types
 export type RentalListNavigationProp = NativeStackNavigationProp<RootStackParamList, 'RentalList'>;

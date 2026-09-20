@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { act, render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@mui/material/styles';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -7,6 +7,73 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import theme from '../design-system/theme';
 import AssignmentModal from './AssignmentModal';
 import { dashboardService, UnitOption } from '../services/dashboardService';
+
+/**
+ * NEVER call `fireEvent` from inside a `waitFor` callback.
+ *
+ * `waitFor` observes the container with a MutationObserver, and in jsdom that
+ * delivery happens on the *microtask* queue. A callback that both mutates the
+ * DOM and keeps throwing therefore re-arms the observer from inside the
+ * microtask queue forever: the event loop never yields, so `waitFor`'s own
+ * timeout can never fire and neither can Jest's `--testTimeout`. The suite
+ * never terminates at all — in CI that burns the entire job timeout instead of
+ * failing, which is strictly worse than a red test.
+ *
+ * So: use `waitFor` only to await async state, and fire events outside it.
+ *
+ * This file used to hang for exactly that reason. A CPU sample of the blocked
+ * process showed every main-thread sample stuck in
+ * `v8::internal::MicrotaskQueue::RunMicrotasks` ->
+ * `Builtins_PromiseFulfillReactionJob`.
+ */
+
+/**
+ * MUI X v8's DatePicker no longer renders an <input>: it renders a
+ * `contenteditable` section list (one `<span role="spinbutton">` per
+ * MM/DD/YYYY). So `fireEvent.change(input, { target: { value } })` had nothing
+ * to target, and `getByLabelText(/lease start/i)` matched several nodes at once
+ * ("Found multiple elements"). Those tests were written against the MUI X
+ * v5/v6 API.
+ *
+ * These tests cover AssignmentModal's own form wiring, not MUI X's calendar
+ * widget, so the picker is replaced with a plain labelled date input that
+ * honours the same contract the component depends on: `value: Date | null`,
+ * `onChange(Date | null)`, and `slotProps.textField.helperText`.
+ */
+jest.mock('@mui/x-date-pickers/DatePicker', () => ({
+  DatePicker: ({
+    label,
+    value,
+    onChange,
+    slotProps,
+  }: {
+    label: string;
+    value: Date | null;
+    onChange: (value: Date | null) => void;
+    slotProps?: { textField?: { helperText?: React.ReactNode } };
+  }) => {
+    const id = `datepicker-${label.replace(/\s+/g, '-').toLowerCase()}`;
+    const helperText = slotProps?.textField?.helperText;
+    const iso =
+      value instanceof Date && !Number.isNaN(value.getTime())
+        ? value.toISOString().slice(0, 10)
+        : '';
+    return (
+      <div>
+        <label htmlFor={id}>{label}</label>
+        <input
+          id={id}
+          type="date"
+          value={iso}
+          onChange={(event) =>
+            onChange(event.target.value ? new Date(`${event.target.value}T00:00:00.000Z`) : null)
+          }
+        />
+        {helperText ? <p>{helperText}</p> : null}
+      </div>
+    );
+  },
+}));
 
 // Mock the dashboard service
 jest.mock('../services/dashboardService', () => ({
@@ -64,6 +131,38 @@ const defaultProps = {
   onSubmit: jest.fn(),
 };
 
+/** Returns a picker's input. Safe before the options request resolves: MUI keeps
+ *  the popup mounted and re-renders the list once `options` fills in. */
+const getPicker = (label: RegExp = /select vacant unit/i) =>
+  screen.getByLabelText(label) as HTMLInputElement;
+
+/** Opens a picker's listbox and waits for it to actually be open. RTL's
+ *  `fireEvent` is not act-wrapped, so the `aria-expanded` update has not
+ *  flushed by the time `fireEvent.mouseDown` returns. */
+const openPicker = async (input: HTMLInputElement) => {
+  if (input.getAttribute('aria-expanded') !== 'true') {
+    fireEvent.mouseDown(input);
+  }
+  await waitFor(() => expect(input).toHaveAttribute('aria-expanded', 'true'));
+};
+
+/** Clicks an option *inside the listbox*. Scoped by role on purpose: once an
+ *  option is chosen its label also renders as a chip, so a plain `getByText`
+ *  would match two nodes in multi-select mode.
+ *
+ *  MUI closes the listbox as soon as an option is selected — the bulk picker
+ *  does not set `disableCloseOnSelect` — so the click is wrapped in `act` to
+ *  flush that close before `aria-expanded` is read again. Otherwise the next
+ *  call sees a stale "open" and skips re-opening. */
+const selectOption = async (input: HTMLInputElement, optionText: string) => {
+  await openPicker(input);
+  const find = () => screen.getAllByRole('option').find((o) => o.textContent?.trim() === optionText);
+  await waitFor(() => expect(find()).toBeDefined());
+  await act(async () => {
+    fireEvent.click(find()!);
+  });
+};
+
 describe('AssignmentModal', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -118,48 +217,44 @@ describe('AssignmentModal', () => {
     it('allows unit selection in assign mode', async () => {
       renderWithProviders(<AssignmentModal {...defaultProps} />);
 
-      let unitSelect: HTMLElement;
+      const unitSelect = getPicker();
+      await selectOption(unitSelect, '101 - 123 Main St');
 
-      await waitFor(() => {
-        unitSelect = screen.getByLabelText(/select vacant unit/i);
-        fireEvent.mouseDown(unitSelect);
-      });
-
-      await waitFor(() => {
-        expect(screen.getByText('101 - 123 Main St')).toBeInTheDocument();
-        expect(screen.getByText('102 - 123 Main St')).toBeInTheDocument();
-      });
-
-      fireEvent.click(screen.getByText('101 - 123 Main St'));
-
-      expect(unitSelect!).toHaveValue('101 - 123 Main St');
+      await waitFor(() => expect(unitSelect).toHaveValue('101 - 123 Main St'));
     });
 
     it('allows multiple unit selection in bulk mode', async () => {
       const bulkProps = { ...defaultProps, mode: 'bulk' as const, tenantIds: ['t1'] };
       renderWithProviders(<AssignmentModal {...bulkProps} />);
 
+      const unitSelect = getPicker(/select units/i);
+      await selectOption(unitSelect, '101 - 123 Main St');
+      await selectOption(unitSelect, '102 - 123 Main St');
+
+      // The picks render as chips in the field itself...
       await waitFor(() => {
-        const unitSelect = screen.getByLabelText(/select units/i);
-        fireEvent.mouseDown(unitSelect);
+        expect(screen.getByText('101 - 123 Main St')).toBeInTheDocument();
+        expect(screen.getByText('102 - 123 Main St')).toBeInTheDocument();
       });
 
-      fireEvent.click(screen.getByText('101 - 123 Main St'));
-      fireEvent.click(screen.getByText('102 - 123 Main St'));
-
-      expect(screen.getByText('101 - 123 Main St')).toBeInTheDocument();
-      expect(screen.getByText('102 - 123 Main St')).toBeInTheDocument();
+      // ...and as `aria-selected` options in the listbox, which MUI closes after
+      // every pick, so re-open it before asserting on them.
+      await openPicker(unitSelect);
+      await waitFor(() => {
+        expect(screen.getAllByRole('option', { selected: true })).toHaveLength(2);
+      });
     });
   });
 
   describe('Validation Tests', () => {
     it('shows validation errors for required fields in assign mode', async () => {
-      renderWithProviders(<AssignmentModal {...defaultProps} />);
+      // `unitId` is deliberately omitted here. When it is supplied the modal
+      // pre-selects that unit (`initialValues.unitId = unitId || ''`), so the
+      // `unitId` required check can never fail and "Unit is required" would
+      // never render.
+      renderWithProviders(<AssignmentModal {...defaultProps} unitId={undefined} />);
 
-      await waitFor(() => {
-        const submitButton = screen.getByRole('button', { name: /assign/i });
-        fireEvent.click(submitButton);
-      });
+      fireEvent.click(screen.getByRole('button', { name: /^assign$/i }));
 
       await waitFor(() => {
         expect(screen.getByText('Unit is required')).toBeInTheDocument();
@@ -171,23 +266,13 @@ describe('AssignmentModal', () => {
     it('validates lease end is after lease start', async () => {
       renderWithProviders(<AssignmentModal {...defaultProps} />);
 
-      await waitFor(() => {
-        // Select unit first
-        const unitSelect = screen.getByLabelText(/select vacant unit/i);
-        fireEvent.mouseDown(unitSelect);
-        fireEvent.click(screen.getByText('101 - 123 Main St'));
+      const unitSelect = getPicker();
+      await selectOption(unitSelect, '101 - 123 Main St');
 
-        // Set lease start
-        const leaseStartInput = screen.getByLabelText(/lease start/i);
-        fireEvent.change(leaseStartInput, { target: { value: '2024-01-15' } });
+      fireEvent.change(screen.getByLabelText(/lease start/i), { target: { value: '2024-01-15' } });
+      fireEvent.change(screen.getByLabelText(/lease end/i), { target: { value: '2024-01-10' } });
 
-        // Set lease end before start
-        const leaseEndInput = screen.getByLabelText(/lease end/i);
-        fireEvent.change(leaseEndInput, { target: { value: '2024-01-10' } });
-
-        const submitButton = screen.getByRole('button', { name: /assign/i });
-        fireEvent.click(submitButton);
-      });
+      fireEvent.click(screen.getByRole('button', { name: /^assign$/i }));
 
       await waitFor(() => {
         expect(screen.getByText('End date must be after start')).toBeInTheDocument();
@@ -198,10 +283,7 @@ describe('AssignmentModal', () => {
       const bulkProps = { ...defaultProps, mode: 'bulk' as const, tenantIds: ['t1'] };
       renderWithProviders(<AssignmentModal {...bulkProps} />);
 
-      await waitFor(() => {
-        const submitButton = screen.getByRole('button', { name: /assign bulk/i });
-        fireEvent.click(submitButton);
-      });
+      fireEvent.click(screen.getByRole('button', { name: /assign bulk/i }));
 
       await waitFor(() => {
         expect(screen.getByText('At least one unit required')).toBeInTheDocument();
@@ -214,22 +296,17 @@ describe('AssignmentModal', () => {
       const mockOnSubmit = jest.fn();
       renderWithProviders(<AssignmentModal {...defaultProps} onSubmit={mockOnSubmit} />);
 
-      await waitFor(() => {
-        // Select unit
-        const unitSelect = screen.getByLabelText(/select vacant unit/i);
-        fireEvent.mouseDown(unitSelect);
-        fireEvent.click(screen.getByText('101 - 123 Main St'));
+      const unitSelect = getPicker();
+      await selectOption(unitSelect, '101 - 123 Main St');
 
-        // Set dates
-        const leaseStartInput = screen.getByLabelText(/lease start/i);
-        fireEvent.change(leaseStartInput, { target: { value: '2024-01-15' } });
+      fireEvent.change(screen.getByLabelText(/lease start/i), { target: { value: '2024-01-15' } });
+      fireEvent.change(screen.getByLabelText(/lease end/i), { target: { value: '2025-01-15' } });
 
-        const leaseEndInput = screen.getByLabelText(/lease end/i);
-        fireEvent.change(leaseEndInput, { target: { value: '2025-01-15' } });
-
-        const submitButton = screen.getByRole('button', { name: /assign/i });
-        fireEvent.click(submitButton);
-      });
+      // See the bulk case below: wait for Formik's async validation to settle
+      // before clicking, or the click lands on a disabled submit button.
+      const submitButton = screen.getByRole('button', { name: /^assign$/i });
+      await waitFor(() => expect(submitButton).toBeEnabled());
+      fireEvent.click(submitButton);
 
       await waitFor(() => {
         expect(mockOnSubmit).toHaveBeenCalledWith({
@@ -249,23 +326,20 @@ describe('AssignmentModal', () => {
       const bulkProps = { ...defaultProps, mode: 'bulk' as const, tenantIds: ['t1', 't2'], onSubmit: mockOnSubmit };
       renderWithProviders(<AssignmentModal {...bulkProps} />);
 
-      await waitFor(() => {
-        // Select units
-        const unitSelect = screen.getByLabelText(/select units/i);
-        fireEvent.mouseDown(unitSelect);
-        fireEvent.click(screen.getByText('101 - 123 Main St'));
-        fireEvent.click(screen.getByText('102 - 123 Main St'));
+      const unitSelect = getPicker(/select units/i);
+      await selectOption(unitSelect, '101 - 123 Main St');
+      await selectOption(unitSelect, '102 - 123 Main St');
 
-        // Set dates
-        const leaseStartInput = screen.getByLabelText(/lease start/i);
-        fireEvent.change(leaseStartInput, { target: { value: '2024-01-15' } });
+      fireEvent.change(screen.getByLabelText(/lease start/i), { target: { value: '2024-01-15' } });
+      fireEvent.change(screen.getByLabelText(/lease end/i), { target: { value: '2025-01-15' } });
 
-        const leaseEndInput = screen.getByLabelText(/lease end/i);
-        fireEvent.change(leaseEndInput, { target: { value: '2025-01-15' } });
-
-        const submitButton = screen.getByRole('button', { name: /assign bulk/i });
-        fireEvent.click(submitButton);
-      });
+      // Formik validates asynchronously and `fireEvent` is not act-wrapped, so
+      // wait for the form to settle. Clicking straight away lands on a submit
+      // button still disabled by an earlier validation pass — the values are
+      // already correct, the stale `errors` simply have not been replaced yet.
+      const submitButton = screen.getByRole('button', { name: /assign bulk/i });
+      await waitFor(() => expect(submitButton).toBeEnabled());
+      fireEvent.click(submitButton);
 
       await waitFor(() => {
         expect(mockOnSubmit).toHaveBeenCalledWith({
@@ -284,15 +358,13 @@ describe('AssignmentModal', () => {
       const mockOnSubmit = jest.fn();
       renderWithProviders(<AssignmentModal {...defaultProps} mode="unassign" onSubmit={mockOnSubmit} />);
 
-      await waitFor(() => {
-        const confirmButton = screen.getByRole('button', { name: /confirm unassign/i });
-        fireEvent.click(confirmButton);
-      });
+      fireEvent.click(screen.getByRole('button', { name: /confirm unassign/i }));
 
-      await waitFor(() => {
-        const finalConfirmButton = screen.getByRole('button', { name: /confirm/i });
-        fireEvent.click(finalConfirmButton);
-      });
+      // The nested confirmation dialog. Anchored on purpose: the outer dialog
+      // also has a "Confirm Unassign" button, so a loose /confirm/i matches two.
+      const finalConfirm = () => screen.getByRole('button', { name: /^confirm$/i });
+      await waitFor(() => expect(finalConfirm()).toBeInTheDocument());
+      fireEvent.click(finalConfirm());
 
       await waitFor(() => {
         expect(mockOnSubmit).toHaveBeenCalledWith({
@@ -301,7 +373,8 @@ describe('AssignmentModal', () => {
           leaseStart: null,
           leaseEnd: null,
           tenantId: 't1',
-          tenantIds: [],
+          // Omitted in non-bulk modes, matching the assign-mode assertion above.
+          tenantIds: undefined,
           mode: 'unassign',
         });
       });
@@ -318,23 +391,25 @@ describe('AssignmentModal', () => {
       });
     });
 
-    it('disables submit button when form is invalid', async () => {
+    it('enables submit while the form is untouched, then disables it after a failed submit', async () => {
       renderWithProviders(<AssignmentModal {...defaultProps} />);
 
-      await waitFor(() => {
-        const submitButton = screen.getByRole('button', { name: /assign/i });
-        expect(submitButton).toBeDisabled();
-      });
+      // Formik initialises `errors` to `{}`, so `isValid` is true on mount and
+      // the button starts ENABLED. It only becomes disabled once a submit has
+      // been attempted and validation has failed.
+      const submitButton = screen.getByRole('button', { name: /^assign$/i });
+      expect(submitButton).toBeEnabled();
+
+      fireEvent.click(submitButton);
+
+      await waitFor(() => expect(submitButton).toBeDisabled());
     });
 
     it('closes modal on cancel', async () => {
       const mockOnClose = jest.fn();
       renderWithProviders(<AssignmentModal {...defaultProps} onClose={mockOnClose} />);
 
-      await waitFor(() => {
-        const cancelButton = screen.getByRole('button', { name: /cancel/i });
-        fireEvent.click(cancelButton);
-      });
+      fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
 
       expect(mockOnClose).toHaveBeenCalled();
     });
@@ -342,6 +417,11 @@ describe('AssignmentModal', () => {
     it('handles empty unit options', async () => {
       mockGetVacantUnitOptions.mockResolvedValue([]);
       renderWithProviders(<AssignmentModal {...defaultProps} />);
+
+      // Deliberately not `openPicker`: with an empty option list MUI still
+      // renders the "No options" row but does not flip `aria-expanded` to
+      // "true", so waiting on that attribute would time out.
+      fireEvent.mouseDown(getPicker());
 
       await waitFor(() => {
         expect(screen.getByText('No options')).toBeInTheDocument();

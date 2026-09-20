@@ -520,7 +520,7 @@ const DocumentSearch: React.FC = () => {
           <DialogTitle>Share Document</DialogTitle>
           <DialogContent>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Share "{selectedDocumentForShare?.name}" with other users
+              Share &quot;{selectedDocumentForShare?.name}&quot; with other users
             </Typography>
             <Autocomplete
               multiple
@@ -530,13 +530,17 @@ const DocumentSearch: React.FC = () => {
                 <TextField {...params} label="Select users" placeholder="Search users..." />
               )}
               renderTags={(value, getTagProps) =>
-                value.map((option, index) => (
-                  <Chip
-                    label={option.name}
-                    {...getTagProps({ index })}
-                    size="small"
-                  />
-                ))
+                value.map((option, index) => {
+                  const { key, ...tagProps } = getTagProps({ index });
+                  return (
+                    <Chip
+                      key={key}
+                      label={option.name}
+                      {...tagProps}
+                      size="small"
+                    />
+                  );
+                })
               }
             />
           </DialogContent>

@@ -150,7 +150,7 @@ const RatingsList: React.FC<RatingsListProps> = ({
           No Ratings Yet
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          This tenant hasn't received any ratings yet. Submit the first rating above!
+          This tenant hasn&apos;t received any ratings yet. Submit the first rating above!
         </Typography>
       </Paper>
     );

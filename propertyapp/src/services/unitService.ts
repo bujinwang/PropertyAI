@@ -1,7 +1,7 @@
 import { api } from './api';
 import { Unit, CreateUnitRequest, UpdateUnitRequest } from '../types/unit';
 import { rentalService } from './rentalService';
-import { Rental, CreateRentalDto, UpdateRentalDto } from '../types/rental';
+import { Rental, CreateRentalDto, UpdateRentalDto, RentalStatus } from '../types/rental';
 
 /**
  * @deprecated Use rentalService instead
@@ -158,7 +158,16 @@ const getUnitListings = async (unitId: string) => {
   }
 };
 
-const createUnitListing = async (unitId: string, listingData: any) => {
+/** Listing fields accepted by the deprecated {@link createUnitListing} helper. */
+interface UnitListingData {
+  title?: string;
+  description?: string;
+  rent?: number;
+  isAvailable?: boolean;
+  status?: RentalStatus;
+}
+
+const createUnitListing = async (unitId: string, listingData: UnitListingData) => {
   console.warn('unitService.createUnitListing is deprecated. Update the rental directly using rentalService.updateRental.');
   
   try {

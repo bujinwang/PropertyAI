@@ -54,6 +54,25 @@ interface RentOptimizationWithName {
   currentRent: number;
 }
 
+/** Minimal shape of a lease row returned by the backend leases endpoint. */
+interface LeaseLike {
+  id: string;
+  status?: string;
+  endDate: string;
+  tenantId?: string;
+  tenant?: { firstName?: string; lastName?: string };
+}
+
+/** Minimal shape of a rental row returned by the backend rentals endpoint. */
+interface RentalLike {
+  id: string;
+  name?: string;
+  address?: string;
+  yearBuilt?: number;
+  type?: string;
+  squareFeet?: number;
+}
+
 export const MLInsightsScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'churn' | 'maintenance' | 'occupancy' | 'rent'>('churn');
   const [loading, setLoading] = useState(true);
@@ -95,11 +114,15 @@ export const MLInsightsScreen: React.FC = () => {
   const loadChurnPredictions = async () => {
     try {
       // Fetch real lease data from backend
-      const leasesResponse = await api.get<any>(ENDPOINTS.LEASES.LIST);
-      const leases = leasesResponse.leases || leasesResponse || [];
+      const leasesResponse = await api.get<LeaseLike[] | { leases?: LeaseLike[] }>(
+        ENDPOINTS.LEASES.LIST
+      );
+      const leases: LeaseLike[] = Array.isArray(leasesResponse)
+        ? leasesResponse
+        : leasesResponse.leases ?? [];
       
       // Filter active leases
-      const activeLeases = leases.filter((lease: any) => 
+      const activeLeases = leases.filter((lease) => 
         lease.status === 'ACTIVE' || lease.status === 'active'
       );
       
@@ -111,7 +134,7 @@ export const MLInsightsScreen: React.FC = () => {
       
       // Generate predictions for each active lease/tenant
       const predictions = await Promise.all(
-        activeLeases.slice(0, 10).map(async (lease: any) => {
+        activeLeases.slice(0, 10).map(async (lease) => {
           try {
             // Calculate lease months remaining
             const endDate = new Date(lease.endDate);
@@ -156,8 +179,12 @@ export const MLInsightsScreen: React.FC = () => {
   const loadMaintenancePredictions = async () => {
     try {
       // Fetch real rental data from backend
-      const rentalsResponse = await api.get<any>(ENDPOINTS.RENTALS.LIST);
-      const rentals = rentalsResponse.rentals || rentalsResponse || [];
+      const rentalsResponse = await api.get<RentalLike[] | { rentals?: RentalLike[] }>(
+        ENDPOINTS.RENTALS.LIST
+      );
+      const rentals: RentalLike[] = Array.isArray(rentalsResponse)
+        ? rentalsResponse
+        : rentalsResponse.rentals ?? [];
       
       if (rentals.length === 0) {
         setMaintenancePredictions([]);
@@ -166,7 +193,7 @@ export const MLInsightsScreen: React.FC = () => {
       
       // Generate predictions for each rental
       const predictions = await Promise.all(
-        rentals.slice(0, 10).map(async (rental: any) => {
+        rentals.slice(0, 10).map(async (rental) => {
           try {
             // Calculate property age
             const yearBuilt = rental.yearBuilt || 2010;

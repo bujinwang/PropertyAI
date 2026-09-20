@@ -278,7 +278,7 @@ const AIGuidedSetupWizardScreen: React.FC<NavigationProps<'AIGuidedSetupWizard'>
           <View style={styles.stepContent}>
             <Text style={styles.welcomeTitle}>Welcome to Property AI</Text>
             <Text style={styles.welcomeSubtitle}>
-              Let's set up your personalized AI experience
+              Let&apos;s set up your personalized AI experience
             </Text>
             <Text style={styles.welcomeDescription}>
               This wizard will help you configure AI-powered features tailored to your needs.
@@ -380,7 +380,7 @@ const AIGuidedSetupWizardScreen: React.FC<NavigationProps<'AIGuidedSetupWizard'>
           <View style={styles.stepContent}>
             <Text style={styles.summaryTitle}>Setup Summary</Text>
             <Text style={styles.summarySubtitle}>
-              Here's a summary of your personalized AI setup
+              Here&apos;s a summary of your personalized AI setup
             </Text>
             
             {state.selectedRole === 'propertyManager' && (

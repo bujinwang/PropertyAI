@@ -284,7 +284,7 @@ const MobileAuditDashboard: React.FC = () => {
                   🔍 Touch Target Details
                 </Typography>
                 <Typography variant="body2" color="text.secondary" mb={2}>
-                  Elements that don't meet the 44px minimum touch target size (WCAG AA requirement)
+                  Elements that don&apos;t meet the 44px minimum touch target size (WCAG AA requirement)
                 </Typography>
 
                 <Accordion>
@@ -328,7 +328,7 @@ const MobileAuditDashboard: React.FC = () => {
               Ready to Run Mobile Audit
             </Typography>
             <Typography variant="body2" color="text.secondary" mb={3}>
-              Click the "Run Audit" button to perform a comprehensive assessment of mobile compatibility
+              Click the &quot;Run Audit&quot; button to perform a comprehensive assessment of mobile compatibility
             </Typography>
             <Button
               variant="contained"

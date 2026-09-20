@@ -242,7 +242,7 @@ const RatingForm: React.FC<RatingFormProps> = ({
             </Box>
             
             <Typography variant="caption" color="text.secondary">
-              Add tags like "excellent", "needs improvement", "reliable", etc.
+              Add tags like &quot;excellent&quot;, &quot;needs improvement&quot;, &quot;reliable&quot;, etc.
             </Typography>
           </Grid>
 

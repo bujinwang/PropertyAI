@@ -1,5 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { MaintenanceStackParamList } from '@/navigation/types';
 
 const maintenanceRequests = [
   { id: '1', title: 'Leaky Faucet', status: 'Open' },
@@ -7,7 +9,11 @@ const maintenanceRequests = [
   { id: '3', title: 'Heater Not Working', status: 'Closed' },
 ];
 
-const MaintenanceRequestsScreen = ({ navigation }: { navigation: any }) => {
+const MaintenanceRequestsScreen = ({
+  navigation,
+}: {
+  navigation: NativeStackNavigationProp<MaintenanceStackParamList>;
+}) => {
   const renderItem = ({ item }: { item: { id: string; title: string; status: string } }) => (
     <TouchableOpacity onPress={() => navigation.navigate('MaintenanceRequestDetails', { requestId: item.id })}>
       <View style={styles.item}>

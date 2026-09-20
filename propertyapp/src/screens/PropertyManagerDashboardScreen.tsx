@@ -18,17 +18,20 @@ import { RootStackParamList } from '@/navigation/types';
 
 type PropertyManagerDashboardNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
+/** Union of valid Ionicons glyph names, derived from the component's props. */
+type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
+
 interface PropertyStat {
   title: string;
   value: string | number;
-  icon: string;
+  icon: IoniconName;
   color: string;
   trend?: 'up' | 'down';
 }
 
 interface QuickAction {
   title: string;
-  icon: string;
+  icon: IoniconName;
   color: string;
   onPress: () => void;
   count?: number;
@@ -92,46 +95,46 @@ export const PropertyManagerDashboardScreen: React.FC = () => {
       title: 'ML Insights',
       icon: 'analytics-outline',
       color: '#1976D2',
-      onPress: () => navigation.navigate('MLInsights' as any),
+      onPress: () => navigation.navigate('MLInsights'),
     },
     {
       title: 'Add Property',
       icon: 'add-circle-outline',
       color: '#007AFF',
-      onPress: () => navigation.navigate('AddProperty' as any),
+      onPress: () => navigation.navigate('AddProperty'),
     },
     {
       title: 'Create Listing',
       icon: 'create-outline',
       color: '#34C759',
-      onPress: () => navigation.navigate('CreateListing' as any),
+      onPress: () => navigation.navigate('CreateListing'),
     },
     {
       title: 'View Tasks',
       icon: 'checkmark-done-circle-outline',
       color: '#FF9500',
-      onPress: () => navigation.navigate('Tasks' as any),
+      onPress: () => navigation.navigate('Tasks'),
       count: 7,
     },
     {
       title: 'Maintenance',
       icon: 'construct-outline',
       color: '#FF3B30',
-      onPress: () => navigation.navigate('Maintenance' as any),
+      onPress: () => navigation.navigate('Maintenance'),
       count: 3,
     },
     {
       title: 'Messages',
       icon: 'chatbubble-ellipses-outline',
       color: '#AF52DE',
-      onPress: () => navigation.navigate('Messages' as any),
+      onPress: () => navigation.navigate('Messages'),
       count: 12,
     },
     {
       title: 'Reports',
       icon: 'document-text-outline',
       color: '#FF2D92',
-      onPress: () => navigation.navigate('Reports' as any),
+      onPress: () => navigation.navigate('Reports'),
     },
   ];
 
@@ -213,7 +216,7 @@ export const PropertyManagerDashboardScreen: React.FC = () => {
     },
   ];
 
-  const getTaskIcon = (type: Task['type']) => {
+  const getTaskIcon = (type: Task['type']): IoniconName => {
     switch (type) {
       case 'maintenance':
         return 'construct-outline';
@@ -258,7 +261,7 @@ export const PropertyManagerDashboardScreen: React.FC = () => {
     <Card key={stat.title} style={[styles.statCard, { borderLeftColor: stat.color }]}>
       <Card.Content>
         <View style={styles.statHeader}>
-          <Ionicons name={stat.icon as any} size={24} color={stat.color} />
+          <Ionicons name={stat.icon} size={24} color={stat.color} />
           {stat.trend && (
             <Ionicons
               name={stat.trend === 'up' ? 'trending-up' : 'trending-down'}
@@ -280,7 +283,7 @@ export const PropertyManagerDashboardScreen: React.FC = () => {
       onPress={action.onPress}
     >
       <View style={[styles.actionIcon, { backgroundColor: action.color }]}>
-        <Ionicons name={action.icon as any} size={24} color="#fff" />
+        <Ionicons name={action.icon} size={24} color="#fff" />
         {action.count && (
           <View style={styles.actionBadge}>
             <Text style={styles.actionCount}>{action.count}</Text>
@@ -295,7 +298,7 @@ export const PropertyManagerDashboardScreen: React.FC = () => {
     <TouchableOpacity style={styles.taskItem}>
       <View style={styles.taskContent}>
         <View style={[styles.taskIcon, { backgroundColor: `${getTaskColor(item.type)}15` }]}>
-          <Ionicons name={getTaskIcon(item.type) as any} size={20} color={getTaskColor(item.type)} />
+          <Ionicons name={getTaskIcon(item.type)} size={20} color={getTaskColor(item.type)} />
         </View>
         <View style={styles.taskDetails}>
           <Text style={styles.taskTitle} numberOfLines={1}>{item.title}</Text>

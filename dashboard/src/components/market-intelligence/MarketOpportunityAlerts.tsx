@@ -394,7 +394,7 @@ const MarketOpportunityAlerts: React.FC<MarketOpportunityAlertsProps> = ({
       </DialogTitle>
       <DialogContent>
        <Typography variant="body2" color="textSecondary" paragraph>
-        You're about to implement this market opportunity. Add any notes or specific considerations:
+        You&apos;re about to implement this market opportunity. Add any notes or specific considerations:
        </Typography>
        
        <TextField

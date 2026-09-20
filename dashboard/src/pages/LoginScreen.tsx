@@ -176,7 +176,7 @@ const LoginScreen: React.FC = () => {
             
             <Box sx={{ textAlign: 'center', mb: 2 }}>
               <Link component={RouterLink} to="/register" variant="body2">
-                Don't have an account? Sign up
+                Don&apos;t have an account? Sign up
               </Link>
             </Box>
           </Box>

@@ -67,9 +67,13 @@ export const MFASetupScreen: React.FC = () => {
           'WXYZ-1234-5678',
           '9ABC-DEFG-HIJK',
         ]);
-      } catch (err: any) {
-        setError(err.message || 'Failed to set up MFA. Please try again.');
-        Alert.alert('Error', err.message || 'Failed to set up MFA. Please try again.');
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : 'Failed to set up MFA. Please try again.';
+        setError(message);
+        Alert.alert('Error', message);
       } finally {
         setSetupLoading(false);
       }
@@ -101,8 +105,12 @@ export const MFASetupScreen: React.FC = () => {
         'MFA Enabled',
         'Two-factor authentication has been successfully enabled for your account.'
       );
-    } catch (err: any) {
-      setError(err.message || 'Failed to verify code. Please try again.');
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to verify code. Please try again.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -161,7 +169,7 @@ export const MFASetupScreen: React.FC = () => {
             </View>
             
             <Text style={styles.warningText}>
-              Keep these codes in a safe place. They won't be shown again!
+              Keep these codes in a safe place. They won&apos;t be shown again!
             </Text>
           </View>
           

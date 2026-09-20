@@ -183,7 +183,9 @@ const CreateListingScreen = () => {
     return '';
   };
 
-  const handleAutoGenerate = (setFieldValue: any) => {
+  const handleAutoGenerate = (
+    setFieldValue: (field: string, value: unknown, shouldValidate?: boolean) => void
+  ) => {
     setFieldValue('title', generateAutoTitle());
     setFieldValue('description', generateAutoDescription());
     
@@ -343,7 +345,7 @@ const CreateListingScreen = () => {
               <View style={styles.buttonContainer}>
                 <Button
                   title="Create Listing"
-                  onPress={handleSubmit as any}
+                  onPress={() => handleSubmit()}
                   disabled={loading}
                   style={styles.submitButton}
                 />

@@ -116,7 +116,7 @@ export class AppErrorBoundary extends Component<Props, State> {
                 We encountered an unexpected error while loading the application.
               </Typography>
               <Typography variant="body1" color="text.secondary" paragraph>
-                Don't worry - this has been reported to our team and we're working on a fix.
+                Don&apos;t worry - this has been reported to our team and we&apos;re working on a fix.
               </Typography>
             </Box>
 

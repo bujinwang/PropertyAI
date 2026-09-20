@@ -269,7 +269,7 @@ export function createConnectorConfig(
 
 export function calculateNextSync(frequency: SyncFrequency, lastSync?: string): string {
   const now = new Date();
-  let nextSync = new Date(now);
+  const nextSync = new Date(now);
 
   switch (frequency) {
     case 'realtime':

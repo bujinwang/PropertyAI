@@ -115,7 +115,7 @@ export function PaymentMethodScreen({ navigation }: PaymentMethodScreenProps) {
       <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
           <Text style={styles.title}>Select Payment Method</Text>
-          <Text style={styles.subtitle}>Choose how you'd like to pay your rent</Text>
+          <Text style={styles.subtitle}>Choose how you&apos;d like to pay your rent</Text>
         </View>
 
         <View style={styles.methodsContainer}>

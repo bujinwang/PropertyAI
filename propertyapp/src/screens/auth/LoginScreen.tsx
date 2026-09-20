@@ -78,10 +78,12 @@ export const LoginScreen: React.FC = () => {
         setUser(response.user);
         setToken(response.token);
       }
-    } catch (error: any) {
+    } catch (error) {
       Alert.alert(
         'Login Failed',
-        error.message || 'Please check your email and password and try again.',
+        error instanceof Error
+          ? error.message
+          : 'Please check your email and password and try again.',
         [{ text: 'OK' }]
       );
     } finally {
@@ -125,10 +127,12 @@ export const LoginScreen: React.FC = () => {
         setUser(response.user);
         setToken(response.token);
       }
-    } catch (error: any) {
+    } catch (error) {
       Alert.alert(
         'Login Failed',
-        error.message || `Failed to login with ${provider}. Please try again.`,
+        error instanceof Error
+          ? error.message
+          : `Failed to login with ${provider}. Please try again.`,
         [{ text: 'OK' }]
       );
     } finally {
@@ -240,7 +244,7 @@ export const LoginScreen: React.FC = () => {
         </View>
         
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Don't have an account?</Text>
+          <Text style={styles.footerText}>Don&apos;t have an account?</Text>
           <TouchableOpacity onPress={() => navigation.navigate('Register')}>
             <Text style={styles.registerText}>Register</Text>
           </TouchableOpacity>

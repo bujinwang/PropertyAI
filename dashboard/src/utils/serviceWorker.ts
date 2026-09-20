@@ -251,7 +251,7 @@ export function onNetworkChange(callback: (online: boolean) => void) {
  * Request background sync
  */
 export async function requestBackgroundSync(tag: string = 'background-sync'): Promise<boolean> {
-  if ('serviceWorker' in navigator && 'sync' in (window as any).ServiceWorkerRegistration?.prototype) {
+  if ('serviceWorker' in navigator && (window as any).ServiceWorkerRegistration && 'sync' in (window as any).ServiceWorkerRegistration.prototype) {
     try {
       const registration = await navigator.serviceWorker.ready;
       await (registration as any).sync.register(tag);

@@ -27,11 +27,18 @@ import {
   SAFE_AREA 
 } from '@/styles/mobileLayout';
 
+interface HomeSectionItem {
+  title: string;
+  description?: string;
+  action: () => void;
+  icon?: string;
+}
+
 interface HomeSection {
   id: string;
   title: string;
   type: 'ai-features' | 'property-management' | 'tenant-portal' | 'admin-section';
-  data: any[];
+  data: HomeSectionItem[];
 }
 
 export const OptimizedHomeScreen: React.FC = () => {
@@ -86,7 +93,7 @@ export const OptimizedHomeScreen: React.FC = () => {
     </View>
   );
 
-  const renderQuickAction = ({ item }: { item: any }) => (
+  const renderQuickAction = ({ item }: { item: HomeSectionItem }) => (
     <Card style={styles.quickActionCard}>
       <Card.Content>
         <Text style={styles.quickActionTitle}>{item.title}</Text>

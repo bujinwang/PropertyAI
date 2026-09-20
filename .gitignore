@@ -6,6 +6,10 @@ yarn-debug.log*
 yarn-error.log*
 dev-debug.log
 
+# Redis snapshot written into the repo root by a locally running redis-server.
+# The backend test suite needs Redis up, so this appears for anyone who runs it.
+dump.rdb
+
 # Dependency directories
 node_modules/
 

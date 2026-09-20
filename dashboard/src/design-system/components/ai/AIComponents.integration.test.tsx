@@ -310,7 +310,7 @@ describe('AI Components Integration', () => {
     it('does not cause unnecessary re-renders', () => {
       const renderSpy = jest.fn();
       
-      const TestComponent = React.memo(() => {
+      const TestComponent = React.memo(function TestComponent() {
         renderSpy();
         return (
           <AIGeneratedContent confidence={85}>

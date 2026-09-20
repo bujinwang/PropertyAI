@@ -233,7 +233,7 @@ const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
         <DialogTitle>Confirm Permission Change</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to {confirmDialog.action} the "{confirmDialog.permission}" permission
+            Are you sure you want to {confirmDialog.action} the &quot;{confirmDialog.permission}&quot; permission
             for this role?
           </Typography>
         </DialogContent>

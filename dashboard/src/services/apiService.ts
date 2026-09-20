@@ -5,7 +5,7 @@ const RATE_LIMIT_DELAY = 100; // 100ms between requests
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1 second
 
-let requestQueue: Array<() => Promise<any>> = [];
+const requestQueue: Array<() => Promise<any>> = [];
 let isProcessingQueue = false;
 
 const processQueue = async () => {

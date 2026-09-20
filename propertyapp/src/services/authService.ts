@@ -227,7 +227,7 @@ class AuthService {
       return {
         data: tokens,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw this.handleError(error);
     }
   }
@@ -338,7 +338,7 @@ class AuthService {
       }
       throw new Error('Failed to process password reset request. Please try again.');
     }
-  };
+  }
 
   // Reset password doesn't use apiService because it uses a special token
   async resetPassword(resetToken: string, newPassword: string): Promise<{ message: string }> {
@@ -357,7 +357,7 @@ class AuthService {
       }
       throw new Error('Failed to reset password. Please try again.');
     }
-  };
+  }
 
   private async storeTokens(tokens: AuthTokens): Promise<void> {
     await SecureStore.setItemAsync('auth_tokens', JSON.stringify(tokens));

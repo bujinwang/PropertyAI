@@ -571,7 +571,7 @@ describe('LocationService', () => {
       const unsubscribe = locationServiceInstance.onPositionUpdate(callback);
 
       // Simulate position update
-      (locationServiceInstance as any).positionCallbacks.forEach((cb: Function) => {
+      (locationServiceInstance as any).positionCallbacks.forEach((cb: (...args: unknown[]) => void) => {
         cb({ latitude: 40.7128, longitude: -74.0060, accuracy: 10, timestamp: Date.now() });
       });
 
@@ -587,7 +587,7 @@ describe('LocationService', () => {
       const unsubscribe = locationServiceInstance.onPositionError(callback);
 
       // Simulate error
-      (locationServiceInstance as any).errorCallbacks.forEach((cb: Function) => {
+      (locationServiceInstance as any).errorCallbacks.forEach((cb: (...args: unknown[]) => void) => {
         cb({ code: 1, message: 'Permission denied' });
       });
 

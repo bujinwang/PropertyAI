@@ -57,11 +57,11 @@ export const UnitDetailScreen: React.FC = () => {
   const { unitId } = route.params as { unitId: string };
 
   const handleApply = () => {
-    navigation.navigate('Application' as any, { unitId });
+    navigation.navigate('Application', { unitId });
   };
 
   const handleContact = () => {
-    navigation.navigate('ChatDetail' as any, { unitId });
+    navigation.navigate('ChatDetail', { unitId });
   };
 
   return (

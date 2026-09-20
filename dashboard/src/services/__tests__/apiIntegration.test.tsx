@@ -44,8 +44,9 @@ const createTestQueryClient = () => new QueryClient({
 
 // Test wrapper component
 const createWrapper = (client: QueryClient) => {
-  return ({ children }: { children: React.ReactNode }) => 
-    React.createElement(QueryClientProvider, { client }, children);
+  return function Wrapper({ children }: { children: React.ReactNode }) {
+    return React.createElement(QueryClientProvider, { client }, children);
+  };
 };
 
 describe('API Integration Layer', () => {
@@ -89,7 +90,7 @@ describe('API Integration Layer', () => {
         escalationRules: [],
       };
 
-      const aiService = require('../../services/aiService');
+      const aiService = jest.requireMock('../../services/aiService');
       aiService.aiCommunicationService.getResponseSettings.mockResolvedValue(mockSettings);
 
       const { result } = renderHook(() => useResponseSettings(), {
@@ -116,7 +117,7 @@ describe('API Integration Layer', () => {
         escalationRules: [],
       };
 
-      const aiService = require('../../services/aiService');
+      const aiService = jest.requireMock('../../services/aiService');
       aiService.aiCommunicationService.getResponseSettings.mockResolvedValue(initialSettings);
       aiService.aiCommunicationService.updateResponseSettings.mockResolvedValue(updatedSettings);
 
@@ -148,7 +149,7 @@ describe('API Integration Layer', () => {
         averageScore: 75,
       };
 
-      const aiService = require('../../services/aiService');
+      const aiService = jest.requireMock('../../services/aiService');
       aiService.aiRiskAssessmentService.getMetrics.mockResolvedValue(mockMetrics);
 
       const { result } = renderHook(() => useRiskAssessmentMetrics('property-1'), {
@@ -177,7 +178,7 @@ describe('API Integration Layer', () => {
         },
       ];
 
-      const emergencyService = require('../../services/emergencyResponseService');
+      const emergencyService = jest.requireMock('../../services/emergencyResponseService');
       emergencyService.emergencyResponseService.getAlerts.mockResolvedValue(mockAlerts);
 
       const { result } = renderHook(() => useEmergencyAlerts(), {
@@ -194,7 +195,7 @@ describe('API Integration Layer', () => {
 
   describe('Personalization Hooks', () => {
     it('should fetch recommendations with fallback to mock data', async () => {
-      const personalizationService = require('../../services/personalizationService');
+      const personalizationService = jest.requireMock('../../services/personalizationService');
       
       // Mock API failure
       personalizationService.personalizationService.getRecommendations.mockRejectedValue(
@@ -234,7 +235,7 @@ describe('API Integration Layer', () => {
         mimeType: 'application/pdf',
       };
 
-      const documentService = require('../../services/documentVerificationService');
+      const documentService = jest.requireMock('../../services/documentVerificationService');
       documentService.documentVerificationService.uploadDocument.mockResolvedValue(mockDocument);
 
       const { result } = renderHook(() => useVerificationStatus('user-1'), {
@@ -257,7 +258,7 @@ describe('API Integration Layer', () => {
         lastUpdated: new Date(),
       };
 
-      const buildingHealthService = require('../../services/buildingHealthService');
+      const buildingHealthService = jest.requireMock('../../services/buildingHealthService');
       buildingHealthService.buildingHealthService.getBuildingHealthOverview.mockResolvedValue(mockOverview);
 
       const { result } = renderHook(() => useBuildingHealthOverview('property-1'), {
@@ -294,7 +295,7 @@ describe('API Integration Layer', () => {
         lastUpdated: new Date(),
       };
 
-      const aiInsightsService = require('../../services/aiInsightsService');
+      const aiInsightsService = jest.requireMock('../../services/aiInsightsService');
       aiInsightsService.aiInsightsService.getInsightsDashboard.mockResolvedValue(mockDashboard);
 
       const { result } = renderHook(() => useInsightsDashboard(), {
@@ -322,7 +323,7 @@ describe('API Integration Layer', () => {
         },
       ];
 
-      const marketService = require('../../services/marketIntelligenceService');
+      const marketService = jest.requireMock('../../services/marketIntelligenceService');
       marketService.marketIntelligenceService.getMarketTrends.mockResolvedValue(mockTrends);
 
       const { result } = renderHook(() => useMarketTrends('san-francisco'), {
@@ -369,7 +370,7 @@ describe('API Integration Layer', () => {
       // Set up initial data
       testQueryClient.setQueryData(['emergency-alerts'], []);
 
-      const emergencyService = require('../../services/emergencyResponseService');
+      const emergencyService = jest.requireMock('../../services/emergencyResponseService');
       emergencyService.emergencyResponseService.updateAlertStatus.mockResolvedValue({
         id: 'alert-1',
         status: 'resolved',
@@ -408,7 +409,7 @@ describe('API Integration Layer', () => {
     it('should handle network errors gracefully', async () => {
       const networkError = new Error('Network Error');
       
-      const aiService = require('../../services/aiService');
+      const aiService = jest.requireMock('../../services/aiService');
       aiService.aiCommunicationService.getResponseSettings.mockRejectedValue(networkError);
 
       const { result } = renderHook(() => useResponseSettings(), {
@@ -423,7 +424,7 @@ describe('API Integration Layer', () => {
     });
 
     it('should retry failed requests according to configuration', async () => {
-      const aiService = require('../../services/aiService');
+      const aiService = jest.requireMock('../../services/aiService');
       aiService.aiCommunicationService.getResponseSettings
         .mockRejectedValueOnce(new Error('Temporary Error'))
         .mockRejectedValueOnce(new Error('Temporary Error'))

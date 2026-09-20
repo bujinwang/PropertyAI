@@ -157,8 +157,8 @@ export const ContactManagementModal: React.FC<ContactManagementModalProps> = ({
   if (!formData.phone?.trim()) return 'Phone number is required';
   
   // Basic phone number validation
-  const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
-  const cleanPhone = formData.phone.replace(/[\s\-\(\)]/g, '');
+  const phoneRegex = /^[+]?[1-9][\d]{0,15}$/;
+  const cleanPhone = formData.phone.replace(/[\s\-()]/g, '');
   if (!phoneRegex.test(cleanPhone)) {
    return 'Please enter a valid phone number';
   }

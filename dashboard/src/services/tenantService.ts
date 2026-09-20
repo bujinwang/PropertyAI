@@ -1,4 +1,4 @@
-const Tenant = require('../models/Tenant');
+import Tenant from '../models/Tenant';
 
 const tenantService = {
   async getTenant(tenantId) {

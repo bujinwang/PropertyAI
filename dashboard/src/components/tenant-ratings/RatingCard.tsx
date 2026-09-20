@@ -250,7 +250,7 @@ const RatingCard: React.FC<RatingCardProps> = ({
                   lineHeight: 1.6
                 }}
               >
-                "{rating.comment}"
+                &quot;{rating.comment}&quot;
               </Typography>
             </Box>
           )}

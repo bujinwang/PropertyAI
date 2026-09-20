@@ -327,7 +327,7 @@ const AIPersonalizationDashboard: React.FC<PersonalizationDashboardProps> = ({
        No recommendations available
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-       We're working on generating personalized recommendations for you.
+       We&apos;re working on generating personalized recommendations for you.
       </Typography>
       <Button variant="contained" onClick={loadRecommendations} startIcon={<Refresh />}>
        Check Again

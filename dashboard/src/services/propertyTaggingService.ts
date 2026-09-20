@@ -564,9 +564,10 @@ class PropertyTaggingService {
           return Number(fieldValue) > Number(condition.value);
         case 'less_than':
           return Number(fieldValue) < Number(condition.value);
-        case 'between':
+        case 'between': {
           const [min, max] = condition.value;
           return Number(fieldValue) >= min && Number(fieldValue) <= max;
+        }
         case 'regex':
           return new RegExp(condition.value).test(String(fieldValue));
         default:

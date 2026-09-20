@@ -136,7 +136,7 @@ export class AIErrorBoundary extends Component<Props, State> {
           </Typography>
           
           <Typography variant="body2" sx={{ mb: 3, opacity: 0.8 }}>
-            We're experiencing issues with this AI-powered feature. 
+            We&apos;re experiencing issues with this AI-powered feature. 
             The system is working to restore functionality.
           </Typography>
 

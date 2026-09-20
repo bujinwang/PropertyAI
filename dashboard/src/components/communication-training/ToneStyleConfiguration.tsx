@@ -120,7 +120,7 @@ const ToneStyleConfiguration: React.FC<ToneStyleConfigurationProps> = ({
               }}
              >
               <Typography variant="body2" fontStyle="italic">
-               "{option.example}"
+               &quot;{option.example}&quot;
               </Typography>
              </Paper>
             </Box>
@@ -177,7 +177,7 @@ const ToneStyleConfiguration: React.FC<ToneStyleConfigurationProps> = ({
               }}
              >
               <Typography variant="body2" fontStyle="italic">
-               "{option.example}"
+               &quot;{option.example}&quot;
               </Typography>
              </Paper>
             </Box>
@@ -241,7 +241,7 @@ const ToneStyleConfiguration: React.FC<ToneStyleConfigurationProps> = ({
          borderColor: 'grey.200'
         }}
        >
-        "{getCurrentExample()}"
+        &quot;{getCurrentExample()}&quot;
        </Typography>
        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
         This is how the AI will respond using your selected tone and style combination.

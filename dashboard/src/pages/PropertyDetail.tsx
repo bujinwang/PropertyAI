@@ -501,7 +501,7 @@ const PropertyDetail: React.FC = () => {
 
             {!pricingRecommendations && !competitiveAnalysis && !marketLoading && (
               <Alert severity="info">
-                Click "Get Market Insights" to analyze pricing recommendations and competitive positioning for this property.
+                Click &quot;Get Market Insights&quot; to analyze pricing recommendations and competitive positioning for this property.
               </Alert>
             )}
           </Box>

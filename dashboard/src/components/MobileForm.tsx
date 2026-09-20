@@ -92,18 +92,20 @@ const MobileForm: React.FC<MobileFormProps> = ({
 
     // Built-in validations
     switch (field.type) {
-      case 'email':
+      case 'email': {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (value && !emailRegex.test(value)) {
           return 'Please enter a valid email address';
         }
         break;
-      case 'tel':
-        const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
-        if (value && !phoneRegex.test(value.replace(/[\s\-\(\)]/g, ''))) {
+      }
+      case 'tel': {
+        const phoneRegex = /^[+]?[1-9][\d]{0,15}$/;
+        if (value && !phoneRegex.test(value.replace(/[\s\-()]/g, ''))) {
           return 'Please enter a valid phone number';
         }
         break;
+      }
       case 'number':
         if (value && isNaN(Number(value))) {
           return 'Please enter a valid number';
