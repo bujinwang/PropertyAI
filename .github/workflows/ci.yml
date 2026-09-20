@@ -160,9 +160,12 @@ jobs:
         cache: 'npm'
 
     - name: Install dependencies
-      run: |
-        npm ci
-        cd ContractorApp && npm ci
+      # Root `npm ci` installs every workspace, ContractorApp included. The
+      # extra `cd ContractorApp && npm ci` that used to live here built a
+      # second, partial tree in ContractorApp/node_modules (1600 packages) —
+      # see the note on the Code Quality job's Prisma step for why a partial
+      # tree is dangerous here.
+      run: npm ci
 
     - name: Run contractor app tests
       run: |
@@ -190,13 +193,23 @@ jobs:
     - name: Run linting
       run: npm run lint
 
+    - name: Generate Prisma Client
+      # The backend type-checks against @prisma/client. `npm ci` installs only
+      # Prisma's *un-generated stub*, where PrismaClient is typed `any` and the
+      # `Prisma.*` namespace does not exist — every file that imports
+      # `Prisma.SomeWhereInput` then fails. That inflates the backend count from
+      # 18 to 253. Generate before type-checking, or the ratchet below is
+      # measuring the stub rather than the code.
+      run: cd backend && npx prisma generate
+
     - name: Check TypeScript compilation
       # The repo carries a large amount of pre-existing type debt, so a plain
       # `tsc --noEmit` is permanently red and therefore carries no signal:
       #   backend 18, dashboard 719, ContractorApp 3  =>  740 total
-      # (measured 2026-09-17). This ratchets instead — it fails when the count
-      # GROWS, which is the thing that actually indicates a regression, while
-      # tolerating the known baseline. Lower the number as debt is paid down.
+      # (measured 2026-09-17, with the Prisma Client generated). This ratchets
+      # instead — it fails when the count GROWS, which is the thing that
+      # actually indicates a regression, while tolerating the known baseline.
+      # Lower the number as debt is paid down.
       run: |
         BASELINE=740
         total=0
