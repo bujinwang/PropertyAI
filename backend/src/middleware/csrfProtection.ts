@@ -13,8 +13,10 @@ const csrfTokenStore = new Map<string, { token: string; expires: number }>();
 // Token expiration time (15 minutes)
 const TOKEN_EXPIRY = 15 * 60 * 1000;
 
-// Clean up expired tokens every 5 minutes
-setInterval(() => {
+// Clean up expired tokens every 5 minutes. unref() so this background timer
+// does not, by itself, keep the process alive (e.g. it would otherwise prevent
+// a Jest run from exiting).
+const cleanupInterval = setInterval(() => {
   const now = Date.now();
   for (const [sessionId, data] of csrfTokenStore.entries()) {
     if (data.expires < now) {
@@ -22,6 +24,10 @@ setInterval(() => {
     }
   }
 }, 5 * 60 * 1000);
+
+if (typeof cleanupInterval.unref === 'function') {
+  cleanupInterval.unref();
+}
 
 /**
  * Generate a secure CSRF token

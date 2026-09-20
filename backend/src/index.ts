@@ -10,6 +10,7 @@ import { rentCollectionService } from './services/rentCollection.service';
 import { documentExpirationService } from './services/documentExpiration.service';
 import './services/pubSub.service';
 // const cleanupSchedulerService = require('./services/cleanupSchedulerService');
+import { closeCache } from './utils/cache';
 import path from 'path';
 
 const PORT = process.env.PORT || 3001;
@@ -116,6 +117,7 @@ process.on('SIGINT', async () => {
   }
 //    schedulerService.stop();
 //    cleanupSchedulerService.stop();
+  await closeCache();
   await closeDatabaseConnections();
   process.exit(0);
 });
@@ -129,6 +131,7 @@ process.on('SIGTERM', async () => {
   }
 //    schedulerService.stop();
 //    cleanupSchedulerService.stop();
+  await closeCache();
   await closeDatabaseConnections();
   process.exit(0);
 });
