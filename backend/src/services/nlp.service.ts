@@ -2,15 +2,31 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { config } from '../config/config';
 
 class NlpService {
-  private genAI: GoogleGenerativeAI;
-  private model: any;
+  private genAI: GoogleGenerativeAI | null = null;
+  private model: any = null;
 
-  constructor() {
-    if (!config.google.apiKey) {
-      throw new Error('Google API key is not defined in config.');
+  /**
+   * Resolve the client and model lazily, on first use.
+   *
+   * The key check used to live in the constructor, and this module instantiates
+   * the service at import time (`export const nlpService = new NlpService()`
+   * below). A missing GEMINI_API_KEY therefore made *importing the module*
+   * throw, which stopped every suite that reaches it transitively from running
+   * at all in CI, where `.env.example` carries no key.
+   *
+   * Deferring the check to first use keeps the same error and the same message
+   * without making the module unloadable. Same pattern as
+   * generativeAI.service.ts.
+   */
+  private getModel(): any {
+    if (!this.model) {
+      if (!config.google.apiKey) {
+        throw new Error('Google API key is not defined in config.');
+      }
+      this.genAI = new GoogleGenerativeAI(config.google.apiKey);
+      this.model = this.genAI.getGenerativeModel({ model: "gemini-pro" });
     }
-    this.genAI = new GoogleGenerativeAI(config.google.apiKey);
-    this.model = this.genAI.getGenerativeModel({ model: "gemini-pro" });
+    return this.model;
   }
 
   /**
@@ -29,7 +45,7 @@ Maintenance Request: "${description}"
 Example Output: {"priority": "HIGH", "category": "PLUMBING"}`;
 
     try {
-      const result = await this.model.generateContent(prompt);
+      const result = await this.getModel().generateContent(prompt);
       const response = await result.response;
       const text = response.text();
 
