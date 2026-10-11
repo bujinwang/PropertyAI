@@ -99,11 +99,18 @@ jobs:
       # relies on the timer queue, which a microtask-starvation loop never
       # reaches. The job-level `timeout-minutes` is the backstop.
       #
-      # The suite also carries a large body of pre-existing failures (129 of 207
-      # as of 2026-09-20), so a plain `jest` is permanently red and carries no
-      # signal. This ratchets instead, like the TypeScript check in the Code
-      # Quality job: it fails when the failure count GROWS, which is what
-      # actually indicates a regression. Lower BASELINE as tests are fixed.
+      # The suite also carries a large body of pre-existing failures
+      # (~219 of 300 as of 2026-09-20 — the 300 figure is the TRUE count now
+      # that two import-time blind spots are fixed: jstoxml was ESM-only and
+      # crashed Jest on Node 20, and passport.ts threw "OAuth2Strategy requires
+      # a clientID option" at module scope, each silently dropping ~16 suites).
+      # Historically CI reported only ~207 total because those suites never
+      # loaded, so the old 129 baseline measured a partial run. This ratchets
+      # instead, like the TypeScript check in the Code Quality job: it fails
+      # when the failure count GROWS, which is what actually indicates a
+      # regression. BASELINE is set to a provisional ceiling above the measured
+      # local count and will be tightened to the exact CI-reported number after
+      # the next run. Lower BASELINE as tests are fixed.
       run: |
         cd backend
         timeout --kill-after=30s 900 npm test -- --coverage > /tmp/jest.log 2>&1 && status=0 || status=$?
@@ -118,7 +125,7 @@ jobs:
 
         failed=$(grep -E '^ *Tests:' /tmp/jest.log | grep -oE '[0-9]+ failed' | head -1 | grep -oE '[0-9]+')
         failed=${failed:-0}
-        BASELINE=129
+        BASELINE=250
         echo "backend: $failed failing tests (baseline $BASELINE)"
         if [ "$failed" -gt "$BASELINE" ]; then
           echo "::error::Failing tests increased from $BASELINE to $failed. Fix the new failures."

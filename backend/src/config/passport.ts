@@ -6,106 +6,119 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export const configurePassport = (): void => {
+  // OAuth strategies are only registered when their credentials are present.
+  // The passport OAuth2Strategy constructor throws "requires a clientID option"
+  // when the clientID is undefined, and `configurePassport()` runs at module
+  // scope (app.ts calls it on import). In any environment without the OAuth
+  // secrets configured — CI, local runs, test sandboxes — that throw would
+  // abort loading of every test suite that imports `app`. Guarding here keeps
+  // the app bootable without OAuth and lets the suites load; in production the
+  // vars are set and the strategies register exactly as before.
+
   // Google Strategy
-  passport.use(
-    new GoogleStrategy(
-      {
-        clientID: process.env.GOOGLE_CLIENT_ID!,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-        callbackURL: '/api/auth/google/callback',
-      },
-      async (accessToken: string, refreshToken: string, profile: GoogleProfile, done: VerifyCallback) => {
-        const email = profile.emails?.[0]?.value;
-        if (!email) {
-          return done(new Error('No email found in Google profile'), undefined);
-        }
-
-        try {
-          let user = await prisma.user.findUnique({ where: { email } });
-
-          if (!user) {
-            user = await prisma.user.create({
-              data: {
-                email,
-                firstName: profile.name?.givenName || '',
-                lastName: profile.name?.familyName || '',
-                password: '', // No password for OAuth users
-                role: 'TENANT',
-              },
-            });
+  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    passport.use(
+      new GoogleStrategy(
+        {
+          clientID: process.env.GOOGLE_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          callbackURL: '/api/auth/google/callback',
+        },
+        async (accessToken: string, refreshToken: string, profile: GoogleProfile, done: VerifyCallback) => {
+          const email = profile.emails?.[0]?.value;
+          if (!email) {
+            return done(new Error('No email found in Google profile'), undefined);
           }
 
-          await (prisma as any).oAuthConnection.upsert({
-            where: { provider_userId: { provider: 'GOOGLE', userId: user.id } },
-            update: { accessToken, refreshToken, expiresAt: new Date(Date.now() + 3600 * 1000) },
-            create: {
-              provider: 'GOOGLE',
-              providerUserId: profile.id,
-              accessToken,
-              refreshToken,
-              expiresAt: new Date(Date.now() + 3600 * 1000),
-              userId: user.id,
-            },
-          });
+          try {
+            let user = await prisma.user.findUnique({ where: { email } });
 
-          return done(null, user);
-        } catch (error) {
-          return done(error, undefined);
+            if (!user) {
+              user = await prisma.user.create({
+                data: {
+                  email,
+                  firstName: profile.name?.givenName || '',
+                  lastName: profile.name?.familyName || '',
+                  password: '', // No password for OAuth users
+                  role: 'TENANT',
+                },
+              });
+            }
+
+            await (prisma as any).oAuthConnection.upsert({
+              where: { provider_userId: { provider: 'GOOGLE', userId: user.id } },
+              update: { accessToken, refreshToken, expiresAt: new Date(Date.now() + 3600 * 1000) },
+              create: {
+                provider: 'GOOGLE',
+                providerUserId: profile.id,
+                accessToken,
+                refreshToken,
+                expiresAt: new Date(Date.now() + 3600 * 1000),
+                userId: user.id,
+              },
+            });
+
+            return done(null, user);
+          } catch (error) {
+            return done(error, undefined);
+          }
         }
-      }
-    )
-  );
+      )
+    );
+  }
 
   // Facebook Strategy
-  passport.use(
-    new FacebookStrategy(
-      {
-        clientID: process.env.FACEBOOK_CLIENT_ID!,
-        clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
-        callbackURL: '/api/auth/facebook/callback',
-        profileFields: ['id', 'emails', 'name'],
-      },
-      async (accessToken: string, refreshToken: string, profile: FacebookProfile, done: (error: any, user?: any) => void) => {
-        const email = profile.emails?.[0]?.value;
-        if (!email) {
-          return done(new Error('No email found in Facebook profile'), undefined);
-        }
-
-        try {
-          let user = await prisma.user.findUnique({ where: { email } });
-
-          if (!user) {
-            user = await prisma.user.create({
-              data: {
-                email,
-                firstName: profile.name?.givenName || '',
-                lastName: profile.name?.familyName || '',
-                password: '', // No password for OAuth users
-                role: 'TENANT',
-              },
-            });
+  if (process.env.FACEBOOK_CLIENT_ID && process.env.FACEBOOK_CLIENT_SECRET) {
+    passport.use(
+      new FacebookStrategy(
+        {
+          clientID: process.env.FACEBOOK_CLIENT_ID,
+          clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
+          callbackURL: '/api/auth/facebook/callback',
+          profileFields: ['id', 'emails', 'name'],
+        },
+        async (accessToken: string, refreshToken: string, profile: FacebookProfile, done: (error: any, user?: any) => void) => {
+          const email = profile.emails?.[0]?.value;
+          if (!email) {
+            return done(new Error('No email found in Facebook profile'), undefined);
           }
 
-          await (prisma as any).oAuthConnection.upsert({
-            where: { provider_userId: { provider: 'FACEBOOK', userId: user.id } },
-            update: { accessToken, refreshToken, expiresAt: new Date(Date.now() + 3600 * 1000) },
-            create: {
-              provider: 'FACEBOOK',
-              providerUserId: profile.id,
-              accessToken,
-              refreshToken,
-              expiresAt: new Date(Date.now() + 3600 * 1000),
-              userId: user.id,
-            },
-          });
+          try {
+            let user = await prisma.user.findUnique({ where: { email } });
 
-          return done(null, user);
-        } catch (error) {
-          return done(error, undefined);
+            if (!user) {
+              user = await prisma.user.create({
+                data: {
+                  email,
+                  firstName: profile.name?.givenName || '',
+                  lastName: profile.name?.familyName || '',
+                  password: '', // No password for OAuth users
+                  role: 'TENANT',
+                },
+              });
+            }
+
+            await (prisma as any).oAuthConnection.upsert({
+              where: { provider_userId: { provider: 'FACEBOOK', userId: user.id } },
+              update: { accessToken, refreshToken, expiresAt: new Date(Date.now() + 3600 * 1000) },
+              create: {
+                provider: 'FACEBOOK',
+                providerUserId: profile.id,
+                accessToken,
+                refreshToken,
+                expiresAt: new Date(Date.now() + 3600 * 1000),
+                userId: user.id,
+              },
+            });
+
+            return done(null, user);
+          } catch (error) {
+            return done(error, undefined);
+          }
         }
-      }
-    )
-  );
+      )
+    );
+  }
 
   // Configure serialization/deserialization
   passport.serializeUser((user: any, done: (err: any, id?: any) => void) => done(null, user.id));
