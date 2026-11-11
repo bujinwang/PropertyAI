@@ -7,12 +7,16 @@ on:
     branches: [ main, develop ]
 
 env:
-  NODE_VERSION: '20.x'
+  # Pin to an active LTS. Node 20.x is deprecated on GitHub-hosted runners and
+  # was being force-run on Node 24; 22.x matches local dev and is verified to
+  # pass the suite (jstoxml is pinned to the CJS v6, so the old Node-20 ESM
+  # crash cannot recur).
+  NODE_VERSION: '22.x'
 
 jobs:
   test-backend:
     name: Backend Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # GitHub's default is 360 minutes. A test runner that fails to terminate
     # (see the dashboard job) would otherwise burn the whole six hours; this
     # caps the damage at a bounded, visible failure.
@@ -142,7 +146,7 @@ jobs:
 
   test-dashboard:
     name: Dashboard Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # This job used to be the dangerous one: a test suite that never terminated
     # would have run to GitHub's 360-minute default. The root cause is fixed,
     # but cap it so a future regression fails in minutes instead of hours.
@@ -199,7 +203,7 @@ jobs:
 
   test-contractor-app:
     name: ContractorApp Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
 
     steps:
@@ -227,7 +231,7 @@ jobs:
 
   lint-and-format:
     name: Code Quality
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
 
     steps:
@@ -280,7 +284,7 @@ jobs:
 
   security-scan:
     name: Security Scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     permissions:
       actions: read
