@@ -1,94 +1,55 @@
 import express from 'express';
 import unitController from '../controllers/unitController';
-import { deprecationWarning } from '../middleware/deprecation';
-import { legacyRouteMapper } from '../middleware/legacy-mapping';
 
+/**
+ * Legacy `/api/units` surface, RESTORED as a compatibility view over `Rental`.
+ *
+ * The deprecation middleware (`deprecationWarning`) and `legacyRouteMapper`
+ * were removed when CRUD was restored. `legacyRouteMapper` in particular is not
+ * harmless: it rewrites `req.query.type = 'unit'` on collection GETs, which
+ * would silently distort filtering on a now-live endpoint. These paths are
+ * first-class aliases again, not deprecation stubs.
+ *
+ * All routes still sit behind the global `app.use('/api', requireAuth)` guard.
+ */
 const router = express.Router();
 
-// Apply deprecation warning to all routes
-router.use(deprecationWarning('/api/rentals', '2024-05-01'));
-
-// Apply legacy route mapping
-router.use(legacyRouteMapper);
-
-/**
- * @route   GET /api/units
- * @desc    Get all units with filtering and pagination
- * @access  Private (Property Manager, Admin)
- * @deprecated Use /api/rentals instead
- */
+/** @route GET /api/units — list rentals */
 router.get('/', unitController.getAllUnits);
 
-/**
- * @route   POST /api/units
- * @desc    Create a new unit
- * @access  Private (Property Manager, Admin)
- * @deprecated Use /api/rentals instead
- */
+/** @route POST /api/units — create a rental (unitNumber is optional) */
 router.post('/', unitController.createUnit);
 
 /**
- * @route   GET /api/units/property/:propertyId
- * @desc    Get all units for a specific property
- * @access  Private (Property Manager, Admin, Owner)
- * @deprecated Use /api/rentals?parentRentalId=:propertyId instead
+ * @route GET /api/units/property/:propertyId
+ * The unified Rental model has no parent relation, so this is an unfiltered
+ * list. Kept for route compatibility; see legacyRentalCrud.listByPropertyLegacy.
  */
-router.get('/property/:propertyId', unitController.getAllUnits);
+router.get('/property/:propertyId', unitController.getUnitsByProperty);
 
-/**
- * @route   GET /api/units/property/:propertyId/occupancy
- * @desc    Get occupancy statistics for a property
- * @access  Private (Property Manager, Admin, Owner)
- * @deprecated Use /api/rentals/:propertyId/analytics instead
- */
-router.get('/property/:propertyId/occupancy', unitController.getAllUnits);
+/** @route GET /api/units/property/:propertyId/occupancy */
+router.get('/property/:propertyId/occupancy', unitController.getPropertyOccupancy);
 
-/**
- * @route   GET /api/units/:id
- * @desc    Get a unit by ID
- * @access  Private (Property Manager, Admin, Tenant if associated)
- * @deprecated Use /api/rentals/:id instead
- */
+/** @route GET /api/units/:id */
 router.get('/:id', unitController.getUnitById);
 
-/**
- * @route   PUT /api/units/:id
- * @desc    Update a unit
- * @access  Private (Property Manager, Admin)
- * @deprecated Use /api/rentals/:id instead
- */
+/** @route PUT /api/units/:id */
 router.put('/:id', unitController.updateUnit);
 
-/**
- * @route   PUT /api/units/:id/availability
- * @desc    Set unit availability
- * @access  Private (Property Manager, Admin)
- * @deprecated Use /api/rentals/:id with isAvailable field instead
- */
-router.put('/:id/availability', unitController.updateUnit);
+/** @route PUT /api/units/:id/availability */
+router.put('/:id/availability', unitController.setUnitAvailability);
+
+/** @route PUT /api/units/:id/tenant — tenants live on Lease, not Rental */
+router.put('/:id/tenant', unitController.assignTenant);
 
 /**
- * @route   PUT /api/units/:id/tenant
- * @desc    Assign a tenant to a unit
- * @access  Private (Property Manager, Admin)
- * @deprecated Use /api/leases instead
+ * @route DELETE /api/units/:id/tenant
+ * This MUST NOT be `deleteUnit`: the old 410 stub made that mapping harmless,
+ * but on a live surface it would delete the entire Rental row.
  */
-router.put('/:id/tenant', unitController.updateUnit);
+router.delete('/:id/tenant', unitController.removeTenant);
 
-/**
- * @route   DELETE /api/units/:id/tenant
- * @desc    Remove tenant from a unit
- * @access  Private (Property Manager, Admin)
- * @deprecated Use /api/leases/:id/terminate instead
- */
-router.delete('/:id/tenant', unitController.deleteUnit);
-
-/**
- * @route   DELETE /api/units/:id
- * @desc    Delete a unit
- * @access  Private (Admin only)
- * @deprecated Use /api/rentals/:id instead
- */
+/** @route DELETE /api/units/:id */
 router.delete('/:id', unitController.deleteUnit);
 
 export default router;

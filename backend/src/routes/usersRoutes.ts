@@ -2,7 +2,6 @@ import express from 'express';
 import { prisma } from '../config/database';
 import { handleDatabaseError } from '../utils/dbUtils';
 import { authMiddleware } from '../middleware/authMiddleware';
-import { ServiceCommunicationError } from '../utils/serviceUtils';
 import UserController from '../controllers/userController';
 
 const router = express.Router();
@@ -16,21 +15,22 @@ router.delete('/:id', authMiddleware.protect, authMiddleware.admin, UserControll
 
 
 /**
- * @route   GET /api/users/validate/:id
- * @desc    Validate if a user exists and is active (for inter-service communication)
- * @access  Internal
+ * Internal-service routes.
+ *
+ * The `x-internal-service-call: true` header check these handlers used is NOT a
+ * security control — any client can set an arbitrary header. `/users/*` is
+ * behind the global `requireAuth`, so the caller at least had to hold a valid
+ * JWT; but a TENANT could still read any user's email and role, one id at a
+ * time (verified: a TENANT token + the header returned an OWNER's record).
+ *
+ * These are now ADMIN-only. If genuine machine-to-machine callers need them,
+ * they must present a shared secret compared against an env var — not a header
+ * the caller simply asserts about itself.
  */
-router.get('/validate/:id', async (req, res, next) => {
+router.get('/validate/:id', authMiddleware.protect, authMiddleware.admin, async (req, res, next) => {
   try {
-    // Check if this is an internal service call
-    const isInternalCall = req.headers['x-internal-service-call'] === 'true';
-    
-    if (!isInternalCall) {
-      throw new ServiceCommunicationError('Unauthorized access to internal endpoint', 403);
-    }
-    
     const { id } = req.params;
-    
+
     const user = await prisma.user.findUnique({
       where: { id },
       select: {
@@ -39,11 +39,11 @@ router.get('/validate/:id', async (req, res, next) => {
         isActive: true
       }
     });
-    
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    
+
     res.json(user);
   } catch (error) {
     next(error);
@@ -52,20 +52,13 @@ router.get('/validate/:id', async (req, res, next) => {
 
 /**
  * @route   GET /api/users/basic/:id
- * @desc    Get basic user information (for inter-service communication)
- * @access  Internal
+ * @desc    Get basic user information
+ * @access  Private (ADMIN)
  */
-router.get('/basic/:id', async (req, res, next) => {
+router.get('/basic/:id', authMiddleware.protect, authMiddleware.admin, async (req, res, next) => {
   try {
-    // Check if this is an internal service call
-    const isInternalCall = req.headers['x-internal-service-call'] === 'true';
-    
-    if (!isInternalCall) {
-      throw new ServiceCommunicationError('Unauthorized access to internal endpoint', 403);
-    }
-    
     const { id } = req.params;
-    
+
     const user = await prisma.user.findUnique({
       where: { id },
       select: {

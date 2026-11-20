@@ -1,7 +1,7 @@
 import { PrismaClient, User, UserRole } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { authenticator } from 'otplib';
+import { verifyTOTP } from './mfaService';
 import { generateToken, generateRefreshToken, verifyRefreshToken } from './tokenService';
 import { AppError } from '../middleware/errorMiddleware';
 
@@ -97,7 +97,10 @@ export class EnhancedAuthService {
       throw new AppError('MFA not set up', 400);
     }
 
-    const isValid = authenticator.verify({ token: code, secret: user.mfaSecret });
+    // Delegate to the shared TOTP verifier instead of calling otplib directly.
+    // There were two identical implementations (otplib here, `verifyTOTP` in
+    // mfaService); only the latter is the seam tests and callers can stub.
+    const isValid = verifyTOTP(user.mfaSecret, code);
     if (!isValid) {
       if (loginAttempt) {
         await this.logFailedLogin(loginAttempt, 'Invalid MFA code', userId);
@@ -297,6 +300,41 @@ export class EnhancedAuthService {
     if (requireSpecial && !/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>?/]/.test(password)) {
       throw new AppError('Password must contain at least one special character', 400);
     }
+  }
+
+  /**
+   * Complete a login for a user whose identity was already established by an
+   * external authority (SSO / OAuth identity provider), i.e. where no local
+   * password exists to check.
+   *
+   * SSO previously called `authenticate({ email, password: '' })`, which always
+   * threw `Invalid credentials` — an SSO user has no password to match, so
+   * federated login could never succeed. Verification is the IdP's job here;
+   * this method only mints the local session, exactly as biometric login does.
+   */
+  async completeExternalLogin(
+    userId: string,
+    attempt?: LoginAttempt
+  ): Promise<{
+    user: User;
+    accessToken: string;
+    refreshToken: string;
+    sessionId: string;
+  }> {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { SecuritySettings: true },
+    });
+
+    if (!user) {
+      throw new AppError('User not found', 404);
+    }
+
+    if (!user.isActive) {
+      throw new AppError('Account is deactivated', 403);
+    }
+
+    return await this.completeLogin(user, attempt);
   }
 
   private async completeLogin(user: User, attempt?: LoginAttempt): Promise<{
