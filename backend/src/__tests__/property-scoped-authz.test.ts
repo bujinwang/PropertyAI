@@ -618,8 +618,7 @@ describe('Property-scoped surfaces: tenancy and write gating', () => {
       ];
 
       for (const [verb, path] of probes) {
-        const res = await (request(server) as any)
-          [verb](path)
+        const res = await (request(server) as any)[verb](path)
           .set('Authorization', `Bearer ${admin.token}`);
         const raw = JSON.stringify(res.body);
         expect(raw).not.toContain('SENTINEL-BCRYPT-HASH-DO-NOT-LEAK');
