@@ -251,7 +251,14 @@ export class RentalService {
     page: number = 1,
     limit: number = 10,
     sortField: string = 'createdAt',
-    sortOrder: 'asc' | 'desc' = 'desc'
+    sortOrder: 'asc' | 'desc' = 'desc',
+    /**
+     * Extra `where` fragment ANDed onto the filter clause, used to enforce
+     * tenancy (see utils/rentalAccess.ts). Passed in rather than computed here
+     * because the service has no request context and must stay callable from
+     * non-HTTP code paths. `undefined` = unrestricted.
+     */
+    scope?: Record<string, unknown>
   ): Promise<{
     rentals: any[];
     total: number;
@@ -262,6 +269,7 @@ export class RentalService {
     try {
       // Build where clause from filters
       const where: any = {
+        ...(scope ? { AND: [scope] } : {}),
         ...(filters.title && {
           title: { contains: filters.title, mode: 'insensitive' }
         }),
@@ -843,7 +851,13 @@ export class RentalService {
     searchTerm: string,
     filters: RentalFilterParams = {},
     page: number = 1,
-    limit: number = 10
+    limit: number = 10,
+    /**
+     * Tenancy scope, ANDed onto the filter. Passing it here (rather than
+     * post-filtering the result page) keeps pagination and `total` honest: a
+     * post-filter shrinks the page while reporting the unfiltered total.
+     */
+    scope?: Record<string, unknown>
   ): Promise<{
     rentals: any[];
     total: number;
@@ -854,6 +868,7 @@ export class RentalService {
     try {
       const where: any = {
         ...this.buildWhereClause(filters),
+        ...(scope ? { AND: [scope] } : {}),
         OR: [
           { title: { contains: searchTerm, mode: 'insensitive' } },
           { description: { contains: searchTerm, mode: 'insensitive' } },

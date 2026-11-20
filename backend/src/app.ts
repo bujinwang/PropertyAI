@@ -217,4 +217,10 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
+// Named export in addition to the default. Several suites do
+// `import { app } from '../app'`, which silently resolved to `undefined` when
+// only a default export existed — the failure surfaced deep inside supertest as
+// `TypeError: Cannot read properties of undefined (reading 'address')`, so it
+// read like a routing bug rather than a wrong import.
+export { app };
 export default app;

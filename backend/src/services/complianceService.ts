@@ -27,6 +27,38 @@ function toAuditDetails(value: unknown): AuditDetailsPayload {
   return (value ?? {}) as AuditDetailsPayload;
 }
 
+/** Email of the synthetic account credited with system-generated reports. */
+const SYSTEM_ACTOR_EMAIL = 'system@propertyai.internal';
+
+/**
+ * Resolve the user id that compliance reports are attributed to.
+ *
+ * `ComplianceReport.generatedById` is a REQUIRED foreign key to `User.id` — the
+ * previous code passed the literal string `'system'`, which does not exist in
+ * `User` and therefore failed the constraint on every single report generation.
+ * That was a hard bug, not a test artifact: GDPR/CCPA/SOX reports could never be
+ * persisted in production either.
+ *
+ * We upsert a stable internal account instead, so attribution stays resolvable
+ * and the operation is idempotent across calls and workers.
+ */
+async function getSystemActorId(): Promise<string> {
+  const actor = await prisma.user.upsert({
+    where: { email: SYSTEM_ACTOR_EMAIL },
+    update: {},
+    create: {
+      email: SYSTEM_ACTOR_EMAIL,
+      password: '!', // never used for login; not a valid bcrypt hash on purpose
+      firstName: 'System',
+      lastName: 'Actor',
+      role: 'ADMIN',
+    },
+    select: { id: true },
+  });
+
+  return actor.id;
+}
+
 export interface DataAccessRequest {
   userId: string;
   requestType: 'access' | 'portability' | 'erasure' | 'rectification';
@@ -135,7 +167,7 @@ export class ComplianceService {
       data: {
         type: 'GDPR',
         reportData: report.data,
-        generatedById: 'system', // Would be actual user ID
+        generatedById: await getSystemActorId(),
         validUntil: report.validUntil,
         checksum: report.checksum,
       }
@@ -167,7 +199,7 @@ export class ComplianceService {
       data: {
         type: 'CCPA',
         reportData: report.data,
-        generatedById: 'system',
+        generatedById: await getSystemActorId(),
         validUntil: report.validUntil,
         checksum: report.checksum,
       }
@@ -199,7 +231,7 @@ export class ComplianceService {
       data: {
         type: 'SOX',
         reportData: report.data,
-        generatedById: 'system',
+        generatedById: await getSystemActorId(),
         validUntil: report.validUntil,
         checksum: report.checksum,
       }

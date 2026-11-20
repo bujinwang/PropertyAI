@@ -9,6 +9,60 @@ import { PUBLIC_SIGNUP_ROLES, normalizePublicSignupRole } from '../middleware/va
 
 const prisma = new PrismaClient();
 
+/**
+ * Persist an authentication audit entry.
+ *
+ * OWASP A09:2021 (Security Logging and Monitoring Failures): `/api/auth/login`
+ * is the only login path actually mounted (routes/authRoutes.ts:14), so the
+ * failed-login auditing has to happen here or not at all.
+ *
+ * Why this writes `prisma.auditEntry.create` directly instead of calling
+ * `enhancedAuthService.logFailedLogin()` — do not "refactor" this into that
+ * service:
+ *  - `enhancedAuthService` implements a *different*, unrouted login flow; its
+ *    `logFailedLogin` is effectively dead code for this endpoint. Calling it
+ *    would introduce a service dependency for no behavioural gain.
+ *  - The security suites assert against the Prisma table, not against a mocked
+ *    helper, so the write must reach the DB.
+ * This mirrors the existing direct write style in `resetPassword` /
+ * `forgotPassword` / `register` above.
+ *
+ * Auditing is a side channel: a failure to write must NEVER change the login
+ * response. Callers expect 401/403 and must still get it, so failures here are
+ * swallowed and warned about rather than propagated to `next()`.
+ */
+async function writeAuthAudit(
+  req: Request,
+  data: {
+    action: string;
+    entityId: string;
+    entityType?: string;
+    userId?: string | null;
+    details: any;
+    severity?: 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL';
+  }
+): Promise<void> {
+  try {
+    await prisma.auditEntry.create({
+      data: {
+        userId: data.userId ?? null,
+        action: data.action,
+        details: data.details,
+        entityType: data.entityType ?? 'USER',
+        entityId: data.entityId,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+        severity: data.severity ?? 'WARNING',
+      },
+    });
+  } catch (auditError) {
+    console.warn(
+      `[auth] Failed to write ${data.action} audit entry for entity ${data.entityId}:`,
+      auditError
+    );
+  }
+}
+
 export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password, firstName, lastName, role } = req.body;
@@ -57,7 +111,13 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
         role: user.role,
       }
     });
-  } catch (error) {
+  } catch (error: any) {
+    // A duplicate signup violates the unique index on User.email. Prisma raises
+    // P2002, which nothing else maps to a client error, so it surfaced as an
+    // unhandled 500 — a registration conflict is a 400/409, not a server fault.
+    if (error?.code === 'P2002') {
+      return next(new AppError('An account with this email already exists', 400));
+    }
     next(error);
   }
 };
@@ -156,10 +216,40 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
+      // `AuditEntry.entityId` is a required String and there is no userId to
+      // point at. We use the submitted email instead of a bare 'unknown'
+      // placeholder: the email is the only stable identifier an investigator
+      // has for an attempted account, and it still lets repeated attempts
+      // against the same unregistered address be correlated. The email lives
+      // in `entityId` (not `entityType`, which stays 'USER') because the email
+      // IS the entity being targeted here; no `userId` row exists to link to.
+      await writeAuthAudit(req, {
+        action: 'LOGIN_FAILED',
+        entityId: email,
+        userId: null,
+        details: {
+          reason: 'USER_NOT_FOUND',
+          email,
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'],
+        },
+      });
       return next(new AppError('Invalid credentials', 401));
     }
 
     if (user.isLocked && user.lockedUntil && user.lockedUntil > new Date()) {
+      await writeAuthAudit(req, {
+        action: 'LOGIN_FAILED',
+        entityId: user.id,
+        userId: user.id,
+        details: {
+          reason: 'ACCOUNT_LOCKED',
+          email,
+          lockedUntil: user.lockedUntil,
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'],
+        },
+      });
       return next(new AppError('Account locked. Please try again later.', 403));
     }
 
@@ -214,6 +304,39 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
           lockedUntil,
         },
       });
+
+      // Distinguish "wrong password" from "wrong password that tripped the
+      // lockout" so responders can separate noise from an active brute-force
+      // run. The lock event additionally emits ACCOUNT_LOCKED, mirroring
+      // enhancedAuthService.ts:421-426.
+      await writeAuthAudit(req, {
+        action: 'LOGIN_FAILED',
+        entityId: user.id,
+        userId: user.id,
+        details: {
+          reason: isLocked
+            ? `INVALID_PASSWORD_LOCKOUT_TRIGGERED (attempt ${newFailedAttempts}/${lockoutConfig.maxFailedAttempts})`
+            : `INVALID_PASSWORD (attempt ${newFailedAttempts}/${lockoutConfig.maxFailedAttempts})`,
+          email,
+          failedAttempts: newFailedAttempts,
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'],
+        },
+      });
+
+      if (isLocked) {
+        await writeAuthAudit(req, {
+          action: 'ACCOUNT_LOCKED',
+          entityId: user.id,
+          userId: user.id,
+          details: {
+            failedAttempts: newFailedAttempts,
+            lockedUntil,
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+          },
+        });
+      }
 
       return next(new AppError('Invalid credentials', 401));
     }

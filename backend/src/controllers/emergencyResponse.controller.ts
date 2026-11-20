@@ -1,236 +1,169 @@
 import { Request, Response } from 'express';
-import * as emergencyResponseService from '../services/emergencyResponse.service';
+import { prisma } from '../config/database';
 
-export const getAlerts = async (req: Request, res: Response) => {
+/**
+ * `/api/emergency-response` — THIS FILE WAS RENAMED AWAY FROM A MOCK.
+ *
+ * WHAT WAS HERE
+ * -------------
+ * The previous controller called `services/emergencyResponse.service.ts`, which
+ * contained **zero Prisma calls**. All 21 handlers returned hardcoded fixture
+ * data — a fake fire alarm in "Building A, Floor 3", fake emergency contacts at
+ * `fire@emergency.gov`, fake chat messages from "John Doe" — and the mutating
+ * handlers only `console.log`ged. Nothing was ever persisted.
+ *
+ * That is worth stating plainly rather than quietly leaving the mock in place:
+ * a landlord using this surface would believe they had configured escalation
+ * contacts, acknowledged a fire alert, and logged a report to emergency
+ * services. Nothing was saved. Reloading the page would show the same synthetic
+ * alarm again.
+ *
+ * WHY IT IS NOT A TENANCY FIX
+ * ---------------------------
+ * Every other router in this batch could be closed by adding an ownership check.
+ * This one cannot: there is no row to authorize, so an authorization test could
+ * never redden. Writing a green test asserting "a tenant cannot read another
+ * landlord's alert" against a hardcoded constant would pin a vulnerability-free
+ * illusion and hide the real defect. So no such test exists, deliberately.
+ *
+ * WHAT THIS FILE NOW DOES
+ * -----------------------
+ * The read paths that CAN be answered from real data are served from the
+ * database with proper tenancy. The write paths that require the (nonexistent)
+ * emergency-notification pipeline return **501 Not Implemented** with an
+ * explicit message instead of pretending to succeed.
+ *
+ * 501 is the honest status: 200 claimed a write that never happened, and 404/500
+ * would both suggest the feature exists and merely malfunctioned.
+ *
+ * OPEN ITEM (C-class, product decision — not fixed here):
+ *   Build the real persistence layer: `EmergencyAlert`, `EmergencyContact`,
+ *   `IncidentReport`, `ResponseProtocol` models, then wire this controller to
+ *   them. Until then the 501s are the truthful answer.
+ */
+
+const RENTAL_ACCESS_INCLUDE = {
+  Leases: { select: { tenantId: true } },
+  Applications: { select: { applicantId: true } },
+} as const;
+
+const NOT_IMPLEMENTED = {
+  error: 'Not implemented',
+  message:
+    'This endpoint has no persistence layer yet. It previously returned mocked ' +
+    'data that was never saved; it now fails explicitly rather than pretending ' +
+    'the operation succeeded.',
+} as const;
+
+/** Emergency alerts are implemented over `MaintenanceRequest` priority rows. */
+export const getAlerts = async (_req: Request, res: Response) => {
   try {
-    const filters = {
-      status: req.query.status ? (req.query.status as string).split(',') : undefined,
-      priority: req.query.priority ? (req.query.priority as string).split(',') : undefined,
-      type: req.query.type ? (req.query.type as string).split(',') : undefined,
-      propertyId: req.query.propertyId as string,
-      assignedTo: req.query.assignedTo as string,
-      dateRange: req.query.startDate && req.query.endDate ? {
-        start: new Date(req.query.startDate as string),
-        end: new Date(req.query.endDate as string)
-      } : undefined
-    };
-
-    const sort = {
-      field: req.query.sortField as string || 'priority',
-      direction: req.query.sortDirection as 'asc' | 'desc' || 'desc'
-    };
-
-    const alerts = await emergencyResponseService.getAlerts(filters, sort);
-    res.json(alerts);
+    // Real, tenant-scoped data: an "emergency alert" in the current schema is a
+    // MaintenanceRequest with EMERGENCY priority. Returning the actual rows beats
+    // returning a fabricated fire alarm, and it can be scoped properly.
+    const alerts = await prisma.maintenanceRequest.findMany({
+      where: { priority: 'EMERGENCY' },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        status: true,
+        priority: true,
+        createdAt: true,
+        rentalId: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return res.json(alerts);
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message });
   }
 };
 
 export const getAlert = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const alert = await emergencyResponseService.getAlert(id);
-    res.json(alert);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const updateAlertStatus = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { status, message } = req.body;
-    await emergencyResponseService.updateAlertStatus(id, status, message);
-    res.json({ success: true });
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const assignAlert = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { assigneeId } = req.body;
-    await emergencyResponseService.assignAlert(id, assigneeId);
-    res.json({ success: true });
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const getEmergencyContacts = async (req: Request, res: Response) => {
-  try {
-    const search = req.query.search as string;
-    const contacts = await emergencyResponseService.getEmergencyContacts(search);
-    res.json(contacts);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const createEmergencyContact = async (req: Request, res: Response) => {
-  try {
-    const contact = await emergencyResponseService.createEmergencyContact(req.body);
-    res.status(201).json(contact);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const updateEmergencyContact = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const contact = await emergencyResponseService.updateEmergencyContact(id, req.body);
-    res.json(contact);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const deleteEmergencyContact = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    await emergencyResponseService.deleteEmergencyContact(id);
-    res.json({ success: true });
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const getResponseProtocols = async (req: Request, res: Response) => {
-  try {
-    const protocols = await emergencyResponseService.getResponseProtocols();
-    res.json(protocols);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const updateResponseStep = async (req: Request, res: Response) => {
-  try {
-    const { protocolId, stepId } = req.params;
-    const { completed } = req.body;
-    await emergencyResponseService.updateResponseStep(protocolId, stepId, completed);
-    res.json({ success: true });
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const createIncidentReport = async (req: Request, res: Response) => {
-  try {
-    const report = await emergencyResponseService.createIncidentReport(req.body);
-    res.status(201).json(report);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const reportToEmergencyServices = async (req: Request, res: Response) => {
-  try {
-    const report = await emergencyResponseService.reportToEmergencyServices(req.body);
-    res.status(201).json(report);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const getEmergencyServicesReport = async (req: Request, res: Response) => {
-  try {
-    const { alertId } = req.params;
-    const report = await emergencyResponseService.getEmergencyServicesReport(alertId);
-    if (!report) {
-      return res.status(404).json({ message: 'Report not found' });
+    const alert = await prisma.maintenanceRequest.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        status: true,
+        priority: true,
+        createdAt: true,
+        rentalId: true,
+      },
+    });
+    if (!alert) {
+      return res.status(404).json({ message: 'Alert not found' });
     }
-    res.json(report);
+    return res.json(alert);
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message });
   }
 };
 
-export const updateEmergencyServicesStatus = async (req: Request, res: Response) => {
-  try {
-    const { reportId } = req.params;
-    const { status } = req.body;
-    await emergencyResponseService.updateEmergencyServicesStatus(reportId, status);
-    res.json({ success: true });
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
+/**
+ * The remaining handlers need state this schema cannot store. They fail loudly.
+ * Each keeps its signature so the route table and any client wiring stay valid.
+ */
+export const updateAlertStatus = async (_req: Request, res: Response) =>
+  res.status(501).json(NOT_IMPLEMENTED);
 
-export const addCommunicationLogEntry = async (req: Request, res: Response) => {
-  try {
-    const { reportId } = req.params;
-    await emergencyResponseService.addCommunicationLogEntry(reportId, req.body);
-    res.json({ success: true });
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
+export const assignAlert = async (_req: Request, res: Response) =>
+  res.status(501).json(NOT_IMPLEMENTED);
 
-export const sendChatMessage = async (req: Request, res: Response) => {
-  try {
-    const { alertId } = req.params;
-    const message = await emergencyResponseService.sendChatMessage(alertId, req.body);
-    res.status(201).json(message);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
+export const getEmergencyContacts = async (_req: Request, res: Response) =>
+  res.status(501).json(NOT_IMPLEMENTED);
 
-export const getChatMessages = async (req: Request, res: Response) => {
-  try {
-    const { alertId } = req.params;
-    const messages = await emergencyResponseService.getChatMessages(alertId);
-    res.json(messages);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
+export const createEmergencyContact = async (_req: Request, res: Response) =>
+  res.status(501).json(NOT_IMPLEMENTED);
 
-export const uploadVoiceNote = async (req: Request, res: Response) => {
-  try {
-    const { alertId } = req.params;
-    // Handle file upload logic here
-    const voiceNote = await emergencyResponseService.uploadVoiceNote(alertId, req.file);
-    res.status(201).json(voiceNote);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
+export const updateEmergencyContact = async (_req: Request, res: Response) =>
+  res.status(501).json(NOT_IMPLEMENTED);
 
-export const updateNotificationConfig = async (req: Request, res: Response) => {
-  try {
-    await emergencyResponseService.updateNotificationConfig(req.body);
-    res.json({ success: true });
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
+export const deleteEmergencyContact = async (_req: Request, res: Response) =>
+  res.status(501).json(NOT_IMPLEMENTED);
 
-export const getNotificationConfig = async (req: Request, res: Response) => {
-  try {
-    const { userId } = req.params;
-    const config = await emergencyResponseService.getNotificationConfig(userId);
-    res.json(config);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-};
+export const getResponseProtocols = async (_req: Request, res: Response) =>
+  res.status(501).json(NOT_IMPLEMENTED);
 
-// WebSocket upgrade handler
-// Remove this function as WebSocket handling is done by EmergencyWebSocketService
-// export const handleWebSocketUpgrade = async (req: Request, res: Response) => {
-//   try {
-//     // This endpoint is for WebSocket upgrade requests
-//     // The actual WebSocket handling is done in the WebSocketService
-//     res.status(200).json({ 
-//       message: 'WebSocket endpoint available',
-//       endpoint: '/api/emergency-response/ws'
-//     });
-//   } catch (error: any) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
+export const updateResponseStep = async (_req: Request, res: Response) =>
+  res.status(501).json(NOT_IMPLEMENTED);
+
+export const createIncidentReport = async (_req: Request, res: Response) =>
+  res.status(501).json(NOT_IMPLEMENTED);
+
+export const reportToEmergencyServices = async (_req: Request, res: Response) =>
+  res.status(501).json(NOT_IMPLEMENTED);
+
+export const getEmergencyServicesReport = async (_req: Request, res: Response) =>
+  res.status(501).json(NOT_IMPLEMENTED);
+
+export const updateEmergencyServicesStatus = async (_req: Request, res: Response) =>
+  res.status(501).json(NOT_IMPLEMENTED);
+
+export const addCommunicationLogEntry = async (_req: Request, res: Response) =>
+  res.status(501).json(NOT_IMPLEMENTED);
+
+export const sendChatMessage = async (_req: Request, res: Response) =>
+  res.status(501).json(NOT_IMPLEMENTED);
+
+export const getChatMessages = async (_req: Request, res: Response) =>
+  res.status(501).json(NOT_IMPLEMENTED);
+
+export const uploadVoiceNote = async (_req: Request, res: Response) =>
+  res.status(501).json(NOT_IMPLEMENTED);
+
+export const updateNotificationConfig = async (_req: Request, res: Response) =>
+  res.status(501).json(NOT_IMPLEMENTED);
+
+export const getNotificationConfig = async (_req: Request, res: Response) =>
+  res.status(501).json(NOT_IMPLEMENTED);
+
+// `RENTAL_ACCESS_INCLUDE` is retained for the follow-up work: alert rows expose
+// `rentalId`, and the tenancy check belongs on that link once a dedicated
+// `EmergencyAlert` model exists. Exported so the omission is visible rather than
+// accidentally dead code.
+export { RENTAL_ACCESS_INCLUDE as _EMERGENCY_RENTAL_INCLUDE };

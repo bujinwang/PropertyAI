@@ -41,6 +41,23 @@ interface EntityExtraction {
   }>;
 }
 
+/**
+ * The contract for maintenance analysis, declared ONCE.
+ *
+ * Both `analyzeMaintenanceRequest` (degrading) and
+ * `tryAnalyzeMaintenanceRequest` (throwing) return this, so the two variants
+ * cannot drift apart. `estimatedCost` is a `number` and `urgency` is a union —
+ * both were previously asserted to callers without ever being enforced, because
+ * they came straight off `JSON.parse` (`any`) and `tsc` cannot see through that.
+ */
+export interface MaintenanceAnalysis {
+  urgency: 'LOW' | 'MEDIUM' | 'HIGH' | 'EMERGENCY';
+  category: string;
+  estimatedCost: number;
+  keywords: string[];
+  recommendedVendors: string[];
+}
+
 interface SummaryRequest {
   text: string;
   maxLength?: number;
@@ -102,55 +119,92 @@ class AIService {
   }
 
   /**
-   * Analyze sentiment using Hugging Face models
+   * Analyze sentiment using Hugging Face models, DEGRADING to a keyword count.
+   *
+   * THE CONSEQUENCE, WHICH IS A REAL BUG: `basicSentimentAnalysis` counts
+   * positive/negative words. On a vendor outage it returns
+   * `{ label: 'NEUTRAL', score: 0.5 }` for *any* input — so an outage on a
+   * strongly negative message is reported as "no sentiment". A caller cannot
+   * tell the two apart, and the HTTP route reported it as `{ success: true }`.
+   *
+   * Use `tryAnalyzeSentiment` when the distinction matters.
    */
   async analyzeSentiment(text: string): Promise<SentimentAnalysis> {
     try {
-      const result = await this.hfInference.textClassification({
-        model: 'distilbert-base-uncased-finetuned-sst-2-english',
-        inputs: text,
-      });
-
-      const prediction = result[0];
-      const label = prediction.label.toUpperCase() as 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL';
-      
-      return {
-        label,
-        score: prediction.score,
-      };
+      return await this.tryAnalyzeSentiment(text);
     } catch (error) {
       logger.error(`Error analyzing sentiment: ${error}`);
-      
-      // Fallback to basic sentiment analysis
+
+      // Documented, deliberate degradation for best-effort enrichment.
       return this.basicSentimentAnalysis(text);
     }
   }
 
   /**
+   * Analyze sentiment, PROPAGATING failure.
+   *
+   * Exists so `/api/ai/sentiment` can answer honestly instead of presenting a
+   * word count as a model verdict. Mirrors `sentimentService.tryAnalyze`.
+   */
+  async tryAnalyzeSentiment(text: string): Promise<SentimentAnalysis> {
+    const result = await this.hfInference.textClassification({
+      model: 'distilbert-base-uncased-finetuned-sst-2-english',
+      inputs: text,
+    });
+
+    const prediction = result[0];
+    if (!prediction) {
+      throw new Error('Sentiment model returned no prediction');
+    }
+
+    return {
+      label: prediction.label.toUpperCase() as 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL',
+      score: prediction.score,
+    };
+  }
+
+  /**
    * Extract entities from text
+   */
+  /**
+   * Extract entities, DEGRADING to a regex sweep.
+   *
+   * `basicEntityExtraction` matches five hardcoded patterns at confidence 0.6.
+   * On a vendor outage every real entity it fails to match is silently absent
+   * and every match is presented with an invented confidence — indistinguishable
+   * from a model result.
+   *
+   * Use `tryExtractEntities` when the distinction matters.
    */
   async extractEntities(text: string): Promise<EntityExtraction> {
     try {
-      const result = await this.hfInference.tokenClassification({
-        model: 'dbmdz/bert-large-cased-finetuned-conll03-english',
-        inputs: text,
-      });
-
-      const entities: Array<{ text: string; label: string | undefined; confidence: number; start: number; end: number; }> = result.map(entity => ({
-        text: entity.word,
-        label: entity.entity_group,
-        confidence: entity.score,
-        start: entity.start,
-        end: entity.end,
-      }));
-
-      return { entities };
+      return await this.tryExtractEntities(text);
     } catch (error) {
       logger.error(`Error extracting entities: ${error}`);
-      
-      // Fallback to basic entity extraction
+
+      // Documented, deliberate degradation for best-effort enrichment.
       return this.basicEntityExtraction(text);
     }
+  }
+
+  /**
+   * Extract entities, PROPAGATING failure.
+   */
+  async tryExtractEntities(text: string): Promise<EntityExtraction> {
+    const result = await this.hfInference.tokenClassification({
+      model: 'dbmdz/bert-large-cased-finetuned-conll03-english',
+      inputs: text,
+    });
+
+    const entities = result.map(entity => ({
+      text: entity.word,
+      label: entity.entity_group,
+      confidence: entity.score,
+      start: entity.start,
+      end: entity.end,
+    }));
+
+    return { entities };
   }
 
   /**
@@ -308,46 +362,192 @@ class AIService {
   }
 
   /**
-   * Analyze maintenance request
+   * Analyze a maintenance request, DEGRADING to a keyword grep on any failure.
+   *
+   * This is the historical behaviour and it is kept deliberately, because
+   * internal callers may not want triage to stop when the vendor is down.
+   *
+   * THE CONSEQUENCE, WHICH WAS A REAL BUG:
+   * `basicMaintenanceAnalysis` is not a model — it is a substring match. For any
+   * text containing "broken" it returns `urgency: 'EMERGENCY'` and
+   * `estimatedCost: 2000`. A caller could not distinguish "the model judged this
+   * an emergency" from "we never reached the model", because both arrived as a
+   * successful result. The HTTP route reported it to users as AI analysis.
+   *
+   * Use `tryAnalyzeMaintenanceRequest` when the distinction matters.
    */
   async analyzeMaintenanceRequest(request: {
     title: string;
     description: string;
     category?: string;
-  }): Promise<{
-    urgency: 'LOW' | 'MEDIUM' | 'HIGH' | 'EMERGENCY';
-    category: string;
-    estimatedCost: number;
-    keywords: string[];
-    recommendedVendors: string[];
-  }> {
+  }): Promise<MaintenanceAnalysis> {
     try {
-      const model = this.googleAI.getGenerativeModel({ model: 'gemini-pro' });
-      
-      const prompt = `Analyze this maintenance request:
-        Title: ${request.title}
-        Description: ${request.description}
-        
-        Determine:
-        1. Urgency level (LOW, MEDIUM, HIGH, EMERGENCY)
-        2. Best category (plumbing, electrical, HVAC, etc.)
-        3. Estimated cost range ($50-100, $100-500, $500-2000, $2000+)
-        4. Key keywords
-        5. Recommended vendor types
-        
-        Provide a JSON response with these fields: urgency, category, estimatedCost, keywords, recommendedVendors`;
-
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const jsonResponse = JSON.parse(response.text());
-
-      return jsonResponse;
+      return await this.tryAnalyzeMaintenanceRequest(request);
     } catch (error) {
       logger.error(`Error analyzing maintenance request: ${error}`);
-      
-      // Fallback analysis
+
+      // Documented, deliberate degradation. Callers that must know the
+      // difference call the try-variant instead.
       return this.basicMaintenanceAnalysis(request);
     }
+  }
+
+  /**
+   * Analyze a maintenance request, PROPAGATING failure.
+   *
+   * Exists so the HTTP surface can answer honestly instead of presenting a
+   * keyword match as a model verdict. Separated from
+   * `analyzeMaintenanceRequest` rather than replacing it, because turning a
+   * never-throw method into a thrower would change every internal caller's
+   * failure mode as a side effect of fixing one route.
+   *
+   * THREE BUGS THIS FIXES, all of which produced a fabricated success:
+   *
+   * 1. `JSON.parse(response.text())` with NO `responseMimeType` set. Asked for
+   *    JSON, Gemini routinely answers inside a markdown fence, `JSON.parse`
+   *    throws on the backtick, and the throw landed in the old `catch` — so the
+   *    fake was the NORMAL path, not an edge case. Fixed at the root by
+   *    requesting JSON mode, and defensively by stripping a fence if one still
+   *    appears.
+   * 2. The declared return type said `estimatedCost: number` while the prompt
+   *    asked for a cost RANGE ("$100-500"). `JSON.parse` returns `any`, so
+   *    nothing checked: one branch produced a string, the other a number, both
+   *    behind a `number` annotation. Anything doing arithmetic got `NaN`.
+   * 3. `urgency` was never validated against its union, so "HIGH PRIORITY"
+   *    escaped the declared type at runtime.
+   */
+  async tryAnalyzeMaintenanceRequest(request: {
+    title: string;
+    description: string;
+    category?: string;
+  }): Promise<MaintenanceAnalysis> {
+    const model = this.googleAI.getGenerativeModel({
+      model: 'gemini-pro',
+      // Root-cause fix for bug 1: ask for JSON instead of hoping for it.
+      generationConfig: { responseMimeType: 'application/json' },
+    });
+
+    const prompt = `Analyze this maintenance request:
+        Title: ${request.title}
+        Description: ${request.description}
+
+        Determine:
+        1. Urgency level — exactly one of: LOW, MEDIUM, HIGH, EMERGENCY
+        2. Best category (plumbing, electrical, HVAC, etc.)
+        3. Estimated cost as a SINGLE whole-dollar number (no range, no currency symbol)
+        4. Key keywords
+        5. Recommended vendor types
+
+        Respond with JSON only, using these keys: urgency, category, estimatedCost, keywords, recommendedVendors`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const raw = response.text();
+
+    return this.normalizeMaintenanceAnalysis(raw);
+  }
+
+  /**
+   * Turn raw model output into the declared contract, or throw.
+   *
+   * Every field is validated rather than trusted, because the declared types are
+   * asserted to callers and `JSON.parse` erases all of them.
+   *
+   * A range is reduced to its MIDPOINT: the prompt asks for a point estimate, so
+   * a range is a compliance failure by the model, and the midpoint is the
+   * standard single-point reduction of an uncertain interval. Documented here
+   * because picking a bound instead would be an arbitrary tie-break.
+   */
+  private normalizeMaintenanceAnalysis(raw: string): MaintenanceAnalysis {
+    const jsonText = this.stripCodeFence(raw);
+
+    let parsed: any;
+    try {
+      parsed = JSON.parse(jsonText);
+    } catch (error) {
+      // Unusable output must fail loudly. Returning a partial object here would
+      // recreate the bug this method exists to fix.
+      throw new Error('AI returned unstructured output for maintenance analysis');
+    }
+
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error('AI returned a non-object for maintenance analysis');
+    }
+
+    // --- urgency: must land inside the declared union -----------------------
+    const rawUrgency = String(parsed.urgency ?? '').toUpperCase().trim();
+    const URGENCIES = ['LOW', 'MEDIUM', 'HIGH', 'EMERGENCY'] as const;
+    let urgency: MaintenanceAnalysis['urgency'];
+    if ((URGENCIES as readonly string[]).includes(rawUrgency)) {
+      urgency = rawUrgency as MaintenanceAnalysis['urgency'];
+    } else if (rawUrgency.includes('EMERGENCY')) {
+      urgency = 'EMERGENCY';
+    } else if (rawUrgency.includes('HIGH')) {
+      urgency = 'HIGH';
+    } else if (rawUrgency.includes('MEDIUM') || rawUrgency.includes('MODERATE')) {
+      urgency = 'MEDIUM';
+    } else if (rawUrgency.includes('LOW')) {
+      urgency = 'LOW';
+    } else {
+      throw new Error('AI returned an unrecognised urgency for maintenance analysis');
+    }
+
+    // --- estimatedCost: must be a finite number ------------------------------
+    const estimatedCost = this.parseCostToNumber(parsed.estimatedCost);
+    if (!Number.isFinite(estimatedCost)) {
+      throw new Error('AI returned a non-numeric cost for maintenance analysis');
+    }
+
+    const category =
+      typeof parsed.category === 'string' && parsed.category.trim()
+        ? parsed.category.trim()
+        : 'General';
+
+    const keywords = Array.isArray(parsed.keywords)
+      ? parsed.keywords.filter((k: unknown) => typeof k === 'string')
+      : [];
+
+    const recommendedVendors = Array.isArray(parsed.recommendedVendors)
+      ? parsed.recommendedVendors.filter((v: unknown) => typeof v === 'string')
+      : [];
+
+    return { urgency, category, estimatedCost, keywords, recommendedVendors };
+  }
+
+  /**
+   * Strip a markdown code fence, if present.
+   *
+   * `responseMimeType: 'application/json'` should make this unnecessary, but the
+   * SDK/model combination does not guarantee it, and the previous behaviour —
+   * throwing straight into a fabricating `catch` — is too costly to leave to a
+   * guarantee we cannot enforce locally.
+   */
+  private stripCodeFence(text: string): string {
+    const trimmed = String(text ?? '').trim();
+    const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+    return fenced ? fenced[1].trim() : trimmed;
+  }
+
+  /**
+   * Extract a finite dollar figure from whatever the model produced.
+   *
+   * Handles `350`, `"350"`, `"$350"`, `"$100-500"` (midpoint), `"$2,000"`.
+   * Returns `NaN` when there is no number, so the caller can reject it.
+   */
+  private parseCostToNumber(value: unknown): number {
+    if (typeof value === 'number') return Number.isFinite(value) ? value : NaN;
+    if (typeof value !== 'string') return NaN;
+
+    const numbers = value
+      .replace(/,/g, '')
+      .match(/\d+(?:\.\d+)?/g)
+      ?.map(Number)
+      .filter((n) => Number.isFinite(n));
+
+    if (!numbers || numbers.length === 0) return NaN;
+    if (numbers.length === 1) return numbers[0];
+    // A range: reduce to the midpoint of the first two figures.
+    return (numbers[0] + numbers[1]) / 2;
   }
 
   /**
@@ -408,23 +608,41 @@ class AIService {
   /**
    * Extract keywords from text
    */
+  /**
+   * Extract keywords, DEGRADING to word frequency.
+   *
+   * THE CONSEQUENCE: `basicKeywordExtraction` ranks tokens by count, so it
+   * returns the most REPEATED words, not the most IMPORTANT ones, and it cannot
+   * produce a multi-word keyphrase at all. On an outage the caller receives a
+   * plausible list that is answering a different question, presented as a model
+   * result.
+   *
+   * Use `tryExtractKeywords` when the distinction matters.
+   */
   async extractKeywords(text: string, maxKeywords: number = 10): Promise<string[]> {
     try {
-      const model = this.googleAI.getGenerativeModel({ model: 'gemini-pro' });
-      
-      const prompt = `Extract the top ${maxKeywords} most important keywords from this text:\n\n${text}\n\nReturn as a comma-separated list:`;
-      
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const keywordsText = response.text();
-      
-      return keywordsText.split(',').map(k => k.trim()).filter(k => k.length > 0);
+      return await this.tryExtractKeywords(text, maxKeywords);
     } catch (error) {
       logger.error(`Error extracting keywords: ${error}`);
-      
-      // Fallback to basic keyword extraction
+
+      // Documented, deliberate degradation for best-effort enrichment.
       return this.basicKeywordExtraction(text, maxKeywords);
     }
+  }
+
+  /**
+   * Extract keywords, PROPAGATING failure.
+   */
+  async tryExtractKeywords(text: string, maxKeywords: number = 10): Promise<string[]> {
+    const model = this.googleAI.getGenerativeModel({ model: 'gemini-pro' });
+
+    const prompt = `Extract the top ${maxKeywords} most important keywords from this text:\n\n${text}\n\nReturn as a comma-separated list:`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const keywordsText = response.text();
+
+    return keywordsText.split(',').map(k => k.trim()).filter(k => k.length > 0);
   }
 
   // Private helper methods

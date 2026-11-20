@@ -1,7 +1,12 @@
-import { PrismaClient, User, MaintenanceRequest, Transaction } from '@prisma/client';
+import { MaintenanceRequest, Transaction, User } from '@prisma/client';
+import { prisma } from '../config/database';
 import { predictTenantIssue } from '../utils/predictiveModels';
 
-const prisma = new PrismaClient();
+// The shared singleton from `config/database`. This module previously built its
+// own `new PrismaClient()` at import time, which opened a SECOND connection pool
+// per Jest worker: the pool was never `$disconnect()`ed, so Jest could not exit
+// and `--detectOpenHandles` reported it as a lingering TCPWRAP. It also meant the
+// module could not be imported without DATABASE_URL being set.
 
 /**
  * Fetches all tenant issue predictions.

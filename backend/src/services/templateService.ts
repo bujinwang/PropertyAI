@@ -2,6 +2,34 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+/**
+ * Columns of `User` safe to attach to a template response.
+ *
+ * WHY THIS EXISTS
+ * ---------------
+ * Every method below used to eager-load the owner with a bare
+ * `include: { user: true }`. That is Prisma's "all scalar columns" shorthand, so
+ * each template response carried the owner's ENTIRE row: `password` (bcrypt
+ * hash), `mfaSecret`, `refreshToken`, `passwordResetToken`, `passwordHistory`,
+ * `biometricPublicKey`, `ssoProviderId`, plus lockout and compliance state.
+ * A live probe confirmed all of it reached the client in plain JSON.
+ *
+ * This is the same defect previously fixed in the user listing, resurfacing
+ * through a nested relation — which is exactly why a response-shape test has to
+ * scan the RAW JSON rather than assert on known fields.
+ *
+ * The fields kept here are the ones the dashboard actually renders (name,
+ * email, role). Never widen this to `true`.
+ */
+const SAFE_USER_SELECT = {
+  id: true,
+  email: true,
+  firstName: true,
+  lastName: true,
+  role: true,
+  isActive: true,
+} as const;
+
 export interface CreateTemplateData {
   userId: string;
   templateName: string;
@@ -35,7 +63,7 @@ export class TemplateService {
           sharedWith: data.sharedWith || [],
         },
         include: {
-          user: true,
+          user: { select: SAFE_USER_SELECT },
         },
       });
     } catch (error) {
@@ -52,7 +80,7 @@ export class TemplateService {
       return await prisma.userTemplate.findUnique({
         where: { id },
         include: {
-          user: true,
+          user: { select: SAFE_USER_SELECT },
         },
       });
     } catch (error) {
@@ -74,7 +102,7 @@ export class TemplateService {
       return await prisma.userTemplate.findMany({
         where: whereClause,
         include: {
-          user: true,
+          user: { select: SAFE_USER_SELECT },
         },
         orderBy: {
           updatedAt: 'desc',
@@ -99,7 +127,7 @@ export class TemplateService {
       return await prisma.userTemplate.findMany({
         where: whereClause,
         include: {
-          user: true,
+          user: { select: SAFE_USER_SELECT },
         },
         orderBy: {
           updatedAt: 'desc',
@@ -130,7 +158,7 @@ export class TemplateService {
       return await prisma.userTemplate.findMany({
         where: whereClause,
         include: {
-          user: true,
+          user: { select: SAFE_USER_SELECT },
         },
         orderBy: [
           { userId: 'asc' }, // Own templates first
@@ -155,7 +183,7 @@ export class TemplateService {
           updatedAt: new Date(),
         },
         include: {
-          user: true,
+          user: { select: SAFE_USER_SELECT },
         },
       });
     } catch (error) {
@@ -189,7 +217,7 @@ export class TemplateService {
             updatedAt: new Date(),
           },
           include: {
-            user: true,
+            user: { select: SAFE_USER_SELECT },
           },
         });
       } else {
@@ -202,7 +230,7 @@ export class TemplateService {
             role,
           },
           include: {
-            user: true,
+            user: { select: SAFE_USER_SELECT },
           },
         });
       }
@@ -239,7 +267,7 @@ export class TemplateService {
           updatedAt: new Date(),
         },
         include: {
-          user: true,
+          user: { select: SAFE_USER_SELECT },
         },
       });
     } catch (error) {
@@ -261,7 +289,7 @@ export class TemplateService {
           updatedAt: new Date(),
         },
         include: {
-          user: true,
+          user: { select: SAFE_USER_SELECT },
         },
       });
     } catch (error) {
@@ -278,7 +306,7 @@ export class TemplateService {
       return await prisma.userTemplate.findMany({
         where: { role },
         include: {
-          user: true,
+          user: { select: SAFE_USER_SELECT },
         },
         orderBy: {
           updatedAt: 'desc',
@@ -371,7 +399,7 @@ export class TemplateService {
       return await prisma.userTemplate.findMany({
         where: whereClause,
         include: {
-          user: true,
+          user: { select: SAFE_USER_SELECT },
         },
         orderBy: {
           updatedAt: 'desc',

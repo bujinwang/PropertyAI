@@ -6,8 +6,17 @@ import { Prisma } from '@prisma/client';
 import { pubSubService } from './pubSub.service';
 
 class MaintenanceService {
-  public async getAllMaintenanceRequests(): Promise<MaintenanceRequest[]> {
+  /**
+   * @param scope Prisma `where` fragment limiting results to the caller's own
+   *   rows. Omit for an unrestricted listing (ADMIN). Callers MUST pass a scope
+   *   when serving a non-admin request — an unscoped call is a full cross-tenant
+   *   dump, which is exactly what this endpoint used to do.
+   */
+  public async getAllMaintenanceRequests(
+    scope?: Record<string, unknown>
+  ): Promise<MaintenanceRequest[]> {
     return prisma.maintenanceRequest.findMany({
+      where: (scope ?? {}) as Prisma.MaintenanceRequestWhereInput,
       select: {
         id: true,
         title: true,

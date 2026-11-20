@@ -3,6 +3,105 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+/**
+ * Marketing surface — campaigns, promotions, syndication.
+ *
+ * TWO CLASSES OF BUG FIXED HERE
+ * -----------------------------
+ * 1. CREDENTIAL EXPOSURE. `SyndicationPlatform` stores `apiKey` and `apiSecret`
+ *    for third-party listing portals. `getSyndicationPlatforms` and
+ *    `updateSyndicationPlatform` returned the whole row, so both secrets came
+ *    back in plain text to any authenticated caller. They are now explicitly
+ *    excluded from every response. Never add them back "for the settings page" —
+ *    serve a boolean such as `hasCredentials` instead.
+ *
+ * 2. MASS ASSIGNMENT. `updateCampaign`, `updatePromotion`, `updateSyndicationPlatform`
+ *    and `createPromotion` passed `req.body` straight into Prisma, so a caller
+ *    could write `spent`, `usageCount`, `status`, `apiKey`, or any other column
+ *    the endpoint's purpose never intended. Each now filters through an explicit
+ *    whitelist of fields the operation actually owns.
+ *
+ * Authorization (who may write at all) is enforced on the router, which is the
+ * correct place for it: these rows are GLOBAL, with no per-tenant ownership to
+ * scope them by, so a role gate is sufficient. Do not move those checks here.
+ */
+
+/** Columns of `SyndicationPlatform` safe to return to a client. */
+const SAFE_PLATFORM_SELECT = {
+  id: true,
+  name: true,
+  enabled: true,
+  status: true,
+  lastSync: true,
+  totalListings: true,
+  activeListings: true,
+  monthlyFee: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;
+
+/** Fields a caller may set on a campaign. `spent`/`impressions`/… are system-owned. */
+const CAMPAIGN_WRITABLE = [
+  'name',
+  'type',
+  'status',
+  'budget',
+  'startDate',
+  'endDate',
+  'description',
+  'targetAudience',
+] as const;
+
+/** Fields a caller may set on a promotion. `usageCount` is system-owned. */
+const PROMOTION_WRITABLE = [
+  'name',
+  'type',
+  'status',
+  'code',
+  'discountType',
+  'discountValue',
+  'description',
+  'startDate',
+  'endDate',
+  'usageLimit',
+  'terms',
+  'applicableProperties',
+] as const;
+
+/** Fields a caller may set on a syndication platform — secrets handled separately. */
+const PLATFORM_WRITABLE = [
+  'name',
+  'enabled',
+  'status',
+  'monthlyFee',
+  'config',
+  'apiKey',
+  'apiSecret',
+] as const;
+
+/**
+ * Copies only whitelisted keys, and coerces the two date columns when present —
+ * the original endpoints did the date coercion inline, so it has to survive the
+ * whitelist pass.
+ */
+function pickWritable(
+  body: unknown,
+  allowed: readonly string[],
+  dateFields: readonly string[] = []
+): Record<string, unknown> {
+  const source = (body ?? {}) as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  for (const field of allowed) {
+    if (source[field] !== undefined) out[field] = source[field];
+  }
+  for (const field of dateFields) {
+    if (out[field] !== undefined && out[field] !== null) {
+      out[field] = new Date(out[field] as string);
+    }
+  }
+  return out;
+}
+
 // Campaign Controllers
 export const getCampaigns = async (req: Request, res: Response) => {
   try {
@@ -25,18 +124,13 @@ export const getCampaigns = async (req: Request, res: Response) => {
 
 export const createCampaign = async (req: Request, res: Response) => {
   try {
-    const { name, type, budget, startDate, endDate, description, targetAudience } = req.body;
-    
+    // Whitelisted rather than spread: `spent`, `impressions`, `clicks` and
+    // `leads` are system-owned counters. Letting a caller seed them would let
+    // them fabricate campaign performance.
+    const data = pickWritable(req.body, CAMPAIGN_WRITABLE, ['startDate', 'endDate']);
+
     const newCampaign = await prisma.marketingCampaign.create({
-      data: {
-        name,
-        type,
-        budget,
-        startDate: new Date(startDate),
-        endDate: new Date(endDate),
-        description,
-        targetAudience
-      }
+      data: data as any,
     });
 
     res.status(201).json({
@@ -83,18 +177,12 @@ export const getCampaign = async (req: Request, res: Response) => {
 export const updateCampaign = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
-    
-    if (updateData.startDate) {
-      updateData.startDate = new Date(updateData.startDate);
-    }
-    if (updateData.endDate) {
-      updateData.endDate = new Date(updateData.endDate);
-    }
-    
+
+    const updateData = pickWritable(req.body, CAMPAIGN_WRITABLE, ['startDate', 'endDate']);
+
     const updatedCampaign = await prisma.marketingCampaign.update({
       where: { id },
-      data: updateData
+      data: updateData,
     });
 
     res.json({
@@ -384,17 +472,13 @@ export const getPromotions = async (req: Request, res: Response) => {
 
 export const createPromotion = async (req: Request, res: Response) => {
   try {
-    const promotionData = req.body;
-    
-    if (promotionData.startDate) {
-      promotionData.startDate = new Date(promotionData.startDate);
-    }
-    if (promotionData.endDate) {
-      promotionData.endDate = new Date(promotionData.endDate);
-    }
-    
+    // `usageCount` is deliberately absent: it is a redemption counter owned by
+    // the system, so a caller must not be able to mint a promo that looks
+    // already-redeemed (or reset an exhausted one).
+    const promotionData = pickWritable(req.body, PROMOTION_WRITABLE, ['startDate', 'endDate']);
+
     const newPromotion = await prisma.promotion.create({
-      data: promotionData
+      data: promotionData as any,
     });
 
     res.status(201).json({
@@ -441,18 +525,12 @@ export const getPromotion = async (req: Request, res: Response) => {
 export const updatePromotion = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
-    
-    if (updateData.startDate) {
-      updateData.startDate = new Date(updateData.startDate);
-    }
-    if (updateData.endDate) {
-      updateData.endDate = new Date(updateData.endDate);
-    }
-    
+
+    const updateData = pickWritable(req.body, PROMOTION_WRITABLE, ['startDate', 'endDate']);
+
     const updatedPromotion = await prisma.promotion.update({
       where: { id },
-      data: updateData
+      data: updateData as any,
     });
 
     res.json({
@@ -596,8 +674,12 @@ export const validatePromotionCode = async (req: Request, res: Response) => {
 // Syndication Controllers
 export const getSyndicationPlatforms = async (req: Request, res: Response) => {
   try {
+    // `apiKey` / `apiSecret` are third-party portal credentials. They must never
+    // leave the server: an operator's own settings screen only needs to know
+    // whether a key is configured, not what it is.
     const platforms = await prisma.syndicationPlatform.findMany({
-      orderBy: { name: 'asc' }
+      select: SAFE_PLATFORM_SELECT,
+      orderBy: { name: 'asc' },
     });
 
     res.json({
@@ -616,11 +698,15 @@ export const getSyndicationPlatforms = async (req: Request, res: Response) => {
 export const updateSyndicationPlatform = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
-    
+
+    const updateData = pickWritable(req.body, PLATFORM_WRITABLE);
+
+    // `apiKey`/`apiSecret` ARE writable (that is how credentials get configured)
+    // but are never readable back — see SAFE_PLATFORM_SELECT.
     const updatedPlatform = await prisma.syndicationPlatform.update({
       where: { id },
-      data: updateData
+      data: updateData as any,
+      select: SAFE_PLATFORM_SELECT,
     });
 
     res.json({

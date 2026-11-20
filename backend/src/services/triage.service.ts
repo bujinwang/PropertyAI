@@ -26,10 +26,26 @@ class TriageService {
     const sentiment = await sentimentService.analyze(request.description);
     const { priority, category } = await nlpService.extractDetails(request.description);
 
+    /**
+     * `nlpService` returns a category NAME ('PLUMBING'), but
+     * `MaintenanceRequest.categoryId` is a FOREIGN KEY to
+     * `MaintenanceRequestCategory.id`. The original code wrote the name straight
+     * into the FK column, so every triage raised
+     * `P2003 ... MaintenanceRequest_categoryId_fkey` and the whole re-triage
+     * (including `declineWorkOrder`, which calls it) failed. Resolve the name to
+     * a real row first — seeded categories are reused, unseen ones are created.
+     */
+    const categoryRecord = await prisma.maintenanceRequestCategory.upsert({
+      where: { name: category },
+      update: {},
+      create: { name: category },
+      select: { id: true },
+    });
+
     // Update request with analyzed data
     await prisma.maintenanceRequest.update({
       where: { id: requestId },
-      data: { priority: priority as Priority, categoryId: category },
+      data: { priority: priority as Priority, categoryId: categoryRecord.id },
     });
 
     // 2. Apply routing rules

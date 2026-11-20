@@ -2,8 +2,22 @@ import { PrismaClient } from '@prisma/client';
 import { enhancedAuthService } from './enhancedAuthService';
 import { AppError } from '../middleware/errorMiddleware';
 import axios from 'axios';
+import crypto from 'crypto';
 
 const prisma = new PrismaClient();
+
+/**
+ * `User.password` is required by the schema, but a user provisioned through SSO
+ * has no password of their own — the identity provider is the credential.
+ *
+ * Storing a random, never-disclosed value satisfies the NOT NULL column while
+ * keeping password login impossible for the account (nothing can match a
+ * 48-byte random secret that is discarded immediately). The alternative of
+ * making the column nullable would weaken password auth for every other user.
+ */
+function generateUnusablePassword(): string {
+  return `!sso-no-password!${crypto.randomBytes(48).toString('hex')}`;
+}
 
 export interface SSOProvider {
   id: string;
@@ -129,10 +143,17 @@ export class SSOService {
       throw new AppError(`Unsupported SSO provider: ${provider}`, 400);
     }
 
+    // Scope separator is provider-specific: GitHub's OAuth docs specify a
+    // comma-separated `scope` list, while the OpenID Connect providers (Google,
+    // Microsoft) expect space-separated scopes. Joining with a space for every
+    // provider produced `scope=user%3Aemail+read%3Auser` on GitHub, which is a
+    // single invalid scope token rather than two.
+    const scopeSeparator = provider === 'github' ? ',' : ' ';
+
     const params = new URLSearchParams({
       client_id: ssoConfig.clientId,
       redirect_uri: ssoConfig.redirectUri,
-      scope: ssoConfig.scopes.join(' '),
+      scope: ssoConfig.scopes.join(scopeSeparator),
       response_type: 'code',
       access_type: 'offline', // For refresh tokens
       prompt: 'consent', // Force consent screen
@@ -247,6 +268,8 @@ export class SSOService {
           email: userInfo.email,
           firstName: userInfo.firstName,
           lastName: userInfo.lastName,
+          // Required by the schema; SSO accounts authenticate via the IdP only.
+          password: generateUnusablePassword(),
           role: 'TENANT', // Default role
           isActive: true,
           ssoEnabled: true,
@@ -299,10 +322,13 @@ export class SSOService {
       }
     });
 
-    // Complete login
-    const loginResult = await enhancedAuthService.authenticate({
+    // Complete login. Do NOT route this through password authentication:
+    // an SSO user has no password, so `authenticate({ password: '' })` always
+    // threw "Invalid credentials" and federated login could never succeed.
+    // The identity provider has already verified the user at this point.
+    const loginResult = await enhancedAuthService.completeExternalLogin(user.id, {
       email: user.email,
-      password: '', // SSO doesn't use password
+      password: '', // unused: identity already established by the IdP
       deviceInfo,
     });
 

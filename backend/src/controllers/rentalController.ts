@@ -1,9 +1,48 @@
 import { Request, Response } from 'express';
 import { rentalService, CreateRentalDto, UpdateRentalDto, RentalFilterParams, ListingStatus } from '../services/rentalService';
+import {
+  canAccessRental,
+  canModifyRental,
+  canWriteRentals,
+  currentUserId,
+  isAdmin,
+  rentalScopeFilter,
+} from '../utils/rentalAccess';
 
 /**
  * Rental controller to handle HTTP requests related to rental management
+ *
+ * TENANCY CONTRACT (see utils/rentalAccess.ts for the policy)
+ * ----------------------------------------------------------
+ * `rentalRoutes.ts` applies `authMiddleware.protect` and nothing else: it proves
+ * WHO the caller is, never WHAT they may touch. Ownership decisions therefore
+ * have to happen here, because they need the fetched row.
+ *
+ * Invariants this controller must preserve:
+ *   1. `managerId` / `ownerId` / `createdById` are SERVER-SET from the
+ *      authenticated user. They are never read from `req.body` — accepting them
+ *      let any authenticated user attribute a rental to somebody else.
+ *   2. Cross-tenant reads/updates/deletes are refused with 403 and must not
+ *      mutate. 404 is reserved for "no such row" so a legitimate owner does not
+ *      get a misleading error.
+ *   3. Multi-row operations (search, bulk) resolve every id through the same
+ *      row-level check — scoping only the single-row handlers leaves the holes
+ *      reachable through the bulk endpoints.
  */
+
+/**
+ * Fields a caller may never set from the body. Kept out of the DTO copy so a
+ * PUT cannot move ownership even when the caller is the current owner.
+ */
+const SERVER_OWNED_FIELDS = ['managerId', 'ownerId', 'createdById'] as const;
+
+/** Strip server-owned fields from a client payload. */
+function withoutServerOwnedFields<T extends Record<string, any>>(body: T): Partial<T> {
+  const out: Record<string, any> = { ...body };
+  for (const field of SERVER_OWNED_FIELDS) delete out[field];
+  return out as Partial<T>;
+}
+
 export class RentalController {
   /**
    * Create a new rental
@@ -12,12 +51,33 @@ export class RentalController {
    */
   async createRental(req: Request, res: Response): Promise<Response> {
     try {
-      const rentalData: CreateRentalDto = req.body;
-      
-      // Validate required fields
-      const requiredFields = ['title', 'address', 'city', 'state', 'zipCode', 'propertyType', 'rent', 'managerId', 'ownerId', 'createdById'];
-      const missingFields = requiredFields.filter(field => !rentalData[field as keyof CreateRentalDto]);
-      
+      const userId = currentUserId(req);
+
+      if (!userId) {
+        return res.status(401).json({ status: 'error', message: 'Authentication required' });
+      }
+
+      // No role gate: any authenticated caller may list a rental they own.
+      // TENANT / VENDOR are excluded by canWriteRentals so they cannot become
+      // accidental landlords via the API.
+      if (!canWriteRentals(req)) {
+        return res.status(403).json({
+          status: 'error',
+          message: 'Your role cannot create rental listings',
+        });
+      }
+
+      // `managerId` / `ownerId` / `createdById` are NOT required from the
+      // caller and are ignored if supplied: they are always taken from the
+      // authenticated user.
+      const rentalData = withoutServerOwnedFields(req.body || {}) as CreateRentalDto;
+
+      // Validate required fields (ownership ids are server-set, not required).
+      const requiredFields = ['title', 'address', 'city', 'state', 'zipCode', 'propertyType', 'rent'];
+      const missingFields = requiredFields.filter(
+        (field) => !(rentalData as Record<string, any>)[field]
+      );
+
       if (missingFields.length > 0) {
         return res.status(400).json({
           status: 'error',
@@ -25,9 +85,14 @@ export class RentalController {
           missingFields
         });
       }
-      
-      const rental = await rentalService.createRental(rentalData);
-      
+
+      const rental = await rentalService.createRental({
+        ...rentalData,
+        managerId: userId,
+        ownerId: userId,
+        createdById: userId,
+      });
+
       return res.status(201).json({
         status: 'success',
         message: 'Rental created successfully',
@@ -35,7 +100,7 @@ export class RentalController {
       });
     } catch (error: any) {
       console.error('Error creating rental:', error);
-      
+
       return res.status(error.status || 500).json({
         status: 'error',
         message: error.message || 'Failed to create rental',
@@ -66,6 +131,16 @@ export class RentalController {
         return res.status(404).json({
           status: 'error',
           message: 'Rental not found'
+        });
+      }
+
+      // Existence is checked first so a legitimate owner gets 404 for a bad id;
+      // a different tenant then gets 403 rather than a 404 that pretends their
+      // own rental does not exist.
+      if (!canAccessRental(req, rental)) {
+        return res.status(403).json({
+          status: 'error',
+          message: 'You do not have access to this rental'
         });
       }
       
@@ -142,13 +217,19 @@ export class RentalController {
       const validSortOrder = sortOrder === 'asc' || sortOrder === 'desc' 
         ? sortOrder 
         : 'desc';
-      
+
+      // Limit the collection to rows the caller may see. ADMIN gets no scope
+      // (see rentalScopeFilter); a non-operator gets an impossible filter and
+      // therefore an empty portfolio rather than a 403.
+      const scope = rentalScopeFilter(req);
+
       const result = await rentalService.getRentals(
         filters,
         parseInt(String(page), 10),
         parseInt(String(limit), 10),
         String(sortField),
-        validSortOrder as 'asc' | 'desc'
+        validSortOrder as 'asc' | 'desc',
+        scope as Record<string, unknown> | undefined
       );
       
       return res.status(200).json({
@@ -171,7 +252,7 @@ export class RentalController {
       });
     }
   }
-  
+
   /**
    * Get public rentals (for public listing pages)
    * @param req Request
@@ -199,6 +280,8 @@ export class RentalController {
       } = req.query;
       
       // Build filter object for public listings (only active and available)
+      // NOTE: deliberately unscoped — this is the anonymous marketplace listing
+      // surface, and it only ever exposes ACTIVE + available rows.
       const filters: RentalFilterParams = {
         isActive: true,
         isAvailable: true,
@@ -268,6 +351,15 @@ export class RentalController {
           message: 'Manager ID is required'
         });
       }
+
+      // The id comes from the URL, so without this check any authenticated user
+      // could enumerate another manager's portfolio by guessing ids.
+      if (!isAdmin(req) && managerId !== currentUserId(req)) {
+        return res.status(403).json({
+          status: 'error',
+          message: 'You may only list your own rentals'
+        });
+      }
       
       const rentals = await rentalService.getRentalsByManagerId(
         managerId,
@@ -305,6 +397,14 @@ export class RentalController {
           message: 'Owner ID is required'
         });
       }
+
+      // Same reasoning as getRentalsByManager: the id is caller-chosen.
+      if (!isAdmin(req) && ownerId !== currentUserId(req)) {
+        return res.status(403).json({
+          status: 'error',
+          message: 'You may only list your own rentals'
+        });
+      }
       
       const rentals = await rentalService.getRentalsByOwnerId(
         ownerId,
@@ -334,7 +434,6 @@ export class RentalController {
   async updateRental(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
-      const updateData: UpdateRentalDto = req.body;
       
       if (!id) {
         return res.status(400).json({
@@ -351,6 +450,18 @@ export class RentalController {
           message: 'Rental not found'
         });
       }
+
+      if (!canModifyRental(req, existingRental)) {
+        return res.status(403).json({
+          status: 'error',
+          message: 'You do not have access to this rental'
+        });
+      }
+
+      // Ownership ids are never writable, even by the current owner: allowing
+      // them here would let a rental be handed to another account (and would
+      // silently re-attribute `createdById`, which is an audit field).
+      const updateData = withoutServerOwnedFields(req.body || {}) as UpdateRentalDto;
       
       const updatedRental = await rentalService.updateRental(id, updateData);
       
@@ -400,6 +511,13 @@ export class RentalController {
         return res.status(404).json({
           status: 'error',
           message: 'Rental not found'
+        });
+      }
+
+      if (!canModifyRental(req, existingRental)) {
+        return res.status(403).json({
+          status: 'error',
+          message: 'You do not have access to this rental'
         });
       }
       
@@ -458,6 +576,13 @@ export class RentalController {
           message: 'Rental not found'
         });
       }
+
+      if (!canModifyRental(req, existingRental)) {
+        return res.status(403).json({
+          status: 'error',
+          message: 'You do not have access to this rental'
+        });
+      }
       
       const updatedRental = await rentalService.setRentalStatus(id, status);
       
@@ -509,6 +634,13 @@ export class RentalController {
           message: 'Rental not found'
         });
       }
+
+      if (!canModifyRental(req, existingRental)) {
+        return res.status(403).json({
+          status: 'error',
+          message: 'You do not have access to this rental'
+        });
+      }
       
       const updatedRental = await rentalService.setRentalActiveStatus(id, isActive);
       
@@ -550,6 +682,13 @@ export class RentalController {
         return res.status(404).json({
           status: 'error',
           message: 'Rental not found'
+        });
+      }
+
+      if (!canModifyRental(req, existingRental)) {
+        return res.status(403).json({
+          status: 'error',
+          message: 'You do not have access to this rental'
         });
       }
       
@@ -673,11 +812,14 @@ export class RentalController {
       const { searchTerm, ...filters } = req.body;
       const { page = 1, limit = 10 } = req.query;
       
+      const scope = rentalScopeFilter(req);
+
       const result = await rentalService.searchRentals(
         searchTerm || '',
         filters,
         parseInt(String(page), 10),
-        parseInt(String(limit), 10)
+        parseInt(String(limit), 10),
+        scope as Record<string, unknown> | undefined
       );
       
       return res.status(200).json({
@@ -716,8 +858,27 @@ export class RentalController {
           message: 'Rentals array is required and must not be empty'
         });
       }
+
+      const userId = currentUserId(req);
+      if (!userId || !canWriteRentals(req)) {
+        return res.status(403).json({
+          status: 'error',
+          message: 'Your role cannot create rental listings'
+        });
+      }
+
+      // Every row is stamped with the authenticated user; ownership ids in the
+      // payload are discarded, exactly as in single create. The cast is needed
+      // only because `withoutServerOwnedFields` returns a Partial — the three
+      // required ownership keys are added immediately after.
+      const ownedRentals = rentals.map((rental: Record<string, any>) => ({
+        ...withoutServerOwnedFields(rental),
+        managerId: userId,
+        ownerId: userId,
+        createdById: userId,
+      })) as CreateRentalDto[];
       
-      const result = await rentalService.bulkCreateRentals(rentals);
+      const result = await rentalService.bulkCreateRentals(ownedRentals);
       
       return res.status(201).json({
         status: 'success',
@@ -753,8 +914,28 @@ export class RentalController {
           message: 'Updates array is required and must not be empty'
         });
       }
+
+      // Scope the batch to the caller's own rows FIRST. Filtering after the
+      // service call would be too late — the mutation would already be applied.
+      const accessible: typeof updates = [];
+      for (const update of updates) {
+        const existing = await rentalService.getRentalById(update?.id);
+        if (existing && canModifyRental(req, existing)) {
+          accessible.push({
+            id: update.id,
+            data: withoutServerOwnedFields(update.data || {}),
+          });
+        }
+      }
+
+      if (accessible.length === 0) {
+        return res.status(403).json({
+          status: 'error',
+          message: 'None of the supplied rentals are accessible to you'
+        });
+      }
       
-      const result = await rentalService.bulkUpdateRentals(updates);
+      const result = await rentalService.bulkUpdateRentals(accessible);
       
       return res.status(200).json({
         status: 'success',
@@ -790,8 +971,25 @@ export class RentalController {
           message: 'IDs array is required and must not be empty'
         });
       }
+
+      // Resolve access per id BEFORE deleting anything, so a batch that mixes
+      // the caller's rows with someone else's cannot delete the latter.
+      const accessibleIds: string[] = [];
+      for (const id of ids) {
+        const existing = await rentalService.getRentalById(String(id));
+        if (existing && canModifyRental(req, existing)) {
+          accessibleIds.push(String(id));
+        }
+      }
+
+      if (accessibleIds.length === 0) {
+        return res.status(403).json({
+          status: 'error',
+          message: 'None of the supplied rentals are accessible to you'
+        });
+      }
       
-      const result = await rentalService.bulkDeleteRentals(ids);
+      const result = await rentalService.bulkDeleteRentals(accessibleIds);
       
       return res.status(200).json({
         status: 'success',

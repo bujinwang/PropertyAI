@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { UserRole } from '@prisma/client';
+import { validationResult } from 'express-validator';
 import { AppError } from './errorMiddleware';
 
 /**
@@ -120,10 +121,86 @@ export const validateLogin = (req: Request, res: Response, next: NextFunction) =
   next();
 };
 
-export const validateRequest = (validationRules: any) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    // Basic validation middleware
-    // You can implement specific validation logic here
-    next();
-  };
-};
+/**
+ * Terminal validation middleware.
+ *
+ * WHY THIS IS SHAPED THE WAY IT IS — READ BEFORE CHANGING
+ * ------------------------------------------------------
+ * This function has now been wrong in TWO different ways, and both bugs were
+ * invisible because the symptom was "the request still works".
+ *
+ * BUG 1 — it was a middleware FACTORY:
+ *
+ *     export const validateRequest = (validationRules: any) => (req, res, next) => next();
+ *
+ * but every call site passes it UNINVOKED, as a bare element of the route's
+ * middleware array:
+ *
+ *     router.get('/:id', [param('id').isString(), validateRequest], handler)
+ *
+ * Express therefore called `validateRequest(req, res, next)`, which ran the
+ * FACTORY BODY, built a closure, and returned it. It never called `next()`, so
+ * the request never reached the handler and never got a response: the connection
+ * hung until the client timed out. 38 routes across 4 files were dead on
+ * arrival, and because the failure mode is "hangs" rather than "500" it reads
+ * as a network problem, not a code defect.
+ *
+ * BUG 2 — after Bug 1 was fixed by turning it into a pure pass-through, it
+ * validated NOTHING. `express-validator` does not reject anything by itself: its
+ * `body()`/`param()`/`query()` chains only *record* failures on the request, and
+ * `validationResult(req)` is the only thing that reads them. Nothing in
+ * `src/` called `validationResult` — so all 64 chains across `ai.routes.ts`,
+ * `googleCalendar.routes.ts` and `alertGroups.routes.ts` were declared,
+ * executed, and discarded. The router advertised `body('text').isString()
+ * .notEmpty()` and then happily handed `undefined` to a BILLED AI vendor.
+ * A controller-level test cannot catch this: the endpoint returns 200 either
+ * way. Only asserting the middleware's own contract does.
+ *
+ * It is now a real Express middleware that BOTH continues and enforces:
+ *
+ *   - called with `(req, res, next)`  -> Express: runs `validationResult`,
+ *     rejects with 400 when any chain failed, otherwise continues.
+ *   - called with an array / anything else -> returns that same middleware,
+ *     preserving the factory contract so neither spelling can reintroduce a hang.
+ *
+ * `next()` must be reachable on EVERY success path. Do not add an early `return`
+ * that skips it — that is exactly Bug 1.
+ *
+ * Response shape matches `errorMiddleware` (`{status:'error', message}`) because
+ * every other 4xx in this API uses it. `message` is the first failing chain's
+ * message so a client gets one actionable sentence, and `errors` carries the
+ * per-field detail. Neither leaks internals: these strings come from the route
+ * definitions, not from the ORM or the vendor.
+ */
+function rejectWhenInvalid(req: Request, res: Response, next: NextFunction): any {
+  const result = validationResult(req);
+  if (result.isEmpty()) {
+    return next();
+  }
+
+  const errors = result.array();
+  return res.status(400).json({
+    status: 'error',
+    message: errors[0]?.msg || 'Invalid request',
+    errors: errors.map((e) => ({
+      field: 'path' in e ? e.path : undefined,
+      message: e.msg,
+    })),
+  });
+}
+
+export function validateRequest(
+  validationRulesOrReq?: any,
+  res?: Response,
+  next?: NextFunction
+): any {
+  // Express call style: (req, res, next). `res` and `next` are both present.
+  if (typeof next === 'function') {
+    return rejectWhenInvalid(validationRulesOrReq as Request, res as Response, next);
+  }
+
+  // Factory call style: (rules) -> middleware. Kept for backwards compatibility.
+  return (req: Request, resFn: Response, nextFn: NextFunction) =>
+    rejectWhenInvalid(req, resFn, nextFn);
+}
+
