@@ -103,12 +103,20 @@ class VendorPaymentService {
       const vendorPaymentId = payout.metadata?.vendorPaymentId;
 
       if (vendorPaymentId) {
+        // `paymentDate`, NOT `processedAt` -- `VendorPayment` has no
+        // `processedAt` column. The old code wrote `processedAt` behind an
+        // `as any`, which silenced `tsc`, so EVERY `payout.paid` webhook threw
+        // PrismaClientValidationError before touching a row:
+        //   Unknown argument `processedAt`. Available options are marked with ?.
+        // The catch below then treated it as a webhook failure, so a successful
+        // Stripe payout could never be marked PAID. Verified against the live
+        // schema. `paymentDate` is the column that means "when this was paid".
         await prisma.vendorPayment.update({
           where: { id: vendorPaymentId },
           data: {
             status: 'PAID',
-            processedAt: new Date(payout.arrival_date * 1000),
-          } as any, // Cast to any to bypass type checking
+            paymentDate: new Date(payout.arrival_date * 1000),
+          },
         });
       }
     } else if (event.type === 'payout.failed') {

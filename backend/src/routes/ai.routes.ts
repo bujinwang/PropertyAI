@@ -1,9 +1,10 @@
 import { Router, Request, Response } from 'express';
-import { User } from '@prisma/client';
+import { User, Prisma } from '@prisma/client';
 import { aiService } from '../services/ai.service';
 import { authenticateToken } from '../middleware/auth';
 import { body, query } from 'express-validator';
 import { validateRequest } from '../middleware/validation';
+import { MAX_BILLED_TEXT_CHARS } from '../middleware/billedEndpointGuards';
 import { prisma } from '../config/database';
 import { getInsights, getDashboardSummary, getInsightCategories, regenerateInsight } from '../controllers/aiController';
 
@@ -12,8 +13,8 @@ const router = Router();
 
 // Generate text
 router.post('/generate', authenticateToken, [
-  body('text').isString().notEmpty(),
-  body('context').optional().isString(),
+  body('text').isString().notEmpty().isLength({ max: MAX_BILLED_TEXT_CHARS }),
+  body('context').optional().isString().isLength({ max: MAX_BILLED_TEXT_CHARS }),
   body('language').optional().isString(),
   body('maxLength').optional().isInt({ min: 1, max: 4000 }),
   validateRequest,
@@ -29,12 +30,12 @@ router.post('/generate', authenticateToken, [
     });
 
     // Log the request
-    await (prisma as any).aIUsageLog.create({
+    await prisma.aIUsageLog.create({
       data: {
         userId: (req.user as User)!.id,
-        feature: 'text_generation',
-        prompt: text,
-        response: result.text,
+        toolName: 'text_generation',
+        input: text,
+        output: result.text,
         // metadata: result.metadata, // Removed as it's not in schema
       },
     });
@@ -54,21 +55,21 @@ router.post('/generate', authenticateToken, [
 
 // Analyze sentiment
 router.post('/sentiment', authenticateToken, [
-  body('text').isString().notEmpty(),
+  body('text').isString().notEmpty().isLength({ max: MAX_BILLED_TEXT_CHARS }),
   validateRequest,
 ], async (req: Request, res: Response) => {
   try {
     const { text } = req.body;
     
-    const result = await aiService.analyzeSentiment(text);
+    const result = await aiService.tryAnalyzeSentiment(text);
 
     // Log the request
-    await (prisma as any).aIUsageLog.create({
+    await prisma.aIUsageLog.create({
       data: {
         userId: (req.user as User)!.id,
-        feature: 'sentiment_analysis',
-        prompt: text,
-        response: JSON.stringify(result),
+        toolName: 'sentiment_analysis',
+        input: text,
+        output: JSON.stringify(result),
       },
     });
 
@@ -78,30 +79,32 @@ router.post('/sentiment', authenticateToken, [
     });
   } catch (error: any) {
     console.error('Error analyzing sentiment:', error);
-    res.status(500).json({
+    // Do NOT echo `error.message`: the HF SDK embeds the upstream URL, and an
+    // outage message can carry it. Detail stays in logs.
+    res.status(502).json({
       success: false,
-      error: error.message || 'Failed to analyze sentiment',
+      error: 'Sentiment analysis is temporarily unavailable',
     });
   }
 });
 
 // Extract entities
 router.post('/entities', authenticateToken, [
-  body('text').isString().notEmpty(),
+  body('text').isString().notEmpty().isLength({ max: MAX_BILLED_TEXT_CHARS }),
   validateRequest,
 ], async (req: Request, res: Response) => {
   try {
     const { text } = req.body;
     
-    const result = await aiService.extractEntities(text);
+    const result = await aiService.tryExtractEntities(text);
 
     // Log the request
-    await (prisma as any).aIUsageLog.create({
+    await prisma.aIUsageLog.create({
       data: {
         userId: (req.user as User)!.id,
-        feature: 'entity_extraction',
-        prompt: text,
-        response: JSON.stringify(result),
+        toolName: 'entity_extraction',
+        input: text,
+        output: JSON.stringify(result),
       },
     });
 
@@ -111,9 +114,9 @@ router.post('/entities', authenticateToken, [
     });
   } catch (error: any) {
     console.error('Error extracting entities:', error);
-    res.status(500).json({
+    res.status(502).json({
       success: false,
-      error: error.message || 'Failed to extract entities',
+      error: 'Entity extraction is temporarily unavailable',
     });
   }
 });
@@ -180,9 +183,9 @@ router.get('/summary', async (req: Request, res: Response) => {
 
 // Classify text
 router.post('/classify', authenticateToken, [
-  body('text').isString().notEmpty(),
-  body('labels').isArray().notEmpty(),
-  body('labels.*').isString(),
+  body('text').isString().notEmpty().isLength({ max: MAX_BILLED_TEXT_CHARS }),
+  body('labels').isArray({ min: 1, max: 100 }).notEmpty(),
+  body('labels.*').isString().isLength({ max: MAX_BILLED_TEXT_CHARS }),
   validateRequest,
 ], async (req: Request, res: Response) => {
   try {
@@ -194,12 +197,12 @@ router.post('/classify', authenticateToken, [
     });
 
     // Log the request
-    await (prisma as any).aIUsageLog.create({
+    await prisma.aIUsageLog.create({
       data: {
         userId: (req.user as User)!.id,
-        feature: 'text_classification',
-        prompt: text,
-        response: result.text,
+        toolName: 'text_classification',
+        input: text,
+        output: result.text,
         // metadata: result.metadata, // Removed as it's not in schema
       },
     });
@@ -219,9 +222,11 @@ router.post('/classify', authenticateToken, [
 
 // Chat with AI
 router.post('/chat', authenticateToken, [
-  body('message').isString().notEmpty(),
+  body('message').isString().notEmpty().isLength({ max: MAX_BILLED_TEXT_CHARS }),
   body('conversationId').optional().isString(),
-  body('context').optional().isObject(),
+  body('context').optional().isObject().custom((v) =>
+    JSON.stringify(v ?? {}).length <= MAX_BILLED_TEXT_CHARS
+  ).withMessage(`context exceeds the maximum length of ${MAX_BILLED_TEXT_CHARS} characters`),
   validateRequest,
 ], async (req: Request, res: Response) => {
   try {
@@ -233,12 +238,12 @@ router.post('/chat', authenticateToken, [
       context,
     });
     // Log the request
-    await (prisma as any).aIUsageLog.create({
+    await prisma.aIUsageLog.create({
       data: {
         userId: (req.user as User)!.id,
-        feature: 'chat',
-        prompt: message,
-        response: JSON.stringify(result),
+        toolName: 'chat',
+        input: message,
+        output: JSON.stringify(result),
         // metadata: context, // Removed as it's not in schema
       },
     });
@@ -258,12 +263,12 @@ router.post('/chat', authenticateToken, [
 
 // Generate property description
 router.post('/property-description', authenticateToken, [
-  body('type').isString().notEmpty(),
+  body('type').isString().notEmpty().isLength({ max: MAX_BILLED_TEXT_CHARS }),
   body('bedrooms').isInt({ min: 0 }),
   body('bathrooms').isInt({ min: 0 }),
-  body('location').isString().notEmpty(),
-  body('amenities').isArray(),
-  body('amenities.*').isString(),
+  body('location').isString().notEmpty().isLength({ max: MAX_BILLED_TEXT_CHARS }),
+  body('amenities').isArray({ max: 100 }),
+  body('amenities.*').isString().isLength({ max: MAX_BILLED_TEXT_CHARS }),
   body('price').isFloat({ min: 0 }),
   validateRequest,
 ], async (req: Request, res: Response) => {
@@ -273,12 +278,12 @@ router.post('/property-description', authenticateToken, [
     const result = await aiService.generatePropertyDescription(propertyData);
 
     // Log the request
-    await (prisma as any).aIUsageLog.create({
+    await prisma.aIUsageLog.create({
       data: {
         userId: (req.user as User)!.id,
-        feature: 'property_description',
-        prompt: JSON.stringify(propertyData),
-        response: result.text,
+        toolName: 'property_description',
+        input: JSON.stringify(propertyData),
+        output: result.text,
         // metadata: result.metadata, // Removed as it's not in schema
       },
     });
@@ -298,23 +303,28 @@ router.post('/property-description', authenticateToken, [
 
 // Analyze maintenance request
 router.post('/maintenance-analysis', authenticateToken, [
-  body('title').isString().notEmpty(),
-  body('description').isString().notEmpty(),
-  body('category').optional().isString(),
+  body('title').isString().notEmpty().isLength({ max: MAX_BILLED_TEXT_CHARS }),
+  body('description').isString().notEmpty().isLength({ max: MAX_BILLED_TEXT_CHARS }),
+  body('category').optional().isString().isLength({ max: MAX_BILLED_TEXT_CHARS }),
   validateRequest,
 ], async (req: Request, res: Response) => {
   try {
     const maintenanceData = req.body;
     
-    const result = await aiService.analyzeMaintenanceRequest(maintenanceData);
+    // The TRYING variant, not the degrading one. `analyzeMaintenanceRequest`
+    // never throws: on a vendor outage it returns a keyword-grep verdict
+    // (`EMERGENCY` / `2000` for any text containing "broken") which this handler
+    // would report as `{ success: true }`. That is a fabricated analysis served
+    // to a property manager as a model finding.
+    const result = await aiService.tryAnalyzeMaintenanceRequest(maintenanceData);
 
     // Log the request
-    await (prisma as any).aIUsageLog.create({
+    await prisma.aIUsageLog.create({
       data: {
         userId: (req.user as User)!.id,
-        feature: 'maintenance_analysis',
-        prompt: JSON.stringify(maintenanceData),
-        response: JSON.stringify(result),
+        toolName: 'maintenance_analysis',
+        input: JSON.stringify(maintenanceData),
+        output: JSON.stringify(result),
       },
     });
 
@@ -324,16 +334,19 @@ router.post('/maintenance-analysis', authenticateToken, [
     });
   } catch (error: any) {
     console.error('Error analyzing maintenance request:', error);
-    res.status(500).json({
+    // Do NOT echo `error.message`: the service propagates vendor errors that can
+    // carry the upstream URL and API key, and it throws specific parse failures.
+    // The caller gets a stable, non-diagnostic message; the detail stays in logs.
+    res.status(502).json({
       success: false,
-      error: error.message || 'Failed to analyze maintenance request',
+      error: 'Maintenance analysis is temporarily unavailable',
     });
   }
 });
 
 // Generate lease summary
 router.post('/lease-summary', authenticateToken, [
-  body('leaseText').isString().notEmpty(),
+  body('leaseText').isString().notEmpty().isLength({ max: MAX_BILLED_TEXT_CHARS }),
   validateRequest,
 ], async (req: Request, res: Response) => {
   try {
@@ -342,12 +355,12 @@ router.post('/lease-summary', authenticateToken, [
     const result = await aiService.generateLeaseSummary(leaseText);
 
     // Log the request
-    await (prisma as any).aIUsageLog.create({
+    await prisma.aIUsageLog.create({
       data: {
         userId: (req.user as User)!.id,
-        feature: 'lease_summary',
-        prompt: leaseText.substring(0, 1000), // Truncate for storage
-        response: result.text,
+        toolName: 'lease_summary',
+        input: leaseText.substring(0, 1000), // Truncate for storage
+        output: result.text,
         // metadata: result.metadata, // Removed as it's not in schema
       },
     });
@@ -367,7 +380,7 @@ router.post('/lease-summary', authenticateToken, [
 
 // Translate text
 router.post('/translate', authenticateToken, [
-  body('text').isString().notEmpty(),
+  body('text').isString().notEmpty().isLength({ max: MAX_BILLED_TEXT_CHARS }),
   body('targetLanguage').isString().notEmpty(),
   validateRequest,
 ], async (req: Request, res: Response) => {
@@ -377,12 +390,12 @@ router.post('/translate', authenticateToken, [
     const result = await aiService.translateText(text, targetLanguage);
 
     // Log the request
-    await (prisma as any).aIUsageLog.create({
+    await prisma.aIUsageLog.create({
       data: {
         userId: (req.user as User)!.id,
-        feature: 'translation',
-        prompt: text,
-        response: result.text,
+        toolName: 'translation',
+        input: text,
+        output: result.text,
         // metadata: result.metadata, // Removed as it's not in schema
       },
     });
@@ -402,22 +415,22 @@ router.post('/translate', authenticateToken, [
 
 // Extract keywords
 router.post('/keywords', authenticateToken, [
-  body('text').isString().notEmpty(),
+  body('text').isString().notEmpty().isLength({ max: MAX_BILLED_TEXT_CHARS }),
   body('maxKeywords').optional().isInt({ min: 1, max: 50 }),
   validateRequest,
 ], async (req: Request, res: Response) => {
   try {
     const { text, maxKeywords } = req.body;
     
-    const keywords = await aiService.extractKeywords(text, maxKeywords);
+    const keywords = await aiService.tryExtractKeywords(text, maxKeywords);
 
     // Log the request
-    await (prisma as any).aIUsageLog.create({
+    await prisma.aIUsageLog.create({
       data: {
         userId: (req.user as User)!.id,
-        feature: 'keyword_extraction',
-        prompt: text,
-        response: JSON.stringify(keywords),
+        toolName: 'keyword_extraction',
+        input: text,
+        output: JSON.stringify(keywords),
       },
     });
 
@@ -427,9 +440,9 @@ router.post('/keywords', authenticateToken, [
     });
   } catch (error: any) {
     console.error('Error extracting keywords:', error);
-    res.status(500).json({
+    res.status(502).json({
       success: false,
-      error: error.message || 'Failed to extract keywords',
+      error: 'Keyword extraction is temporarily unavailable',
     });
   }
 });
@@ -445,11 +458,20 @@ router.get('/usage-stats', authenticateToken, [
     const { startDate, endDate, type } = req.query;
     const userId = (req.user as User)!.id;
 
-    const where: any = {
+    // Typed as Prisma.AIUsageLogWhereInput, NOT `any`. An `any` here is a hole
+    // that survives deleting the `(prisma as any)` cast on the call: a phantom
+    // key inside an `any`-typed object still compiles, because the object is
+    // never checked against the model. Verified by planting `bogusColumn: 1`
+    // here -- under `any` tsc stayed silent; under this type it is an error.
+    const where: Prisma.AIUsageLogWhereInput = {
       userId,
-      ...(type && { feature: type as string }),
+      // `AIUsageLog` has `toolName`, NOT `feature`. The `(prisma as any)` cast
+      // that used to wrap this call hid the mismatch from `tsc`, so every
+      // request threw PrismaClientValidationError ("Unknown argument `feature`")
+      // -- the endpoint had never worked.
+      ...(type && { toolName: type as string }),
       ...(startDate && endDate && {
-        createdAt: {
+        timestamp: {
           gte: new Date(startDate as string),
           lte: new Date(endDate as string),
         },
@@ -457,12 +479,15 @@ router.get('/usage-stats', authenticateToken, [
     };
 
     const [usage, total] = await Promise.all([
-      (prisma as any).aIUsageLog.findMany({
+      prisma.aIUsageLog.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        // `timestamp`, NOT `createdAt` — the model has no `createdAt`. This was
+        // UNCONDITIONAL, so even a bare request failed validation before reading
+        // a single row.
+        orderBy: { timestamp: 'desc' },
         take: 100,
       }),
-      (prisma as any).aIUsageLog.count({ where }),
+      prisma.aIUsageLog.count({ where }),
     ]);
 
     res.json({
@@ -474,9 +499,13 @@ router.get('/usage-stats', authenticateToken, [
     });
   } catch (error: any) {
     console.error('Error getting usage stats:', error);
+    // Do NOT echo `error.message`: Prisma's validation message names the model,
+    // the unknown argument AND every field it would have accepted
+    // ("Unknown argument `createdAt`. Available options are ..."). Returning it
+    // hands any authenticated caller the ORM's internal schema shape.
     res.status(500).json({
       success: false,
-      error: error.message || 'Failed to get usage stats',
+      error: 'Failed to get usage stats',
     });
   }
 });

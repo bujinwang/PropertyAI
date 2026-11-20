@@ -45,12 +45,20 @@ export const configurePassport = (): void => {
               });
             }
 
-            await (prisma as any).oAuthConnection.upsert({
-              where: { provider_userId: { provider: 'GOOGLE', userId: user.id } },
+            // NOT `(prisma as any)`. This used to be cast to `any`, which hid
+            // three phantom names from `tsc`: the model field is `providerId`,
+            // the `@@unique` is `[provider, providerId]` so its compound key is
+            // `provider_providerId` (not `provider_userId`), and the compound
+            // key's second member is the PROVIDER's id -- not our `userId`.
+            // Every Google sign-in therefore threw PrismaClientValidationError
+            // inside this verify callback and surfaced as "Authentication
+            // failed". Typed now, so the compiler enforces it.
+            await prisma.oAuthConnection.upsert({
+              where: { provider_providerId: { provider: 'GOOGLE', providerId: profile.id } },
               update: { accessToken, refreshToken, expiresAt: new Date(Date.now() + 3600 * 1000) },
               create: {
                 provider: 'GOOGLE',
-                providerUserId: profile.id,
+                providerId: profile.id,
                 accessToken,
                 refreshToken,
                 expiresAt: new Date(Date.now() + 3600 * 1000),
@@ -98,12 +106,15 @@ export const configurePassport = (): void => {
               });
             }
 
-            await (prisma as any).oAuthConnection.upsert({
-              where: { provider_userId: { provider: 'FACEBOOK', userId: user.id } },
+            // Same phantom-name bug as the Google branch above, and the same
+            // fix: `providerId` + `provider_providerId`, and no `any` cast so
+            // `tsc` can catch a regression.
+            await prisma.oAuthConnection.upsert({
+              where: { provider_providerId: { provider: 'FACEBOOK', providerId: profile.id } },
               update: { accessToken, refreshToken, expiresAt: new Date(Date.now() + 3600 * 1000) },
               create: {
                 provider: 'FACEBOOK',
-                providerUserId: profile.id,
+                providerId: profile.id,
                 accessToken,
                 refreshToken,
                 expiresAt: new Date(Date.now() + 3600 * 1000),

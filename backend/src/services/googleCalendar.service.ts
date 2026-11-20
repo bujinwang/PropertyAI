@@ -65,6 +65,19 @@ class GoogleCalendarService {
     try {
       const { tokens } = await this.oauth2Client.getToken(code);
       
+      // Two phantom names removed here, both previously hidden by `as any`:
+      //   - `scopes`: `OAuthConnection` has NO `scopes` column. Every call threw
+      //     `Unknown argument 'scopes'` (verified against the live schema).
+      //   - `user`: the relation is `User` (capital), and `userId` is a required
+      //     scalar -- the create branch must set it directly. `user: {connect}`
+      //     threw `Unknown argument 'user'. Did you mean 'userId'?`.
+      //
+      // KNOWN INCONSISTENCY, deliberately not changed here: this method keys the
+      // connection as providerId = OUR userId, whereas the passport Google
+      // strategy (config/passport.ts) keys it as providerId = Google's profile.id.
+      // So a row written by one flow is not found by the other. Fixing that is a
+      // data-migration decision (existing rows would need rewriting), not a typing
+      // fix, so it is recorded rather than silently altered.
       await prisma.oAuthConnection.upsert({
         where: {
           provider_providerId: {
@@ -74,19 +87,15 @@ class GoogleCalendarService {
         },
         update: {
           accessToken: tokens.access_token!,
-          refreshToken: tokens.refresh_token,
-          scopes: tokens.scope?.split(' ') || []
-        } as any, // Cast to any to bypass type checking for scopes
+          refreshToken: tokens.refresh_token
+        },
         create: {
           provider: 'google',
           providerId: userId,
           accessToken: tokens.access_token!,
           refreshToken: tokens.refresh_token,
-          scopes: tokens.scope?.split(' ') || [],
-          user: {
-            connect: { id: userId }
-          }
-        } as any // Cast to any to bypass type checking for scopes and user
+          userId
+        }
       });
 
       this.oauth2Client.setCredentials(tokens);

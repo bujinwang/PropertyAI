@@ -34,10 +34,12 @@ export const createWhiteLabelConfig = async (data: {
       Rental: {
         connect: { id: data.rentalId }
       },
-      user: {
-        connect: { id: data.userId }
-      }
-    } as any,
+      // `user: { connect }` removed. No such relation exists -- it is `User`
+      // (capital), and `userId` above already sets the FK. Verified:
+      //   Unknown argument `user`. Did you mean `userId`?
+      // The whole payload was `as any`, so `tsc` never objected and every
+      // create threw at runtime. No cast needed now that the shape is real.
+    },
   });
 };
 
