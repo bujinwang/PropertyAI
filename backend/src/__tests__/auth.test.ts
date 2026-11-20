@@ -1,3 +1,4 @@
+import http from 'http';
 import request from 'supertest';
 import app from '../app';
 import { PrismaClient } from '@prisma/client';
@@ -6,10 +7,20 @@ import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+// One listener for the whole file. Passing the app to supertest makes it call
+// `app.listen(0)` and close the listener again on every request, so requests
+// can race the previous close (spurious 404 / socket hang up). Binding once and
+// passing the server keeps every request on the real Express stack.
+let server: http.Server;
+
 describe('Authentication Endpoints', () => {
   let authToken: string;
 
   beforeAll(async () => {
+    server = await new Promise<http.Server>((resolve) => {
+      const s = app.listen(0, () => resolve(s));
+    });
+
     // Idempotent setup: clear rows this suite owns so a previous (or aborted)
     // run cannot trip the unique-email constraint below.
     await prisma.user.deleteMany({
@@ -40,7 +51,7 @@ describe('Authentication Endpoints', () => {
 
   describe('POST /api/auth/register', () => {
     it('should register a new user successfully', async () => {
-      const response = await request(app)
+      const response = await request(server)
         .post('/api/auth/register')
         .send({
           email: 'register@example.com',
@@ -58,7 +69,7 @@ describe('Authentication Endpoints', () => {
     it('should reject self-assignment of the ADMIN role and create no account', async () => {
       const email = 'escalation-test@example.com';
 
-      const response = await request(app)
+      const response = await request(server)
         .post('/api/auth/register')
         .send({
           email,
@@ -75,7 +86,7 @@ describe('Authentication Endpoints', () => {
     });
 
     it('should reject an unknown role instead of coercing it', async () => {
-      const response = await request(app)
+      const response = await request(server)
         .post('/api/auth/register')
         .send({
           email: 'unknown-role@example.com',
@@ -89,7 +100,7 @@ describe('Authentication Endpoints', () => {
     });
 
     it('should allow a legitimate self-serve role', async () => {
-      const response = await request(app)
+      const response = await request(server)
         .post('/api/auth/register')
         .send({
           email: 'legit-role@example.com',
@@ -106,10 +117,14 @@ describe('Authentication Endpoints', () => {
 
   describe('POST /api/auth/login', () => {
     it('should login with valid credentials', async () => {
-      const response = await request(app)
+      const response = await request(server)
         .post('/api/auth/login')
         .send({
-          email: 'auth@example.com',
+          // Must match the fixture created in beforeAll. This said
+          // 'auth@example.com' while the user was created as
+          // 'auth-test@example.com', so the lookup always missed and the test
+          // asserted 200 against a guaranteed 401.
+          email: 'auth-test@example.com',
           password: 'password123'
         });
 
@@ -120,7 +135,7 @@ describe('Authentication Endpoints', () => {
 
   describe('GET /api/auth/me', () => {
     it('should get user profile with valid token', async () => {
-      const response = await request(app)
+      const response = await request(server)
         .get('/api/auth/me')
         .set('Authorization', `Bearer ${authToken}`);
 
@@ -146,5 +161,8 @@ describe('Authentication Endpoints', () => {
       },
     });
     await prisma.$disconnect();
+    if (server) {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
   });
 });

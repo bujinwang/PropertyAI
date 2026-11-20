@@ -1,15 +1,36 @@
+import http from 'http';
 import request from 'supertest';
 import app from '../app';
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
+import { resetDatabase } from './testDb';
 
 const prisma = new PrismaClient();
+
+// One listener for the whole file. Passing the app to supertest makes it call
+// `app.listen(0)` and close the listener again on every request, so requests
+// can race the previous close (spurious 404 / socket hang up). Binding once and
+// passing the server keeps every request on the real Express stack.
+let server: http.Server;
 
 describe('Units Endpoints', () => {
   let authToken: string;
   let userId: string;
 
   beforeAll(async () => {
+    server = await new Promise<http.Server>((resolve) => {
+      const s = app.listen(0, () => resolve(s));
+    });
+
+    // Start from a clean database. This suite hardcodes 'units-unique@example.com'
+    // below, so without a reset the second run collides with the row the first
+    // run left behind and fails with a unique-constraint 500 before any
+    // assertion executes. Reset in beforeAll (not afterAll) so the suite also
+    // does not inherit rows a previous, unrelated suite left in the same DB.
+    // TRUNCATE ... CASCADE — see src/__tests__/testDb.ts for why ordered
+    // deleteMany() cannot work against this schema's 37 User foreign keys.
+    await resetDatabase(prisma);
+
     const user = await prisma.user.create({
       data: {
         email: 'units-unique@example.com',
@@ -25,7 +46,7 @@ describe('Units Endpoints', () => {
 
   describe('POST /api/units', () => {
     it('should create a new rental unit', async () => {
-      const response = await request(app)
+      const response = await request(server)
         .post('/api/units')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
@@ -56,7 +77,7 @@ describe('Units Endpoints', () => {
 
   describe('GET /api/units', () => {
     it('should get all rental units', async () => {
-      const response = await request(app)
+      const response = await request(server)
         .get('/api/units')
         .set('Authorization', `Bearer ${authToken}`);
 
@@ -89,7 +110,7 @@ describe('Units Endpoints', () => {
             slug: 'test-unit-slug-301',
           }
         });
-        const response = await request(app)
+        const response = await request(server)
             .get(`/api/units/${rental.id}`)
             .set('Authorization', `Bearer ${authToken}`);
 
@@ -98,7 +119,7 @@ describe('Units Endpoints', () => {
     });
 
     it('should return 404 for non-existent rental unit', async () => {
-      const response = await request(app)
+      const response = await request(server)
         .get('/api/units/non-existent-id')
         .set('Authorization', `Bearer ${authToken}`);
 
@@ -130,7 +151,7 @@ describe('Units Endpoints', () => {
             isAvailable: true,
         }
         });
-        const response = await request(app)
+        const response = await request(server)
             .put(`/api/units/${rental.id}`)
             .set('Authorization', `Bearer ${authToken}`)
             .send({
@@ -167,11 +188,18 @@ describe('Units Endpoints', () => {
             slug: 'test-unit-slug-501',
           }
         });
-        const response = await request(app)
+        const response = await request(server)
             .delete(`/api/units/${rental.id}`)
             .set('Authorization', `Bearer ${authToken}`);
 
         expect(response.status).toBe(200);
     });
+  });
+
+  afterAll(async () => {
+    await prisma.$disconnect();
+    if (server) {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
   });
 });

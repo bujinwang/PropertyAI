@@ -1,15 +1,15 @@
 import { complianceService } from '../complianceService';
 import { PrismaClient } from '@prisma/client';
+import { resetDatabase } from '../../__tests__/testDb';
 
 const prisma = new PrismaClient();
 
 describe('ComplianceService', () => {
   beforeEach(async () => {
-    // Clear test data
-    await prisma.complianceReport.deleteMany();
-    await prisma.dataRetentionPolicy.deleteMany();
-    await prisma.auditEntry.deleteMany();
-    await prisma.user.deleteMany();
+    // Truncate every table (CASCADE) rather than deleting User last: 37 models
+    // hold a FK to User.id, so a bare user.deleteMany() fails on whichever child
+    // table still has rows.
+    await resetDatabase(prisma);
   });
 
   afterAll(async () => {
@@ -87,14 +87,25 @@ describe('ComplianceService', () => {
 
   describe('detectComplianceViolations', () => {
     it('should detect compliance violations', async () => {
+      // AuditEntry.userId is a real FK to User.id, so the row it points at has
+      // to exist first — a bare 'test-user' string fails on AuditEntry_userId_fkey.
+      const user = await prisma.user.create({
+        data: {
+          email: 'violations@example.com',
+          password: 'hashed',
+          firstName: 'Violation',
+          lastName: 'Fixture',
+        },
+      });
+
       // Create some test audit entries that might trigger violations
       await prisma.auditEntry.create({
         data: {
-          userId: 'test-user',
+          userId: user.id,
           action: 'LOGIN_FAILED',
           details: { reason: 'Invalid password' },
           entityType: 'USER',
-          entityId: 'test-user',
+          entityId: user.id,
           severity: 'WARNING',
         }
       });
@@ -151,13 +162,22 @@ describe('ComplianceService', () => {
       // Create old audit entry
       const oldDate = new Date(Date.now() - 400 * 24 * 60 * 60 * 1000); // 400 days ago
 
+      const user = await prisma.user.create({
+        data: {
+          email: 'retention@example.com',
+          password: 'hashed',
+          firstName: 'Retention',
+          lastName: 'Fixture',
+        },
+      });
+
       await prisma.auditEntry.create({
         data: {
-          userId: 'test-user',
+          userId: user.id,
           action: 'TEST_ACTION',
           details: {},
           entityType: 'USER',
-          entityId: 'test-user',
+          entityId: user.id,
           severity: 'INFO',
           timestamp: oldDate,
         }

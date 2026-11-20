@@ -1,16 +1,32 @@
 import { complianceService } from '../services/complianceService';
 import { enhancedAuditService } from '../services/enhancedAuditService';
 import { PrismaClient } from '@prisma/client';
+import { resetDatabase } from './testDb';
 
 const prisma = new PrismaClient();
 
 describe('Compliance Testing Suite', () => {
+  // AuditEntry.userId is a real FK to User.id. The suites below used to pass
+  // invented ids ('test-user', 'old-user', ...), which failed on
+  // AuditEntry_userId_fkey before the assertion under test ever ran.
+  let fixtureUserId: string;
+
   beforeEach(async () => {
-    // Clear test data
-    await prisma.complianceReport.deleteMany();
-    await prisma.dataRetentionPolicy.deleteMany();
-    await prisma.auditEntry.deleteMany();
-    await prisma.user.deleteMany();
+    // TRUNCATE ... CASCADE instead of ordered deleteMany(): `User` is the hub of
+    // 37 foreign keys, so deleting it last still fails whenever a child table
+    // still holds rows.
+    await resetDatabase(prisma);
+
+    const fixture = await prisma.user.create({
+      data: {
+        email: 'compliance-fixture@example.com',
+        password: 'hashed',
+        firstName: 'Compliance',
+        lastName: 'Fixture',
+      },
+      select: { id: true },
+    });
+    fixtureUserId = fixture.id;
   });
 
   afterAll(async () => {
@@ -70,7 +86,7 @@ describe('Compliance Testing Suite', () => {
       // Create some audit entries that represent data processing
       await prisma.auditEntry.create({
         data: {
-          userId: 'test-user',
+          userId: fixtureUserId,
           action: 'DATA_PROCESSING',
           details: {
             purpose: 'User authentication',
@@ -97,7 +113,7 @@ describe('Compliance Testing Suite', () => {
       // Create audit entries for data subject rights
       await prisma.auditEntry.create({
         data: {
-          userId: 'test-user',
+          userId: fixtureUserId,
           action: 'DATA_ACCESS_REQUEST',
           details: { reason: 'User requested access to their data' },
           entityType: 'USER',
@@ -107,7 +123,7 @@ describe('Compliance Testing Suite', () => {
 
       await prisma.auditEntry.create({
         data: {
-          userId: 'test-user',
+          userId: fixtureUserId,
           action: 'DATA_ERASURE_REQUEST',
           details: { reason: 'User requested data deletion' },
           entityType: 'USER',
@@ -146,7 +162,7 @@ describe('Compliance Testing Suite', () => {
       // Create audit entries for data sales
       await prisma.auditEntry.create({
         data: {
-          userId: 'test-user',
+          userId: fixtureUserId,
           action: 'DATA_SALE',
           details: {
             recipient: 'third_party_analytics',
@@ -174,7 +190,7 @@ describe('Compliance Testing Suite', () => {
       // Create audit entries for opt-out requests
       await prisma.auditEntry.create({
         data: {
-          userId: 'test-user',
+          userId: fixtureUserId,
           action: 'OPT_OUT_REQUEST',
           details: {
             reason: 'User opted out of data sales',
@@ -218,7 +234,7 @@ describe('Compliance Testing Suite', () => {
       // Create audit entries for financial data access
       await prisma.auditEntry.create({
         data: {
-          userId: 'accountant-user',
+          userId: fixtureUserId,
           action: 'ACCESS',
           details: {
             resource: 'financial_records',
@@ -284,7 +300,7 @@ describe('Compliance Testing Suite', () => {
 
       await prisma.auditEntry.create({
         data: {
-          userId: 'old-user',
+          userId: fixtureUserId,
           action: 'OLD_ACTION',
           details: {},
           entityType: 'USER',
@@ -359,7 +375,7 @@ describe('Compliance Testing Suite', () => {
       for (let i = 0; i < 6; i++) {
         await prisma.auditEntry.create({
           data: {
-            userId: 'suspicious-user',
+            userId: fixtureUserId,
             action: 'LOGIN_FAILED',
             details: { attempt: i + 1 },
             entityType: 'USER',
@@ -381,7 +397,7 @@ describe('Compliance Testing Suite', () => {
     it('should maintain audit trail integrity', async () => {
       const originalEntry = await prisma.auditEntry.create({
         data: {
-          userId: 'integrity-test',
+          userId: fixtureUserId,
           action: 'TEST_ACTION',
           details: { test: 'data' },
           entityType: 'USER',
@@ -403,7 +419,7 @@ describe('Compliance Testing Suite', () => {
     it('should prevent audit log tampering', async () => {
       const entry = await prisma.auditEntry.create({
         data: {
-          userId: 'tamper-test',
+          userId: fixtureUserId,
           action: 'ORIGINAL_ACTION',
           details: { original: true },
           entityType: 'USER',

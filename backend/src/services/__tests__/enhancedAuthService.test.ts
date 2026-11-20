@@ -1,15 +1,13 @@
 import { PrismaClient } from '@prisma/client';
 import { enhancedAuthService } from '../enhancedAuthService';
 import { AppError } from '../../middleware/errorMiddleware';
+import { resetDatabase } from '../../__tests__/testDb';
 
 const prisma = new PrismaClient();
 
 describe('EnhancedAuthService', () => {
   beforeEach(async () => {
-    // Clear test data
-    await prisma.auditEntry.deleteMany();
-    await prisma.session.deleteMany();
-    await prisma.user.deleteMany();
+    await resetDatabase(prisma);
   });
 
   afterAll(async () => {

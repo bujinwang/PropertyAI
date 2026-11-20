@@ -1,14 +1,12 @@
 import { ssoService } from '../ssoService';
 import { PrismaClient } from '@prisma/client';
+import { resetDatabase } from '../../__tests__/testDb';
 
 const prisma = new PrismaClient();
 
 describe('SSOService', () => {
   beforeEach(async () => {
-    // Clear test data
-    await prisma.sSOConfig.deleteMany();
-    await prisma.oAuthConnection.deleteMany();
-    await prisma.user.deleteMany();
+    await resetDatabase(prisma);
   });
 
   afterAll(async () => {

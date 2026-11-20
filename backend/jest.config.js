@@ -17,6 +17,9 @@ module.exports = {
     // and reported "Your test suite must contain at least one test." It is
     // configuration, not a test — exclude it explicitly.
     '<rootDir>/src/__tests__/setup.ts',
+    // Same problem for the shared DB-reset helper: it lives under __tests__/
+    // so testMatch would require it to contain a test.
+    '<rootDir>/src/__tests__/testDb.ts',
   ],
   collectCoverageFrom: [
     'src/**/*.{ts,js}',

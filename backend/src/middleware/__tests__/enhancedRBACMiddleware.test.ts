@@ -1,14 +1,12 @@
 import { enhancedRBACService } from '../enhancedRBACMiddleware';
 import { PrismaClient, UserRole } from '@prisma/client';
+import { resetDatabase } from '../../__tests__/testDb';
 
 const prisma = new PrismaClient();
 
 describe('EnhancedRBACService', () => {
   beforeEach(async () => {
-    // Clear test data
-    await prisma.permission.deleteMany();
-    await prisma.role.deleteMany();
-    await prisma.user.deleteMany();
+    await resetDatabase(prisma);
   });
 
   afterAll(async () => {
